@@ -4,11 +4,11 @@
     :target: https://github.com/rl-institut/super-repo/
     :alt: Repo logo
 
-==========
-super-repo
-==========
+=====================
+oemof-tabular-plugins
+=====================
 
-**A template repo to test and document elements and features for research software.**
+**A dummy repo to pitch an idea to oemof community**
 
 .. list-table::
    :widths: auto
@@ -33,9 +33,12 @@ Introduction
 ============
 This is to showcase how this repository could be used to complement `oemof-tabular <https://github.com/oemof/oemof-tabular>`_ to add constraints specific to certain uses of it
 
-import oemof-tabular-plugin as otp
-# from otp import CONSTRAINT_TYPE_MAP
-from otp.hydrogen import CONSTRAINT_TYPE_MAP
+.. code::
+    import oemof_tabular_plugin as otp
+    # one can import the full constraint map
+    from otp import CONSTRAINT_TYPE_MAP
+    # or just the one relevant for a specific usecase
+    from otp.hydrogen import CONSTRAINT_TYPE_MAP
 
 Documentation
 =============
