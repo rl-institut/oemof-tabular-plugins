@@ -31,9 +31,11 @@ super-repo
 
 Introduction
 ============
-| A template repo to test and document elements and features for research software.
-| It implements the collection of repository elements collected in this `Etherpad <https://etherpad.wikimedia.org/p/super-repo>`_.
-| The goal is to simplify and standardise the creation of software in GitHub repositories.
+This is to showcase how this repository could be used to complement `oemof-tabular <https://github.com/oemof/oemof-tabular>`_ to add constraints specific to certain uses of it
+
+import oemof-tabular-plugin as otp
+# from otp import CONSTRAINT_TYPE_MAP
+from otp.hydrogen import CONSTRAINT_TYPE_MAP
 
 Documentation
 =============
