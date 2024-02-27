@@ -1,3 +1,1 @@
-build
-pyomo
-oemof.tabular
+git+https://github.com/oemof/oemof-tabular.git@v0.0.4dev2#egg=oemof-tabular

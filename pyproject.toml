@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "pyomo", "oemof.tabular"]
+requires = ["setuptools", "oemof.tabular"]
 build-backend = "setuptools.build_meta"
 
 [project]
