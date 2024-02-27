@@ -1,5 +1,7 @@
 # source: https://github.com/github/gitignore/blob/main/Python.gitignore
 
+setup.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

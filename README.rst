@@ -34,6 +34,7 @@ Introduction
 This is to showcase how this repository could be used to complement `oemof-tabular <https://github.com/oemof/oemof-tabular>`_ to add constraints specific to certain uses of it
 
 .. code::
+
     import oemof_tabular_plugin as otp
     # one can import the full constraint map
     from otp import CONSTRAINT_TYPE_MAP
