@@ -19,7 +19,7 @@ dynamic = ["version", "dependencies", "readme"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst"]}
-version = {attr = "oemof-tabular-plugins.version"}
+version = {attr = "oemof_tabular_plugins.version"}
 dependencies = {file = ["requirements/build_requirements.txt"]}
 
 [project.scripts]
