@@ -1,11 +1,11 @@
 # Project
-site_name: Super-Repo Documentation
+site_name: oemof-tabular-plugins Documentation
 site_url: 
-site_description: Write your documentation in Markdown and create a static page for your developer and user community
+site_description: Documentaiton of the plugins to oemof-tabular, a series of constraints which might be useful across different projects.
 
 # Repository
-repo_name: rl-institut/super-repo
-repo_url: https://github.com/rl-institut/super-repo
+repo_name: rl-institut/oemof-tabular-plugins
+repo_url: https://github.com/rl-institut/oemof-tabular-plugins
 docs_dir: docs
 
 # Configuration
