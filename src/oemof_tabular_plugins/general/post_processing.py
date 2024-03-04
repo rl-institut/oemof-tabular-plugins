@@ -1,8 +1,21 @@
+import logging
 import os
 import pandas as pd
 import warnings
 from oemof.tabular.postprocessing.core import Calculator
 from oemof.tabular.postprocessing import calculations as clc, naming
+
+
+def excess_generation(all_scalars):
+    # assuming your DataFrame has a MultiIndex with levels ("name", "var_name")
+    excess_rows = all_scalars[all_scalars.index.get_level_values("name").str.contains('excess')]
+    # convert the excess_rows DataFrame to a dictionary
+    excess_dict = excess_rows['var_value'].to_dict()
+    # extract only the first part of the MultiIndex ('name') and use it as the key
+    excess_dict = {(key[0]): value for key, value in excess_dict.items()}
+
+    return excess_dict
+
 
 def specific_system_costs(all_scalars, total_system_costs):
     """
@@ -20,9 +33,11 @@ def specific_system_costs(all_scalars, total_system_costs):
 
     return specific_system_cost
 
+
 def calculate_renewable_share(results):
     """
     Calculates the renewable share of generation based on the renewable factor set in the inputs.
+    ToDo: proper testing and appropriate warnings/logging info
     :param results: oemof model results
     :return: renewable share value
     """
@@ -63,6 +78,34 @@ def calculate_renewable_share(results):
     renewable_share = round(renewable_generation / total_generation, 2)
 
     return renewable_share
+
+
+def calculate_total_emissions(results):
+    """
+
+    :param results:
+    :return:
+    """
+    # initiate total emissions value
+    total_emissions = 0
+
+    # loop through the results dict
+    for entry_key, entry_value in results.items():
+        # store the 'sequences' value for each oemof object tuple in results dict
+        sequences = entry_value.get('sequences', None)
+        # check if the oemof object tuple has the 'output_parameters' attribute
+        if hasattr(entry_key[0], 'output_parameters'):
+            # store the 'output_parameters' dict as output_param_dict
+            output_param_dict = entry_key[0].output_parameters
+            # retrieve the 'specific_emission' value if it exists
+            specific_emission = output_param_dict.get('custom_attributes', {}).get('specific_emission')
+            if specific_emission is not None:
+                total_emissions += specific_emission * sequences.sum().sum()
+                logging.info(f"Specific emissions recorded for {entry_key}")
+    # round the total emissions to 2dp
+    total_emissions = round(total_emissions, 2)
+
+    return total_emissions
 
 
 def post_processing(params, results, results_path):
@@ -122,13 +165,18 @@ def post_processing(params, results, results_path):
     # store the relevant KPI variables
     specific_system_cost = round(specific_system_costs(all_scalars, total_system_costs), 3)
     renewable_share = calculate_renewable_share(results)
-    #excess_gen = excess_generation(all_scalars)
+    excess_gen = excess_generation(all_scalars)
+    total_emissions = calculate_total_emissions(results)
 
     # create a dataframe with the KPI variables
-    kpi_data = {'Variable': ['specific_system_cost', 'renewable_share'],
-            'Value': [specific_system_cost, renewable_share]}
+    kpi_data = {'Variable': ['specific_system_cost', 'renewable_share', 'total_emissions'],
+            'Value': [specific_system_cost, renewable_share, total_emissions]}
     # store KPI data as a dataframe
     kpi_df = pd.DataFrame(kpi_data)
+    for key, value in excess_gen.items():
+        kpi_df = kpi_df._append({'Variable': key, 'Value': value}, ignore_index=True)
+        # replace any parameters with '-' in the name with '_' for uniformity
+        kpi_df['Variable'] = kpi_df['Variable'].str.replace('-', '_')
     # save all KPI results to a csv file
     filepath_name_kpis = os.path.join(results_path, 'kpis.csv')
     # save the DataFrame to a CSV file
