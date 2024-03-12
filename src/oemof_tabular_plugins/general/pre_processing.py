@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from oemof.tools import economics
 
 
 def calculate_annuity(capex, opex_fix, lifetime, wacc):
@@ -11,7 +12,7 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     :param wacc: the weighted average cost of capital (WACC) applied throughout the model (%)
     :return: the total annuity (currency/MW*/year)
     """
-    annuity_capex = (capex) * (wacc * (1 + wacc) ** lifetime) / (((1 + wacc) ** lifetime) - 1)
+    annuity_capex = economics.annuity(capex, lifetime, wacc)
     annuity_opex_fix = opex_fix
     annuity_total = round(annuity_capex + annuity_opex_fix, 2)
     return annuity_total
@@ -49,7 +50,7 @@ def pre_processing(scenario_dir, wacc):
             else:
                 annuity_cost = 'storage_capacity_cost'
             # if the annuity cost parameter is not included in the CSV file, this file will be ignored
-            # NOTE: this is to skip files such as bus.csv, load.csv etc. that do not need to calculate an annuity
+            # NOTE: this is to skip files such as no_annuity_cost.csv, load.csv etc. that do not need to calculate an annuity
             # NOTE: this means you must include this parameter in your CSV file if you want it to be considered!
             if annuity_cost not in element_df.columns:
                 print(f"INFO: '{element}' does not contain '{annuity_cost}' parameter. Skipping...")
