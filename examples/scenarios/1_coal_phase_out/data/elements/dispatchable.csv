@@ -1,0 +1,7 @@
+name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;carrier_cost;profile;output_parameters;expandable
+gas-KA;dispatchable;gas;ocgt;0;0;gas-bus-KA;23.4;0;1;"{""custom_attributes"": {""renewable_factor"": 0}}";True
+gas-UZ;dispatchable;gas;ocgt;0;0;gas-bus-UZ;23.4;0;1;"{""custom_attributes"": {""renewable_factor"": 0}}";True
+coal-KA;dispatchable;coal;st;0;0;coal-bus-KA;10.6;0;1;"{""custom_attributes"": {""renewable_factor"": 0}}";True
+coal-UZ;dispatchable;coal;st;0;0;coal-bus-UZ;10.6;0;1;"{""custom_attributes"": {""renewable_factor"": 0}}";True
+oil-KA;dispatchable;coal;st;0;0;oil-bus-KA;52.1;0;1;"{""custom_attributes"": {""renewable_factor"": 0}}";True
+oil-UZ;dispatchable;coal;st;0;0;oil-bus-UZ;52.1;0;1;"{""custom_attributes"": {""renewable_factor"": 0}}";True

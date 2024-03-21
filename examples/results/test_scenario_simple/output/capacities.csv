@@ -1,0 +1,10 @@
+Component,Type,Carrier,Existing Capacity,Capacity Potential,Optimizable,Optimized Capacity
+elec-shortage,shortage,electricity,0,inf,False,
+renewable-conv,conversion,electricity,0,inf,True,0.0
+gas-pp,conversion,gas,50,inf,False,
+gas,dispatchable,gas,0,inf,True,88.395625
+hydro,volatile,hydro,0,inf,True,0.0
+pv,volatile,solar,0,inf,True,0.0
+wind,volatile,wind,0,inf,True,0.0
+demand,load,,,,,
+electricity-excess,excess,,,,,

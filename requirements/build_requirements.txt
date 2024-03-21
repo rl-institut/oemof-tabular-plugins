@@ -1,0 +1,2 @@
+# Right now this is a problem as oemof.tabular is not installable from releases because of requirements conflicts
+# git+https://github.com/oemof/oemof-tabular.git@v0.0.4dev2#egg=oemof-tabular

@@ -78,9 +78,6 @@ For a **Patch Release** (Hotfix), start at [section 3](https://github.com/rl-ins
 * `📝CITATION.cff`
     * Update `version`
     * Update `date-released`
-* `📝setup.py`
-    * Update `version`
-    * Update `download_url` (.../v0.1.0.tar.gz)
 
 ▶️ Increase version numbers!
 
@@ -160,11 +157,9 @@ If you messed up, remove tags and start again
 * Push commits to the `release-*` branch
 
 ### 1. 💻 Create and publish package on PyPI
-* Navigate to git folder `cd D:\git\github\GROUP\REPO\`
-* Create package using `python setup.py sdist`
+* Create package using `python -m build`
 * Check that file has been created in folder `dist`
-* Activate python environment `activate release_py38`
-* Upload to PyPI using `twine upload dist/NAME_0.5.1.tar.gz`
+* Upload to PyPI using `twine upload dist/*`
 * Enter `name` and `password`
 * Check on PyPI if release arrived
 * Breath three times and smile

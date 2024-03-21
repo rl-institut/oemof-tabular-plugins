@@ -1,0 +1,13 @@
+name;type;balanced
+elec-bus-KA;bus;true
+elec-bus-UZ;bus;true
+re-elec-bus-KA;bus;true
+re-elec-bus-UZ;bus;true
+h2-bus-KA;bus;true
+h2-bus-UZ;bus;true
+gas-bus-KA;bus;true
+gas-bus-UZ;bus;true
+coal-bus-KA;bus;true
+coal-bus-UZ;bus;true
+oil-bus-KA;bus;true
+oil-bus-UZ;bus;true

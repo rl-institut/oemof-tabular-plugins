@@ -1,0 +1,4 @@
+name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;profile;output_parameters;expandable
+wind;volatile;wind;onshore;0;161151;re-elec-bus;0;wind-profile;"{""custom_attributes"": {""renewable_factor"": 1}}";True
+pv;volatile;solar;pv;0;99405;re-elec-bus;0;pv-profile;"{""custom_attributes"": {""renewable_factor"": 1}}";True
+hydro;volatile;hydro;hydro;0;218011;re-elec-bus;0;1;"{""custom_attributes"": {""renewable_factor"": 1}}";True
