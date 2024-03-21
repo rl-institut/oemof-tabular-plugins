@@ -1,0 +1,3 @@
+name;type;bus
+electricity-excess-KA;excess;elec-bus-KA
+electricity-excess-UZ;excess;elec-bus-UZ

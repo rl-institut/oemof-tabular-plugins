@@ -1,0 +1,5 @@
+name;carrier;tech;storage_capacity;capacity;efficiency;capacity_cost;storage_capacity_cost;marginal_cost;type;bus;invest_relation_output_capacity;invest_relation_input_output;expandable
+h2-storage-KA;h2;tank;0;0;1.0;0;4537;0;storage;h2-bus-KA;0.1;1;True
+h2-storage-UZ;h2;tank;0;0;1.0;0;4537;0;storage;h2-bus-UZ;0.1;1;True
+battery-storage-KA;lithium;battery;500;0;0.87;0;61553;0;storage;re-elec-bus-KA;0.1;1;True
+battery-storage-UZ;lithium;battery;1000;0;0.87;0;61553;0;storage;re-elec-bus-UZ;0.1;1;True
