@@ -6,14 +6,22 @@ For each version, important additions, changes and removals are listed here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [X.Y.Z] dev - 202Y-MM-DD
+### Added
 
-## [0.0.1] Initial Release - Hello Super-Repo - 2024-02-27
+
+### Changed
+
+## [0.0.1] Initial Release - Hello Super-Repo - 2024-04-09
 
 ### Added
 - pyproject.toml
 - setup.py to .gitignore
 - new requirements files inside a requirements folder
 - created `oemof_tabular_plugins/` inside `src/` folder
+- created examples folder with scenarios for user to play with
+- created subpackages for general, hydrogen and wefe
+- added pre and post processing in the general package
 
 ### Changed
 - Changelog
