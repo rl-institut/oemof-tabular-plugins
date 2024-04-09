@@ -178,3 +178,41 @@ Check that all steps have been documented:
 - Entry in CHANGELOG.md?
 - PR is closed?
 - Issue is closed?
+
+### 6. Release
+
+As on pypi.org, one is allowed to upload a given version only once, one need a way to test a release before making it official. This is the purpose of a release candidate.
+Technically, a release candidate is similar to a normal release in the sense that someone can `pip install` them. However users will know that the release candidate is only there for test purposes.
+
+1. Open a working python3 virtual environment and make sure you have the latest versions of setuptools and wheel installed:
+    ```bash
+    pip install --upgrade setuptools wheel twine
+    ```
+2. Make sure you pulled the latest version of `dev` branch from `origin`: `git checkout dev`, `git pull origin`.
+3. Change the version (without committing) with release candidates (add `rc1` to the `version_num`, for example `vX.Y.Zrc1`) before the actual release, as a release with a specific version number can only be uploaded once on pypi.
+4. Move to the root of your local copy of this repository and prepare the python package and remove previous version distribution files with 
+    ```bash
+    python prepare_release.py
+    ```
+    The last two lines should show the result of the twine check:
+    ```
+    Checking dist/oemof_tabular_plugins-0.0.1rc2-py3-none-any.whl: PASSED
+    Checking dist/oemof-tabular-plugins-0.0.1rc2.tar.gz: PASSED
+    ```
+    If one of the two is not `PASSED`, find out why and fix it.
+
+5. If the twine check passed you can now upload the package release candidate to pypi.org
+    1. Check the credentials of our pypi@rl-institut.de account on https://pypi.org.
+    2. Type `twine upload dist/*`
+    3. Enter `__token__` for username and your pypi token for password.
+
+6. Create a fresh virtual environment and install the release candidate version of the package
+    ```bash
+    pip install oemof-tabular-plugins==X.Y.Zrci
+    ```
+   Then try to run an example file (for the moment you could try `python examples/scripts/compute.py` from the root of this repository)
+
+7. If you notice errors in the uploaded package, fix them and bump up `rc1` to `rc2` and repeat steps 3. to 6. until you don't see any more errors.
+
+    It is encouraged to make sure step 6.is also performed on a different os than yours (ask a colleague for example)
+8. If your release candidate works well, you can now do the actual release on `master`, followed by the release on pypi.org. You can also remove the folder `empty_folder` and its content.
