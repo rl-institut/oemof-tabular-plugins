@@ -1,6 +1,0 @@
-Component,Type,Carrier,Existing Capacity,Capacity Potential,Optimizable,Optimized Capacity
-back-up-elec,dispatchable,electricity,0,inf,True,0.000141433
-pv-panel,pv-panel,solar-energy,0,inf,False,
-solar-radiation,dispatchable,solar-energy,0,inf,True,0.0
-demand,load,,,,,
-electricity-excess,excess,,,,,
