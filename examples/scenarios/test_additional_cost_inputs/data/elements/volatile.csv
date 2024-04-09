@@ -1,0 +1,2 @@
+name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;profile;output_parameters;expandable;capex;opex_fix;lifetime
+test-vol;volatile;vol;vol;0;16.53;test-bus-1;0;1;"{""custom_attributes"": {""renewable_factor"": 1}}";True;200;2;30

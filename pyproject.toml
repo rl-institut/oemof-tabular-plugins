@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools", "oemof.tabular"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oemof-tabular-plugins"
+authors = [
+  { name="Ciara Dunks", email="ciara.dunks@rl-institut.de" },
+  { name="Pierre-François Duc", email="pierre-francois.duc@rl-institut.de" },
+]
+description = "A package that contains various constraint facades to be used with oemof-tabular"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dynamic = ["version", "dependencies", "readme"]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.rst"]}
+version = {attr = "oemof_tabular_plugins.version"}
+dependencies = {file = ["requirements/build_requirements.txt"]}
+
+[project.scripts]
+cli-name = "mypkg.mymodule:some_func"
+
+[project.urls]
+Homepage = "https://github.com/rl-institut/oemof-tabular-plugins"
+Issues = "https://github.com/rl-institut/oemof-tabular-plugins/issues"

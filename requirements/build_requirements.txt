@@ -1,0 +1,2 @@
+# Right now this is a problem as oemof.tabular is not installable from releases because of requirements conflictspytho
+oemof-tabular
