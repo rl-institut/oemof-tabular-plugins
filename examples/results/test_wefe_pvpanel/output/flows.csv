@@ -1,0 +1,7 @@
+From,To,Aggregated Flow
+back-up-elec,elec-bus,0.0028803099999999996
+elec-bus,demand,0.0028803099999999996
+elec-bus,electricity-excess,0.0
+pv-panel,elec-bus,0.0
+solar-energy-bus,pv-panel,0.0
+solar-radiation,solar-energy-bus,0.0

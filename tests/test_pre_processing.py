@@ -12,6 +12,3 @@ def test_calculate_annuity(capex, opex_fix, lifetime, wacc, expected_annuity):
     result = gen_pre_p.calculate_annuity(capex, opex_fix, lifetime, wacc)
     assert result == expected_annuity
 
-def test_no_capacity_cost(test_inputs):
-
-

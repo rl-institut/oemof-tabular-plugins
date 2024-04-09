@@ -11,14 +11,17 @@ from oemof.tabular.facades import TYPEMAP
 from src.oemof_tabular_plugins.general.post_processing import post_processing
 from src.oemof_tabular_plugins.general.constraint_facades import CONSTRAINT_TYPE_MAP
 from src.oemof_tabular_plugins.general.pre_processing import pre_processing
+from src.oemof_tabular_plugins.wefe.facades.pv_panel import PVPanel
 
 # get the project directory by navigating up one level from the current script file
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 # list of scenarios to be evaluated - manually updated by user!
-scenarios = ["1_coal_phase_out"]
+scenarios = ["test_wefe_pvpanel"]
 # weighted average cost of capital (WACC) - might move later
 #wacc = 0.06
+# add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
+TYPEMAP["pv-panel"] = PVPanel
 
 for scenario in scenarios:
     print("Running scenario with datapackage {}".format(scenario))

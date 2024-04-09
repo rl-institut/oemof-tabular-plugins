@@ -1,2 +1,0 @@
-name;type;capacity;capacity_cost;loss;from_bus;to_bus
-elec-conn-UZ-KA;link;;0;0;elec-bus-UZ;elec-bus-KA

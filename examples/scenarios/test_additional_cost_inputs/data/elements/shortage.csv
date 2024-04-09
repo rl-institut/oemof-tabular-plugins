@@ -1,0 +1,2 @@
+name;type;carrier;tech;bus;marginal_cost;capacity;output_parameters
+test-shortage;shortage;shortage;shortage;test-bus-1;100000;0;{}

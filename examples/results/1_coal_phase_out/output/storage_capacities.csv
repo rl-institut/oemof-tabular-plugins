@@ -1,5 +1,0 @@
-Component,Type,Carrier,Existing Storage Capacity,Existing Max Input/Output,Storage Capacity Potential,Max Input/Output Potential,Optimizable,Optimized Storage Capacity,Optimized Max Input/Output
-h2-storage-KA,storage,h2,0,0,inf,inf,True,0.0,0.0
-h2-storage-UZ,storage,h2,0,0,inf,inf,True,0.0,0.0
-battery-storage-KA,storage,lithium,500,0,inf,inf,True,0.0,50.0
-battery-storage-UZ,storage,lithium,1000,0,inf,inf,True,0.0,100.0
