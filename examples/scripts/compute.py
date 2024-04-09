@@ -8,10 +8,9 @@ from oemof.tabular import datapackage # noqa
 from oemof.tabular.facades import TYPEMAP
 # ---- imports from oemof-tabular-plugins package ----
 # ToDo: adapt the way these imports are called once oemof-tabular-plugins has expanded a bit
-from src.oemof_tabular_plugins.general.post_processing import post_processing
-from src.oemof_tabular_plugins.general.constraint_facades import CONSTRAINT_TYPE_MAP
-from src.oemof_tabular_plugins.general.pre_processing import pre_processing
-from src.oemof_tabular_plugins.wefe.facades.pv_panel import PVPanel
+from oemof_tabular_plugins.general import post_processing, CONSTRAINT_TYPE_MAP
+from oemof_tabular_plugins.general.pre_processing import pre_processing
+from oemof_tabular_plugins.wefe.facades import PVPanel
 
 # get the project directory by navigating up one level from the current script file
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
