@@ -31,7 +31,7 @@ for scenario in scenarios:
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
-    # pre-processing to update input csv files based on
+    # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
     pre_processing(scenario_dir, wacc)
 
     # create energy system object from the datapackage
