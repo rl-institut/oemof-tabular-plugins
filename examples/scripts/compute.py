@@ -18,6 +18,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # list of scenarios to be evaluated - manually updated by user!
 scenarios = ["general_basic"]
 # weighted average cost of capital (WACC) - might move later
+# this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
