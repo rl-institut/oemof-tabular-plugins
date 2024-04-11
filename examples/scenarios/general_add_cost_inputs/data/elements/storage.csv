@@ -1,2 +1,2 @@
 name;carrier;tech;storage_capacity;storage_capacity_potential;capacity;efficiency;capacity_cost;storage_capacity_cost;marginal_cost;type;bus;invest_relation_output_capacity;invest_relation_input_output;expandable;capex;opex_fix;lifetime
-test-batt;electricity;batt;0;100;0;0.92;0;23.59;1.8;storage;re-elec-bus;0.1;1;True;100;10;10
+battery-storage;lithium;battery;0;100;0;0.92;0;30.44;1.8;storage;elec-bus;0.1;1;True;150;15;15

@@ -16,9 +16,9 @@ from oemof_tabular_plugins.wefe.facades import PVPanel
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 # list of scenarios to be evaluated - manually updated by user!
-scenarios = ["test_wefe_pvpanel"]
+scenarios = ["general_basic"]
 # weighted average cost of capital (WACC) - might move later
-#wacc = 0.06
+wacc = 0.06
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
 
@@ -32,7 +32,7 @@ for scenario in scenarios:
         os.makedirs(results_path)
 
     # pre-processing to update input csv files based on
-    #pre_processing(scenario_dir, wacc)
+    pre_processing(scenario_dir, wacc)
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(
