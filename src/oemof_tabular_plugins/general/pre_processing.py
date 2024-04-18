@@ -71,15 +71,12 @@ def pre_processing(scenario_dir, wacc):
                 scenario_group = "annuity all cost params"
             # scenario group "no annuity partial/all cost params": annuity parameter is not included and at least one
             # of capex, opex fix and lifetime parameters are included in the csv file
-            elif annuity_cost not in element_df.columns and cost_columns == missing_columns:
+            elif annuity_cost not in element_df.columns and cost_columns != missing_columns:
                 scenario_group = "no annuity partial/all cost params"
             # scenario group "no annuity no cost params": the annuity parameter is not included and neither are
             # capex, opex fix and lifetime parameters in the csv file
             elif annuity_cost not in element_df.columns and cost_columns == missing_columns:
                 scenario_group = "no annuity no cost params"
-
-            # print statement for testing, remove later
-            print("scenario_group: ", scenario_group)
 
             # ---------------- POSSIBLE SCENARIOS FOR EACH SCENARIO GROUP ----------------
             # loop through each entry in the csv file
@@ -197,7 +194,7 @@ def pre_processing(scenario_dir, wacc):
                         # are ignored
                         if user_choice == 'no':
                             # log warning message
-                            logger.warning('The annuity cost is used directly rather than calculating from other '
+                            logging.warning('The annuity cost is used directly rather than calculating from other '
                                            f'parameters. This could lead to discrepancies in the results '
                                            f'- please check!')
                             # exit the loop
@@ -205,7 +202,7 @@ def pre_processing(scenario_dir, wacc):
                         else:
                             # if the user enters something other than yes or no, they are asked to re-enter
                             # their answer
-                            print("Invalid choice. Please enter 'yes' or 'no'.")
+                            logger.info("Invalid choice. Please enter 'yes' or 'no'.")
                 elif scenario == "no annuity partial/all cost params empty":
                     # raise value error
                     raise ValueError(f"One or more of 'capex', 'opex_fix' and 'lifetime' have been left "
