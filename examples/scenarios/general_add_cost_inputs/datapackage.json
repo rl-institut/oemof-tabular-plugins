@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
-    "name": "uzbek_scenario1_status_quo",
-    "oemof_tabular_version": "0.0.4dev",
+    "name": "general-add-cost-inputs",
+    "oemof_tabular_version": "0.0.5",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -102,6 +102,21 @@
                     {
                         "name": "expandable",
                         "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -461,6 +476,21 @@
                         "name": "expandable",
                         "type": "boolean",
                         "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "number",
+                        "format": "default"
                     }
                 ],
                 "missingValues": [
@@ -514,7 +544,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -524,7 +554,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -540,6 +570,21 @@
                     {
                         "name": "expandable",
                         "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
