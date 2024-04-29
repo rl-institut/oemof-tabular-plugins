@@ -113,17 +113,33 @@ class TestPreprocessing:
         with pytest.raises(ValueError):
             pre_processing(self.pre_p_dir, wacc=1)
 
-    def test_annuity_defined_partial_cost_params_raises_error(self):
+    def test_annuity_defined_partial_cost_params_logs_message(self, caplog):
         """
-        Tests that a value error is raised when the annuity is defined and some but not all other cost
+        Tests that a warning message is logged when the annuity is defined and some but not all other cost
         parameters are included.
         """
         # copy scenario csv file to the package path
         f_name = "annuity_defined_partial_cost_params.csv"
         shutil.copy(os.path.join(self.test_inputs_pre_p, f_name), os.path.join(self.package_path, f_name))
-        # check if calling the pre_processing function with the given scenario raises a value error
-        with pytest.raises(ValueError):
-            pre_processing(self.pre_p_dir, wacc=1)
+        pre_processing(self.pre_p_dir, wacc=1)
+        assert any(record.levelname == "WARNING" and "directly used but be aware that some cost" in record.message
+                   for record in caplog.records)
+
+    def test_annuity_defined_partial_cost_params_uses_annuity(self):
+        """
+        Tests that the annuity is directly used when it is defined and some but not all of the other cost
+        parameters are included.
+        """
+        # copy scenario csv file to the package path
+        f_name = "annuity_defined_partial_cost_params.csv"
+        shutil.copy(os.path.join(self.test_inputs_pre_p, f_name), os.path.join(self.package_path, f_name))
+        # call pre_processing function
+        pre_processing(self.pre_p_dir, wacc=1)
+        # check if the actual value matches the expected value
+        expected_value = 107265
+        df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=';')
+        actual_value = df['capacity_cost'].iloc[0]
+        assert actual_value == expected_value
 
     def test_annuity_empty_all_cost_params_defined_calculates_annuity(self):
         """
@@ -155,16 +171,33 @@ class TestPreprocessing:
         assert any(record.levelname == "INFO" and "has been calculated and updated" in record.message
                    for record in caplog.records)
 
-    def test_annuity_all_cost_params_some_empty_raises_error(self):
+    def test_annuity_all_cost_params_some_empty_logs_message(self, caplog):
         """
-        Tests that a value error is raised when some but not all of the other cost parameters are defined.
+        Tests that warning message is logged when some but not all of the other cost parameters are defined.
         """
         # copy scenario csv file to the package path
         f_name = "annuity_all_cost_params_some_empty.csv"
         shutil.copy(os.path.join(self.test_inputs_pre_p, f_name), os.path.join(self.package_path, f_name))
-        # check if calling the pre_processing function with the given scenario raises a value error
-        with pytest.raises(ValueError):
-            pre_processing(self.pre_p_dir, wacc=1)
+        # check if the info message is logged when the pre_processing function is called
+        pre_processing(self.pre_p_dir, wacc=1)
+        assert any(record.levelname == "WARNING" and "annuity will be directly used but be aware" in record.message
+                   for record in caplog.records)
+
+    def test_annuity_all_cost_params_some_empty_uses_annuity(self):
+        """
+        Tests that the annuity is directly used when it is defined and some but not all of the other cost
+        parameters are defined.
+        """
+        # copy scenario csv file to the package path
+        f_name = "annuity_all_cost_params_some_empty.csv"
+        shutil.copy(os.path.join(self.test_inputs_pre_p, f_name), os.path.join(self.package_path, f_name))
+        # call pre_processing function
+        pre_processing(self.pre_p_dir, wacc=1)
+        # check if the actual value matches the expected value
+        expected_value = 107265
+        df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=';')
+        actual_value = df['capacity_cost'].iloc[0]
+        assert actual_value == expected_value
 
     def test_annuity_defined_all_cost_params_defined_yes_calculates_new_annuity(self):
         """
@@ -218,7 +251,7 @@ class TestPreprocessing:
             # check if the warning message is logged when the pre_processing function is called and the user
             # enters 'no'
             pre_processing(self.pre_p_dir, wacc=wacc)
-        assert any(record.levelname == "WARNING" and "cost is used directly rather than" in record.message
+        assert any(record.levelname == "WARNING" and "could lead to discrepancies in the results" in record.message
                    for record in caplog.records)
 
     def test_annuity_defined_all_cost_params_defined_invalid_input_retries(self, caplog):

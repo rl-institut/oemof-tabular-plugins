@@ -16,7 +16,7 @@ from oemof_tabular_plugins.wefe.facades import PVPanel
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 # list of scenarios to be evaluated - manually updated by user!
-scenarios = ["scenario_c1"]
+scenarios = ["general_basic"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
@@ -25,8 +25,8 @@ TYPEMAP["pv-panel"] = PVPanel
 
 for scenario in scenarios:
     print("Running scenario with datapackage {}".format(scenario))
-    # set paths for scenario and result directories - CHANGE BACK ONCE DONE TESTING
-    scenario_dir = os.path.join(project_dir, "scenarios", "test_inputs", scenario)
+    # set paths for scenario and result directories
+    scenario_dir = os.path.join(project_dir, "scenarios", scenario)
     results_path = os.path.join(project_dir, "results", scenario, "output")
     # create results directory if it doesn't already exist
     if not os.path.exists(results_path):

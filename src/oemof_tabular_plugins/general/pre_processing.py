@@ -154,10 +154,11 @@ def pre_processing(scenario_dir, wacc):
                                      f"directly stated or all of the other financial parameters must be stated "
                                      f"to calculate the annuity.")
                 elif scenario == "annuity defined partial cost params":
-                    # raise value error
-                    raise ValueError(f"'{annuity_cost}' is defined and some but not all of 'capex', 'opex_fix'"
-                                     f"and 'lifetime' have been included. Please either only state '{annuity_cost}'"
-                                     f"or include all other financial parameters to calculate the annuity.")
+                    # log warning message
+                    logging.warning(f"'{annuity_cost}' (the annuity) has been defined and some but not all "
+                                    f"of 'capex', 'opex_fix' and 'lifetime' have been defined for {row_name} "
+                                    f"in {element}. The annuity will be directly used but be aware that some"
+                                    f"cost results will not be calculated.")
                 elif scenario == "annuity empty all cost params defined":
                     # calculate the annuity using the calculate_annuity function
                     capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
@@ -167,9 +168,10 @@ def pre_processing(scenario_dir, wacc):
                     logger.info(f"the annuity ('{annuity_cost}') has been calculated and updated for"
                                 f" '{row_name}' in '{element}'.")
                 elif scenario == "annuity all cost params some empty":
-                    # raise value error
-                    raise ValueError(f"One or more of 'capex', 'opex_fix' and 'lifetime' have been left "
-                                     f"empty. Please enter values or remove the parameters.")
+                    # log warning message
+                    logging.warning(f"One or more of 'capex', 'opex_fix' and 'lifetime' have been left "
+                                    f"empty for {row_name} in {element}. The annuity will be directly used "
+                                    f"but be aware that some cost results will not be calculated.")
                 elif scenario == "annuity defined all cost params defined":
                     # if all parameters are defined, the user is asked if they want to calculate the annuity
                     # from the capex, opex_fix and lifetime or use the annuity directly
@@ -194,9 +196,9 @@ def pre_processing(scenario_dir, wacc):
                         # are ignored
                         if user_choice == 'no':
                             # log warning message
-                            logging.warning('The annuity cost is used directly rather than calculating from other '
-                                           f'parameters. This could lead to discrepancies in the results '
-                                           f'- please check!')
+                            logging.warning(f"The annuity ('{annuity_cost}') is used directly rather than "
+                                            f"calculating from other parameters for {row_name} in {element}. This "
+                                            f"could lead to discrepancies in the results - please check!")
                             # exit the loop
                             break
                         else:
@@ -206,7 +208,8 @@ def pre_processing(scenario_dir, wacc):
                 elif scenario == "no annuity partial/all cost params empty":
                     # raise value error
                     raise ValueError(f"One or more of 'capex', 'opex_fix' and 'lifetime' have been left "
-                                     f"empty. Please enter values or remove the parameters and include "
+                                     f"empty for {row_name} in {element}. Please enter values or remove the"
+                                     f" parameters and include "
                                      f"the 'capacity_cost'.")
                 elif scenario == "no annuity all cost params defined":
                     # calculate the annuity using the calculate_annuity function
