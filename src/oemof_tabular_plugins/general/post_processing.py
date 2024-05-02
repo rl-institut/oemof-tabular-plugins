@@ -74,7 +74,7 @@ def calculate_renewable_share(results):
         warning_message = "Total generation is 0. This may be because there is no generation or the" \
                           " renewable factor is not defined in the output parameters of the inputs."
         warnings.warn(warning_message, UserWarning)
-    return 0
+        return 0
     # calculate the renewable share (rounded to 2dp)
     renewable_share = round(renewable_generation / total_generation, 2)
 
