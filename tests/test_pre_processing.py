@@ -24,13 +24,13 @@ def test_calculate_annuity(capex, opex_fix, lifetime, wacc, expected_annuity):
     assert result == expected_annuity
 
 
-class TestPreprocessing:
+class TestPreprocessingCosts:
     """
-    This class contains tests for the pre-processing module.
+    This class contains tests for the pre-processing costs function.
     """
     # store the relevant paths
-    test_inputs_pre_p = os.path.join("tests", "test_inputs_pre_processing")
-    pre_p_dir = os.path.join("tests", "test_inputs_pre_processing", "pre_processing")
+    test_inputs_pre_p = os.path.join("tests", "test_inputs_pre_processing_costs")
+    pre_p_dir = os.path.join("tests", "test_inputs_pre_processing_costs", "pre_processing")
     _package_path = os.path.join("data", "elements")
     package_path = _package_path
 
@@ -348,3 +348,40 @@ class TestPreprocessing:
         # check if the info message is logged when the pre_processing function is called
         assert any(record.levelname == "INFO" and "does not contain" in record.message
                    for record in caplog.records)
+
+
+class TestPreprocessingCustomAttributes:
+    """
+    This class contains tests for the pre-processing custom attributes function.
+    """
+    # store the relevant paths
+    test_inputs_pre_p = os.path.join("tests", "test_inputs_pre_processing_custom_attributes")
+    pre_p_dir = os.path.join("tests", "test_inputs_pre_processing_custom_attributes", "pre_processing")
+    _package_path = os.path.join("data", "elements")
+    package_path = _package_path
+
+    def setup_method(self):
+        """
+        Sets up the testing environment before each test method is executed.
+        """
+        # removes the 'pre_processing' directory if it exists, ignoring errors
+        if os.path.exists(self.pre_p_dir):
+            shutil.rmtree(self.pre_p_dir, ignore_errors=True)
+        # creates the 'pre_processing' directory
+        os.mkdir(self.pre_p_dir)
+        # creates the 'data' directory within the 'pre_processing' directory
+        os.mkdir(os.path.join(self.pre_p_dir, "data"))
+        # creates the 'elements' directory within the 'data' directory
+        os.mkdir(os.path.join(self.pre_p_dir, self._package_path))
+        # sets the package path for the test environment
+        self.package_path = os.path.join(self.pre_p_dir, self._package_path)
+
+    def teardown_method(self):
+        """
+        Cleans up the testing environment after each test method is executed.
+        """
+        # removes the 'pre_processing' directory if it exists, ignoring errors
+        if os.path.exists(self.pre_p_dir):
+            shutil.rmtree(self.pre_p_dir, ignore_errors=True)
+        # resets the package path to its original value
+        self.package_path = self._package_path
