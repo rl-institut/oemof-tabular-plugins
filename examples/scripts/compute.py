@@ -4,7 +4,7 @@ from oemof.solph import EnergySystem, Model
 from oemof.solph.processing import parameter_as_dict
 
 # ---- imports to be used when the package has been installed ----
-from oemof.tabular import datapackage # noqa
+from oemof.tabular import datapackage  # noqa
 from oemof.tabular.facades import TYPEMAP
 # ---- imports from oemof-tabular-plugins package ----
 # ToDo: adapt the way these imports are called once oemof-tabular-plugins has expanded a bit
@@ -12,17 +12,24 @@ from oemof_tabular_plugins.general import post_processing, CONSTRAINT_TYPE_MAP
 from oemof_tabular_plugins.general.pre_processing import pre_processing
 from oemof_tabular_plugins.wefe.facades import PVPanel
 
+# -------------- RELEVANT PATHS --------------
 # get the project directory by navigating up one level from the current script file
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
-# list of scenarios to be evaluated - manually updated by user!
-scenarios = ["general_basic"]
+# -------------- USER INPUTS --------------
+# list of scenarios to be evaluated
+scenarios = ["general_custom_attributes"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
+
+# -------------- ADDITIONAL FUNCTIONALITIES (OEMOF-TABULAR-PLUGINS) --------------
+# include the custom attribute parameters to be included in the model
+custom_attributes = ["emission_factor", "renewable_factor", "land_requirement"]
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
 
+# -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
     print("Running scenario with datapackage {}".format(scenario))
     # set paths for scenario and result directories
@@ -33,7 +40,7 @@ for scenario in scenarios:
         os.makedirs(results_path)
 
     # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-    pre_processing(scenario_dir, wacc)
+    pre_processing(scenario_dir, wacc, custom_attributes)
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(
@@ -61,7 +68,6 @@ for scenario in scenarios:
     params = parameter_as_dict(es)
     results = m.results()
 
-    all_scalars = post_processing(params, results, results_path)
-
+    post_processing(params, results, results_path)
 
 print('done')
