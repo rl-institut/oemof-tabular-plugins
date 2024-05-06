@@ -28,9 +28,9 @@ def pre_processing_costs(wacc, element, element_path, element_df):
     used directly if stated, or if left empty then calculated using the calculate_annuity function,
     or if all parameters are stated a choice is given.
     :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
-    :param element:
-    :param element_path:
-    :param element_df:
+    :param element: csv filename
+    :param element_path: path of the csv file
+    :param element_df: dataframe containing data from the csv file
     :return: updated input CSV files
     """
     # for every element other than storage, the annuity cost parameter is 'capacity_cost'
@@ -257,7 +257,6 @@ def update_datapackage_json_custom_attributes(scenario_dir, element):
     # write the updated datapackage.json back to the file
     with open(datapackage_json_path, "w") as f:
         json.dump(datapackage, f, indent=4)
-
     return
 
 
@@ -298,11 +297,17 @@ def pre_processing_custom_attributes(scenario_dir, element, element_path, elemen
     # if custom attributes were found, update the datapackage.json file
     if has_custom_attributes:
         update_datapackage_json_custom_attributes(scenario_dir, element)
-
     return
 
 
 def pre_processing(scenario_dir, wacc, custom_attributes):
+    """Performs pre-processing of input scenario data before running the model.
+
+    :param scenario_dir: scenario directory path
+    :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
+    :param custom_attributes: list of custom attributes included in the model (defined in compute.py)
+    :return: updated input scenario data
+    """
     print("PRE-PROCESSING ACTIVATED")
     # locate the elements directory
     elements_dir = os.path.join(scenario_dir, "data", "elements")
@@ -317,7 +322,10 @@ def pre_processing(scenario_dir, wacc, custom_attributes):
             element_path = os.path.join(elements_dir, element)
             # read the csv file and save it as a pandas dataframe
             element_df = pd.read_csv(element_path, sep=';')
+            # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
             pre_processing_costs(wacc, element, element_path, element_df)
+            # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
+            # requirement)
             pre_processing_custom_attributes(scenario_dir, element, element_path,
                                              element_df, custom_attributes)
     return
