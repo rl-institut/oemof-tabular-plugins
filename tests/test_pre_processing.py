@@ -385,3 +385,17 @@ class TestPreprocessingCustomAttributes:
             shutil.rmtree(self.pre_p_dir, ignore_errors=True)
         # resets the package path to its original value
         self.package_path = self._package_path
+
+    def test_custom_attribute_dict_not_empty(self):
+        """
+        Tests that the custom attributes dict is non-empty if any of the custom attributes defined
+        in a list by the user are present in the dataframe (created from input csv file).
+        """
+        # copy scenario csv file to the package path
+        f_name = "only_cust_attr.csv"
+        shutil.copy(os.path.join(self.test_inputs_pre_p, f_name), os.path.join(self.package_path, f_name))
+        # call the pre_processing function with wacc = 1
+        wacc = 1
+        pre_processing(self.pre_p_dir, wacc=wacc)
+
+
