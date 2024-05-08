@@ -230,10 +230,12 @@ def update_datapackage_json_custom_attributes(scenario_dir, element):
     # define the path to the element csv file
     element_path = os.path.join('data', 'elements', element)
     element_path = os.path.normpath(element_path)
+    print('element path: ', element_path)
     # iterate through each resource in the datapackage file
     for resource in datapackage["resources"]:
         resource_path = resource["path"]
         resource_path = os.path.normpath(resource_path)
+        print('resource path: ', resource_path)
         # check if the resource path in the datapackage file matches the particular element path
         if resource_path == element_path:
             if "schema" in resource:
@@ -277,21 +279,23 @@ def pre_processing_custom_attributes(scenario_dir, element, element_path, elemen
         custom_attributes_dict = {}
         # set boolean to false
         has_custom_attributes = False
-        # check if any of the custom attributes list are in the dataframe columns
-        for attribute in custom_attributes:
-            if attribute in element_df.columns:
-                value = row[attribute]
-                # add the attribute to the custom attributes dict
-                custom_attributes_dict[attribute] = value
-                # set boolean to true
-                has_custom_attributes = True
-            # if custom attributes are found for this row, add them to 'output_parameters'
-            if has_custom_attributes:
-                output_parameters_str = json.dumps({"custom_attributes": custom_attributes_dict})
-                element_df.at[index, 'output_parameters'] = output_parameters_str
-            else:
-                # no custom attributes found, do not update 'output_parameters'
-                continue
+        # check if custom_attributes is not none before iterating
+        if custom_attributes is not None:
+            # check if any of the custom attributes list are in the dataframe columns
+            for attribute in custom_attributes:
+                if attribute in element_df.columns:
+                    value = row[attribute]
+                    # add the attribute to the custom attributes dict
+                    custom_attributes_dict[attribute] = value
+                    # set boolean to true
+                    has_custom_attributes = True
+                # if custom attributes are found for this row, add them to 'output_parameters'
+                if has_custom_attributes:
+                    output_parameters_str = json.dumps({"custom_attributes": custom_attributes_dict})
+                    element_df.at[index, 'output_parameters'] = output_parameters_str
+                else:
+                    # no custom attributes found, do not update 'output_parameters'
+                    continue
     # write the updated dataframe back to the csv file
     element_df.to_csv(element_path, sep=';', index=False)
     # if custom attributes were found, update the datapackage.json file
@@ -300,7 +304,7 @@ def pre_processing_custom_attributes(scenario_dir, element, element_path, elemen
     return
 
 
-def pre_processing(scenario_dir, wacc, custom_attributes):
+def pre_processing(scenario_dir, wacc, custom_attributes=None):
     """Performs pre-processing of input scenario data before running the model.
 
     :param scenario_dir: scenario directory path
