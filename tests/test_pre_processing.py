@@ -1,10 +1,10 @@
 import os
 import shutil
-
 import pandas as pd
 import pytest
 from oemof_tabular_plugins.general import pre_processing, calculate_annuity
 from unittest.mock import patch
+import json
 
 
 @pytest.mark.parametrize("capex, opex_fix, lifetime, wacc, expected_annuity", [
@@ -376,26 +376,81 @@ class TestPreprocessingCustomAttributes:
         # sets the package path for the test environment
         self.package_path = os.path.join(self.pre_p_dir, self._package_path)
 
-    def teardown_method(self):
+    def test_output_params_added_to_csv_with_cust_attr_in_csv_and_list(self):
         """
-        Cleans up the testing environment after each test method is executed.
+        Tests that the output parameters column has been added to the csv file if the csv
+        file contains custom attributes and they have been defined as list by user.
         """
-        # removes the 'pre_processing' directory if it exists, ignoring errors
-        if os.path.exists(self.pre_p_dir):
-            shutil.rmtree(self.pre_p_dir, ignore_errors=True)
-        # resets the package path to its original value
-        self.package_path = self._package_path
-
-    def test_custom_attribute_dict_not_empty(self):
-        """
-        Tests that the custom attributes dict is non-empty if any of the custom attributes defined
-        in a list by the user are present in the dataframe (created from input csv file).
-        """
-        # copy scenario csv file to the package path
+        # copy scenario csv file and datapackage json file to the package path
         f_name = "only_cust_attr.csv"
+        dp_name = "dp_only_cust_attr.json"
         shutil.copy(os.path.join(self.test_inputs_pre_p, f_name), os.path.join(self.package_path, f_name))
-        # call the pre_processing function with wacc = 1
+        shutil.copy(os.path.join(self.test_inputs_pre_p, dp_name),
+                    os.path.join(self.pre_p_dir, "datapackage.json"))
+        # call the pre_processing function with wacc = 1 and custom_attributes list defined
+        wacc = 1
+        pre_processing(self.pre_p_dir, wacc=wacc,
+                       custom_attributes=["emission_factor", "renewable_factor", "land_requirement"])
+        # read the updated csv file
+        updated_df = pd.read_csv(os.path.join(self.package_path, f_name), sep=';')
+        print(updated_df.columns)
+        # assert that 'output_parameters' column is in the updated dataframe
+        assert 'output_parameters' in updated_df.columns, "'output_parameters' column is not present " \
+                                                          "in the updated dataframe"
+
+    def test_output_params_not_added_to_csv_with_cust_attr_in_csv_and_not_list(self):
+        """
+        Tests that the output parameters column has not been added to the csv file if the csv
+        file contains custom attributes and they have not been defined as list by user.
+        """
+        # copy scenario csv file and datapackage json file to the package path
+        f_name = "only_cust_attr.csv"
+        dp_name = "dp_only_cust_attr.json"
+        shutil.copy(os.path.join(self.test_inputs_pre_p, f_name), os.path.join(self.package_path, f_name))
+        shutil.copy(os.path.join(self.test_inputs_pre_p, dp_name),
+                    os.path.join(self.pre_p_dir, "datapackage.json"))
+        # read the original dataframe before pre-processing
+        original_df = pd.read_csv(os.path.join(self.package_path, f_name), sep=';')
+        # call the pre_processing function with wacc = 1 and custom_attributes = none (default)
         wacc = 1
         pre_processing(self.pre_p_dir, wacc=wacc)
+        # read the updated csv file after pre-processing
+        updated_df = pd.read_csv(os.path.join(self.package_path, f_name), sep=';')
+        # assert that 'output_parameters' column is not in the updated dataframe if it wasn't present initially
+        if 'output_parameters' not in original_df.columns:
+            assert 'output_parameters' not in updated_df.columns, \
+                "'output_parameters' has been added to the updated dataframe when it should not be"
 
-
+    def test_output_params_added_to_json_with_cust_attr_in_csv_and_list(self):
+        """
+        Tests that the output parameters field has been added to the datapackage.json file if the
+        csv file contains custom attributes and they have been defined as list by user.
+        """
+        # copy scenario csv file and datapackage json file to the package path
+        f_name = "only_cust_attr.csv"
+        dp_name = "dp_only_cust_attr.json"
+        shutil.copy(os.path.join(self.test_inputs_pre_p, f_name), os.path.join(self.package_path, f_name))
+        shutil.copy(os.path.join(self.test_inputs_pre_p, dp_name),
+                    os.path.join(self.pre_p_dir, "datapackage.json"))
+        # call the pre_processing function with wacc = 1 and custom_attributes = none (default)
+        wacc = 1
+        pre_processing(self.pre_p_dir, wacc=wacc,
+                       custom_attributes=["emission_factor", "renewable_factor", "land_requirement"])
+        # read the datapackage.json file after pre-processing
+        with open(os.path.join(self.pre_p_dir, "datapackage.json"), "r") as f:
+            updated_datapackage = json.load(f)
+        # get the resource form the datapackage.json file
+        resource = updated_datapackage.get("resources", [None])[0]
+        print('resource: ', resource)
+        # check if the resource was found
+        assert resource is not None, "No resource found in the updated datapackage.json file"
+        # find the appropriate field within the resource's schema
+        fields = resource.get("schema", {}).get("fields", [])
+        output_parameters_field = None
+        for field in fields:
+            if field.get("name") == "output_parameters":
+                output_parameters_field = field
+                break
+        # assert that the 'output_parameters' field has been added to the datapackage.json file
+        assert output_parameters_field is not None, "output_parameters field is not present in the updated " \
+                                                    "datapackage.json file"
