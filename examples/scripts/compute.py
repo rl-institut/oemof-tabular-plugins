@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 from oemof.solph import EnergySystem, Model
 from oemof.solph.processing import parameter_as_dict
 
@@ -27,6 +26,8 @@ wacc = 0.06
 # -------------- ADDITIONAL FUNCTIONALITIES (OEMOF-TABULAR-PLUGINS) --------------
 # include the custom attribute parameters to be included in the model
 custom_attributes = ["emission_factor", "renewable_factor", "land_requirement"]
+# set whether the multi-objective optimization should be performed
+moo = False
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
 
@@ -41,7 +42,7 @@ for scenario in scenarios:
         os.makedirs(results_path)
 
     # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-    pre_processing(scenario_dir, wacc, custom_attributes)
+    pre_processing(scenario_dir, wacc, custom_attributes, moo)
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(
@@ -49,15 +50,18 @@ for scenario in scenarios:
         attributemap={},
         typemap=TYPEMAP,
     )
+    logger.info("Energy system created from datapackage")
 
     # create model from energy system (this is just oemof.solph)
     m = Model(es)
+    logger.info("Model created from energy system")
 
     # add constraints from datapackage to the model
     m.add_constraints_from_datapackage(
         os.path.join(scenario_dir, "datapackage.json"),
         constraint_type_map=CONSTRAINT_TYPE_MAP,
     )
+    logger.info("Constraints added to model")
 
     # if you want dual variables / shadow prices uncomment line below
     # m.receive_duals()
