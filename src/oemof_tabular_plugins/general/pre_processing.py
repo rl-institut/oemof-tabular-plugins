@@ -5,6 +5,7 @@ from oemof.tools import logger, economics
 import json
 from .pre_processing_moo import pre_processing_moo
 
+logger.define_logging()
 
 def calculate_annuity(capex, opex_fix, lifetime, wacc):
     """
