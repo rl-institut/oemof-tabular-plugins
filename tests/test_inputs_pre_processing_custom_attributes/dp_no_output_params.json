@@ -4,7 +4,7 @@
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {
-            "path": "only_cust_attr.csv",
+            "path": "data/elements/cust_attr.csv",
             "profile": "tabular-data-resource",
             "name": "volatile",
             "format": "csv",
