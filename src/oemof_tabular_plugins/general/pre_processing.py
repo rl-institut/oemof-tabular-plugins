@@ -3,8 +3,7 @@ import pandas as pd
 import logging
 from oemof.tools import logger, economics
 import json
-
-logger.define_logging()
+from .pre_processing_moo import pre_processing_moo
 
 
 def calculate_annuity(capex, opex_fix, lifetime, wacc):
@@ -230,12 +229,10 @@ def update_datapackage_json_custom_attributes(scenario_dir, element):
     # define the path to the element csv file
     element_path = os.path.join('data', 'elements', element)
     element_path = os.path.normpath(element_path)
-    print('element path: ', element_path)
     # iterate through each resource in the datapackage file
     for resource in datapackage["resources"]:
         resource_path = resource["path"]
         resource_path = os.path.normpath(resource_path)
-        print('resource path: ', resource_path)
         # check if the resource path in the datapackage file matches the particular element path
         if resource_path == element_path:
             if "schema" in resource:
@@ -304,15 +301,20 @@ def pre_processing_custom_attributes(scenario_dir, element, element_path, elemen
     return
 
 
-def pre_processing(scenario_dir, wacc, custom_attributes=None):
+def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
     """Performs pre-processing of input scenario data before running the model.
 
     :param scenario_dir: scenario directory path
     :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
-    :param custom_attributes: list of custom attributes included in the model (defined in compute.py)
+    :param custom_attributes: list of custom attributes included in the model (defined in compute.py), default is None
+    :param moo: whether the multi-objective optimization is activated, default is False
     :return: updated input scenario data
     """
-    print("PRE-PROCESSING ACTIVATED")
+    if moo is False:
+        logger.info(f"Optimization activated for only costs")
+    elif moo is True:
+        logger.info(f"Multi-objective optimization activated")
+    logger.info("Pre-processing activated")
     # locate the elements directory
     elements_dir = os.path.join(scenario_dir, "data", "elements")
     # raise error if the elements directory is not found in the scenario directory
@@ -326,10 +328,14 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None):
             element_path = os.path.join(elements_dir, element)
             # read the csv file and save it as a pandas dataframe
             element_df = pd.read_csv(element_path, sep=';')
-            # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
-            pre_processing_costs(wacc, element, element_path, element_df)
-            # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
-            # requirement)
-            pre_processing_custom_attributes(scenario_dir, element, element_path,
-                                             element_df, custom_attributes)
+            if moo is False:
+                # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
+                pre_processing_costs(wacc, element, element_path, element_df)
+                # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
+                # requirement)
+                pre_processing_custom_attributes(scenario_dir, element, element_path,
+                                                 element_df, custom_attributes)
+            elif moo is True:
+                pre_processing_moo()
+    logger.info("Pre-processing completed")
     return
