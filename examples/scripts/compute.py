@@ -1,8 +1,4 @@
 import os
-<<<<<<< HEAD
-import logging
-=======
->>>>>>> 045ea45148dcdbce5ba94f6a073254403bf0d4b4
 from oemof.solph import EnergySystem, Model
 from oemof.solph.processing import parameter_as_dict
 from oemof.tools import logger

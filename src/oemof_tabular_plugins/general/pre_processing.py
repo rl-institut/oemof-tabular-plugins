@@ -32,7 +32,6 @@ def pre_processing_costs(wacc, element, element_path, element_df):
     :param element: csv filename
     :param element_path: path of the csv file
     :param element_df: dataframe containing data from the csv file
-    :return: updated input CSV files
     """
     # for every element other than storage, the annuity cost parameter is 'capacity_cost'
     # for storage, the annuity cost parameter is 'storage_capacity_cost'
@@ -221,7 +220,6 @@ def update_datapackage_json_custom_attributes(scenario_dir, element):
 
     :param scenario_dir: scenario directory path
     :param element: csv filename
-    :return: updated datapackage.json file
     """
     # define path to datapackage.json file
     datapackage_json_path = os.path.join(scenario_dir, "datapackage.json")
@@ -270,7 +268,6 @@ def pre_processing_custom_attributes(scenario_dir, element, element_path, elemen
     :param element_path: path of the csv file
     :param element_df: dataframe containing data from the csv file
     :param custom_attributes: list of custom attributes included in the model (defined in compute.py)
-    :return: updated 'output_parameters' in csv files and datapackage.json
     """
     # iterate over each entry in the dataframe (from csv file)
     for index, row in element_df.iterrows():
@@ -310,7 +307,6 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
     :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
     :param custom_attributes: list of custom attributes included in the model (defined in compute.py), default is None
     :param moo: whether the multi-objective optimization is activated, default is False
-    :return: updated input scenario data
     """
     if moo is False:
         logger.info(f"Optimization activated for only costs")

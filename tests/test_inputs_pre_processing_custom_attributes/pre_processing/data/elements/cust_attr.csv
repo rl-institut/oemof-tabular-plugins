@@ -1,2 +1,0 @@
-name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;profile;expandable;emission_factor;renewable_factor;land_requirement;output_parameters
-wind;volatile;wind;onshore;0;161151;elec-bus;0;wind-profile;True;1;1;1;"{""custom_attributes"": {""emission_factor"": 1, ""renewable_factor"": 1, ""land_requirement"": 1}}"
