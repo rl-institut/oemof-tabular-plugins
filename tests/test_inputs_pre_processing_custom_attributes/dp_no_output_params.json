@@ -1,0 +1,84 @@
+{
+    "profile": "tabular-data-package",
+    "name": "dp_only_cust_attr",
+    "oemof_tabular_version": "0.0.5",
+    "resources": [
+        {
+            "path": "data/elements/cust_attr.csv",
+            "profile": "tabular-data-resource",
+            "name": "volatile",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "marginal_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "profile",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "emission_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "renewable_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "land_requirement",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ]
+            }
+        }
+    ]
+}
