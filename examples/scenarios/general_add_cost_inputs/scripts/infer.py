@@ -23,8 +23,7 @@ building.infer_metadata(
             "excess"
         ],
         "profile": ["load", "volatile"],
-        "chp": ["chp"],
-        "from_to_bus": ["link", "conversion"],
+        "from_to_bus": ["conversion"],
     },
     **kwargs,
 )
