@@ -1,5 +1,8 @@
 import os
+<<<<<<< HEAD
 import logging
+=======
+>>>>>>> 045ea45148dcdbce5ba94f6a073254403bf0d4b4
 from oemof.solph import EnergySystem, Model
 from oemof.solph.processing import parameter_as_dict
 from oemof.tools import logger
@@ -10,10 +13,9 @@ from oemof.tabular.facades import TYPEMAP
 # ---- imports from oemof-tabular-plugins package ----
 # ToDo: adapt the way these imports are called once oemof-tabular-plugins has expanded a bit
 from oemof_tabular_plugins.general import post_processing, CONSTRAINT_TYPE_MAP
-from oemof_tabular_plugins.general.pre_processing import pre_processing
+from oemof_tabular_plugins.general.pre_processing import pre_processing, logger
 from oemof_tabular_plugins.wefe.facades import PVPanel
 
-logger.define_logging()
 
 # -------------- RELEVANT PATHS --------------
 # get the project directory by navigating up one level from the current script file
