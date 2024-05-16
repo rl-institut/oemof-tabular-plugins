@@ -25,3 +25,5 @@ building.infer_metadata(
     },
     **kwargs,
 )
+
+# run building.infer, reopen json file and ammend datapackage
