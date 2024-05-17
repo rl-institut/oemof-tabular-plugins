@@ -1,7 +1,6 @@
 import os
 from oemof.solph import EnergySystem, Model
 from oemof.solph.processing import parameter_as_dict
-from oemof.tools import logger
 
 # ---- imports to be used when the package has been installed ----
 from oemof.tabular import datapackage  # noqa
@@ -19,7 +18,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["general_custom_attributes"]
+scenarios = ["wefe_pv_panel"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
