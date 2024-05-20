@@ -1,0 +1,9 @@
+Component,Upfront Investment Cost,Annuity (CAPEX + Fixed O&M),Variable Costs (In),Variable Costs (Out)
+elec-shortage,,,,0.0
+gas-pp,,,42124.533749999995,1296.1395000000002
+gas,,0.0,,
+hydro,,0.0,,
+pv,,0.0,,
+wind,,0.0,,
+demand,,,,
+electricity-excess,,,,
