@@ -11,7 +11,7 @@ It is structured by each release and divided by additions, changes, and removals
 ## MkDocs
 [MkDocs](https://www.mkdocs.org/) is a fast and simple static site generator that is used for documentation. <br>
 The source files are written in [Markdown](https://www.markdownguide.org/cheat-sheet/), and configured with `mkdocs.yml`. <br>
-[Material theme](https://squidfunk.github.io/mkdocs-material/) enables 
+[Material theme](https://squidfunk.github.io/mkdocs-material/) enables
 additional features and an elegant design. <br>
 
 ### Install
@@ -34,7 +34,7 @@ Publish documentation on **GitHub Pages**. <br>
 🐙 Deploy the documentation with **GitHub Actions**. <br>
 The file `.github\workflows\gh-pages.yml` creates an automated GitHub workflow. <br>
 It is configured to be pushed to the branch `gh-page` and then deployed online. <br>
-A commit on the `production` branch triggers the workflow. 
+A commit on the `production` branch triggers the workflow.
 
 ### Mike
 The package [mike](https://github.com/jimporter/mike) is used to deploy [multiple versions](https://squidfunk.github.io/mkdocs-material/setup/setting-up-versioning/?h=versioning) of the documentation.<br>
@@ -43,7 +43,7 @@ The package [mike](https://github.com/jimporter/mike) is used to deploy [multipl
 💻 `mike set-default --push latest` Set the default version to latest
 
 ## mkdocstrings
-[mkdocstrings](https://mkdocstrings.github.io/) generates automatic 
+[mkdocstrings](https://mkdocstrings.github.io/) generates automatic
 documentation (autodocs) from [Google style docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html). <br>
 💻 `pip install mkdocstrings` install mkdocstrings
 

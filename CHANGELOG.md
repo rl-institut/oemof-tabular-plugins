@@ -29,4 +29,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CITATIONS.cff
 - moved requirements from a file to a folder structure similar to the one of Numpy
 - LICENSE (MIT License)
-
