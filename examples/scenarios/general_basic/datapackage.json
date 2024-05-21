@@ -71,7 +71,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -163,7 +163,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -173,12 +173,12 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -212,7 +212,7 @@
                 ]
             }
         },
-                {
+        {
             "path": "data/elements/excess.csv",
             "profile": "tabular-data-resource",
             "name": "excess",
@@ -316,7 +316,7 @@
         {
             "path": "data/elements/shortage.csv",
             "profile": "tabular-data-resource",
-            "name": "elec-shortage",
+            "name": "shortage",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
@@ -378,7 +378,7 @@
                 ]
             }
         },
-                        {
+        {
             "path": "data/elements/storage.csv",
             "profile": "tabular-data-resource",
             "name": "storage",
@@ -429,7 +429,7 @@
                     },
                     {
                         "name": "storage_capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -514,7 +514,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -524,7 +524,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {

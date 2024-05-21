@@ -1,6 +1,6 @@
 {
     "profile": "tabular-data-package",
-    "name": "general-basic",
+    "name": "general-custom-attributes",
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {
@@ -71,7 +71,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -106,12 +106,12 @@
                     },
                     {
                         "name": "emission_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -178,7 +178,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -188,12 +188,12 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -208,17 +208,17 @@
                     },
                     {
                         "name": "emission_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "renewable_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -346,7 +346,7 @@
         {
             "path": "data/elements/shortage.csv",
             "profile": "tabular-data-resource",
-            "name": "elec-shortage",
+            "name": "shortage",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
@@ -454,7 +454,7 @@
                     },
                     {
                         "name": "storage_capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -489,12 +489,12 @@
                     },
                     {
                         "name": "emission_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -554,7 +554,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -564,7 +564,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -579,17 +579,17 @@
                     },
                     {
                         "name": "emission_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "renewable_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {

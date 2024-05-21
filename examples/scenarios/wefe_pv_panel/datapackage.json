@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
-    "name": "uzbek_scenario1_status_quo",
-    "oemof_tabular_version": "0.0.4dev",
+    "name": "wefe-pv-panel",
+    "oemof_tabular_version": "0.0.5",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -71,7 +71,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -86,7 +86,7 @@
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -126,7 +126,7 @@
                 ]
             }
         },
-                {
+        {
             "path": "data/elements/excess.csv",
             "profile": "tabular-data-resource",
             "name": "excess",
@@ -227,7 +227,7 @@
                 ]
             }
         },
-               {
+        {
             "path": "data/elements/pv_panel.csv",
             "profile": "tabular-data-resource",
             "name": "pv_panel",
@@ -268,12 +268,12 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -298,12 +298,12 @@
                     },
                     {
                         "name": "p_rpv",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "r_ref",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -313,12 +313,12 @@
                     },
                     {
                         "name": "t_c_ref",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "noct",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -361,7 +361,7 @@
                 ]
             }
         },
-                {
+        {
             "path": "data/sequences/dispatchable_profile.csv",
             "profile": "tabular-data-resource",
             "name": "dispatchable_profile",
@@ -382,7 +382,7 @@
                     },
                     {
                         "name": "elec-profile",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     }
                 ],

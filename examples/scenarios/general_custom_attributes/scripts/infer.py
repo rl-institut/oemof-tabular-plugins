@@ -9,13 +9,21 @@ from oemof.tabular.datapackage import building
 if "kwargs" not in locals():
     kwargs = {}
 
+# This automatically generates a datapackage.json file and the foreign keys should be
+# updated depending on the energy system design
 building.infer_metadata(
-    package_name="oemof-tabular-simple-system1",
+    package_name="general-custom-attributes",
     foreign_keys={
-        "bus": ["volatile", "dispatchable", "storage", "load"],
+        "bus": [
+            "volatile",
+            "dispatchable",
+            "storage",
+            "load",
+            "shortage",
+            "excess"
+        ],
         "profile": ["load", "volatile"],
-        "from_to_bus": ["link"],
-        "chp": [],
+        "from_to_bus": ["conversion"],
     },
     **kwargs,
 )
