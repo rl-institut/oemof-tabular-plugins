@@ -1,6 +1,6 @@
 # Project
 site_name: oemof-tabular-plugins Documentation
-site_url: 
+site_url:
 site_description: Documentaiton of the plugins to oemof-tabular, a series of constraints which might be useful across different projects.
 
 # Repository
@@ -21,7 +21,7 @@ theme:
     # Palette toggle for light mode
     - scheme: default
       toggle:
-        icon: material/brightness-7 
+        icon: material/brightness-7
         name: Switch to dark mode
   icon:
     repo: fontawesome/brands/github
@@ -35,7 +35,7 @@ theme:
     - navigation.top
     - toc.follow
 
-# extensions 
+# extensions
 markdown_extensions:
   - admonition
   - toc:

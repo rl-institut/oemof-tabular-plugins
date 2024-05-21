@@ -21,7 +21,7 @@ def add_foreign_keys_to_datapackage(datapackage_filename, foreign_keys):
         datapackage = json.load(file)
     # loop through each resource in the datapackage
     for resource in datapackage["resources"]:
-        resource_name = resource['name']
+        resource_name = resource["name"]
         if resource_name in foreign_keys:
             # initialize foreignKeys if it doesn't exist
             if "foreignKeys" not in resource["schema"]:

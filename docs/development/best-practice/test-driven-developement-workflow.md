@@ -68,7 +68,7 @@ class MyModelViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "object1")
         self.assertContains(response, "object2")
-    
+
     def test_list_view_displays_empty_message(self):
         response = self.client.get('/my-models/')
         self.assertEqual(response.status_code, 200)

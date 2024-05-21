@@ -62,6 +62,7 @@ class PVPanel(Converter, Facade):
     SHOULD INCLUDE FUNCTIONS AND EXAMPLE HERE
 
     """
+
     from_bus: Bus
 
     to_bus: Bus
@@ -118,7 +119,9 @@ class PVPanel(Converter, Facade):
         pv_tf_values = []
         for t_air, ghi in zip(t_air_values, ghi_values):
             t_c = t_air + ((self.noct - 20) / 800) * ghi
-            pv_tf = self.p_rpv * (1 / self.r_ref) * (1 + self.n_t * (t_c - self.t_c_ref))
+            pv_tf = (
+                self.p_rpv * (1 / self.r_ref) * (1 + self.n_t * (t_c - self.t_c_ref))
+            )
             pv_tf_values.append(pv_tf)
 
         self.conversion_factors.update(

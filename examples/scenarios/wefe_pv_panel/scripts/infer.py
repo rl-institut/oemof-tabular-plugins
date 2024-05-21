@@ -2,6 +2,7 @@
 Run this script from the root directory of the datapackage to update or create meta-data in the
 form of a json file (datapackage.json)
 """
+
 from oemof.tabular.datapackage import building
 from oemof_tabular_plugins.datapackage import building as otp_building
 
@@ -16,12 +17,7 @@ if "kwargs" not in locals():
 building.infer_metadata(
     package_name="wefe-pv-panel",
     foreign_keys={
-        "bus": [
-            "dispatchable",
-            "load",
-            "excess",
-            "pv-panel"
-        ],
+        "bus": ["dispatchable", "load", "excess", "pv-panel"],
         "profile": ["dispatchable", "load", "pv-panel"],
         "from_to_bus": ["pv-panel"],
     },
@@ -36,7 +32,7 @@ otp_building.add_foreign_keys_to_datapackage(
             "from_bus": {"resource": "bus", "fields": "name"},
             "to_bus": {"resource": "bus", "fields": "name"},
             "t_air": {"resource": "pv_panel_profile"},
-            "ghi": {"resource": "pv_panel_profile"}
+            "ghi": {"resource": "pv_panel_profile"},
         }
-    }
+    },
 )
