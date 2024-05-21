@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from oemof.tabular.constraint_facades import ConstraintFacade
-from .constraints import renewable_share_minimum
+from oemof_tabular_plugins.general.constraints.constraints import renewable_share_minimum
 
 
 @dataclass
