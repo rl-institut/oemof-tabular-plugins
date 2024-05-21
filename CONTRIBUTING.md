@@ -34,6 +34,18 @@ You coordinate and carry out the release.
 ## Workflow
 The workflow for contributing to this project has been inspired by the workflow described by [Vincent Driessen](https://nvie.com/posts/a-successful-git-branching-model/).
 
+### 0. Local dev setup
+
+1. Create a virtual environment and install the dev dependencies with
+
+        pip install -r requirements/dev_requirements.txt
+2. Install the pre-commit hooks with
+
+        pre-commit install
+
+   This will mainly make sure you can't commit if your code is not linted with black.
+   The pre-commit hook will check if your code is linted and if it is not it will simply lint it for you, you then only need to stage the changes made by the linter and commit again, as simple as that :)
+
 ### 1. Describe the issue on GitHub
 Create [an issue](https://help.github.com/en/articles/creating-an-issue)
 in the GitHub repository. 
@@ -43,10 +55,10 @@ Make a checklist for all needed steps if possible.
 
 ### 2. Solve the issue locally
 
-#### 2.0. Get the latest version of the `develop` branch
-Load the `develop branch`:
+#### 2.0. Get the latest version of the `production` branch
+Load the `production branch`:
 ```bash
-git checkout develop
+git checkout production
 ```
 
 Update with the latest version:
@@ -56,15 +68,15 @@ git pull
 
 ##### Permanent branches
 * production - includes the current stable version
-* develop - includes all current developments
+
 
 #### 2.1. Create a new (local) branch
 Create a new feature branch:
 ```bash
-git checkout -b feature-1314-my-feature
+git checkout -b feature/1314-my-feature
 ```
 
-Naming convention for branches: `type`-`issue-nr`-`short-description`
+Naming convention for branches: `type`/`issue-nr`-`short-description`
 
 ##### `type`
 * feature - includes the feature that will be implemented
@@ -146,7 +158,7 @@ git push
 
 ### 4. Submit a pull request (PR)
 Follow the GitHub guide [creating-a-pull-request](https://help.github.com/en/articles/creating-a-pull-request). <br>
-The PR should be directed: `base: develop` <- `compare: feature-1-collaboration`. <br>
+The PR should be directed: `base: production` <- `compare: feature-1-collaboration`. <br>
 Add the line `Close #<issue-number>` in the description of your PR.
 When it is merged, it [automatically closes](https://help.github.com/en/github/managing-your-work-on-github/closing-issues-using-keywords) the issue. <br>
 Assign a reviewer and get in contact.

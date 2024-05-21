@@ -20,7 +20,7 @@ oemof-tabular-plugins
    * - Publication
      - 
    * - Development
-     - |badge_issue_open| |badge_issue_closes| |badge_pr_open| |badge_pr_closes|
+     - |badge_issue_open| |badge_issue_closes| |badge_pr_open| |badge_pr_closes| |badge_black|
    * - Community
      - |badge_contributing| |badge_contributors| |badge_repo_counts|
 
@@ -72,7 +72,9 @@ License and Citation
 .. |badge_contributing| image:: https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat
     :alt: contributions
 
-.. |badge_repo_counts| image:: http://hits.dwyl.com/rl-institut/super-repo.svg
+.. |badge_repo_counts| image:: https://img.shields.io/endpoint?url=https%3A%2F%2Fhits.dwyl.com%2Frl-institut%2Foemof-tabular-plugins.json
+   :alt: Endpoint Badge
+
     :alt: counter
 
 .. |badge_contributors| image:: https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square
@@ -85,7 +87,11 @@ License and Citation
     :alt: closes issues
 
 .. |badge_pr_open| image:: https://img.shields.io/github/issues-pr-raw/rl-institut/super-repo
-    :alt: closes issues
+    :alt: open pull requests
 
 .. |badge_pr_closes| image:: https://img.shields.io/github/issues-pr-closed-raw/rl-institut/super-repo
-    :alt: closes issues
+    :alt: closes pull requests
+
+.. |badge_black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: black linting badge
