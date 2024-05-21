@@ -2,6 +2,7 @@
 Run this script from the root directory of the datapackage to update
 or create meta data.
 """
+
 from oemof.tabular.datapackage import building
 
 # This part is for testing only: It allows to pass
@@ -14,14 +15,7 @@ if "kwargs" not in locals():
 building.infer_metadata(
     package_name="general-custom-attributes",
     foreign_keys={
-        "bus": [
-            "volatile",
-            "dispatchable",
-            "storage",
-            "load",
-            "shortage",
-            "excess"
-        ],
+        "bus": ["volatile", "dispatchable", "storage", "load", "shortage", "excess"],
         "profile": ["load", "volatile"],
         "from_to_bus": ["conversion"],
     },

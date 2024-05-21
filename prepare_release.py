@@ -6,8 +6,8 @@ for dist_file in ("dist", "build", "src/*.egg-info"):
     shutil.rmtree(dist_file, ignore_errors=True)
 
 # Delete the previous package_data folder
-#pkg_data_folder = os.path.join("src", "multi_vector_simulator", "package_data")
-#shutil.rmtree(pkg_data_folder, ignore_errors=True)
+# pkg_data_folder = os.path.join("src", "multi_vector_simulator", "package_data")
+# shutil.rmtree(pkg_data_folder, ignore_errors=True)
 
 # Reconstitute the package_data folder by copying the content of
 # `input_template` into `src/multi-vector-simulator/package_data/input_template`,

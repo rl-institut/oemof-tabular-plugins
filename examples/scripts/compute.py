@@ -5,6 +5,7 @@ from oemof.solph.processing import parameter_as_dict
 # ---- imports to be used when the package has been installed ----
 from oemof.tabular import datapackage  # noqa
 from oemof.tabular.facades import TYPEMAP
+
 # ---- imports from oemof-tabular-plugins package ----
 # ToDo: adapt the way these imports are called once oemof-tabular-plugins has expanded a bit
 from oemof_tabular_plugins.general import post_processing, CONSTRAINT_TYPE_MAP
@@ -75,4 +76,4 @@ for scenario in scenarios:
 
     post_processing(params, results, results_path)
 
-print('done')
+print("done")

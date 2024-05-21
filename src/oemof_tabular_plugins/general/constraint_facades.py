@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from oemof.tabular.constraint_facades import ConstraintFacade
 from .constraints import renewable_share_minimum
 
+
 @dataclass
 class MinimumRenewableShare(ConstraintFacade):
     name: str
@@ -19,10 +20,11 @@ class MinimumRenewableShare(ConstraintFacade):
 
         if not flows:
             raise Warning(f"No flows with keyword {self.keyword}")
-        #else:
-            #print(f"These flows will contribute to the integral limit: {flows.keys()}")
+        # else:
+        # print(f"These flows will contribute to the integral limit: {flows.keys()}")
 
         # Add constraint to the model
         renewable_share_minimum(model, flows=flows, limit=self.limit)
+
 
 CONSTRAINT_TYPE_MAP = {"minimum_renewable_share": MinimumRenewableShare}
