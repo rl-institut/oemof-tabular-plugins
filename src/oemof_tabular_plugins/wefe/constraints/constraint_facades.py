@@ -1,1 +1,0 @@
-CONSTRAINT_TYPE_MAP = {}

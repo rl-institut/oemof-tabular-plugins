@@ -22,7 +22,7 @@ oemof-tabular-plugins
    * - Development
      - |badge_issue_open| |badge_issue_closes| |badge_pr_open| |badge_pr_closes| |badge_black|
    * - Community
-     - |badge_contributing| |badge_contributors| |badge_repo_counts|
+     - |badge_contributing| |badge_contributors|
 
 .. contents::
     :depth: 2
@@ -71,11 +71,6 @@ License and Citation
 
 .. |badge_contributing| image:: https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat
     :alt: contributions
-
-.. |badge_repo_counts| image:: https://img.shields.io/endpoint?url=https%3A%2F%2Fhits.dwyl.com%2Frl-institut%2Foemof-tabular-plugins.json
-   :alt: Endpoint Badge
-
-    :alt: counter
 
 .. |badge_contributors| image:: https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square
     :alt: contributors
