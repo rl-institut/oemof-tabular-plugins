@@ -1,1 +1,1 @@
-from oemof_tabular_plugins.wefe.constraints.constraint_facades import CONSTRAINT_TYPE_MAP
+from .constraints.constraint_facades import CONSTRAINT_TYPE_MAP

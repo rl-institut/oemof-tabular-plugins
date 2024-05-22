@@ -7,9 +7,12 @@ from oemof.tabular import datapackage  # noqa
 from oemof.tabular.facades import TYPEMAP
 
 # ---- imports from oemof-tabular-plugins package ----
-# ToDo: adapt the way these imports are called once oemof-tabular-plugins has expanded a bit
-from oemof_tabular_plugins.general import post_processing, CONSTRAINT_TYPE_MAP
-from oemof_tabular_plugins.general.pre_processing import pre_processing, logger
+from oemof_tabular_plugins.general import (
+    post_processing,
+    CONSTRAINT_TYPE_MAP,
+    pre_processing,
+    logger,
+)
 from oemof_tabular_plugins.wefe.facades import PVPanel
 
 
@@ -19,7 +22,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["wefe_pv_panel"]
+scenarios = ["general_basic"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
