@@ -14,8 +14,8 @@ in combination with project specific subpackages.
 Constraints
 ===========
 The general constraints subpackage contains all of the constraints that are not seen to be project specific.
-In :ref:`constraints.py <constraints/constraints.py>`, the constraints are defined and added to a Pyomo model.
-In :ref:`constraint_facades.py <constraints/constraint_facades.py>`, a mapping is
+In `constraints.py <constraints/constraints.py>`_, the constraints are defined and added to a Pyomo model.
+In `constraint_facades.py <constraints/constraint_facades.py>`_, a mapping is
 provided between constraint types and their corresponding facade classes.
 
 Available constraints
@@ -26,8 +26,8 @@ Post-processing
 ===============
 The general post-processing subpackage contains the functionalities involved in post-processing and visualising
 of the (oemof) results for any results that are seen to be used in a wide range of projects. There is the
-option to apply post-processing methods for a cost-only optimization (in :ref:`post_processing.py <post_processing/post_processing.py>` or for a
-multi-objective optimization (in :ref:`post_processing_moo.py <post_processing/post_processing_moo.py>`)
+option to apply post-processing methods for a cost-only optimization (in `post_processing.py <post_processing/post_processing.py>`_ or for a
+multi-objective optimization (in `post_processing_moo.py <post_processing/post_processing_moo.py>`_)
 (to be implemented).
 
 General results (cost-optimization)
@@ -48,8 +48,8 @@ Pre-processing
 ===============
 The pre-processing subpackage contains the functionalities involved in pre-processing of input data before
 creating an oemof model from the datapackage.json file. There is the option to apply post-processing methods
-for a cost-only optimization (in :ref:`pre_processing.py <pre_processing/pre_processing.py>` or for a
-multi-objective optimization (in :ref:`pre_processing_moo.py <pre_processing/pre_processing_moo.py>`)
+for a cost-only optimization (in `pre_processing.py <pre_processing/pre_processing.py>`_ or for a
+multi-objective optimization (in `pre_processing_moo.py <pre_processing/pre_processing_moo.py>`_)
 (to be implemented).
 
 General pre-processing options (cost-optimization)
