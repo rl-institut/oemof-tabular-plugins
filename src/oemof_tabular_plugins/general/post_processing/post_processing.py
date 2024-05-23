@@ -6,8 +6,17 @@ import warnings
 from oemof.tabular.postprocessing.core import Calculator
 from oemof.tabular.postprocessing import calculations as clc, naming
 
+# ToDo: the functions below need proper testing and appropriate logging info for the user's understanding
+# NOTE: the post-processing module is expected to change once the main multi-index dataframe is created, so
+#       expect a change in structure, but the calculations should not need to be changed
+
 
 def excess_generation(all_scalars):
+    """
+    Calculates the excess generation for each energy vector
+    :param all_scalars: all scalars multiindex dataframe (from oemof tabular)
+    :return: dictionary containing all excess generation values
+    """
     # assuming your DataFrame has a MultiIndex with levels ("name", "var_name")
     excess_rows = all_scalars[
         all_scalars.index.get_level_values("name").str.contains("excess")
@@ -21,18 +30,22 @@ def excess_generation(all_scalars):
 
 
 def specific_system_costs(all_scalars, total_system_costs):
+    # if the units are in MWh, the specific cost will be in currency/MWh -> user needs to divide by 1000 to
+    # get to currency/kWh (usual standard for LCOE). I have left it general for now so systems can be set up
+    # in different scales e.g. kWh, MWh, GWh... but this could be adapted to always return a value in
+    # currency/kWh, requiring an input of the energy system scale (kWh, MWh, GWh etc)
     """
-    Calculates the specific system costs based on total system costs (this might change) and total demand in
-    MWh (including demands from all sectors)
-    :return:
+    Calculates the specific system costs based on total system costs from optimization (this might change) and total
+    demand (including demands from all sectors)
+    :return: specific system cost
     """
     # conditionally extract values based on the 'type' column
     demand_values = all_scalars.loc[all_scalars["type"] == "load", "var_value"].tolist()
     demand_values_sum = sum(demand_values)
     # extract total_system_cost value from dataframe
     total_system_cost = total_system_costs["var_value"].iloc[0]
-    # calculate specific system costs (currency/kWh)
-    specific_system_cost = total_system_cost / demand_values_sum / 1000
+    # calculate specific system costs (currency/total demand)
+    specific_system_cost = total_system_cost / demand_values_sum
 
     return specific_system_cost
 
@@ -40,7 +53,6 @@ def specific_system_costs(all_scalars, total_system_costs):
 def calculate_renewable_share(results):
     """
     Calculates the renewable share of generation based on the renewable factor set in the inputs.
-    ToDo: proper testing and appropriate warnings/logging info
     :param results: oemof model results
     :return: renewable share value
     """
@@ -88,10 +100,12 @@ def calculate_renewable_share(results):
 
 
 def calculate_total_emissions(results):
-    """
-
-    :param results:
-    :return:
+    # At present, the total annual emissions is rounded to 2dp but maybe this value should
+    # be rounded to the nearest int
+    """Calculates the total annual emissions by applying the emission factor to the
+    aggregated flow of each component if the emission factor is defined in the csv inputs.
+    :param results: oemof model results
+    :return: total annual emissions value (2dp)
     """
     # initiate total emissions value
     total_emissions = 0
@@ -104,7 +118,7 @@ def calculate_total_emissions(results):
         if hasattr(entry_key[0], "output_parameters"):
             # store the 'output_parameters' dict as output_param_dict
             output_param_dict = entry_key[0].output_parameters
-            # retrieve the 'specific_emission' value if it exists
+            # retrieve the 'emission_factor' value if it exists
             specific_emission = output_param_dict.get("custom_attributes", {}).get(
                 "specific_emission"
             )
@@ -118,8 +132,18 @@ def calculate_total_emissions(results):
 
 
 def create_capacities_table(all_scalars, results):
-    # ToDo: maybe there is a way to make this function cleaner/shorter
+    # ToDo: this function has a lot of repetition so can be made cleaner/shorter - the aim is that this
+    #  function will be adapted and improved by getting the information from filtering the 'mother'
+    #  multiindex dataframe once this has been created
+    """
+    Creates a DataFrame containing information regarding the component capacities from the oemof
+    model results.
+    :param all_scalars: all scalars multiindex dataframe (from oemof tabular)
+    :param results: oemof model results
+    :return: capacities dataframe
+    """
     # set columns of the capacities dataframe
+    # NOTE: when this function is modified, the aim is to remove the initial setting of columns of the df
     capacities_df = pd.DataFrame(
         columns=[
             "Component",
@@ -227,9 +251,20 @@ def create_capacities_table(all_scalars, results):
 def create_storage_capacities_table(all_scalars, results):
     # ToDo: this function requires the naming of storage components to have 'storage' in them, there is
     #  probably a cleaner way of doing it
-    # ToDo: this is a bit of a repetition of the above function, maybe there is a better way to do this?
-    # ToDo: note that for storages, storage capacity is the capacity in e.g. MWh and capacity is the
+    # ToDo: this function and the above are very similar can probably be combined after the multi-index dataframe
+    #  is implemented
+    # NOTE: for storages, storage capacity is the capacity in e.g. MWh and capacity is the
     #  max input/output in e.g. MW
+    # NOTE: this has been made a separate function to above because storage components have both
+    # optimizable capacities (MW) and storage capacities (MWh) and it might be interesting to display all of
+    # this information to understand how the storage works, but there is probably a better way to do this
+    """
+    Creates a DataFrame containing information regarding the storage component capacities from the oemof
+    model results.
+    :param all_scalars: all scalars multiindex dataframe (from oemof tabular)
+    :param results: oemof model results
+    :return: storage capacities dataframe
+    """
     # set columns of the capacities dataframe
     storage_capacities_df = pd.DataFrame(
         columns=[
@@ -384,12 +419,18 @@ def create_storage_capacities_table(all_scalars, results):
 
 
 def create_aggregated_flows_table(aggregated_flows):
+    """
+    Creates a dataframe based on the aggregated flows from/to each component. It uses the
+    aggregated flows series generated from oemof tabular and puts it into a more readable dataframe
+    :param aggregated_flows: aggregated flows series (from oemof tabular)
+    :return: aggregated flows dataframe
+    """
     # create an empty DataFrame to store the flows
     flows_df = pd.DataFrame(columns=["From", "To", "Aggregated Flow"])
 
     # iterate over the items of the Series
     for idx, value in aggregated_flows.items():
-        # Extract the source, target, and var_name from the index
+        # extract the source, target, and var_name from the index
         from_, to, _ = idx
 
         # append a row to the DataFrame
@@ -402,6 +443,15 @@ def create_aggregated_flows_table(aggregated_flows):
 
 
 def create_costs_table(all_scalars, results, capacities_df, storage_capacities_df):
+    # ToDo: make this function more concise and clear once multi-index dataframe is implemented.
+    """
+    Creates a DataFrame containing information regarding the costs from the oemof model results.
+    :param all_scalars: all scalars multiindex dataframe (from oemof tabular)
+    :param results: oemof model results
+    :param capacities_df: capacities dataframe
+    :param storage_capacities_df: storage capacities dataframe
+    :return: costs dataframe
+    """
     # create an empty dataframe
     costs_df = pd.DataFrame(
         columns=[
@@ -507,6 +557,14 @@ def create_costs_table(all_scalars, results, capacities_df, storage_capacities_d
 
 
 def post_processing(params, results, results_path):
+    # ToDo: adapt this function after multi-index dataframe is implemented
+    # ToDo: params can be accessed in results so will not need to be a separate argument
+    """
+    The main post-processing function extracts various scalar and timeseries data and stores it in CSV files.
+    :param params: energy system parameters
+    :param results: oemof model results
+    :param results_path: results directory path
+    """
     # initiate calculator for post-processing
     calculator = Calculator(params, results)
 
@@ -607,4 +665,4 @@ def post_processing(params, results, results_path):
     # save the DataFrame to a CSV file
     costs_df.to_csv(filepath_name_costs, index=False)
 
-    return all_scalars
+    return
