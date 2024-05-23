@@ -129,6 +129,7 @@ def create_capacities_table(all_scalars, results):
             "Capacity Potential",
             "Optimizable",
             "Optimized Capacity",
+            "Total Capacity",
         ]
     )
     # create an empty set for the component names
@@ -194,11 +195,11 @@ def create_capacities_table(all_scalars, results):
             expandable = entry_key[0].expandable
             # convert entry_key[0] to string
             expandable_name_str = str(entry_key[0])
-            # Check if expandable_name_str is in capacities_df['Component']
+            # check if expandable_name_str is in capacities_df['Component']
             if any(
                 expandable_name_str in val for val in capacities_df["Component"].values
             ):
-                # Update the existing expandable value in capacities_df
+                # update the existing expandable value in capacities_df
                 capacities_df.loc[
                     capacities_df["Component"] == expandable_name_str, "Optimizable"
                 ] = expandable
@@ -208,12 +209,18 @@ def create_capacities_table(all_scalars, results):
             capacity_potential = entry_key[0].capacity_potential
             # convert entry_key[0] to string
             cp_name_str = str(entry_key[0])
-            # Check if cp_name_str is in capacities_df['Component']
+            # check if cp_name_str is in capacities_df['Component']
             if any(cp_name_str in val for val in capacities_df["Component"].values):
-                # Update the existing expandable value in capacities_df
+                # update the existing expandable value in capacities_df
                 capacities_df.loc[
                     capacities_df["Component"] == cp_name_str, "Capacity Potential"
                 ] = capacity_potential
+    # temporarily replace nan values with 0 in existing capacity and optimized capacity columns in order
+    # to calculate the total capacity
+    capacities_df["Total Capacity"] = capacities_df["Existing Capacity"].fillna(
+        0
+    ) + capacities_df["Optimized Capacity"].fillna(0)
+
     return capacities_df
 
 
@@ -236,6 +243,7 @@ def create_storage_capacities_table(all_scalars, results):
             "Optimizable",
             "Optimized Storage Capacity",
             "Optimized Max Input/Output",
+            "Total Storage Capacity",
         ]
     )
     # create an empty set for the component names
@@ -341,11 +349,11 @@ def create_storage_capacities_table(all_scalars, results):
             storage_capacity_potential = entry_key[0].storage_capacity_potential
             # convert entry_key[0] to string
             cp_name_str = str(entry_key[0])
-            # Check if cp_name_str is in storage_capacities_df['Component']
+            # check if cp_name_str is in storage_capacities_df['Component']
             if any(
                 cp_name_str in val for val in storage_capacities_df["Component"].values
             ):
-                # Update the existing expandable value in storage_capacities_df
+                # update the existing expandable value in storage_capacities_df
                 storage_capacities_df.loc[
                     storage_capacities_df["Component"] == cp_name_str,
                     "Storage Capacity Potential",
@@ -356,29 +364,35 @@ def create_storage_capacities_table(all_scalars, results):
             capacity_potential = entry_key[0].capacity_potential
             # convert entry_key[0] to string
             cp_name_str = str(entry_key[0])
-            # Check if cp_name_str is in storage_capacities_df['Component']
+            # check if cp_name_str is in storage_capacities_df['Component']
             if any(
                 cp_name_str in val for val in storage_capacities_df["Component"].values
             ):
-                # Update the existing expandable value in storage_capacities_df
+                # update the existing expandable value in storage_capacities_df
                 storage_capacities_df.loc[
                     storage_capacities_df["Component"] == cp_name_str,
                     "Max Input/Output Potential",
                 ] = capacity_potential
 
+    # temporarily replace nan values with 0 in existing capacity and optimized capacity columns in order
+    # to calculate the total capacity
+    storage_capacities_df["Total Storage Capacity"] = storage_capacities_df[
+        "Existing Storage Capacity"
+    ].fillna(0) + storage_capacities_df["Optimized Storage Capacity"].fillna(0)
+
     return storage_capacities_df
 
 
 def create_aggregated_flows_table(aggregated_flows):
-    # Create an empty DataFrame to store the flows
+    # create an empty DataFrame to store the flows
     flows_df = pd.DataFrame(columns=["From", "To", "Aggregated Flow"])
 
-    # Iterate over the items of the Series
+    # iterate over the items of the Series
     for idx, value in aggregated_flows.items():
         # Extract the source, target, and var_name from the index
         from_, to, _ = idx
 
-        # Append a row to the DataFrame
+        # append a row to the DataFrame
         flows_df = flows_df._append(
             {"From": from_, "To": to, "Aggregated Flow": float(value)},
             ignore_index=True,
@@ -387,7 +401,7 @@ def create_aggregated_flows_table(aggregated_flows):
     return flows_df
 
 
-def create_costs_table(all_scalars, results):
+def create_costs_table(all_scalars, results, capacities_df, storage_capacities_df):
     # create an empty dataframe
     costs_df = pd.DataFrame(
         columns=[
@@ -453,6 +467,42 @@ def create_costs_table(all_scalars, results):
                 costs_df["Component"] == component_name, "Variable Costs (Out)"
             ] = variable_costs_out
 
+    # loop through the results dict
+    for entry_key, entry_value in results.items():
+        # check if the oemof object tuple has the 'capex' attribute
+        if hasattr(entry_key[0], "capex"):
+            # store the existing capacity as a variable
+            specific_capex = entry_key[0].capex
+            # convert entry_key[0] to string
+            component_name_str = str(entry_key[0])
+            # find the corresponding row in capacities_df for the component
+            capacities_row = capacities_df[
+                capacities_df["Component"] == component_name_str
+            ]
+            # check if the component is a storage component
+            if "storage" in component_name_str:
+                # if it is, find the corresponding row in storage_capacities_df
+                storage_capacities_row = storage_capacities_df[
+                    storage_capacities_df["Component"] == component_name_str
+                ]
+                # calculate the total storage capacity by summing existing and optimized capacity
+                optimized_storage_capacity = storage_capacities_row[
+                    "Optimized Storage Capacity"
+                ].values[0]
+                # multiply the capex by the optimized storage capacity
+                upfront_investment_cost = specific_capex * optimized_storage_capacity
+            else:
+                # if it's not a storage component, calculate the total capacity by summing existing and
+                # optimized capacity
+                optimized_capacity = capacities_row["Optimized Capacity"].values[0]
+                # multiply the capex by the optimized capacity
+                upfront_investment_cost = specific_capex * optimized_capacity
+
+            # add or update 'Upfront Investment Cost' for the component_name with the calculated value
+            costs_df.loc[
+                costs_df["Component"] == component_name_str, "Upfront Investment Cost"
+            ] = upfront_investment_cost
+
     return costs_df
 
 
@@ -513,7 +563,9 @@ def post_processing(params, results, results_path):
     capacities_df = create_capacities_table(all_scalars, results)
     storage_capacities_df = create_storage_capacities_table(all_scalars, results)
     flows_df = create_aggregated_flows_table(aggregated_flows)
-    costs_df = create_costs_table(all_scalars, results)
+    costs_df = create_costs_table(
+        all_scalars, results, capacities_df, storage_capacities_df
+    )
 
     # store the relevant KPI variables
     specific_system_cost = round(
