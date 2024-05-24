@@ -110,21 +110,29 @@ def calculate_total_emissions(results):
     # initiate total emissions value
     total_emissions = 0
 
+    results_items = results.items()
+
     # loop through the results dict
     for entry_key, entry_value in results.items():
         # store the 'sequences' value for each oemof object tuple in results dict
         sequences = entry_value.get("sequences", None)
-        # check if the oemof object tuple has the 'output_parameters' attribute
-        if hasattr(entry_key[0], "output_parameters"):
-            # store the 'output_parameters' dict as output_param_dict
-            output_param_dict = entry_key[0].output_parameters
-            # retrieve the 'emission_factor' value if it exists
-            specific_emission = output_param_dict.get("custom_attributes", {}).get(
-                "specific_emission"
-            )
-            if specific_emission is not None:
-                total_emissions += specific_emission * sequences.sum().sum()
-                logging.info(f"Specific emissions recorded for {entry_key}")
+        # check if sequences exist and if they are relevant to flows (necessary for storage component
+        # where two items exist in results: one with sequences for storage content and one for flows)
+        if sequences is not None and "flow" in sequences.columns.get_level_values(
+            "var_name"
+        ):
+            # check if the oemof object tuple has the 'output_parameters' attribute
+            if hasattr(entry_key[0], "output_parameters"):
+                # store the 'output_parameters' dict as output_param_dict
+                output_param_dict = entry_key[0].output_parameters
+                # retrieve the 'emission_factor' value if it exists
+                # NOTE: this means that the user must define the emission factor as 'emission_factor' otherwise
+                # the total emissions won't be calculated
+                emission_factor = output_param_dict.get("custom_attributes", {}).get(
+                    "emission_factor"
+                )
+                if emission_factor is not None:
+                    total_emissions += emission_factor * sequences.sum().sum()
     # round the total emissions to 2dp
     total_emissions = round(total_emissions, 2)
 
