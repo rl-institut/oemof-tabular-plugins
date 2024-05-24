@@ -1,2 +1,2 @@
 name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;carrier_cost;profile;expandable;emission_factor;renewable_factor;land_requirement;output_parameters
-gas;dispatchable;gas;ocgt;0;0;gas-bus;0;0;1;True;1;1;1;"{""custom_attributes"": {""emission_factor"": 1, ""renewable_factor"": 1, ""land_requirement"": 1}}"
+gas;dispatchable;gas;ocgt;0;0;gas-bus;0;0;1;True;5;0;1;"{""custom_attributes"": {""emission_factor"": 5, ""renewable_factor"": 0, ""land_requirement"": 1}}"
