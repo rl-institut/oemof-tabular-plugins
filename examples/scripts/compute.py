@@ -2,6 +2,9 @@ import os
 from oemof.solph import EnergySystem, Model
 from oemof.solph.processing import parameter_as_dict
 
+# TODO this should be with from oemof.tabular.datapackage import building when https://github.com/oemof/oemof-tabular/pull/173 is merged
+from oemof_tabular_plugins.datapackage import building as otp_building
+
 # ---- imports to be used when the package has been installed ----
 from oemof.tabular import datapackage  # noqa
 from oemof.tabular.facades import TYPEMAP
@@ -44,6 +47,11 @@ for scenario in scenarios:
     # create results directory if it doesn't already exist
     if not os.path.exists(results_path):
         os.makedirs(results_path)
+
+    otp_building.infer_metadata_from_data(
+        package_name=scenario,
+        path=scenario_dir,
+    )
 
     # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
     pre_processing(scenario_dir, wacc, custom_attributes, moo)
