@@ -109,9 +109,6 @@ def calculate_total_emissions(results):
     """
     # initiate total emissions value
     total_emissions = 0
-
-    results_items = results.items()
-
     # loop through the results dict
     for entry_key, entry_value in results.items():
         # store the 'sequences' value for each oemof object tuple in results dict
@@ -426,6 +423,80 @@ def create_storage_capacities_table(all_scalars, results):
     return storage_capacities_df
 
 
+def calculate_total_land_requirement(results, capacities_df, storage_capacities_df):
+    # ToDo: this parameter should only be displayed in the results if the parameters have been defined in the
+    #  CSV input files
+    """
+    Calculates the total land requirement needed for the energy system (existing, planned (fixed) and optimized capacities).
+    :param results: oemof model results
+    :param capacities_df: capacities dataframe
+    :param storage_capacities_df: storage capacities dataframe
+    :return: total land requirement value
+    """
+    # initiate total land requirement value
+    total_land_requirement = 0
+    # set boolean for finding land requirement parameter in any of the csv inputs
+    land_requirement_found = False
+    # convert capacities_df['Component'] column to a list
+    component_names = capacities_df["Component"].tolist()
+    # convert storage_capacities_df['Component'] column to a list
+    storage_component_names = storage_capacities_df["Component"].tolist()
+    # loop through the results dict
+    for entry_key, entry_value in results.items():
+        component_name = entry_key[0]
+        # check if the oemof object tuple has the 'output_parameters' attribute
+        if hasattr(component_name, "output_parameters"):
+            # store the 'output_parameters' dict as output_param_dict
+            output_param_dict = component_name.output_parameters
+            # retrieve the 'land_requirement' value if it exists
+            # NOTE: this means that the user must define the land requirement as 'land_requirement' otherwise
+            # it won't get considered in the total land requirement value
+            land_requirement = output_param_dict.get("custom_attributes", {}).get(
+                "land_requirement"
+            )
+            if land_requirement is not None and str(component_name) in component_names:
+                # set to True because a land requirement parameter has been found
+                land_requirement_found = True
+                # retrieve the total capacity from capacities_df and calculate total land requirement
+                total_capacity = capacities_df.loc[
+                    capacities_df["Component"] == str(component_name), "Total Capacity"
+                ].iloc[0]
+                total_component_land_requirement = land_requirement * total_capacity
+                total_land_requirement += total_component_land_requirement
+            # for if the component is a storage type (for now is treated seperately but this can change)
+            elif (
+                land_requirement is not None
+                and str(component_name) in storage_component_names
+            ):
+                # set to True because a land requirement parameter has been found
+                land_requirement_found = True
+                # store the 'sequences' value for each oemof object tuple in results dict
+                sequences = entry_value.get("sequences", None)
+                # storage objects are saved twice in oemof results: one for storage content and one for flows, so
+                # this is to only store the land requirement once for each storage component
+                if (
+                    sequences is not None
+                    and "flow" in sequences.columns.get_level_values("var_name")
+                ):
+                    # retrieve the total capacity from storage_capacities_df and calculate total land requirement
+                    total_storage_capacity = storage_capacities_df.loc[
+                        storage_capacities_df["Component"] == str(component_name),
+                        "Total Storage Capacity",
+                    ].iloc[0]
+                    total_component_land_requirement = (
+                        land_requirement * total_storage_capacity
+                    )
+                    total_land_requirement += total_component_land_requirement
+    # if the land requirement parameter is found in any input csv files, the value is stored and rounded to 2dp
+    if land_requirement_found is True:
+        total_land_requirement = round(total_land_requirement, 2)
+    # if the land requirement parameter is not found in any input csv files, the value is stored as None
+    else:
+        total_land_requirement = None
+
+    return total_land_requirement
+
+
 def create_aggregated_flows_table(aggregated_flows):
     """
     Creates a dataframe based on the aggregated flows from/to each component. It uses the
@@ -640,11 +711,24 @@ def post_processing(params, results, results_path):
     renewable_share = calculate_renewable_share(results)
     excess_gen = excess_generation(all_scalars)
     total_emissions = calculate_total_emissions(results)
+    total_land_requirement = calculate_total_land_requirement(
+        results, capacities_df, storage_capacities_df
+    )
 
     # create a dataframe with the KPI variables
     kpi_data = {
-        "Variable": ["specific_system_cost", "renewable_share", "total_emissions"],
-        "Value": [specific_system_cost, renewable_share, total_emissions],
+        "Variable": [
+            "specific_system_cost",
+            "renewable_share",
+            "total_emissions",
+            "total_land_requirement",
+        ],
+        "Value": [
+            specific_system_cost,
+            renewable_share,
+            total_emissions,
+            total_land_requirement,
+        ],
     }
     # store KPI data as a dataframe
     kpi_df = pd.DataFrame(kpi_data)
