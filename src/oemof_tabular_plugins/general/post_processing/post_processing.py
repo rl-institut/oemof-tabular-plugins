@@ -29,7 +29,7 @@ def excess_generation(all_scalars):
     return excess_dict
 
 
-def specific_system_costs(all_scalars, total_system_costs):
+def calculate_specific_system_cost(all_scalars, total_system_costs):
     # if the units are in MWh, the specific cost will be in currency/MWh -> user needs to divide by 1000 to
     # get to currency/kWh (usual standard for LCOE). I have left it general for now so systems can be set up
     # in different scales e.g. kWh, MWh, GWh... but this could be adapted to always return a value in
@@ -44,8 +44,8 @@ def specific_system_costs(all_scalars, total_system_costs):
     demand_values_sum = sum(demand_values)
     # extract total_system_cost value from dataframe
     total_system_cost = total_system_costs["var_value"].iloc[0]
-    # calculate specific system costs (currency/total demand)
-    specific_system_cost = total_system_cost / demand_values_sum
+    # calculate specific system costs (currency/total demand) rounded to 2dp
+    specific_system_cost = round(total_system_cost / demand_values_sum, 2)
 
     return specific_system_cost
 
@@ -57,13 +57,17 @@ def calculate_renewable_share(results):
     :return: renewable share value
     """
     # initiate renewable_generation and nonrenewable_generation values
-    renewable_generation = 0
-    nonrenewable_generation = 0
+    total_renewable_generation = 0
+    total_nonrenewable_generation = 0
+    # set boolean for finding renewable factor parameter in any of the csv inputs
+    renewable_factor_found = False
 
     # loop through the results dict
     for entry_key, entry_value in results.items():
         # store the 'sequences' value for each oemof object tuple in results dict
         sequences = entry_value.get("sequences", None)
+        if sequences is None:
+            continue
         # check if the oemof object tuple has the 'output_parameters' attribute
         if hasattr(entry_key[0], "output_parameters"):
             # store the 'output_parameters' dict as output_param_dict
@@ -72,29 +76,34 @@ def calculate_renewable_share(results):
             renewable_factor = output_param_dict.get("custom_attributes", {}).get(
                 "renewable_factor"
             )
-            # if the renewable factor is 0, add the sum of flows to nonrenewable_generation
-            if renewable_factor == 0:
-                nonrenewable_generation += sequences.sum().sum()
-            # if the renewable factor is 1, add the sum of flows to renewable_generation
-            elif renewable_factor == 1:
-                renewable_generation += sequences.sum().sum()
-        else:
-            # if the oemof object tuple does not have the 'output_parameters' attribute, set the flows to 0
-            nonrenewable_generation += 0
-            renewable_generation += 0
+            if renewable_factor is not None:
+                # set to True because a renewable factor parameter has been found
+                renewable_factor_found = True
+                # store the total generation for the component
+                generation = sequences.sum().sum()
+                # multiply the total generation by the renewable factor to get the renewable generation
+                renewable_generation = generation * renewable_factor
+                # add this to the total amount for the whole system
+                total_renewable_generation += renewable_generation
+                # the nonrenewable generation is the total generation - renewable generation
+                nonrenewable_generation = generation - renewable_generation
+                # add this to the total amount for the whole system
+                total_nonrenewable_generation += nonrenewable_generation
 
-    # calculate the total generation
-    total_generation = renewable_generation + nonrenewable_generation
-    # if total generation is 0, return 0 to avoid division by 0
-    if total_generation == 0:
-        warning_message = (
-            "Total generation is 0. This may be because there is no generation or the"
-            " renewable factor is not defined in the output parameters of the inputs."
-        )
-        warnings.warn(warning_message, UserWarning)
-        return 0
-    # calculate the renewable share (rounded to 2dp)
-    renewable_share = round(renewable_generation / total_generation, 2)
+    if renewable_factor_found is True:
+        total_generation = total_renewable_generation + total_nonrenewable_generation
+        # if total generation is 0, return 0 to avoid division by 0
+        # ToDo: test this to see if still necessary or maybe adapt
+        if total_generation == 0:
+            warnings.warn(
+                "Total generation is 0. This may be because there is no generation.",
+                UserWarning,
+            )
+            return 0
+        # calculate the renewable share (rounded to 2dp)
+        renewable_share = round(total_renewable_generation / total_generation, 2)
+    else:
+        renewable_share = None
 
     return renewable_share
 
@@ -109,6 +118,7 @@ def calculate_total_emissions(results):
     """
     # initiate total emissions value
     total_emissions = 0
+    emission_factor_found = False
     # loop through the results dict
     for entry_key, entry_value in results.items():
         # store the 'sequences' value for each oemof object tuple in results dict
@@ -129,9 +139,14 @@ def calculate_total_emissions(results):
                     "emission_factor"
                 )
                 if emission_factor is not None:
+                    emission_factor_found = True
                     total_emissions += emission_factor * sequences.sum().sum()
-    # round the total emissions to 2dp
-    total_emissions = round(total_emissions, 2)
+    # if the emission factor parameter is found in any input csv files, the value is stored and rounded to 2dp
+    if emission_factor_found is True:
+        total_emissions = round(total_emissions, 2)
+    # if the land requirement parameter is not found in any input csv files, the value is stored as None
+    else:
+        total_emissions = None
 
     return total_emissions
 
@@ -636,7 +651,7 @@ def create_costs_table(all_scalars, results, capacities_df, storage_capacities_d
 
 
 def post_processing(params, results, results_path):
-    # ToDo: adapt this function after multi-index dataframe is implemented
+    # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
     """
     The main post-processing function extracts various scalar and timeseries data and stores it in CSV files.
@@ -704,34 +719,30 @@ def post_processing(params, results, results_path):
         all_scalars, results, capacities_df, storage_capacities_df
     )
 
-    # store the relevant KPI variables
-    specific_system_cost = round(
-        specific_system_costs(all_scalars, total_system_costs), 3
-    )
-    renewable_share = calculate_renewable_share(results)
-    excess_gen = excess_generation(all_scalars)
-    total_emissions = calculate_total_emissions(results)
-    total_land_requirement = calculate_total_land_requirement(
-        results, capacities_df, storage_capacities_df
-    )
-
-    # create a dataframe with the KPI variables
-    kpi_data = {
+    # store the relevant KPI variables and their corresponding values
+    kpi_variables = [
+        "specific_system_cost",
+        "renewable_share",
+        "total_emissions",
+        "total_land_requirement",
+    ]
+    kpi_values = [
+        calculate_specific_system_cost(all_scalars, total_system_costs),
+        calculate_renewable_share(results),
+        calculate_total_emissions(results),
+        calculate_total_land_requirement(results, capacities_df, storage_capacities_df),
+    ]
+    # filter out None values
+    filtered_kpi_data = {
         "Variable": [
-            "specific_system_cost",
-            "renewable_share",
-            "total_emissions",
-            "total_land_requirement",
+            var for var, val in zip(kpi_variables, kpi_values) if val is not None
         ],
-        "Value": [
-            specific_system_cost,
-            renewable_share,
-            total_emissions,
-            total_land_requirement,
-        ],
+        "Value": [val for val in kpi_values if val is not None],
     }
-    # store KPI data as a dataframe
-    kpi_df = pd.DataFrame(kpi_data)
+    # create the DataFrame
+    kpi_df = pd.DataFrame(filtered_kpi_data)
+    excess_gen = excess_generation(all_scalars)
+    # add the excess generation values for each vector to the KPI DataFrame
     for key, value in excess_gen.items():
         kpi_df = kpi_df._append({"Variable": key, "Value": value}, ignore_index=True)
         # replace any parameters with '-' in the name with '_' for uniformity
