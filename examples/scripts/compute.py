@@ -25,7 +25,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["general_basic"]
+scenarios = ["general_add_cost_inputs"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
@@ -48,13 +48,13 @@ for scenario in scenarios:
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
+    # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
+    pre_processing(scenario_dir, wacc, custom_attributes, moo)
+
     otp_building.infer_metadata_from_data(
         package_name=scenario,
         path=scenario_dir,
     )
-
-    # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-    pre_processing(scenario_dir, wacc, custom_attributes, moo)
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(
