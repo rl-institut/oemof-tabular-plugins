@@ -1,4 +1,4 @@
-name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;profile;output_parameters;expandable;capex;opex_fix;lifetime
-wind;volatile;wind;onshore;0;18.72;elec-bus;0;wind-profile;"{""custom_attributes"": {""renewable_factor"": 1}}";True;120;10;30
-pv;volatile;solar;pv;0;16.97;elec-bus;0;pv-profile;"{""custom_attributes"": {""renewable_factor"": 1}}";True;80;10;20
-hydro;volatile;hydro;hydro;0;27.26;elec-bus;0;1;"{""custom_attributes"": {""renewable_factor"": 1}}";True;100;20;30
+name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;profile;expandable;capex;opex_fix;lifetime
+wind;volatile;wind;onshore;0;;elec-bus;0;wind-profile;True;120;10;30
+pv;volatile;solar;pv;0;;elec-bus;0;pv-profile;True;80;10;20
+hydro;volatile;hydro;hydro;0;27.26;elec-bus;0;1;True;100;20;30

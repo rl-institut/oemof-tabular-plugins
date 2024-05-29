@@ -1,6 +1,6 @@
 {
     "profile": "tabular-data-package",
-    "name": "general-add-cost-inputs",
+    "name": "general_add_cost_inputs",
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {
@@ -71,7 +71,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -81,7 +81,7 @@
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -188,7 +188,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -199,11 +199,6 @@
                     {
                         "name": "profile",
                         "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "output_parameters",
-                        "type": "object",
                         "format": "default"
                     },
                     {
@@ -329,71 +324,6 @@
             }
         },
         {
-            "path": "data/elements/shortage.csv",
-            "profile": "tabular-data-resource",
-            "name": "shortage",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "tech",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "marginal_cost",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "output_parameters",
-                        "type": "object",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ],
-                "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "bus",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    }
-                ]
-            }
-        },
-        {
             "path": "data/elements/storage.csv",
             "profile": "tabular-data-resource",
             "name": "storage",
@@ -464,7 +394,7 @@
                     },
                     {
                         "name": "invest_relation_output_capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -560,11 +490,6 @@
                     {
                         "name": "profile",
                         "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "output_parameters",
-                        "type": "object",
                         "format": "default"
                     },
                     {
