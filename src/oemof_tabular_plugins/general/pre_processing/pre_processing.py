@@ -189,7 +189,7 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             # from the capex, opex_fix and lifetime or use the annuity directly
             logger.info(
                 f"All parameters ('capex', 'opex_fix', 'lifetime') and '{annuity_cost}' are "
-                f"provided for '{row_name}' in '{element}'. The defined annuity has been replaced with "
+                f"provided for '{row_name}' in '{element}'. \nThe defined annuity has been replaced with "
                 f"the calculated value from capex, opex_fix and lifetime."
             )
         elif scenario == "no annuity partial/all cost params empty":

@@ -222,101 +222,40 @@ class TestPreprocessingCosts:
         actual_value = df["capacity_cost"].iloc[0]
         assert actual_value == expected_value
 
-    def test_annuity_defined_all_cost_params_defined_yes_calculates_new_annuity(self):
+    def test_annuity_defined_all_cost_params_defined_calculates_new_annuity(self):
         """
-        Tests that when the annuity is defined and all other cost parameters, if the user enters 'yes', the
+        Tests that when the annuity is defined and all other cost parameters, the
         new annuity is calculated and replaces the old annuity.
         """
         # copy scenario csv file to the package path
         f_name = "annuity_defined_all_cost_params_defined.csv"
         self.copy_file_to_package_path(f_name)
         wacc = 1
-        # patch the input() function to return 'yes' during the test
-        with patch("builtins.input", return_value="yes"):
-            # call the pre_processing function with wacc = 1
-            pre_processing(self.pre_p_dir, wacc=wacc)
-            # check if the actual value matches the expected value
-            expected_value = calculate_annuity(
-                capex=975000, opex_fix=11625, lifetime=20, wacc=1
-            )
-            df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=";")
-            actual_value = df["capacity_cost"].iloc[0]
+        # call the pre_processing function with wacc = 1
+        pre_processing(self.pre_p_dir, wacc=wacc)
+        # check if the actual value matches the expected value
+        expected_value = calculate_annuity(
+            capex=975000, opex_fix=11625, lifetime=20, wacc=1
+        )
+        df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=";")
+        actual_value = df["capacity_cost"].iloc[0]
         assert actual_value == expected_value
 
-    def test_annuity_defined_all_cost_params_defined_no_uses_old_annuity(self):
+    def test_annuity_defined_all_cost_params_defined_logs_message(self, caplog):
         """
-        Tests that when the annuity is defined and all other cost parameters, if the user enters 'no', the
-        old annuity is used.
-        """
-        # copy scenario csv file to the package path
-        f_name = "annuity_defined_all_cost_params_defined.csv"
-        self.copy_file_to_package_path(f_name)
-        wacc = 1
-        # patch the input() function to return 'no' during the test
-        with patch("builtins.input", return_value="no"):
-            # call the pre_processing function with wacc = 1
-            pre_processing(self.pre_p_dir, wacc=wacc)
-            # check if the actual value matches the expected value
-            expected_value = 107265
-            df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=";")
-            actual_value = df["capacity_cost"].iloc[0]
-        assert actual_value == expected_value
-
-    def test_annuity_defined_all_cost_params_defined_no_logs_message(self, caplog):
-        """
-        Tests that a warning message is logged when the annuity is used and the other cost
-        parameters are defined but not used after the user enters 'no'.
+        Tests that an info message is logged when the annuity and the other cost
+        parameters are defined, so the annuity is replaced by the calculated value
+        from the other parameters.
         """
         # copy scenario csv file to the package path
         self.copy_file_to_package_path("annuity_defined_all_cost_params_defined.csv")
         wacc = 1
-        # patch the input() function to return 'no' during the test
-        with patch("builtins.input", return_value="no"):
-            # check if the warning message is logged when the pre_processing function is called and the user
-            # enters 'no'
-            pre_processing(self.pre_p_dir, wacc=wacc)
+        # check if the info message is logged when the pre_processing function is called
+        pre_processing(self.pre_p_dir, wacc=wacc)
         assert any(
-            record.levelname == "WARNING"
-            and "could lead to discrepancies in the results" in record.message
+            record.levelname == "INFO"
+            and "defined annuity has been replaced with" in record.message
             for record in caplog.records
-        )
-
-    def test_annuity_defined_all_cost_params_defined_invalid_input_retries(
-        self, caplog
-    ):
-        """
-        Tests that the user is asked to re-enter a valid input when the user enters an invalid input.
-        """
-        # copy scenario csv file to the package path
-        self.copy_file_to_package_path("annuity_defined_all_cost_params_defined.csv")
-        wacc = 1
-        # patch the input() function to return an invalid input ('invalid', in this case) during the first call,
-        # and 'no' during the second call
-        with patch("builtins.input", side_effect=["invalid", "no"]):
-            # call the pre_processing function with wacc = 1
-            pre_processing(self.pre_p_dir, wacc=wacc)
-        # check if the invalid log message occurs before the 'no' user input log message
-        log_messages = [record.message for record in caplog.records]
-        invalid_choice_index = next(
-            (
-                i
-                for i, msg in enumerate(log_messages)
-                if "Invalid choice. Please enter " in msg
-            ),
-            None,
-        )
-        no_index = next(
-            (i for i, msg in enumerate(log_messages) if "please check" in msg.lower()),
-            None,
-        )
-        assert (
-            invalid_choice_index is not None
-            and no_index is not None
-            and invalid_choice_index < no_index
-        ), (
-            "Expected 'Invalid choice. "
-            "Please enter ' message before "
-            "'no' input or 'please check' message"
         )
 
     def test_no_annuity_partial_all_cost_params_empty_raises_error(self):
