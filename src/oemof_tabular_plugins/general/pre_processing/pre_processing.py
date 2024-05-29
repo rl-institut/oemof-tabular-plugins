@@ -3,7 +3,9 @@ import pandas as pd
 import logging
 from oemof.tools import logger, economics
 import json
-from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import pre_processing_moo
+from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import (
+    pre_processing_moo,
+)
 
 logger.define_logging()
 
@@ -180,45 +182,16 @@ def pre_processing_costs(wacc, element, element_path, element_df):
                 f"but be aware that some cost results will not be calculated."
             )
         elif scenario == "annuity defined all cost params defined":
+            capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
+            # update the dataframe
+            element_df.at[index, annuity_cost] = float(capacity_cost)
             # if all parameters are defined, the user is asked if they want to calculate the annuity
             # from the capex, opex_fix and lifetime or use the annuity directly
             logger.info(
                 f"All parameters ('capex', 'opex_fix', 'lifetime') and '{annuity_cost}' are "
-                f"provided for '{row_name}' in '{element}'."
+                f"provided for '{row_name}' in '{element}'. The defined annuity has been replaced with "
+                f"the calculated value from capex, opex_fix and lifetime."
             )
-            while True:
-                user_choice = input(
-                    f"Do you want to calculate the annuity from 'capex', 'opex_fix' and 'lifetime' rather "
-                    f"than use the annuity value provided in '{annuity_cost}'? (yes/no): "
-                ).lower()
-                # if the user chooses 'yes', the annuity cost parameter is replaced by the one calculated from
-                # the calculate_annuity function
-                if user_choice == "yes":
-                    capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
-                    # update the dataframe
-                    element_df.at[index, annuity_cost] = float(capacity_cost)
-                    # log info message
-                    logger.info(
-                        f"The annuity ('{annuity_cost}') has been calculated and updated for "
-                        f"'{row_name}' in '{element}'."
-                    )
-                    # exit the loop
-                    break
-                # if the user chooses 'no', the annuity cost parameter is used directly and the other parameters
-                # are ignored
-                if user_choice == "no":
-                    # log warning message
-                    logging.warning(
-                        f"The annuity ('{annuity_cost}') is used directly rather than "
-                        f"calculating from other parameters for {row_name} in {element}. This "
-                        f"could lead to discrepancies in the results - please check!"
-                    )
-                    # exit the loop
-                    break
-                else:
-                    # if the user enters something other than yes or no, they are asked to re-enter
-                    # their answer
-                    logger.info("Invalid choice. Please enter 'yes' or 'no'.")
         elif scenario == "no annuity partial/all cost params empty":
             # raise value error
             raise ValueError(
@@ -248,6 +221,8 @@ def pre_processing_costs(wacc, element, element_path, element_df):
 
 
 def update_datapackage_json_custom_attributes(scenario_dir, element):
+    # ToDo: determine if this function is still necessary now with the automisation
+    #  of building datapackage from CSV files
     """Updates the datapackage.json file with the 'output_parameters' field for each element
     if required and the field does not already exist.
 
