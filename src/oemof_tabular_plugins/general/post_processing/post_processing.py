@@ -476,8 +476,8 @@ def calculate_total_land_requirement(results, capacities_df, storage_capacities_
                 total_capacity = capacities_df.loc[
                     capacities_df["Component"] == str(component_name), "Total Capacity"
                 ].iloc[0]
-                total_component_land_requirement = land_requirement * total_capacity
-                total_land_requirement += total_component_land_requirement
+                component_land_requirement = land_requirement * total_capacity
+                total_land_requirement += component_land_requirement
             # for if the component is a storage type (for now is treated seperately but this can change)
             elif (
                 land_requirement is not None
@@ -498,10 +498,10 @@ def calculate_total_land_requirement(results, capacities_df, storage_capacities_
                         storage_capacities_df["Component"] == str(component_name),
                         "Total Storage Capacity",
                     ].iloc[0]
-                    total_component_land_requirement = (
+                    component_land_requirement = (
                         land_requirement * total_storage_capacity
                     )
-                    total_land_requirement += total_component_land_requirement
+                    total_land_requirement += component_land_requirement
     # if the land requirement parameter is found in any input csv files, the value is stored and rounded to 2dp
     if land_requirement_found is True:
         total_land_requirement = round(total_land_requirement, 2)
