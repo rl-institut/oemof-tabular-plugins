@@ -1,2 +1,0 @@
-name;type;carrier;tech;bus;marginal_cost;capacity;output_parameters
-elec-shortage;shortage;electricity;shortage;elec-bus;100000;0;{}
