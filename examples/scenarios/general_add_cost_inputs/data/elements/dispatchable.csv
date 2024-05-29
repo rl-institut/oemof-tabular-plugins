@@ -1,0 +1,2 @@
+name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;carrier_cost;profile;expandable
+gas;dispatchable;gas;ocgt;0;0;gas-bus;23.4;0;1;True
