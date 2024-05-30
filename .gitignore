@@ -151,3 +151,4 @@ cython_debug/
 #   re-add the scenario to .gitignore and push
 examples/scenarios/general_basic
 examples/scenarios/general_add_cost_inputs
+examples/scenarios/general_custom_attributes
