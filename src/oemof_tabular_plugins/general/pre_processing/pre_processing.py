@@ -220,65 +220,12 @@ def pre_processing_costs(wacc, element, element_path, element_df):
     return
 
 
-def update_datapackage_json_custom_attributes(scenario_dir, element):
-    # ToDo: determine if this function is still necessary now with the automisation
-    #  of building datapackage from CSV files
-    """Updates the datapackage.json file with the 'output_parameters' field for each element
-    if required and the field does not already exist.
-
-    :param scenario_dir: scenario directory path
-    :param element: csv filename
-    """
-    # define path to datapackage.json file
-    datapackage_json_path = os.path.join(scenario_dir, "datapackage.json")
-    # read the datapackage.json file
-    with open(datapackage_json_path, "r") as f:
-        datapackage = json.load(f)
-    # define the path to the element csv file
-    element_path = os.path.join("data", "elements", element)
-    element_path = os.path.normpath(element_path)
-    # iterate through each resource in the datapackage file
-    for resource in datapackage["resources"]:
-        resource_path = resource["path"]
-        resource_path = os.path.normpath(resource_path)
-        # check if the resource path in the datapackage file matches the particular element path
-        if resource_path == element_path:
-            if "schema" in resource:
-                # store the resource schema
-                resource_schema = resource["schema"]
-                if "fields" in resource_schema:
-                    # store the resource field
-                    fields = resource_schema["fields"]
-                    # check if the output_parameters field already exists
-                    output_parameters_exist = any(
-                        field.get("name") == "output_parameters" for field in fields
-                    )
-                    if not output_parameters_exist:
-                        # if the output_parameters field doesn't exist, add it to the schema
-                        fields.append(
-                            {
-                                "name": "output_parameters",
-                                "type": "object",
-                                "format": "default",
-                            }
-                        )
-                        resource_schema["fields"] = fields
-                        resource["schema"] = resource_schema
-
-    # write the updated datapackage.json back to the file
-    with open(datapackage_json_path, "w") as f:
-        json.dump(datapackage, f, indent=4)
-    return
-
-
-def pre_processing_custom_attributes(
-    scenario_dir, element, element_path, element_df, custom_attributes
-):
+def pre_processing_custom_attributes(element_path, element_df, custom_attributes):
+    # ToDo: confirm if this function is needed, whether the attributes need to be added to
+    #  'output_parameters' or if this is not necessary
     """Updates the 'output_parameters' field in the CSV file for the specified element if custom
     attributes are defined.
 
-    :param scenario_dir: scenario directory path
-    :param element: csv filename
     :param element_path: path of the csv file
     :param element_df: dataframe containing data from the csv file
     :param custom_attributes: list of custom attributes included in the model (defined in compute.py)
@@ -310,9 +257,6 @@ def pre_processing_custom_attributes(
                     continue
     # write the updated dataframe back to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
-    # if custom attributes were found, update the datapackage.json file
-    if has_custom_attributes:
-        update_datapackage_json_custom_attributes(scenario_dir, element)
     return
 
 
@@ -348,7 +292,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
                 # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
                 # requirement)
                 pre_processing_custom_attributes(
-                    scenario_dir, element, element_path, element_df, custom_attributes
+                    element_path, element_df, custom_attributes
                 )
             elif moo is True:
                 pre_processing_moo()

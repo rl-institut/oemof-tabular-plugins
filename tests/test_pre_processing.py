@@ -447,67 +447,6 @@ class TestPreprocessingCustomAttributes:
                 "output_parameters" not in updated_df.columns
             ), "'output_parameters' has been added to the updated dataframe when it should not be"
 
-    def test_output_params_added_to_json_with_cust_attr_in_csv_and_list(self):
-        """
-        Tests that the output parameters field has been added to the datapackage.json file if the
-        csv file contains custom attributes and they have been defined as list by user.
-        """
-        # copy scenario csv file and datapackage json file to the package path
-        self.copy_files_to_package_path("cust_attr.csv", "dp_no_output_params.json")
-        # call the pre_processing function with wacc = 1 and custom_attributes list defined
-        wacc = 1
-        pre_processing(
-            self.pre_p_dir,
-            wacc=wacc,
-            custom_attributes=[
-                "emission_factor",
-                "renewable_factor",
-                "land_requirement",
-            ],
-        )
-        # read the datapackage.json file after pre-processing
-        with open(os.path.join(self.pre_p_dir, "datapackage.json"), "r") as f:
-            updated_datapackage = json.load(f)
-        # get the resource from the datapackage.json file
-        resource = updated_datapackage.get("resources", [None])[0]
-        # check if the resource was found
-        assert (
-            resource is not None
-        ), "No resource found in the updated datapackage.json file"
-        # find the appropriate field within the resource's schema
-        fields = resource.get("schema", {}).get("fields", [])
-        output_parameters_field = None
-        for field in fields:
-            if field.get("name") == "output_parameters":
-                output_parameters_field = field
-                break
-        # assert that the 'output_parameters' field has been added to the datapackage.json file
-        assert output_parameters_field is not None, (
-            "output_parameters field is not present in the updated "
-            "datapackage.json file"
-        )
-
-    def test_output_params_not_added_to_json_with_cust_attr_in_csv_and_not_list(self):
-        """
-        Tests that the output parameters field has not been added to the datapackage.json file if the
-        csv file contains custom attributes and they have not been defined as list by user.
-        """
-        # copy scenario csv file and datapackage json file to the package path
-        self.copy_files_to_package_path("cust_attr.csv", "dp_no_output_params.json")
-        # call the pre_processing function with wacc = 1 and custom_attributes = none (default)
-        wacc = 1
-        pre_processing(self.pre_p_dir, wacc=wacc)
-        # read the datapackage.json file after pre-processing
-        with open(os.path.join(self.pre_p_dir, "datapackage.json"), "r") as f:
-            updated_datapackage = json.load(f)
-        with open(
-            os.path.join(self.test_inputs_pre_p, "dp_no_output_params.json"), "r"
-        ) as f:
-            original_datapackage = json.load(f)
-        assert updated_datapackage == original_datapackage, (
-            "The datapackage.json file has been updated " "when it shouldn't be"
-        )
-
     def test_output_params_not_added_to_twice_when_already_exists(self):
         """
         Tests that the output parameters field has not been added again to the datapackage.json file
