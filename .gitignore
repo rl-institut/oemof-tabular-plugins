@@ -152,3 +152,4 @@ cython_debug/
 examples/scenarios/general_basic
 examples/scenarios/general_add_cost_inputs
 examples/scenarios/general_custom_attributes
+examples/scenarios/general_constraints
