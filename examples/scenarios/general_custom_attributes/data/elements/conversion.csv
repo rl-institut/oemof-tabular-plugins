@@ -1,2 +1,2 @@
-name;type;carrier;tech;capacity;capacity_cost;marginal_cost;carrier_cost;efficiency;from_bus;to_bus;expandable;emission_factor;land_requirement;output_parameters
-gas-pp;conversion;gas;ocgt;50;107265;1.5;23.4;0.48;gas-bus;elec-bus;False;1;1;"{""custom_attributes"": {""emission_factor"": 1, ""land_requirement"": 1}}"
+name;type;carrier;tech;capacity;capacity_cost;marginal_cost;carrier_cost;efficiency;from_bus;to_bus;expandable
+gas-pp;conversion;gas;ocgt;50;107265;1.5;23.4;0.48;gas-bus;elec-bus;False
