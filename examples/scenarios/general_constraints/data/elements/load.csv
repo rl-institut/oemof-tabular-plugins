@@ -1,0 +1,2 @@
+name;amount;profile;type;bus
+demand;300000;electricity-load-profile;load;elec-bus
