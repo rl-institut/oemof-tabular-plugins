@@ -1,14 +1,12 @@
 import os
 import warnings
 import pandas as pd
-from oemof.tabular.config import config
 from oemof.tabular.datapackage import building
 from datapackage import Package
 
-SPECIAL_FIELD_NAMES = {}
-for fk, descriptor in config.FOREIGN_KEY_DESCRIPTORS.items():
-    for el in descriptor:
-        SPECIAL_FIELD_NAMES[el["fields"]] = fk
+# TODO when oemof.tabular is updated with inferred metadata PR, use
+# from oemof.tabular.config import config
+import oemof_tabular_plugins.datapackage.config as config
 
 
 def map_sequence_profiles_to_resource_name(p, excluded_profiles=("timeindex",)):
