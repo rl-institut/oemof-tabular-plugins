@@ -222,101 +222,40 @@ class TestPreprocessingCosts:
         actual_value = df["capacity_cost"].iloc[0]
         assert actual_value == expected_value
 
-    def test_annuity_defined_all_cost_params_defined_yes_calculates_new_annuity(self):
+    def test_annuity_defined_all_cost_params_defined_calculates_new_annuity(self):
         """
-        Tests that when the annuity is defined and all other cost parameters, if the user enters 'yes', the
+        Tests that when the annuity is defined and all other cost parameters, the
         new annuity is calculated and replaces the old annuity.
         """
         # copy scenario csv file to the package path
         f_name = "annuity_defined_all_cost_params_defined.csv"
         self.copy_file_to_package_path(f_name)
         wacc = 1
-        # patch the input() function to return 'yes' during the test
-        with patch("builtins.input", return_value="yes"):
-            # call the pre_processing function with wacc = 1
-            pre_processing(self.pre_p_dir, wacc=wacc)
-            # check if the actual value matches the expected value
-            expected_value = calculate_annuity(
-                capex=975000, opex_fix=11625, lifetime=20, wacc=1
-            )
-            df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=";")
-            actual_value = df["capacity_cost"].iloc[0]
+        # call the pre_processing function with wacc = 1
+        pre_processing(self.pre_p_dir, wacc=wacc)
+        # check if the actual value matches the expected value
+        expected_value = calculate_annuity(
+            capex=975000, opex_fix=11625, lifetime=20, wacc=1
+        )
+        df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=";")
+        actual_value = df["capacity_cost"].iloc[0]
         assert actual_value == expected_value
 
-    def test_annuity_defined_all_cost_params_defined_no_uses_old_annuity(self):
+    def test_annuity_defined_all_cost_params_defined_logs_message(self, caplog):
         """
-        Tests that when the annuity is defined and all other cost parameters, if the user enters 'no', the
-        old annuity is used.
-        """
-        # copy scenario csv file to the package path
-        f_name = "annuity_defined_all_cost_params_defined.csv"
-        self.copy_file_to_package_path(f_name)
-        wacc = 1
-        # patch the input() function to return 'no' during the test
-        with patch("builtins.input", return_value="no"):
-            # call the pre_processing function with wacc = 1
-            pre_processing(self.pre_p_dir, wacc=wacc)
-            # check if the actual value matches the expected value
-            expected_value = 107265
-            df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=";")
-            actual_value = df["capacity_cost"].iloc[0]
-        assert actual_value == expected_value
-
-    def test_annuity_defined_all_cost_params_defined_no_logs_message(self, caplog):
-        """
-        Tests that a warning message is logged when the annuity is used and the other cost
-        parameters are defined but not used after the user enters 'no'.
+        Tests that an info message is logged when the annuity and the other cost
+        parameters are defined, so the annuity is replaced by the calculated value
+        from the other parameters.
         """
         # copy scenario csv file to the package path
         self.copy_file_to_package_path("annuity_defined_all_cost_params_defined.csv")
         wacc = 1
-        # patch the input() function to return 'no' during the test
-        with patch("builtins.input", return_value="no"):
-            # check if the warning message is logged when the pre_processing function is called and the user
-            # enters 'no'
-            pre_processing(self.pre_p_dir, wacc=wacc)
+        # check if the info message is logged when the pre_processing function is called
+        pre_processing(self.pre_p_dir, wacc=wacc)
         assert any(
-            record.levelname == "WARNING"
-            and "could lead to discrepancies in the results" in record.message
+            record.levelname == "INFO"
+            and "defined annuity has been replaced with" in record.message
             for record in caplog.records
-        )
-
-    def test_annuity_defined_all_cost_params_defined_invalid_input_retries(
-        self, caplog
-    ):
-        """
-        Tests that the user is asked to re-enter a valid input when the user enters an invalid input.
-        """
-        # copy scenario csv file to the package path
-        self.copy_file_to_package_path("annuity_defined_all_cost_params_defined.csv")
-        wacc = 1
-        # patch the input() function to return an invalid input ('invalid', in this case) during the first call,
-        # and 'no' during the second call
-        with patch("builtins.input", side_effect=["invalid", "no"]):
-            # call the pre_processing function with wacc = 1
-            pre_processing(self.pre_p_dir, wacc=wacc)
-        # check if the invalid log message occurs before the 'no' user input log message
-        log_messages = [record.message for record in caplog.records]
-        invalid_choice_index = next(
-            (
-                i
-                for i, msg in enumerate(log_messages)
-                if "Invalid choice. Please enter " in msg
-            ),
-            None,
-        )
-        no_index = next(
-            (i for i, msg in enumerate(log_messages) if "please check" in msg.lower()),
-            None,
-        )
-        assert (
-            invalid_choice_index is not None
-            and no_index is not None
-            and invalid_choice_index < no_index
-        ), (
-            "Expected 'Invalid choice. "
-            "Please enter ' message before "
-            "'no' input or 'please check' message"
         )
 
     def test_no_annuity_partial_all_cost_params_empty_raises_error(self):
@@ -507,67 +446,6 @@ class TestPreprocessingCustomAttributes:
             assert (
                 "output_parameters" not in updated_df.columns
             ), "'output_parameters' has been added to the updated dataframe when it should not be"
-
-    def test_output_params_added_to_json_with_cust_attr_in_csv_and_list(self):
-        """
-        Tests that the output parameters field has been added to the datapackage.json file if the
-        csv file contains custom attributes and they have been defined as list by user.
-        """
-        # copy scenario csv file and datapackage json file to the package path
-        self.copy_files_to_package_path("cust_attr.csv", "dp_no_output_params.json")
-        # call the pre_processing function with wacc = 1 and custom_attributes list defined
-        wacc = 1
-        pre_processing(
-            self.pre_p_dir,
-            wacc=wacc,
-            custom_attributes=[
-                "emission_factor",
-                "renewable_factor",
-                "land_requirement",
-            ],
-        )
-        # read the datapackage.json file after pre-processing
-        with open(os.path.join(self.pre_p_dir, "datapackage.json"), "r") as f:
-            updated_datapackage = json.load(f)
-        # get the resource from the datapackage.json file
-        resource = updated_datapackage.get("resources", [None])[0]
-        # check if the resource was found
-        assert (
-            resource is not None
-        ), "No resource found in the updated datapackage.json file"
-        # find the appropriate field within the resource's schema
-        fields = resource.get("schema", {}).get("fields", [])
-        output_parameters_field = None
-        for field in fields:
-            if field.get("name") == "output_parameters":
-                output_parameters_field = field
-                break
-        # assert that the 'output_parameters' field has been added to the datapackage.json file
-        assert output_parameters_field is not None, (
-            "output_parameters field is not present in the updated "
-            "datapackage.json file"
-        )
-
-    def test_output_params_not_added_to_json_with_cust_attr_in_csv_and_not_list(self):
-        """
-        Tests that the output parameters field has not been added to the datapackage.json file if the
-        csv file contains custom attributes and they have not been defined as list by user.
-        """
-        # copy scenario csv file and datapackage json file to the package path
-        self.copy_files_to_package_path("cust_attr.csv", "dp_no_output_params.json")
-        # call the pre_processing function with wacc = 1 and custom_attributes = none (default)
-        wacc = 1
-        pre_processing(self.pre_p_dir, wacc=wacc)
-        # read the datapackage.json file after pre-processing
-        with open(os.path.join(self.pre_p_dir, "datapackage.json"), "r") as f:
-            updated_datapackage = json.load(f)
-        with open(
-            os.path.join(self.test_inputs_pre_p, "dp_no_output_params.json"), "r"
-        ) as f:
-            original_datapackage = json.load(f)
-        assert updated_datapackage == original_datapackage, (
-            "The datapackage.json file has been updated " "when it shouldn't be"
-        )
 
     def test_output_params_not_added_to_twice_when_already_exists(self):
         """

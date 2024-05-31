@@ -142,3 +142,14 @@ cython_debug/
 
 # PyCharm
 .idea/
+
+# Example scenarios
+# Scenarios should be ignored to avoid constantly pushing changes when running them
+# If you want to edit a scenario:
+#   remove it from .gitignore and push this change
+#   make changes to your scenario then push them
+#   re-add the scenario to .gitignore and push
+examples/scenarios/general_basic
+examples/scenarios/general_add_cost_inputs
+examples/scenarios/general_custom_attributes
+examples/scenarios/general_constraints

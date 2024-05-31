@@ -3,7 +3,7 @@ import pandas as pd
 import logging
 from oemof.tools import logger, economics
 import json
-from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import pre_processing_moo
+from .pre_processing_moo import pre_processing_moo
 
 logger.define_logging()
 
@@ -180,45 +180,16 @@ def pre_processing_costs(wacc, element, element_path, element_df):
                 f"but be aware that some cost results will not be calculated."
             )
         elif scenario == "annuity defined all cost params defined":
+            capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
+            # update the dataframe
+            element_df.at[index, annuity_cost] = float(capacity_cost)
             # if all parameters are defined, the user is asked if they want to calculate the annuity
             # from the capex, opex_fix and lifetime or use the annuity directly
             logger.info(
                 f"All parameters ('capex', 'opex_fix', 'lifetime') and '{annuity_cost}' are "
-                f"provided for '{row_name}' in '{element}'."
+                f"provided for '{row_name}' in '{element}'. \nThe defined annuity has been replaced with "
+                f"the calculated value from capex, opex_fix and lifetime."
             )
-            while True:
-                user_choice = input(
-                    f"Do you want to calculate the annuity from 'capex', 'opex_fix' and 'lifetime' rather "
-                    f"than use the annuity value provided in '{annuity_cost}'? (yes/no): "
-                ).lower()
-                # if the user chooses 'yes', the annuity cost parameter is replaced by the one calculated from
-                # the calculate_annuity function
-                if user_choice == "yes":
-                    capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
-                    # update the dataframe
-                    element_df.at[index, annuity_cost] = float(capacity_cost)
-                    # log info message
-                    logger.info(
-                        f"The annuity ('{annuity_cost}') has been calculated and updated for "
-                        f"'{row_name}' in '{element}'."
-                    )
-                    # exit the loop
-                    break
-                # if the user chooses 'no', the annuity cost parameter is used directly and the other parameters
-                # are ignored
-                if user_choice == "no":
-                    # log warning message
-                    logging.warning(
-                        f"The annuity ('{annuity_cost}') is used directly rather than "
-                        f"calculating from other parameters for {row_name} in {element}. This "
-                        f"could lead to discrepancies in the results - please check!"
-                    )
-                    # exit the loop
-                    break
-                else:
-                    # if the user enters something other than yes or no, they are asked to re-enter
-                    # their answer
-                    logger.info("Invalid choice. Please enter 'yes' or 'no'.")
         elif scenario == "no annuity partial/all cost params empty":
             # raise value error
             raise ValueError(
@@ -247,63 +218,12 @@ def pre_processing_costs(wacc, element, element_path, element_df):
     return
 
 
-def update_datapackage_json_custom_attributes(scenario_dir, element):
-    """Updates the datapackage.json file with the 'output_parameters' field for each element
-    if required and the field does not already exist.
-
-    :param scenario_dir: scenario directory path
-    :param element: csv filename
-    """
-    # define path to datapackage.json file
-    datapackage_json_path = os.path.join(scenario_dir, "datapackage.json")
-    # read the datapackage.json file
-    with open(datapackage_json_path, "r") as f:
-        datapackage = json.load(f)
-    # define the path to the element csv file
-    element_path = os.path.join("data", "elements", element)
-    element_path = os.path.normpath(element_path)
-    # iterate through each resource in the datapackage file
-    for resource in datapackage["resources"]:
-        resource_path = resource["path"]
-        resource_path = os.path.normpath(resource_path)
-        # check if the resource path in the datapackage file matches the particular element path
-        if resource_path == element_path:
-            if "schema" in resource:
-                # store the resource schema
-                resource_schema = resource["schema"]
-                if "fields" in resource_schema:
-                    # store the resource field
-                    fields = resource_schema["fields"]
-                    # check if the output_parameters field already exists
-                    output_parameters_exist = any(
-                        field.get("name") == "output_parameters" for field in fields
-                    )
-                    if not output_parameters_exist:
-                        # if the output_parameters field doesn't exist, add it to the schema
-                        fields.append(
-                            {
-                                "name": "output_parameters",
-                                "type": "object",
-                                "format": "default",
-                            }
-                        )
-                        resource_schema["fields"] = fields
-                        resource["schema"] = resource_schema
-
-    # write the updated datapackage.json back to the file
-    with open(datapackage_json_path, "w") as f:
-        json.dump(datapackage, f, indent=4)
-    return
-
-
-def pre_processing_custom_attributes(
-    scenario_dir, element, element_path, element_df, custom_attributes
-):
+def pre_processing_custom_attributes(element_path, element_df, custom_attributes):
+    # ToDo: confirm if this function is needed, whether the attributes need to be added to
+    #  'output_parameters' or if this is not necessary
     """Updates the 'output_parameters' field in the CSV file for the specified element if custom
     attributes are defined.
 
-    :param scenario_dir: scenario directory path
-    :param element: csv filename
     :param element_path: path of the csv file
     :param element_df: dataframe containing data from the csv file
     :param custom_attributes: list of custom attributes included in the model (defined in compute.py)
@@ -335,9 +255,6 @@ def pre_processing_custom_attributes(
                     continue
     # write the updated dataframe back to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
-    # if custom attributes were found, update the datapackage.json file
-    if has_custom_attributes:
-        update_datapackage_json_custom_attributes(scenario_dir, element)
     return
 
 
@@ -373,7 +290,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
                 # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
                 # requirement)
                 pre_processing_custom_attributes(
-                    scenario_dir, element, element_path, element_df, custom_attributes
+                    element_path, element_df, custom_attributes
                 )
             elif moo is True:
                 pre_processing_moo()
