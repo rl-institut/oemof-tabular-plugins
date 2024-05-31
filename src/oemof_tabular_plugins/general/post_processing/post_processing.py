@@ -7,6 +7,9 @@ from oemof.tabular.postprocessing.core import Calculator
 from oemof.tabular.postprocessing import calculations as clc, naming
 from oemof_tabular_plugins.datapackage.post_processing import (
     construct_dataframe_from_results,
+    process_raw_results,
+    process_raw_inputs,
+    apply_calculations,
 )
 
 # ToDo: the functions below need proper testing and appropriate logging info for the user's understanding
@@ -654,12 +657,15 @@ def create_costs_table(all_scalars, results, capacities_df, storage_capacities_d
 
 
 class OTPCalculator(Calculator):
-    def __init__(self, input_parameters, energy_system):
+    def __init__(self, input_parameters, energy_system, dp_path):
         self.df_results = construct_dataframe_from_results(energy_system)
+        process_raw_results(self.df_results)
+        self.df_results = process_raw_inputs(self.df_results, dp_path)
+        apply_calculations(self.df_results)
         super().__init__(input_parameters, energy_system.results)
 
 
-def post_processing(params, es, results_path):
+def post_processing(params, es, results_path, dp_path):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
     """
@@ -667,9 +673,11 @@ def post_processing(params, es, results_path):
     :param params: energy system parameters
     :param es: oemof energy_system with results in it, ie es.results = processing.results(m) has been performed
     :param results_path: results directory path
+    :param dp_path: path to the datapackage.json file
     """
     # initiate calculator for post-processing
-    calculator = OTPCalculator(params, es)
+    calculator = OTPCalculator(params, es, dp_path)
+    print(calculator.df_results)
     results = es.results
     # calculate scalars using functions from clc module
     aggregated_flows = clc.AggregatedFlows(calculator).result

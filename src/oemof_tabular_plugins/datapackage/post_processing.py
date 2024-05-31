@@ -1,5 +1,75 @@
 import pandas as pd
+from datapackage import Package
 import oemof.solph as solph
+
+
+RAW_OUTPUTS = ["investments"]
+PROCESSED_RAW_OUTPUTS = ["flow_min", "flow_max", "aggregated_flow"]
+RAW_INPUTS = [
+    "marginal_cost",
+    "carrier_cost",
+    "capacity_cost",
+    "storage_capacity_cost",
+    "capacity",
+    "expendable",
+    "storage_capacity",
+    "min_capacity",
+    "max_capacity",
+    "efficiency",
+    "renewable_factor",
+    "emission_factor",
+]
+
+
+def compute_renewable_share(results_df, argument_names, col_name):
+    _check_arguments(results_df, argument_names, col_name)
+
+
+def compute_cO2_emissions(results_df, argument_names, col_name):
+    _check_arguments(results_df, argument_names, col_name)
+
+
+def _check_arguments(series, index_names, col_name):
+    """Check that all required argument are present in the DataFrame slice"""
+    for arg in index_names:
+        if arg not in series.index:
+            raise AttributeError(
+                f"The column {arg} is not present within the results DataFrame and is required to compute '{col_name}', listed in the calculations to be executed"
+            )
+
+
+def compute_variable_costs(results_df, argument_names, col_name):
+    """TODO write a docstring here"""
+    _check_arguments(results_df, argument_names, col_name)
+    return results_df.aggregated_flow * (
+        results_df.marginal_cost.astype("float")
+        + results_df.carrier_cost.astype("float")
+    )
+
+
+CALCULATED_OUTPUTS = [
+    {
+        "column_name": "renewable_share",
+        "operation": compute_renewable_share,
+        "description": "The renewable share is computed from the flow and the renewable factor",
+        "argument_names": [
+            "aggregated_flow",
+            "renewable_factor",
+        ],
+    },
+    {
+        "column_name": "cO2_emmissions",
+        "operation": compute_cO2_emissions,
+        "description": "Compute the amount of CO2 emitted by each component of the system.",
+        "argument_names": ["aggregated_flow", "emission_factor", "tech"],
+    },
+    {
+        "column_name": "variable_costs",
+        "operation": compute_variable_costs,
+        "description": "this output is calculated ...",
+        "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
+    },
+]
 
 
 def infer_busses_carrier(energy_system):
@@ -184,3 +254,86 @@ def construct_dataframe_from_results(energy_system, bus_carrier=True, asset_type
         df.sort_index(inplace=True)
 
     return df
+
+
+def process_raw_results(df_results):
+    """Compute the min, max and aggregated flows for each asset-bus pair
+
+    Parameters
+    ----------
+    df_results: pandas DataFrame
+        the outcome of construct_dataframe_from_results()
+
+    Returns
+    -------
+    """
+    temp = df_results[df_results.columns.difference(RAW_OUTPUTS)]
+    df_results["flow_min"] = temp.min(axis=1)
+    df_results["flow_max"] = temp.max(axis=1)
+    df_results["aggregated_flow"] = temp.sum(axis=1)
+
+
+def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS):
+    """Find the input parameters from the datapackage.json file
+
+
+    Parameters
+    ----------
+    df_results: pandas DataFrame
+        the outcome of construct_dataframe_from_results()
+    dp_path: string
+        path to the datapackage.json file
+    raw_inputs: list of string
+        list of parameters from the datapackage one would like to collect for result post-processing
+
+    Returns
+    -------
+
+    """
+    p = Package(dp_path)
+    inputs_df = None
+    for r in p.resources:
+        if "elements" in r.descriptor["path"] and r.name != "bus":
+            df = pd.DataFrame.from_records(r.read(keyed=True), index="name")
+            resource_inputs = df[list(set(raw_inputs).intersection(set(df.columns)))].T
+
+            if inputs_df is None:
+                if not resource_inputs.empty:
+                    inputs_df = resource_inputs
+            else:
+                inputs_df = inputs_df.join(resource_inputs)
+
+    # append the inputs of the datapackage to the results DataFrame
+    inputs_df.T.index.name = "asset"
+    return df_results.join(inputs_df.T.apply(pd.to_numeric, downcast="float"))
+
+
+def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
+    """Apply calculation and populate the columns of the results_df
+
+    Parameters
+    ----------
+    df_results: pandas DataFrame
+        the outcome of process_raw_input()
+    calculations: dict
+        dict containing
+            "column_name" (the name of the new column within results_df),
+            "operation" (handle of a function which will be applied row-wise to results_df),
+            "description" (a string for documentation purposes)
+            and "argument_names" (list of columns needed within results_df)
+
+    Returns
+    -------
+
+    """
+    for calc in calculations:
+        var_name = calc["column_name"]
+        try:
+            results_df[var_name] = results_df.apply(
+                calc["operation"],
+                argument_names=calc["argument_names"],
+                col_name=var_name,
+                axis=1,
+            )
+        except AttributeError as e:
+            print(e)

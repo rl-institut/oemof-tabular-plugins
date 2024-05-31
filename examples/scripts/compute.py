@@ -26,7 +26,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["general_add_cost_inputs"]
+scenarios = ["wefe_pv_panel"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
@@ -87,6 +87,8 @@ for scenario in scenarios:
     results = m.results()
     es.results = processing.results(m)
 
-    post_processing(params, es, results_path)
+    post_processing(
+        params, es, results_path, dp_path=os.path.join(scenario_dir, "datapackage.json")
+    )
 
 print("done")
