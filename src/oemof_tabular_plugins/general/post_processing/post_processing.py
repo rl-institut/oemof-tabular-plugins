@@ -5,6 +5,9 @@ import numpy as np
 import warnings
 from oemof.tabular.postprocessing.core import Calculator
 from oemof.tabular.postprocessing import calculations as clc, naming
+from oemof_tabular_plugins.datapackage.post_processing import (
+    construct_dataframe_from_results,
+)
 
 # ToDo: the functions below need proper testing and appropriate logging info for the user's understanding
 # NOTE: the post-processing module is expected to change once the main multi-index dataframe is created, so
@@ -650,18 +653,24 @@ def create_costs_table(all_scalars, results, capacities_df, storage_capacities_d
     return costs_df
 
 
-def post_processing(params, results, results_path):
+class OTPCalculator(Calculator):
+    def __init__(self, input_parameters, energy_system):
+        self.df_results = construct_dataframe_from_results(energy_system)
+        super().__init__(input_parameters, energy_system.results)
+
+
+def post_processing(params, es, results_path):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
     """
     The main post-processing function extracts various scalar and timeseries data and stores it in CSV files.
     :param params: energy system parameters
-    :param results: oemof model results
+    :param es: oemof energy_system with results in it, ie es.results = processing.results(m) has been performed
     :param results_path: results directory path
     """
     # initiate calculator for post-processing
-    calculator = Calculator(params, results)
-
+    calculator = OTPCalculator(params, es)
+    results = es.results
     # calculate scalars using functions from clc module
     aggregated_flows = clc.AggregatedFlows(calculator).result
     storage_losses = clc.StorageLosses(calculator).result
@@ -768,4 +777,4 @@ def post_processing(params, results, results_path):
     # save the DataFrame to a CSV file
     costs_df.to_csv(filepath_name_costs, index=False)
 
-    return
+    return calculator

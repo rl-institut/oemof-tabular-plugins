@@ -1,5 +1,6 @@
 import os
 from oemof.solph import EnergySystem, Model
+from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
 
 # TODO this should be with from oemof.tabular.datapackage import building when https://github.com/oemof/oemof-tabular/pull/173 is merged
@@ -84,7 +85,8 @@ for scenario in scenarios:
     # extract parameters and results
     params = parameter_as_dict(es)
     results = m.results()
+    es.results = processing.results(m)
 
-    post_processing(params, results, results_path)
+    post_processing(params, es, results_path)
 
 print("done")
