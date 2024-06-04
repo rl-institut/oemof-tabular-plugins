@@ -1,0 +1,2 @@
+name;type;carrier;tech;capacity;capacity_cost;marginal_cost;carrier_cost;solar_bus;electricity_bus;biomass_bus;t_air;ghi;lat;expandable
+apv-system;apv-system;solar-energy;transformer;0;0;0;0;solar-energy-bus;electricity-bus;biomass-bus;t-air;ghi;16.6;False

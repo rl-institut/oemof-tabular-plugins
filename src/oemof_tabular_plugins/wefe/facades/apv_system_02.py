@@ -1,6 +1,6 @@
-# TODO: assign water_bus output independent of solar_bus (absolute output instead of conversion factor)
-# TODO: install bifacial radiance (rather get rid of it anyway)
+# TODO: include water (buses, balance, ARID factor)
 # TODO: fix documentation
+# TODO: compute.py: Filenotfounderror for geometry.json
 
 from dataclasses import field
 from typing import Sequence, Union
@@ -18,8 +18,6 @@ import numpy as np
 import pandas as pd
 import json
 from scipy.interpolate import interp1d
-import os
-from pathlib import Path
 
 
 @dataclass_facade
@@ -84,7 +82,7 @@ class APVSystem(Converter, Facade):
 
     biomass_bus: Bus
 
-    water_bus: Bus
+    #water_bus: Bus
 
     carrier: str
 
@@ -134,7 +132,7 @@ class APVSystem(Converter, Facade):
             x = 1.036  # module width (x = E/W)
             # IBC minimum slope (by means of PV: tilt) for proper rainwater runoff
             min_slope = 0.25 / 12
-            min_tilt = np.ceil(np.degrees(np.atan(min_slope)))
+            min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
             # tilt should ideally be close to latitude, but allow for rainwater runoff
             tilt = max(round(abs(lat)), min_tilt)
             rad_tilt = np.radians(tilt)
@@ -152,7 +150,7 @@ class APVSystem(Converter, Facade):
             """
 
             # Load the geometry data
-            filepath = 'src/oemof_tabular_plugins/wefe/global_specs/geometry.json'
+            filepath = 'oemof_tabular_plugins/wefe/global_specs/geometry.json'
 
             with open(filepath, 'r') as f:
                 geometry = json.load(f)
@@ -367,6 +365,8 @@ class APVSystem(Converter, Facade):
             instance.biomass_efficiency = df['biomass_efficiency']
             instance.pv_efficiency = df['pv_efficiency']
 
+            return instance
+
         apv_production(self)
 
         self.conversion_factors.update(
@@ -379,7 +379,7 @@ class APVSystem(Converter, Facade):
 
         self.inputs.update(
             {
-                self.from_bus: Flow(
+                self.solar_bus: Flow(
                     variable_costs=self.carrier_cost, **self.input_parameters
                 )
             }
