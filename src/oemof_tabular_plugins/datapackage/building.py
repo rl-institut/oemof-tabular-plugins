@@ -57,7 +57,7 @@ def map_sequence_profiles_to_resource_name(p, excluded_profiles=("timeindex",)):
     return sequences_mapping
 
 
-def infer_resource_foreign_keys(resource, sequences_profiles_to_resource):
+def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses):
     """Find out the foreign keys within a resource fields
 
     Look through all field of a resource which are of type 'string' if any of their values are matching a profile header in any of the sequences resources
@@ -82,7 +82,7 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource):
 
     for field in r.schema.fields:
         if field.type == "string":
-            for potential_fk in data.dropna()[field.name].unique():
+            for potential_fk in data[field.name].dropna().unique():
 
                 if potential_fk in sequences_profiles_to_resource:
                     # this is actually a wrong format and should be with a "fields" field under the "reference" fields
@@ -96,6 +96,14 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource):
 
                     if fk not in r.descriptor["schema"]["foreignKeys"]:
                         r.descriptor["schema"]["foreignKeys"].append(fk)
+                if potential_fk in busses:
+                    fk = {
+                        "fields": field.name,
+                        "reference": {"resource": "bus", "fields": "name"},
+                    }
+                    if fk not in r.descriptor["schema"]["foreignKeys"]:
+                        r.descriptor["schema"]["foreignKeys"].append(fk)
+
     r.commit()
     return r
 
@@ -114,9 +122,13 @@ def infer_package_foreign_keys(package):
     p = package
     sequences_profiles_to_resource = map_sequence_profiles_to_resource_name(p)
 
+    bus_data = pd.DataFrame.from_records(p.get_resource("bus").read(keyed=True))
+
     for r in p.resources:
-        if "/elements/" in r.descriptor["path"]:
-            r = infer_resource_foreign_keys(r, sequences_profiles_to_resource)
+        if os.sep + "elements" + os.sep in r.descriptor["path"] and r.name != "bus":
+            r = infer_resource_foreign_keys(
+                r, sequences_profiles_to_resource, busses=bus_data.name.to_list()
+            )
             p.remove_resource(r.name)
             p.add_resource(r.descriptor)
 
@@ -136,7 +148,7 @@ def infer_metadata_from_data(
     # Infer the fields from the package data
     path = os.path.abspath(path)
     p0 = Package(base_path=path)
-    p0.infer(os.path.join(path, "**"+os.sep+"*.csv"))
+    p0.infer(os.path.join(path, "**" + os.sep + "*.csv"))
     p0.commit()
     p0.save(os.path.join(path, metadata_filename))
 
