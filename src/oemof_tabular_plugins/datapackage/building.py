@@ -125,7 +125,11 @@ def infer_package_foreign_keys(package):
     bus_data = pd.DataFrame.from_records(p.get_resource("bus").read(keyed=True))
 
     for r in p.resources:
-        if os.sep + "elements" + os.sep in r.descriptor["path"] and r.name != "bus":
+        # it should be from the folder "elements" and the resource should not be bus.csv
+        if (
+            "/elements/" in r.descriptor["path"]
+            or os.sep + "elements" + os.sep in r.descriptor["path"]
+        ) and r.name != "bus":
             r = infer_resource_foreign_keys(
                 r, sequences_profiles_to_resource, busses=bus_data.name.to_list()
             )
@@ -169,7 +173,6 @@ def infer_metadata_from_data(
                     foreign_keys[fk_descriptor] = [resource.name]
 
     for r in p0.resources:
-        print(r.descriptor["path"])
         if os.sep + "elements" + os.sep in r.descriptor["path"]:
             infer_resource_basic_foreign_keys(r)
     # this function saves the metadata of the package in json format
