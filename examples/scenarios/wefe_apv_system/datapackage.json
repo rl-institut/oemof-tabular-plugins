@@ -94,9 +94,24 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "t_air",
+                        "fields": "solar_bus",
                         "reference": {
-                            "resource": "apv_system_profile"
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "electricity_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "biomass_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
                         }
                     },
                     {
@@ -352,7 +367,27 @@
                         "format": "default"
                     },
                     {
-                        "name": "t-air",
+                        "name": "t_air",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_dp",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "e",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tp",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "windspeed",
                         "type": "number",
                         "format": "default"
                     }
@@ -407,7 +442,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "electricity-load-profile",
+                        "name": "elec-load-profile",
                         "type": "number",
                         "format": "default"
                     }

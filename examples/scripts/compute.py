@@ -16,7 +16,7 @@ from oemof_tabular_plugins.general import (
     pre_processing,
     logger,
 )
-from oemof_tabular_plugins.wefe.facades import PVPanel
+from oemof_tabular_plugins.wefe.facades import APVSystem
 
 
 # -------------- RELEVANT PATHS --------------
@@ -25,7 +25,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["general_add_cost_inputs"]
+scenarios = ["wefe_apv_system"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
@@ -35,8 +35,8 @@ wacc = 0.06
 custom_attributes = ["emission_factor", "renewable_factor", "land_requirement"]
 # set whether the multi-objective optimization should be performed
 moo = False
-# add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
-TYPEMAP["pv-panel"] = PVPanel
+# add APV system (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
+TYPEMAP["apv-system"] = APVSystem
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:

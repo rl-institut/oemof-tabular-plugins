@@ -1,0 +1,17 @@
+name,var_name,var_value,region,type,carrier,tech
+back-up-elec,flow_out_bus,0.0,,dispatchable,electricity,source
+back-up-elec,invest_costs_out_bus,0.0,,dispatchable,electricity,source
+back-up-elec,invest_out_bus,0.0,,dispatchable,electricity,source
+back-up-elec,summed_variable_costs_out_bus,0.0,,dispatchable,electricity,source
+solar-radiation,flow_out_energy,0.008159919429999999,,dispatchable,solar-energy,source
+solar-radiation,invest_costs_out_energy,0.0,,dispatchable,solar-energy,source
+solar-radiation,invest_out_energy,11.415757,,dispatchable,solar-energy,source
+apv-system,flow_in_energy,0.008159919429999999,,apv-system,solar-energy,transformer
+apv-system,flow_out_bus,0.0,,apv-system,solar-energy,transformer
+apv-system,flow_out_bus,0.0028803099999999996,,apv-system,solar-energy,transformer
+apv-system,invest_costs_out_bus,0.0,,apv-system,solar-energy,transformer
+apv-system,invest_out_bus,0.000141433,,apv-system,solar-energy,transformer
+biomass-eccess,flow_in_bus,0.0,,excess,,
+demand,flow_in_bus,0.0028803099999999996,,load,,
+electricity-excess,flow_in_bus,0.0,,excess,,
+system,total_system_cost,0.0,,,,

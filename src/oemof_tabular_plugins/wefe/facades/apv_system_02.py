@@ -20,6 +20,10 @@ import json
 from scipy.interpolate import interp1d
 
 
+import os
+
+GEOMETRY_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "global_specs", "geometry.json")
+
 @dataclass_facade
 class APVSystem(Converter, Facade):
     r"""APV System unit with 1 input and 2 outputs.
@@ -82,7 +86,7 @@ class APVSystem(Converter, Facade):
 
     biomass_bus: Bus
 
-    #water_bus: Bus
+    # water_bus: Bus
 
     carrier: str
 
@@ -150,9 +154,10 @@ class APVSystem(Converter, Facade):
             """
 
             # Load the geometry data
-            filepath = 'oemof_tabular_plugins/wefe/global_specs/geometry.json'
 
-            with open(filepath, 'r') as f:
+
+
+            with open(GEOMETRY_PATH, 'r') as f:
                 geometry = json.load(f)
 
             # Convert lists back to numpy arrays and ensure numerical types
@@ -183,7 +188,7 @@ class APVSystem(Converter, Facade):
                     fbifacial_interp_funcs.append(interp1d(lats, fbifacials, kind='linear'))
                     fshading_interp_funcs.append(interp1d(lats, fshadings, kind='linear'))
 
-                # Calculating new values for the given latitude
+                # Calculating new values for the given latitude, convert back from numpy array
                 new_fbifacials = [interp_func(lat).item() for interp_func in fbifacial_interp_funcs]
                 new_fshadings = [interp_func(lat).item() for interp_func in fshading_interp_funcs]
 
@@ -269,9 +274,12 @@ class APVSystem(Converter, Facade):
             Calculate biomass and PV efficiency as full-year hourly conversion factor series
             """
 
+            # raise error if air temperature list and solar irradiance list are different lengths
+            if len(instance.ghi) != len(instance.t_air):
+                raise ValueError("Length mismatch between t_air and ghi profiles.")
             # create date-time-indexed DataFrame with ghi and t_air as columns
             date_time_index = pd.date_range(
-                "1/1/2022", periods=8760, freq="H")
+                "1/1/2022", periods=len(instance.ghi), freq="h")
             df = pd.DataFrame(index=date_time_index)
             df['ghi'] = instance.ghi
             df['t_air'] = instance.t_air
@@ -292,7 +300,7 @@ class APVSystem(Converter, Facade):
             # Transfer sowing date into Timestamp object
             sowing_date = pd.to_datetime(instance.sowing_date + str(" 01:00:00"))
 
-            # Extract PV parameters
+            # Define PV parameters
             p_rated = 270  # [Wp]
             rad_ref = 1000  # [W/m²]
             t_ref = 25  # [°C]
@@ -328,6 +336,8 @@ class APVSystem(Converter, Facade):
                     delta_cum_temp = 0
                 elif t_air > t_base:
                     delta_cum_temp = (t_air - t_base) / 24  # SIMPLE crop model has daily temp values, convert to hourly
+                else:
+                    delta_cum_temp = 0
                 return delta_cum_temp
 
             df['cum_temp'] = df.apply(

@@ -1,4 +1,4 @@
 name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;profile;expandable;capex;opex_fix;lifetime
-wind;volatile;wind;onshore;0.0;;elec-bus;0.0;wind-profile;True;1362500;27500;20
-pv;volatile;solar;pv;0.0;;elec-bus;0.0;pv-profile;True;1050000;10500;30
-hydro;volatile;hydro;hydro;0.0;;elec-bus;0.0;1;True;2150000;47300;40
+wind;volatile;wind;onshore;0.0;146288.96;elec-bus;0.0;wind-profile;True;1362500;27500;20
+pv;volatile;solar;pv;0.0;86781.36;elec-bus;0.0;pv-profile;True;1050000;10500;30
+hydro;volatile;hydro;hydro;0.0;190192.3;elec-bus;0.0;1;True;2150000;47300;40

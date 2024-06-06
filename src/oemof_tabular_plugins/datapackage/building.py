@@ -175,11 +175,13 @@ def infer_metadata_from_data(
     for r in p0.resources:
         if os.sep + "elements" + os.sep in r.descriptor["path"]:
             infer_resource_basic_foreign_keys(r)
+
+    print(foreign_keys)
     # this function saves the metadata of the package in json format
     building.infer_metadata(
         package_name=package_name,
         path=path,
-        foreign_keys=foreign_keys,
+        #foreign_keys=foreign_keys,
         metadata_filename=metadata_filename,
     )
 

@@ -1,2 +1,2 @@
 name;type;carrier;tech;capacity;capacity_cost;marginal_cost;carrier_cost;efficiency;from_bus;to_bus;expandable;capex;opex_fix;lifetime
-gas-pp;conversion;gas;ocgt;50;;1.5;0;0.48;gas-bus;elec-bus;False;975000;11625;20
+gas-pp;conversion;gas;ocgt;50;96629.94;1.5;0;0.48;gas-bus;elec-bus;False;975000;11625;20
