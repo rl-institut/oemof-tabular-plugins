@@ -659,7 +659,7 @@ def create_costs_table(all_scalars, results, capacities_df, storage_capacities_d
 class OTPCalculator(Calculator):
     def __init__(self, input_parameters, energy_system, dp_path):
         self.df_results = construct_dataframe_from_results(energy_system)
-        process_raw_results(self.df_results)
+        self.df_results = process_raw_results(self.df_results)
         self.df_results = process_raw_inputs(self.df_results, dp_path)
         apply_calculations(self.df_results)
         super().__init__(input_parameters, energy_system.results)

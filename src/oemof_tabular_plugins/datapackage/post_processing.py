@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 from datapackage import Package
 import oemof.solph as solph
@@ -21,32 +23,32 @@ RAW_INPUTS = [
 ]
 
 
-def compute_renewable_share(results_df, argument_names, col_name):
-    _check_arguments(results_df, argument_names, col_name)
+def compute_renewable_share(results_df):
+    pass
 
 
-def compute_cO2_emissions(results_df, argument_names, col_name):
-    _check_arguments(results_df, argument_names, col_name)
+def compute_cO2_emissions(results_df):
+    pass
 
 
-def _check_arguments(series, index_names, col_name):
-    """Check that all required argument are present in the DataFrame slice"""
-    for arg in index_names:
-        if arg not in series.index:
+def _check_arguments(df, column_names, col_name):
+    """Check that all required argument are present in the DataFrame columns"""
+    for arg in column_names:
+        if arg not in df.columns:
             raise AttributeError(
                 f"The column {arg} is not present within the results DataFrame and is required to compute '{col_name}', listed in the calculations to be executed"
             )
 
 
-def compute_variable_costs(results_df, argument_names, col_name):
+def compute_variable_costs(results_df):
     """TODO write a docstring here"""
-    _check_arguments(results_df, argument_names, col_name)
     return results_df.aggregated_flow * (
-        results_df.marginal_cost.astype("float")
-        + results_df.carrier_cost.astype("float")
+        results_df.marginal_cost  # .astype("float")
+        + results_df.carrier_cost  # .astype("float")
     )
 
 
+# TODO turn the dict into a class simular to the one of Calculation of oemof.tabular
 CALCULATED_OUTPUTS = [
     {
         "column_name": "renewable_share",
@@ -70,6 +72,30 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
     },
 ]
+
+# Add docstrings from function handles for documentation purposes
+for calc in CALCULATED_OUTPUTS:
+    func_handle = calc.get("operation", None)
+    if callable(func_handle):
+        calc["docstring"] = func_handle.__doc__
+    else:
+        calc["docstring"] = ""
+
+
+def _validate_calculation(calculation):
+    """Check if the parameters of a calculation are there and of the right format"""
+    var_name = calculation.get("column_name", None)
+    fhandle = calculation.get("operation", None)
+
+    if var_name is None:
+        raise ValueError(
+            f"The 'column_name' under which the calculation should be saved in the results DataFrame is missing from the calculation dict: {calc}. Please check your input or look at help(apply_calculations) for the formatting of the calculation dict"
+        )
+
+    if not callable(fhandle):
+        raise ValueError(
+            f"The provided function handle for calculation of column '{var_name}' is not callable"
+        )
 
 
 def infer_busses_carrier(energy_system):
@@ -271,6 +297,7 @@ def process_raw_results(df_results):
     df_results["flow_min"] = temp.min(axis=1)
     df_results["flow_max"] = temp.max(axis=1)
     df_results["aggregated_flow"] = temp.sum(axis=1)
+    return df_results
 
 
 def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS):
@@ -315,8 +342,8 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
     ----------
     df_results: pandas DataFrame
         the outcome of process_raw_input()
-    calculations: dict
-        dict containing
+    calculations: list of dict
+        each dict should contain
             "column_name" (the name of the new column within results_df),
             "operation" (handle of a function which will be applied row-wise to results_df),
             "description" (a string for documentation purposes)
@@ -327,13 +354,16 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
 
     """
     for calc in calculations:
-        var_name = calc["column_name"]
+        _validate_calculation(calc)
+        var_name = calc.get("column_name")
+        argument_names = calc.get("argument_names", [])
+        func_handle = calc.get("operation")
         try:
-            results_df[var_name] = results_df.apply(
-                calc["operation"],
-                argument_names=calc["argument_names"],
-                col_name=var_name,
-                axis=1,
-            )
+            _check_arguments(results_df, column_names=argument_names, col_name=var_name)
         except AttributeError as e:
-            print(e)
+            logging.warning(e)
+
+        results_df[var_name] = results_df.apply(
+            func_handle,
+            axis=1,
+        )
