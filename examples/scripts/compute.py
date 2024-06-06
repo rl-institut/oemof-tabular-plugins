@@ -17,7 +17,7 @@ from oemof_tabular_plugins.general import (
     pre_processing,
     logger,
 )
-from oemof_tabular_plugins.wefe.facades import PVPanel
+from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO
 
 
 # -------------- RELEVANT PATHS --------------
@@ -26,7 +26,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["wefe_pv_panel"]
+scenarios = ["wefe_reverse_osmosis_test"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
@@ -38,6 +38,7 @@ custom_attributes = ["emission_factor", "renewable_factor", "land_requirement"]
 moo = False
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
+TYPEMAP["mimo"] = MIMO
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:

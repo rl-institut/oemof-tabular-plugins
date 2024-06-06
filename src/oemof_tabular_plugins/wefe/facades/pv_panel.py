@@ -150,6 +150,11 @@ class PVPanel(Converter, Facade):
             }
         )
 
+        def processing_raw_inputs(self, resource, results_df):
+            # function to apply on df from above
+
+            return results_df
+
         def validate_datapackage(self, resource):
             # modify the resource (datapackage.resource)
             # should it return the resource?

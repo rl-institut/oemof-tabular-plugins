@@ -113,11 +113,8 @@ def infer_package_foreign_keys(package, typemap=None):
 
     Parameters
     ----------
-    package
-    typemap
-
-    Returns
-    -------
+    package: scenario datapackage
+    typemap: facade typemap
 
     """
     if typemap is None:
@@ -139,8 +136,11 @@ def infer_package_foreign_keys(package, typemap=None):
             )
 
             if r.name in typemap:
-                # TODO here test if facade_type has the method 'validate_datapackage'
-                r = typemap[r.name].validate_datapackage(r)
+                facade_type = typemap[r.name]
+                # test if facade_type has the method 'validate_datapackage'
+                if hasattr(facade_type, "validate_datapackage"):
+                    # apply the method if it exists
+                    facade_type.validate_datapackage(r)
 
             p.remove_resource(r.name)
             p.add_resource(r.descriptor)

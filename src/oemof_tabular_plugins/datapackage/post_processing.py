@@ -119,6 +119,9 @@ def infer_busses_carrier(energy_system):
                 if hasattr(node, attribute):
 
                     bus_label = getattr(node, attribute).label
+                    print(
+                        f"Node: {node}, Attribute: {attribute}, Bus Label: {bus_label}"
+                    )  # Debug print
                     if bus_label in busses_carrier:
                         if busses_carrier[bus_label] != node.carrier:
                             raise ValueError(
@@ -300,7 +303,7 @@ def process_raw_results(df_results):
     return df_results
 
 
-def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS):
+def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None):
     """Find the input parameters from the datapackage.json file
 
 
@@ -317,6 +320,9 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS):
     -------
 
     """
+    if typemap is None:
+        typemap = {}
+
     p = Package(dp_path)
     inputs_df = None
     for r in p.resources:
@@ -329,6 +335,10 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS):
                     inputs_df = resource_inputs
             else:
                 inputs_df = inputs_df.join(resource_inputs)
+
+                if r.name in typemap:
+                    # TODO here test if facade_type has the method 'validate_datapackage'
+                    inputs_df = typemap[r.name].processing_raw_inputs(r, inputs_df)
 
     # append the inputs of the datapackage to the results DataFrame
     inputs_df.T.index.name = "asset"
