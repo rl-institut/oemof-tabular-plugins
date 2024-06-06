@@ -1,0 +1,8 @@
+From,To,Aggregated Flow
+ac-elec-bus,mimo,150.0
+electricity-import,ac-elec-bus,150.0
+mimo,brine-bus,90.0
+mimo,permeate-bus,60.0
+permeate-bus,permeate-demand,60.0
+seawater-bus,mimo,120.0
+seawater-import,seawater-bus,120.0

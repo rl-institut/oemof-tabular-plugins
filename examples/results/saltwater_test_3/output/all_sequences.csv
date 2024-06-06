@@ -1,0 +1,7 @@
+source,ac-elec-bus,electricity-import,mimo,mimo,permeate-bus,seawater-bus,seawater-import
+target,mimo,ac-elec-bus,brine-bus,permeate-bus,permeate-demand,mimo,seawater-bus
+var_name,flow,flow,flow,flow,flow,flow,flow
+2021-01-01 00:00:00,50.0,50.0,15.0,10.0,10.0,0.0,0.0
+2021-01-01 01:00:00,100.0,100.0,30.0,20.0,20.0,0.0,0.0
+2021-01-01 02:00:00,150.0,150.0,45.0,30.0,30.0,0.0,0.0
+2021-01-01 03:00:00,,,,,,,

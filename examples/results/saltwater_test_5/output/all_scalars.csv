@@ -1,0 +1,11 @@
+name,var_name,var_value,region,type,carrier,tech
+electricity-import,flow_out_elec,150.0,,commodity,electricity,
+electricity-import,summed_variable_costs_out_elec,49.5,,commodity,electricity,
+seawater-import,flow_out_bus,120.0,,commodity,seawater,
+seawater-import,summed_variable_costs_out_bus,39.6,,commodity,seawater,
+mimo,flow_in_bus,120.0,,,water,mimo
+mimo,flow_in_elec,150.0,,,water,mimo
+mimo,flow_out_bus,90.0,,,water,mimo
+mimo,flow_out_bus,60.0,,,water,mimo
+permeate-demand,flow_in_bus,60.0,DE,load,,
+system,total_system_cost,89.1,,,,

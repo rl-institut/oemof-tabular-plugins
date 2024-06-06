@@ -1,0 +1,5 @@
+Component,Type,Carrier,Existing Capacity,Capacity Potential,Optimizable,Optimized Capacity,Total Capacity
+electricity-import,commodity,electricity,,,,,0
+seawater-import,commodity,seawater,,,,,0
+mimo,,water,,inf,True,,0
+permeate-demand,load,,,,,,0
