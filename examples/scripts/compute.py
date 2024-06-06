@@ -55,6 +55,7 @@ for scenario in scenarios:
     otp_building.infer_metadata_from_data(
         package_name=scenario,
         path=scenario_dir,
+        typemap=TYPEMAP,
     )
 
     # create energy system object from the datapackage

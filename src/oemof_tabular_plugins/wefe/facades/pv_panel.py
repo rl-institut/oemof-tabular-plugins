@@ -149,3 +149,8 @@ class PVPanel(Converter, Facade):
                 )
             }
         )
+
+        def validate_datapackage(self, resource):
+            # modify the resource (datapackage.resource)
+            # should it return the resource?
+            pass
