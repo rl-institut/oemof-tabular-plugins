@@ -658,10 +658,13 @@ def create_costs_table(all_scalars, results, capacities_df, storage_capacities_d
 
 class OTPCalculator(Calculator):
     def __init__(self, input_parameters, energy_system, dp_path):
-        self.df_results = construct_dataframe_from_results(energy_system)
-        self.df_results = process_raw_results(self.df_results)
-        self.df_results = process_raw_inputs(self.df_results, dp_path)
-        apply_calculations(self.df_results)
+        try:
+            self.df_results = construct_dataframe_from_results(energy_system)
+            self.df_results = process_raw_results(self.df_results)
+            self.df_results = process_raw_inputs(self.df_results, dp_path)
+            apply_calculations(self.df_results)
+        except Exception as e:
+            print(e)
         super().__init__(input_parameters, energy_system.results)
 
 
@@ -740,13 +743,13 @@ def post_processing(params, es, results_path, dp_path):
     kpi_variables = [
         "specific_system_cost",
         "renewable_share",
-        "total_emissions",
+        #    "total_emissions",
         "total_land_requirement",
     ]
     kpi_values = [
         calculate_specific_system_cost(all_scalars, total_system_costs),
         calculate_renewable_share(results),
-        calculate_total_emissions(results),
+        #    calculate_total_emissions(results),
         calculate_total_land_requirement(results, capacities_df, storage_capacities_df),
     ]
     # filter out None values

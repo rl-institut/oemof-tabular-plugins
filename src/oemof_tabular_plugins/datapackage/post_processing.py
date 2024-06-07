@@ -115,15 +115,18 @@ def infer_busses_carrier(energy_system):
 
     for node in energy_system.nodes:
         if hasattr(node, "carrier"):
-            for attribute in ("bus", "from_bus"):
+            # quick fix to work for MIMO component
+            # ToDo: assign carrier to busses instead of components to avoid problems
+            for attribute in ("bus", "from_bus", "from_bus_0", "to_bus_1"):
                 if hasattr(node, attribute):
 
                     bus_label = getattr(node, attribute).label
-                    print(
-                        f"Node: {node}, Attribute: {attribute}, Bus Label: {bus_label}"
-                    )  # Debug print
                     if bus_label in busses_carrier:
                         if busses_carrier[bus_label] != node.carrier:
+                            print(
+                                "busses carrier[bus label]", busses_carrier[bus_label]
+                            )
+                            print("node.carrier: ", node.carrier)
                             raise ValueError(
                                 f"Two different carriers ({busses_carrier[bus_label]}, {node.carrier}) are associated to the same bus '{bus_label}'"
                             )
@@ -255,13 +258,17 @@ def construct_dataframe_from_results(energy_system, bus_carrier=True, asset_type
         investments = []
         flows = []
         for x, res in solph.views.convert_keys_to_strings(results).items():
-            if x[1] != "None":
+            # filter out entries where the second element of the tuple is 'None' and ensure the
+            # tuple has exactly two elements
+            if x[1] != "None" and len(x) == 2:
                 col_name = res["sequences"].columns[0]
                 ts.append(
                     res["sequences"].rename(
                         columns={col_name: x, "variable_name": "timesteps"}
                     )
                 )
+                # here change this information for flow_tuple in ('mimo', 'in_group_0', '0')
+                print(x)
                 flows.append(
                     construct_multi_index_levels(
                         x, busses_info=busses_info, assets_info=assets_info
@@ -324,11 +331,14 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
         typemap = {}
 
     p = Package(dp_path)
-    inputs_df = None
+    # initialise inputs_df with raw inputs as indexes
+    inputs_df = pd.DataFrame(index=raw_inputs)
+    # inputs_df = None
     for r in p.resources:
         if "elements" in r.descriptor["path"] and r.name != "bus":
             df = pd.DataFrame.from_records(r.read(keyed=True), index="name")
             resource_inputs = df[list(set(raw_inputs).intersection(set(df.columns)))].T
+            print("resource inputs: ", resource_inputs)
 
             if inputs_df is None:
                 if not resource_inputs.empty:
@@ -336,10 +346,12 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
             else:
                 inputs_df = inputs_df.join(resource_inputs)
 
-                if r.name in typemap:
-                    # TODO here test if facade_type has the method 'validate_datapackage'
-                    inputs_df = typemap[r.name].processing_raw_inputs(r, inputs_df)
+            # if r.name in typemap:
+            # TODO here test if facade_type has the method 'validate_datapackage'
+            #   inputs_df = typemap[r.name].processing_raw_inputs(r, inputs_df)
 
+    # kick out the lines where all values are NaN
+    inputs_df = inputs_df.dropna(how="all")
     # append the inputs of the datapackage to the results DataFrame
     inputs_df.T.index.name = "asset"
     return df_results.join(inputs_df.T.apply(pd.to_numeric, downcast="float"))
