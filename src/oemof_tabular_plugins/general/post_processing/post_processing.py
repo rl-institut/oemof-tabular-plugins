@@ -723,7 +723,7 @@ def post_processing(params, results, results_path):
     kpi_variables = [
         "specific_system_cost",
         "renewable_share",
-        "total_emissions",
+        # "total_emissions",
         "total_land_requirement",
     ]
     kpi_values = [

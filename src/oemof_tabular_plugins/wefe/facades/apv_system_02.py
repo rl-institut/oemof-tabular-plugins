@@ -1,6 +1,5 @@
 # TODO: include water (buses, balance, ARID factor)
 # TODO: fix documentation
-# TODO: compute.py: Filenotfounderror for geometry.json
 
 from dataclasses import field
 from typing import Sequence, Union

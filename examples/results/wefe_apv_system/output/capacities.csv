@@ -1,7 +1,7 @@
 Component,Type,Carrier,Existing Capacity,Capacity Potential,Optimizable,Optimized Capacity,Total Capacity
-back-up-elec,dispatchable,electricity,0,inf,True,0.0,0.0
-solar-radiation,dispatchable,solar-energy,0,inf,True,11.415757,11.415757
-apv-system,apv-system,solar-energy,0,inf,True,0.000141433,0.000141433
-biomass-eccess,excess,,,,,,0.0
+back-up-elec,dispatchable,electricity,0,inf,True,47.277356,47.277356
+solar-radiation,dispatchable,solar-energy,0,inf,True,8256.0437,8256.0437
+apv-system,apv-system,solar-energy,0,inf,True,41.858063,41.858063
+biomass-excess,excess,,,,,,0.0
 demand,load,,,,,,0.0
 electricity-excess,excess,,,,,,0.0

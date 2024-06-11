@@ -1,24 +1,24 @@
 {
     "profile": "tabular-data-package",
-    "name": "wefe_apv_system",
+    "name": "wefe_apv_system_mimo",
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {
-            "path": "data/elements/apv_system.csv",
+            "path": "data/elements/_apv_mimo.csv",
             "profile": "tabular-data-resource",
-            "name": "apv_system",
+            "name": "_apv_mimo",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
             "schema": {
                 "fields": [
                     {
-                        "name": "name",
+                        "name": "type",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "type",
+                        "name": "name",
                         "type": "string",
                         "format": "default"
                     },
@@ -33,37 +33,72 @@
                         "format": "default"
                     },
                     {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "primary",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
                         "name": "capacity",
                         "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "marginal_cost",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier_cost",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "solar_bus",
+                        "name": "solar_bus_in",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "electricity_bus",
+                        "name": "water_bus_in",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "biomass_bus",
+                        "name": "elec_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bio_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lat",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi",
                         "type": "string",
                         "format": "default"
                     },
@@ -73,18 +108,18 @@
                         "format": "default"
                     },
                     {
-                        "name": "ghi",
+                        "name": "t_dp",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "lat",
-                        "type": "number",
+                        "name": "tp",
+                        "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "expandable",
-                        "type": "boolean",
+                        "name": "windspeed",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
@@ -94,36 +129,275 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "solar_bus",
+                        "fields": "primary",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
                         }
                     },
                     {
-                        "fields": "electricity_bus",
+                        "fields": "solar_bus_in",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
                         }
                     },
                     {
-                        "fields": "biomass_bus",
+                        "fields": "water_bus_in",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
                         }
                     },
                     {
-                        "fields": "t_air",
+                        "fields": "elec_bus_out",
                         "reference": {
-                            "resource": "apv_system_profile"
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "bio_bus_out",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "water_bus_out",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
                         }
                     },
                     {
                         "fields": "ghi",
                         "reference": {
-                            "resource": "apv_system_profile"
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "t_air",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "t_dp",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "tp",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "windspeed",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "path": "data/elements/apv_mimo.csv",
+            "profile": "tabular-data-resource",
+            "name": "apv_mimo",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "primary",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "solar_bus_in",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_bus_in",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "elec_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bio_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lat",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_air",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_dp",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tp",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "windspeed",
+                        "type": "string",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "primary",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "solar_bus_in",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "water_bus_in",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "elec_bus_out",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "bio_bus_out",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "water_bus_out",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "ghi",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "t_air",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "t_dp",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "tp",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "windspeed",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
                         }
                     }
                 ]
@@ -354,9 +628,9 @@
             }
         },
         {
-            "path": "data/sequences/apv_system_profile.csv",
+            "path": "data/sequences/apv_mimo_profile.csv",
             "profile": "tabular-data-resource",
-            "name": "apv_system_profile",
+            "name": "apv_mimo_profile",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
@@ -424,6 +698,11 @@
                     },
                     {
                         "name": "elec-profile",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water-profile",
                         "type": "integer",
                         "format": "default"
                     }
