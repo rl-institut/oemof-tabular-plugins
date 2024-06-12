@@ -5,12 +5,8 @@ from datapackage import Package
 import oemof.solph as solph
 import numpy as np
 
-
 # ToDo: check to see if the storage optimized input/output (invest_out) and
 #  optimized capacity (invest) are saved correctly
-# ToDo: see if variable costs are provided as a raw output, and if not
-#  they should be calculated with: if a flow is into component, multiply flow by carrier cost
-#  and if the flow is out of component, multiply it by marginal cost
 # ToDo: is another raw output from the results is investment costs? or does this have to be calculated?
 RAW_OUTPUTS = ["investments"]
 PROCESSED_RAW_OUTPUTS = ["flow_min", "flow_max", "aggregated_flow"]
@@ -41,6 +37,12 @@ def compute_total_capacity(results_df):
     return results_df.capacity + results_df.investments
 
 
+def compute_total_annuity(results_df):
+    """Calculates total capacity by adding existing capacity (capacity) to optimized capacity (investments)"""
+    # TODO fix this to use storage_capacity_cost for the storage (or fix on the storage side)
+    return results_df.capacity_cost + results_df.investments
+
+
 def compute_upfront_investment_costs(results_df):
     # ToDo: check for storage if investments is based on correct parameter
     """Calculates investment costs by multiplying capex with optimized capacity (investments)"""
@@ -48,6 +50,28 @@ def compute_upfront_investment_costs(results_df):
         return None
     else:
         return results_df.capex * results_df.investments
+
+
+def compute_opex_fix_costs(results_df):
+    """Calculates yearly opex costs by multiplying opex with optimized capacity (investments)"""
+    if "opex_fix" not in results_df.index:
+        return None
+    else:
+        return results_df.opex_fix * results_df.investments
+
+
+def compute_variable_costs(results_df):
+    """Calculates variable costs by multiplying the marginal cost by the aggregated flow if the direction is out,
+     and by the carrier cost if the direction is in. The total marginal costs for each asset correspond to the sum
+     of the marginal costs for the in- and output flows"""
+    if results_df.name[1] == "out":
+        if "marginal_cost" not in results_df.index:
+            return None
+        return results_df.marginal_cost * results_df.aggregated_flow
+    elif results_df.name[1] == "in":
+        if "carrier_cost" not in results_df.index:
+            return None
+        return results_df.carrier_cost * results_df.aggregated_flow
 
 
 def compute_renewable_generation(results_df):
@@ -105,21 +129,42 @@ CALCULATED_OUTPUTS = [
         "column_name": "total_capacity",
         "operation": compute_total_capacity,
         "description": "The total capacity is calculated by adding the optimized capacity (investments) "
-        "to the existing capacity (capacity)",
+                       "to the existing capacity (capacity)",
         "argument_names": ["investments", "capacity"],
+    },
+    {
+        "column_name": "total_annuity",
+        "operation": compute_total_annuity,
+        "description": "Total annuity is calculated by multiplying the optimized capacity "
+                       "by the capacity cost (annuity considering CAPEX, OPEX and WACC)",
+        "argument_names": ["investments", "capacity_cost"],
     },
     {
         "column_name": "upfront_investment_costs",
         "operation": compute_upfront_investment_costs,
         "description": "Upfront investment costs are calculated by multiplying the optimized capacity "
-        "by the CAPEX",
+                       "by the CAPEX",
         "argument_names": ["investments", "capex"],
+    },
+    {
+        "column_name": "total_opex_fix_costs",
+        "operation": compute_opex_fix_costs,
+        "description": "Operation and maintenance costs are calculated by multiplying the optimized capacity "
+                       "by the OPEX",
+        "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
+    },
+    {
+        "column_name": "total_variable_costs",
+        "operation": compute_variable_costs,
+        "description": "Variable costs are calculated by multiplying the total flow "
+                       "by the marginal/carrier costs",
+        "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
     },
     {
         "column_name": "renewable_generation",
         "operation": compute_renewable_generation,
         "description": "The renewable generation for each component is computed from the flow and the "
-        "renewable factor.",
+                       "renewable factor.",
         "argument_names": [
             "aggregated_flow",
             "renewable_factor",
