@@ -3,8 +3,15 @@ import logging
 import pandas as pd
 from datapackage import Package
 import oemof.solph as solph
+import numpy as np
 
 
+# ToDo: check to see if the storage optimized input/output (invest_out) and
+#  optimized capacity (invest) are saved correctly
+# ToDo: see if variable costs are provided as a raw output, and if not
+#  they should be calculated with: if a flow is into component, multiply flow by carrier cost
+#  and if the flow is out of component, multiply it by marginal cost
+# ToDo: is another raw output from the results is investment costs? or does this have to be calculated?
 RAW_OUTPUTS = ["investments"]
 PROCESSED_RAW_OUTPUTS = ["flow_min", "flow_max", "aggregated_flow"]
 RAW_INPUTS = [
@@ -13,22 +20,74 @@ RAW_INPUTS = [
     "capacity_cost",
     "storage_capacity_cost",
     "capacity",
-    "expendable",
+    "expandable",
     "storage_capacity",
     "min_capacity",
     "max_capacity",
     "efficiency",
+    "capex",
+    "opex_fix",
+    "lifetime",
     "renewable_factor",
     "emission_factor",
+    "land_requirement_factor",
+    "water_footprint_factor",
 ]
 
 
-def compute_renewable_share(results_df):
-    pass
+def compute_total_capacity(results_df):
+    # ToDo: check for storage where there is both capacity and storage capacity
+    """Calculates total capacity by adding existing capacity (capacity) to optimized capacity (investments)"""
+    return results_df.capacity + results_df.investments
 
 
-def compute_cO2_emissions(results_df):
-    pass
+def compute_upfront_investment_costs(results_df):
+    # ToDo: check for storage if investments is based on correct parameter
+    """Calculates investment costs by multiplying capex with optimized capacity (investments)"""
+    if "capex" not in results_df.index:
+        return None
+    else:
+        return results_df.capex * results_df.investments
+
+
+def compute_renewable_generation(results_df):
+    """Calculates renewable generation by multiplying aggregated flow by renewable factor"""
+    if "renewable_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.aggregated_flow * results_df.renewable_factor
+
+
+def compute_co2_emissions(results_df):
+    """Calculates CO2 emissions by multiplying aggregated flow by emission factor"""
+    if "emission_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.aggregated_flow * results_df.emission_factor
+
+
+def compute_additional_land_requirement(results_df):
+    """Calculates land requirement needed for optimized capacities"""
+    if "land_requirement_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.investments * results_df.land_requirement_factor
+
+
+def compute_total_land_requirement(results_df):
+    """Calculates land requirement needed for total capacities"""
+    if "land_requirement_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.total_capacity * results_df.land_requirement_factor
+
+
+def compute_water_footprint(results_df):
+    """Calculates water footprint by multiplying aggregated flow by water footprint factor"""
+    if "water_footprint_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.aggregated_flow * results_df.water_footprint_factor
 
 
 def _check_arguments(df, column_names, col_name):
@@ -40,20 +99,27 @@ def _check_arguments(df, column_names, col_name):
             )
 
 
-def compute_variable_costs(results_df):
-    """TODO write a docstring here"""
-    return results_df.aggregated_flow * (
-        results_df.marginal_cost  # .astype("float")
-        + results_df.carrier_cost  # .astype("float")
-    )
-
-
 # TODO turn the dict into a class simular to the one of Calculation of oemof.tabular
 CALCULATED_OUTPUTS = [
     {
-        "column_name": "renewable_share",
-        "operation": compute_renewable_share,
-        "description": "The renewable share is computed from the flow and the renewable factor",
+        "column_name": "total_capacity",
+        "operation": compute_total_capacity,
+        "description": "The total capacity is calculated by adding the optimized capacity (investments) "
+        "to the existing capacity (capacity)",
+        "argument_names": ["investments", "capacity"],
+    },
+    {
+        "column_name": "upfront_investment_costs",
+        "operation": compute_upfront_investment_costs,
+        "description": "Upfront investment costs are calculated by multiplying the optimized capacity "
+        "by the CAPEX",
+        "argument_names": ["investments", "capex"],
+    },
+    {
+        "column_name": "renewable_generation",
+        "operation": compute_renewable_generation,
+        "description": "The renewable generation for each component is computed from the flow and the "
+        "renewable factor.",
         "argument_names": [
             "aggregated_flow",
             "renewable_factor",
@@ -61,15 +127,21 @@ CALCULATED_OUTPUTS = [
     },
     {
         "column_name": "cO2_emmissions",
-        "operation": compute_cO2_emissions,
-        "description": "Compute the amount of CO2 emitted by each component of the system.",
-        "argument_names": ["aggregated_flow", "emission_factor", "tech"],
+        "operation": compute_co2_emissions,
+        "description": "CO2 emissions are calculated from the flow and the emission factor.",
+        "argument_names": ["aggregated_flow", "emission_factor"],
     },
     {
-        "column_name": "variable_costs",
-        "operation": compute_variable_costs,
-        "description": "this output is calculated ...",
-        "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
+        "column_name": "additional_land_requirement",
+        "operation": compute_additional_land_requirement,
+        "description": "The additional land requirement calculates the land required for the optimized capacities.",
+        "argument_names": ["investments", "emission_factor"],
+    },
+    {
+        "column_name": "total_land_requirement",
+        "operation": compute_total_land_requirement,
+        "description": "The total land requirement calculates the land required for the total capacities.",
+        "argument_names": ["total_capacity", "emission_factor"],
     },
 ]
 
@@ -268,14 +340,13 @@ def construct_dataframe_from_results(energy_system, bus_carrier=True, asset_type
                     )
                 )
                 # here change this information for flow_tuple in ('mimo', 'in_group_0', '0')
-                print(x)
                 flows.append(
                     construct_multi_index_levels(
                         x, busses_info=busses_info, assets_info=assets_info
                     )
                 )
-                invest = None if res["scalars"].empty is True else res["scalars"].invest
 
+                invest = None if res["scalars"].empty is True else res["scalars"].invest
                 investments.append(invest)
         ts_df = pd.concat(ts, axis=1, join="inner")
         mindex = pd.MultiIndex.from_tuples(flows, names=mi_levels)
@@ -338,14 +409,11 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
         if "elements" in r.descriptor["path"] and r.name != "bus":
             df = pd.DataFrame.from_records(r.read(keyed=True), index="name")
             resource_inputs = df[list(set(raw_inputs).intersection(set(df.columns)))].T
-            print("resource inputs: ", resource_inputs)
-
             if inputs_df is None:
                 if not resource_inputs.empty:
                     inputs_df = resource_inputs
             else:
                 inputs_df = inputs_df.join(resource_inputs)
-
             # if r.name in typemap:
             # TODO here test if facade_type has the method 'validate_datapackage'
             #   inputs_df = typemap[r.name].processing_raw_inputs(r, inputs_df)
@@ -384,8 +452,15 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
             _check_arguments(results_df, column_names=argument_names, col_name=var_name)
         except AttributeError as e:
             logging.warning(e)
+            continue
 
         results_df[var_name] = results_df.apply(
             func_handle,
             axis=1,
         )
+        # check if the new column contains all None values and remove it if so
+        if results_df[var_name].isna().all():
+            results_df.drop(columns=[var_name], inplace=True)
+            logging.info(
+                f"Removed column '{var_name}' because it contains all None values."
+            )

@@ -26,14 +26,20 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["wefe_reverse_osmosis_test"]
+scenarios = ["cp_nigeria_usungwe_example"]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
 
 # -------------- ADDITIONAL FUNCTIONALITIES (OEMOF-TABULAR-PLUGINS) --------------
 # include the custom attribute parameters to be included in the model
-custom_attributes = ["emission_factor", "renewable_factor", "land_requirement"]
+# this can be moved somewhere and included in a dict or something similar with all possible additional attributes
+custom_attributes = [
+    "emission_factor",
+    "renewable_factor",
+    "land_requirement_factor",
+    "water_footprint_factor",
+]
 # set whether the multi-objective optimization should be performed
 moo = False
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
