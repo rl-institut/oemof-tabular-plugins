@@ -11,7 +11,6 @@ def validate_mimo_datapackage(cls, resource):
     :param cls: class instance
     :param resource: the datapackage resource
     """
-    print("resource in validation: ", resource)
     # check if the 'foreignKeys' field exists in the schema
     if (
         "schema" in resource.descriptor
@@ -19,9 +18,7 @@ def validate_mimo_datapackage(cls, resource):
     ):
         # loop through each foreign key
         for foreign_key in resource.descriptor["schema"]["foreignKeys"]:
-            print(foreign_key)
             if "primary" in foreign_key["fields"]:
-                print(foreign_key)
                 # remove the foreign_key regarding 'primary' from the resource
                 resource.descriptor["schema"]["foreignKeys"].remove(foreign_key)
                 break
