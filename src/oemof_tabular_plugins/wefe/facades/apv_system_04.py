@@ -48,14 +48,13 @@ specspath = os.path.join(
     "wefe", "global_specs")
 
 
-
 # elementspath = os.path.join(os.path.dirname(sequencepath), "elements")
 
 
 # -------------- APV pre-processing --------------
 def pre_processing_apv(scenariopath):
 
-    def _apv_production(scenariopath, apv_dict, geometry_params):
+    def _apv_production(scenariopath, apv_dict):
         r"""
         Calculate biomass and PV efficiency as full-year hourly conversion factor series
         """
@@ -84,12 +83,6 @@ def pre_processing_apv(scenariopath):
         # Convert Radiation Use Efficiency from W/m² to MJ/(m²*h)
         rue *= 3.6e-3
 
-        # ----- PV parameters -----
-        p_rated = 270  # [Wp]
-        rad_ref = 1000  # [W/m²]
-        t_ref = 25  # [°C]
-        noct = 48  # [°C]
-
         # ----- Soil parameters -----
         z = 259
         rzd = 400  # zeta   ## root zone depth [mm]
@@ -97,6 +90,108 @@ def pre_processing_apv(scenariopath):
         awc = 0.13  # theta_m   ## water holding capacity
         rcn = 65  # eta     ## runoff curve number
         ddc = 0.55  # beta      ## deep drainage coefficient
+
+        # ----- PV parameters -----
+        p_rated = 270  # [Wp]
+        rad_ref = 1000  # [W/m²]
+        t_ref = 25  # [°C]
+        noct = 48  # [°C]
+
+        # ----- Geometry -----
+        def apv_geometry(lat):
+            """ """
+
+            # Location-specific, fixed geometry parameters
+            # module size from bifacial_radiance 'test_module'
+            y = 1.74  # module length (y = N/S)
+            x = 1.036  # module width (x = E/W)
+            # IBC minimum slope (by means of PV: tilt) for proper rainwater runoff
+            min_slope = 0.25 / 12
+            min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
+            # tilt should ideally be close to latitude, but allow for rainwater runoff
+            tilt = max(round(abs(lat)), min_tilt)
+            rad_tilt = np.radians(tilt)
+            # minimum solar noon altitude (solar angle at solstice when sun is straight south (lat>0) or north (lat<0)
+            min_solar_angle = 90 - round(abs(lat)) - 23.5
+            rad_min_solar_angle = np.radians(min_solar_angle)
+            # minimum distance to prevent the panels from shading each other
+            min_ygap = y * np.sin(rad_tilt) / np.tan(rad_min_solar_angle)
+            # define pitch as distance from edge of one module across row up to the edge of the next module
+            pitch = round(y * np.cos(rad_tilt) + min_ygap, 2)
+
+            r"""
+            Obtain shading and bifaciality factors from global_specs/geometry.json, 
+            interpolate for given latitude
+            """
+
+            # Load the geometry data
+            geometrypath = os.path.join(specspath, "geometry.json")
+            with open(geometrypath, 'r') as f:
+                geometry = json.load(f)
+
+            # Convert lists back to numpy arrays and ensure numerical types
+            def convert_from_serializable(obj):
+                if isinstance(obj, list):
+                    return np.array(obj)
+                if isinstance(obj, str) and obj.replace('.', '', 1).isdigit():
+                    return float(obj) if '.' in obj else int(obj)
+                return obj
+
+            geometry = {float(lat): {k: convert_from_serializable(v)
+                                     for k, v in lat_results.items()} for lat, lat_results in geometry.items()}
+
+            def latitude_interpolation(lat, geometry):
+                # Extracting data
+                lats = list(geometry.keys())
+
+                # Interpolating fbifacial and fshading for each xgap
+                xgaps = geometry[lats[0]]['xgaps'].tolist() \
+                    if isinstance(geometry[lats[0]]['xgaps'], np.ndarray) \
+                    else geometry[lats[0]]['xgaps']
+                fbifacial_interp_funcs = []
+                fshading_interp_funcs = []
+
+                for xgap in xgaps:
+                    fbifacials = [geometry[lat]['fbifacials'][xgap] for lat in lats]
+                    fshadings = [geometry[lat]['fshadings'][xgap] for lat in lats]
+                    fbifacial_interp_funcs.append(interp1d(lats, fbifacials, kind='linear'))
+                    fshading_interp_funcs.append(interp1d(lats, fshadings, kind='linear'))
+
+                # Calculating new values for the given latitude, convert back from numpy array
+                new_fbifacials = [interp_func(lat).item() for interp_func in fbifacial_interp_funcs]
+                new_fshadings = [interp_func(lat).item() for interp_func in fshading_interp_funcs]
+
+                return {
+                    'xgaps': xgaps,
+                    'fbifacials': new_fbifacials,
+                    'fshadings': new_fshadings,
+                }
+
+            interpolated = latitude_interpolation(lat, geometry)
+
+            return {
+                'x': x,
+                'y': y,
+                'tilt': tilt,
+                'pitch': pitch,
+                'xgaps': interpolated['xgaps'],
+                'fbifacials': interpolated['fbifacials'],
+                'fshadings': interpolated['fshadings'],
+            }
+
+        latitude = apv_dict['lat']
+        geo_params = apv_geometry(latitude)
+
+        x = geo_params['x']
+        y = geo_params['y']
+        tilt = geo_params['tilt']
+        pitch = geo_params['pitch']
+        xgaps = geo_params['xgaps'].pop()
+        fbifacials = geo_params['fbifacials'].pop()
+        fshadings = geo_params['fshadings'].pop()
+
+        area_pv = x * y * np.cos(tilt)
+        geo_params['area_pv'] = area_pv
 
         # ----- General functions for modelling water, biomass and electricity -----
         def development(date, sowing_date, t_air, t_base):
@@ -132,7 +227,7 @@ def pre_processing_apv(scenariopath):
         def power(p_rated, rad, rad_ref, t_air, t_ref, noct):
             """ Hourly PV power output in relation to incoming radiation """
             f_temp = 1 - 3.7e-3 * (t_air + ((noct - 20) / 800) * rad - t_ref)
-            p = p_rated * 1 / rad_ref * f_temp
+            p = p_rated * rad / rad_ref * f_temp
             return p
 
         df['cum_temp'] = df.apply(
@@ -154,7 +249,6 @@ def pre_processing_apv(scenariopath):
         )
 
         # ----- Geometry-dependent functions for modelling water, biomass and electricity -----
-
         def soil_heat_flux(ghi, irr_w):
             """ Soil heat flux as fraction of incoming radiation (FAO56) [W/m²] """
             if ghi > 0:
@@ -180,7 +274,7 @@ def pre_processing_apv(scenariopath):
                     t_air + 237.3) ** 2  # slope of sat vap press curve
 
             def vap_pressure(t):
-                """ Water vapor saturation pressure at specific temperature"""
+                """ Water vapor saturation pressure at specific temperature (t)"""
                 e = 0.6108 * np.exp(17.27 * t / (t + 237.3))
                 return e
 
@@ -189,7 +283,7 @@ def pre_processing_apv(scenariopath):
 
             et_0 = (0.408 * delta * (irr - g) + gamma * 900 / (t_air + 273) * w2 * (e_s - e_a)) / (
                     delta + gamma * 1.34 * w2)  # [mm/m²*day]
-            et_p = k_c * et_0 / 24 # [mm/m²*h]
+            et_p = k_c * et_0 / 24  # [mm/m²*h]
             # q_et = et * rho_w * h_vap / 1000  # [W/m²]
             return et_p
 
@@ -233,7 +327,6 @@ def pre_processing_apv(scenariopath):
                                                     - df.loc[index, 'deep_drain']
                                                     ) / rzd
                 swc_cache = df.loc[index, 'swc']
-            return df
 
         def drought(et_p, et_a):
             """ Drought stress effect on plant growth (SIMPLE) [-] """
@@ -256,123 +349,102 @@ def pre_processing_apv(scenariopath):
                 f_solar = 0
             return f_solar
 
+        def biomass_generation(df, frt):
+            """ Biomass generation including the radiation transmission factor (frt) """
+            df['g'] = df.apply(
+                lambda row: soil_heat_flux(row['ghi'], frt * row['ghi']),
+                axis=1
+            )
+
+            df['et_p'] = df.apply(
+                lambda row: potential_evapotranspiration(
+                    z, row['t_air'], row['t_dp'], row['windspeed'], frt * row['ghi'], row['g']
+                ),
+                axis=1
+            )
+
+            df['runoff'] = df['tp'].apply(
+                lambda tp: runoff(tp, rcn)
+            )
+
+            soil_water_balance(df)
+
+            df['f_drought'] = df.apply(
+                lambda row: drought(row['et_p'], row['et_a'])
+            )
+
+            df['f_solar'] = df['cum_temp'].apply(
+                lambda cum_temp: solar_interception(cum_temp, t_sum, i50a, i50b, f_solar_max)
+            )
+
+            df['biomass_gen'] = frt * df['ghi'] * df['f_solar'] * rue * df['f_temp'] * df[['f_heat', 'f_drought']].min(
+                axis=1)
+
+            return df['biomass_gen']
+
+        def electricity_generation(df, frb):
+            """ Electricity generation including the radiation bifaciality factor (frb) """
+            df['electricity_gen'] = (1 + frb) * df['pv_power']
+            return df['electricity_gen']
+
+        # ------- Geometry optimization: Maximize LER -------
+        biomass_open = biomass_generation(df, frt=1).sum()
+        electricity_rel = [(1 + fbifacials[i]) * x / ((1 + fbifacials[0]) * (x + xgaps[i])) for i in range(len(xgaps))]
+        biomass_rel = [biomass_generation(df, frt=fshadings[i]).sum() / biomass_open for i in range(len(xgaps))]
+
+        # Define the optimization model
+        opti_model = ConcreteModel()
+        opti_model.xgap = Var(bounds=(min(xgaps), max(xgaps)))
+
+        # Set up the piecewise linear functions for biomass and electricity terms
+        opti_model.bio_rel = Var()
+        opti_model.bio_rel_pieces = Piecewise(opti_model.bio_rel, opti_model.xgap,
+                                              pw_pts=xgaps,
+                                              f_rule=biomass_rel,
+                                              pw_constr_type='EQ')
+
+        opti_model.elec_rel = Var()
+        opti_model.elec_rel_pieces = Piecewise(opti_model.elec_rel, opti_model.xgap,
+                                               pw_pts=xgaps,
+                                               f_rule=electricity_rel,
+                                               pw_constr_type='EQ')
+
+        # Minimum relative crop yield constraint
+        min_bio_rel = minimal_crop_yield
+        opti_model.min_shading_constraint = Constraint(expr=opti_model.bio_rel >= min_bio_rel)
+
+        # Optimization
+        def objective_rule(model):
+            return model.elec_rel + model.bio_rel
+
+        opti_model.objective = Objective(rule=objective_rule, sense=maximize)
+        solver = SolverFactory('cbc')
+        solver.solve(opti_model)
+        xgap_optimal = opti_model.xgap.value
+        ler = opti_model.elec_rel.value + opti_model.bio_rel.value
 
 
+        # ----- Results processing -----
+        interp_frb = interp1d(xgaps, fbifacials, kind='linear')
+        interp_frt = interp1d(xgaps, fshadings, kind='linear')
+        fbifacial_optimal = interp_frb(xgap_optimal)
+        fshading_optimal = interp_frt(xgap_optimal)
 
+        electricity_gen = electricity_generation(df, frb=fbifacial_optimal)
+        biomass_gen = biomass_generation(df, frt=fshading_optimal)
+        area_apv = (x + xgap_optimal) * pitch
 
-        df['g'] = df.apply(
-            lambda row: soil_heat_flux(row['ghi'], row['ghi']),
-            axis=1
-        )
-
-
-        df['et_p'] = df.apply(
-            lambda row: potential_evapotranspiration(z, row['t_air'], row['t_dp'], row['windspeed'], row['ghi'], row['g']),
-            axis=1
-        )
-
-
-        df['runoff'] = df['tp'].apply(
-            lambda tp: runoff(tp, rcn)
-        )
-
-
-        df = soil_water_balance(df)
-
-
-        df['f_drought'] = df.apply(
-            lambda row: drought(row['et_p'], row['et_a'])
-        )
-
-
-        df['f_solar'] = df['cum_temp'].apply(
-            lambda cum_temp: solar_interception(cum_temp, t_sum, i50a, i50b, f_solar_max)
-        )
-
-        df['biomass'] = df['ghi'] * df['']
-
-
-    def _apv_geometry(lat):
-        """ """
-
-        # Location-specific, fixed geometry parameters
-        # module size from bifacial_radiance 'test_module'
-        y = 1.74  # module length (y = N/S)
-        x = 1.036  # module width (x = E/W)
-        # IBC minimum slope (by means of PV: tilt) for proper rainwater runoff
-        min_slope = 0.25 / 12
-        min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
-        # tilt should ideally be close to latitude, but allow for rainwater runoff
-        tilt = max(round(abs(lat)), min_tilt)
-        rad_tilt = np.radians(tilt)
-        # minimum solar noon altitude (solar angle at solstice when sun is straight south (lat>0) or north (lat<0)
-        min_solar_angle = 90 - round(abs(lat)) - 23.5
-        rad_min_solar_angle = np.radians(min_solar_angle)
-        # minimum distance to prevent the panels from shading each other
-        min_ygap = y * np.sin(rad_tilt) / np.tan(rad_min_solar_angle)
-        # define pitch as distance from edge of one module across row up to the edge of the next module
-        pitch = round(y * np.cos(rad_tilt) + min_ygap, 2)
-
-        r"""
-        Obtain shading and bifaciality factors from global_specs/geometry.json, 
-        interpolate for given latitude
-        """
-
-        # Load the geometry data
-        geometrypath = os.path.join(specspath, "geometry.json")
-        with open(geometrypath, 'r') as f:
-            geometry = json.load(f)
-
-        # Convert lists back to numpy arrays and ensure numerical types
-        def convert_from_serializable(obj):
-            if isinstance(obj, list):
-                return np.array(obj)
-            if isinstance(obj, str) and obj.replace('.', '', 1).isdigit():
-                return float(obj) if '.' in obj else int(obj)
-            return obj
-
-        geometry = {float(lat): {k: convert_from_serializable(v)
-                                 for k, v in lat_results.items()} for lat, lat_results in geometry.items()}
-
-        def interpolate_values(lat, geometry):
-            # Extracting data
-            lats = list(geometry.keys())
-
-            # Interpolating fbifacial and fshading for each xgap
-            xgaps = geometry[lats[0]]['xgaps'].tolist() \
-                if isinstance(geometry[lats[0]]['xgaps'], np.ndarray) \
-                else geometry[lats[0]]['xgaps']
-            fbifacial_interp_funcs = []
-            fshading_interp_funcs = []
-
-            for xgap in xgaps:
-                fbifacials = [geometry[lat]['fbifacials'][xgap] for lat in lats]
-                fshadings = [geometry[lat]['fshadings'][xgap] for lat in lats]
-                fbifacial_interp_funcs.append(interp1d(lats, fbifacials, kind='linear'))
-                fshading_interp_funcs.append(interp1d(lats, fshadings, kind='linear'))
-
-            # Calculating new values for the given latitude, convert back from numpy array
-            new_fbifacials = [interp_func(lat).item() for interp_func in fbifacial_interp_funcs]
-            new_fshadings = [interp_func(lat).item() for interp_func in fshading_interp_funcs]
-
-            return {
-                'xgaps': xgaps,
-                'fbifacials': new_fbifacials,
-                'fshadings': new_fshadings,
+        apv_dict.update(
+            geo_params,
+            {
+                'area_apv': area_apv,
+                'ler': ler,
+                'electricity': electricity_gen,
+                'biomass': biomass_gen,
             }
+        )
 
-        interpolated = interpolate_values(lat, geometry)
-
-        return {
-            'x': x,
-            'y': y,
-            'tilt': tilt,
-            'pitch': pitch,
-            'xgaps': interpolated['xgaps'],
-            'fbifacials': interpolated['fbifacials'],
-            'fshadings': interpolated['fshadings'],
-        }
-
+        return apv_dict
 
     def _update_apv_element(directory):
         """ """
@@ -382,6 +454,7 @@ def pre_processing_apv(scenariopath):
         )
         for element in os.listdir(elements_path):
             if element.endswith('.csv'):
+                # Read in csv file, check for row with 'apv-system' in column 'name'
                 element_path = os.path.join(elements_path, element)
                 element_df = pd.read_csv(element_path, sep=';')
                 apv_row = element_df[element_df['name'] == 'apv-system']
@@ -394,11 +467,8 @@ def pre_processing_apv(scenariopath):
                     apv_dict = apv_row.iloc[0].to_dict()
                     has_apv = True
 
-                    latitude = apv_dict['lat']
-                    geometry_params = _apv_geometry(latitude)
-
-
-
+                    # Update the dictionary
+                    apv_dict = _apv_production(scenariopath, apv_dict)
 
                     # following part has to be more robust (eg. INFO if buses are missing)
                     bus_dict = {key: value
@@ -410,9 +480,9 @@ def pre_processing_apv(scenariopath):
                         if key == 'from_bus_1':
                             apv_dict[f'conversion_factor_{value}'] = 2
                         if key == 'to_bus_0':
-                            apv_dict[f'conversion_factor_{value}'] = 3
+                            apv_dict[f'conversion_factor_{value}'] = sequence(apv_dict['electricity'])
                         if key == 'to_bus_1':
-                            apv_dict[f'conversion_factor_{value}'] = 4
+                            apv_dict[f'conversion_factor_{value}'] = sequence(apv_dict['biomass'])
                         if key == 'to_bus_2':
                             apv_dict[f'conversion_factor_{value}'] = 5
 
@@ -426,96 +496,3 @@ def pre_processing_apv(scenariopath):
             logger.info("No element found with 'apv-system' in column 'name'.")
 
     _update_apv_element(scenariopath)
-
-    r"""
-    Calculate evapotranspiration for every xgap, 
-    calculate rainwater harvesting potential for every xgap,
-    set up water balance,
-    calculate ARID for every xgap
-    """
-
-
-
-    r""" 
-    Optimize geometry based on analysis results
-
-    Optimization objective is the LER (land equivalent ratio = relative electricity yield + relative crop yield)
-    based on the results for bifaciality factors (fbifacials) and shading factors (fshadings) 
-    generated by iterating the different gaps between modules (xgaps)
-
-    Area requirement per PV module is a conclusive result.
-    """
-
-    # convert the non-linear term for relative electricity yield per area to a piecewise linear function 'farea'
-    fareas = [(1 + fbifacials[i]) * x / ((1 + fbifacials[0]) * (x + xgaps[i])) for i in range(len(xgaps))]
-
-    # Define the optimization model
-    opti_model = ConcreteModel()
-
-    # Decision variable: xgap
-    opti_model.xgap = Var(bounds=(xgaps[0], xgaps[-1]))
-
-    # Set up the piecewise linear functions for shading and area terms
-    opti_model.fshading = Var()
-    opti_model.fshading_pieces = Piecewise(opti_model.fshading, opti_model.xgap,
-                                           pw_pts=xgaps,
-                                           f_rule=fshadings,
-                                           pw_constr_type='EQ')
-
-    opti_model.farea = Var()
-    opti_model.farea_pieces = Piecewise(opti_model.farea, opti_model.xgap,
-                                        pw_pts=xgaps,
-                                        f_rule=fareas,
-                                        pw_constr_type='EQ')
-
-    # Minimum shading constraint
-    min_fshading = self.minimal_crop_yield
-    opti_model.min_shading_constraint = Constraint(expr=opti_model.fshading >= min_fshading)
-
-    # Objective: Maximize LER
-    def objective_rule(model):
-        return model.farea + model.fshading
-
-    opti_model.objective = Objective(rule=objective_rule, sense=maximize)
-
-    # Solver
-    solver = SolverFactory('cbc')
-    result = solver.solve(opti_model)
-
-    # Output results
-    xgap_optimal = opti_model.xgap.value
-    fshading_optimal = opti_model.fshading.value
-    farea_optimal = opti_model.farea.value
-    fbifacial_optimal = ((farea_optimal * (1 + fbifacials[0]) * (xgap_optimal + x)) / x) - 1
-    ler_optimal = farea_optimal + fshading_optimal
-
-    # Assign important results as instance attributes
-    self.area_module = x * y * np.cos(rad_tilt)
-    self.area_apv = (xgap_optimal + x) * pitch
-    self.fshading = fshading_optimal
-    self.fbifacial = fbifacial_optimal
-    self.ler = ler_optimal
-
-    return self
-
-
-
-        df['biomass_efficiency'] = self.fshading * rue * df['f_solar'] * df['f_temp'] * df['f_heat']
-
-        # Define and apply function for modelling electricity generation
-
-
-        df['pv_efficiency'] *= (1 + self.fbifacial)
-
-        self.biomass_efficiency = df['biomass_efficiency']
-        self.pv_efficiency = df['pv_efficiency']
-
-        # ------ Arbitrary water input and output time series to check MIMO compatibility ------#
-        df['water_in'] = 0.3
-        df['water_out'] = 0.1
-        self.water_in_efficiency = df['water_in']
-        self.water_out_efficiency = df['water_out']
-
-        return self
-
-    # wahrscheinlich buses hardcoden um conversion factors zuzuordnen....
