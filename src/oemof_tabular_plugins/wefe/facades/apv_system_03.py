@@ -1,3 +1,13 @@
+r"""
+VERSION 3 - not working
+APV facade based on MIMO facade
+solar in
+water in
+electricity out
+biomass out
+water out
+"""
+
 # TODO: include water (buses, balance, ARID factor)
 # TODO: fix documentation
 
@@ -34,7 +44,7 @@ geometrypath = os.path.join(
     "wefe", "global_specs", "geometry.json")
 weatherpath = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(currentpath))))),
-    "examples", "scenarios", "wefe_apv_system_mimo", "data", "sequences")
+    "examples", "scenarios", "wefe_apv_system_mimo_facade", "data", "sequences")
 
 
 # -------------- FACADE FOR APV SYSTEM --------------
@@ -97,15 +107,15 @@ class APVSystem(MIMO):
 
         """
 
-    # type: str
-    #
-    # name: str
-    #
-    # tech: str
-    #
-    # carrier: str
-    #
-    # primary: str
+    type: str
+
+    name: str
+
+    tech: str
+
+    carrier: str
+
+    primary: str
 
     solar_bus_in: Bus
 
@@ -132,7 +142,7 @@ class APVSystem(MIMO):
     # marginal_cost: float = 0
     #
     # carrier_cost: float = 0
-
+    #
     # capacity_cost: float = None
     #
     # expandable: bool = False
@@ -151,7 +161,7 @@ class APVSystem(MIMO):
     #
     # output_parameters: dict = field(default_factory=dict)
 
-    lat: float = 16.6
+    lat: float = 0
 
     crop_type: str = 'cassava'
 
@@ -161,24 +171,47 @@ class APVSystem(MIMO):
 
     def __init__(self, **kwargs):
         """ """
+        self.type = kwargs.pop('type', None)
+        self.name = kwargs.pop('name', None)
+        self.carrier = kwargs.pop('carrier', None)
+        self.tech = kwargs.pop('tech', None)
+        self.primary = kwargs.pop('primary', None)
+        self.solar_bus_in = kwargs.pop('solar_bus_in')
+        self.water_bus_in = kwargs.pop('water_bus_in')
+        self.elec_bus_out = kwargs.pop('elec_bus_out')
+        self.bio_bus_out = kwargs.pop('bio_bus_out')
+        self.water_bus_out = kwargs.pop('water_bus_out')
+        self.lat = kwargs.pop('lat') if 'lat' in kwargs else self.lat
+        self.crop_type = kwargs.pop('crop_type') if 'crop_type' in kwargs else self.crop_type
+        self.sowing_date = kwargs.pop('sowing_date') if 'sowing_date' in kwargs else self.sowing_date
+        self.minimal_crop_yield = kwargs.pop(
+            'minimal_crop_yield') if 'minimal_crop_yield' in kwargs else self.minimal_crop_yield
+
         # Perform methods to obtain conversion factors as class attributes
         self._apv_geometry()
         self._apv_production()
 
-        conversion_factors = {
-            self.solar_bus_in: sequence(1),
-            self.water_bus_in: sequence(self.water_in_efficiency),
-            self.elec_bus_out: sequence(self.pv_efficiency),
-            self.bio_bus_out: sequence(self.biomass_efficiency),
-            self.water_bus_out: sequence(self.water_out_efficiency)
-        }
+        conversion_factors = {}
+        for key, value in kwargs.items():
+            if hasattr(value, "type") and value.type == "bus":
+                if key.startswith('solar_bus_in'):
+                    conversion_factors[f'conversion_factor_{value}'] = sequence(1)
+                if key.startswith('water_bus_in'):
+                    conversion_factors[f'conversion_factor_{value}'] = sequence(self.water_in_efficiency)
+                if key.startswith('elec_bus_out'):
+                    conversion_factors[f'conversion_factor_{value}'] = sequence(self.pv_efficiency)
+                if key.startswith('bio_bus_out'):
+                    conversion_factors[f'conversion_factor_{value}'] = sequence(self.biomass_efficiency)
+                if key.startswith('water_bus_out'):
+                    conversion_factors[f'conversion_factor_{value}'] = sequence(self.water_out_efficiency)
+        kwargs.update(conversion_factors)
 
-        super().__init__(from_bus_0=kwargs.pop("solar_bus_in"),
-                         from_bus_1=kwargs.pop("water_bus_in"),
-                         to_bus_0=kwargs.pop("elec_bus_out"),
-                         to_bus_1=kwargs.pop("bio_bus_out"),
-                         to_bus_2=kwargs.pop("water_bus_out"),
-                         conversion_factors=conversion_factors, **kwargs)
+        super().__init__(from_bus_0=self.solar_bus_in,
+                         from_bus_1=self.water_bus_in,
+                         to_bus_0=self.elec_bus_out,
+                         to_bus_1=self.bio_bus_out,
+                         to_bus_2=self.water_bus_out,
+                         **kwargs)
 
     def _apv_geometry(self):
         """ """

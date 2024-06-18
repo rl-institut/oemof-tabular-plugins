@@ -1,0 +1,13 @@
+From,To,Aggregated Flow
+apv-system,biomass-bus,127755.02493987976
+apv-system,electricity-bus,95816.26872503103
+apv-system,water-bus-out,159693.78123227568
+back-up-elec,electricity-bus,104412.4168762903
+back-up-water,water-bus-in,63877.51249534034
+biomass-bus,biomass-excess,127755.02493987976
+electricity-bus,demand,185424.009566056
+electricity-bus,electricity-excess,14804.676010856
+solar-energy-bus,apv-system,31938.756262604456
+sun,solar-energy-bus,31938.756262604456
+water-bus-in,apv-system,63877.51249534034
+water-bus-out,water-excess,159693.78123227568

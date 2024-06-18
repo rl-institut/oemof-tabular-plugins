@@ -1,0 +1,4 @@
+name;type;bus;marginal_cost
+electricity-excess;excess;electricity-bus;0
+biomass-excess;excess;biomass-bus;0
+water-excess;excess;water-bus-out;0

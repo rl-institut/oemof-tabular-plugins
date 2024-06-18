@@ -729,7 +729,7 @@ def post_processing(params, results, results_path):
     kpi_values = [
         calculate_specific_system_cost(all_scalars, total_system_costs),
         calculate_renewable_share(results),
-        calculate_total_emissions(results),
+        # calculate_total_emissions(results),
         calculate_total_land_requirement(results, capacities_df, storage_capacities_df),
     ]
     # filter out None values

@@ -16,8 +16,12 @@ from oemof_tabular_plugins.general import (
     pre_processing,
     logger,
 )
-from oemof_tabular_plugins.wefe.facades import APVSystem
+from oemof_tabular_plugins.wefe.facades.apv_system_04 import pre_processing_apv
 
+from oemof_industry.mimo_converter import MIMO
+# from src.oemof_tabular_plugins.wefe.facades import APVSystem
+from oemof_industry.mimo_converter import MIMO
+#from src.oemof_tabular_plugins.wefe.facades import APVSystem
 
 # -------------- RELEVANT PATHS --------------
 # get the project directory by navigating up one level from the current script file
@@ -36,7 +40,7 @@ custom_attributes = ["emission_factor", "renewable_factor", "land_requirement"]
 # set whether the multi-objective optimization should be performed
 moo = False
 # add APV system (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
-TYPEMAP["apv-system"] = APVSystem
+TYPEMAP["apv-system"] = MIMO
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
@@ -51,10 +55,13 @@ for scenario in scenarios:
     # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
     pre_processing(scenario_dir, wacc, custom_attributes, moo)
 
-    otp_building.infer_metadata_from_data(
-        package_name=scenario,
-        path=scenario_dir,
-    )
+    # pre-processing to create input csv files for MIMO conversion factors
+    pre_processing_apv(scenario_dir)
+
+    # otp_building.infer_metadata_from_data(
+    #     package_name=scenario,
+    #     path=scenario_dir,
+    # )
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(

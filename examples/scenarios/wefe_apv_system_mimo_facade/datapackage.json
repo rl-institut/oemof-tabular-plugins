@@ -4,6 +4,206 @@
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {
+            "path": "data/elements/apv_mimo.csv",
+            "profile": "tabular-data-resource",
+            "name": "apv_mimo",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "primary",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "solar_bus_in",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_bus_in",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "elec_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bio_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_bus_out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lat",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_air",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_dp",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tp",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "windspeed",
+                        "type": "string",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "primary",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "solar_bus_in",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "water_bus_in",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "elec_bus_out",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "bio_bus_out",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "water_bus_out",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "ghi",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "t_air",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "t_dp",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "tp",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "windspeed",
+                        "reference": {
+                            "resource": "apv_mimo_profile"
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "path": "data/elements/bus.csv",
             "profile": "tabular-data-resource",
             "name": "bus",
@@ -66,7 +266,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -91,7 +291,7 @@
                     },
                     {
                         "name": "profile",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -115,6 +315,12 @@
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "profile",
+                        "reference": {
+                            "resource": "dispatchable_profile"
                         }
                     }
                 ]
@@ -291,156 +497,23 @@
                         "format": "default"
                     },
                     {
-                        "name": "to_bus_2",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capex",
+                        "name": "conversion_factor_seawater-bus",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "opex_fix",
+                        "name": "conversion_factor_ac-elec-bus",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "lifetime",
+                        "name": "conversion_factor_permeate-bus",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "lat",
+                        "name": "conversion_factor_brine-bus",
                         "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_solar-energy-bus",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_water-bus-in",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_electricity-bus",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_biomass-bus",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_water-bus-out",
-                        "type": "number",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ],
-                "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "from_bus_0",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "from_bus_1",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus_0",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus_1",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus_2",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "path": "data/elements/volatile.csv",
-            "profile": "tabular-data-resource",
-            "name": "volatile",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "tech",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "marginal_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "profile",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "expandable",
-                        "type": "boolean",
                         "format": "default"
                     },
                     {
@@ -463,21 +536,7 @@
                     ""
                 ],
                 "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "bus",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
-                            "resource": "volatile_profile"
-                        }
-                    }
-                ]
+                "foreignKeys": []
             }
         },
         {
@@ -545,6 +604,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "ghi-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "elec-profile",
                         "type": "integer",
                         "format": "default"
@@ -576,31 +640,6 @@
                     },
                     {
                         "name": "elec-load-profile",
-                        "type": "number",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ]
-            }
-        },
-        {
-            "path": "data/sequences/volatile_profile.csv",
-            "profile": "tabular-data-resource",
-            "name": "volatile_profile",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "timeindex",
-                        "type": "datetime",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ghi-profile",
                         "type": "number",
                         "format": "default"
                     }

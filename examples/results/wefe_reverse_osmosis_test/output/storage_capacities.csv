@@ -1,0 +1,3 @@
+Component,Type,Carrier,Existing Storage Capacity,Existing Max Input/Output,Storage Capacity Potential,Max Input/Output Potential,Optimizable,Optimized Storage Capacity,Optimized Max Input/Output,Total Storage Capacity
+battery-storage,storage,electricity,0,0,,inf,True,0.0,0.0,0.0
+water-storage,storage,water,0,0,,inf,True,10.067225,10.067225,10.067225

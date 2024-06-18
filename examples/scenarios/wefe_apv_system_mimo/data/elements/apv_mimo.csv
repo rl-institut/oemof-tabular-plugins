@@ -1,2 +1,0 @@
-type;name;carrier;tech;expandable;primary;capacity;capacity_cost;solar_bus_in;water_bus_in;elec_bus_out;bio_bus_out;water_bus_out;capex;opex_fix;lifetime;lat;ghi;t_air;t_dp;tp;windspeed
-apv-system;apv-system;solar;mimo;True;electricity-bus;0;287.4;solar-energy-bus;water-bus-in;electricity-bus;biomass-bus;water-bus-out;1000.0;50.0;5.0;16.6;ghi;t_air;t_dp;tp;windspeed

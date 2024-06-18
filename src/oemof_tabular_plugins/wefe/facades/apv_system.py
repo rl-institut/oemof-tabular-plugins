@@ -1,3 +1,11 @@
+r"""
+VERSION 1 - no run, install bifacial radiance
+bifacial radiance raytracing on site
+solar in
+electricity out
+biomass out
+"""
+
 # TODO: assign water_bus output independent of solar_bus (absolute output instead of conversion factor)
 # TODO: install bifacial radiance (rather get rid of it anyway)
 # TODO: fix documentation

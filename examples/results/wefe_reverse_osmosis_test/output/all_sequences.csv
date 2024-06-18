@@ -1,0 +1,7 @@
+source,ac-elec-bus,ac-elec-bus,ac-elec-bus,ac-elec-bus,backup-electricity-grid,battery-storage,battery-storage,brine-bus,dc-elec-bus,inverter,mimo,mimo,mimo,permeate-bus,permeate-bus,pv,seawater-bus,seawater-source,third-bus,water-storage,water-storage
+target,battery-storage,elec-demand,electricity-excess,mimo,ac-elec-bus,nan,ac-elec-bus,brine-excess,inverter,ac-elec-bus,brine-bus,permeate-bus,third-bus,permeate-demand,water-storage,dc-elec-bus,mimo,seawater-bus,third-excess,nan,permeate-bus
+var_name,flow,flow,flow,flow,flow,storage_content,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,storage_content,flow
+2021-01-01 00:00:00,0.0,20.0,0.0,13.37815,33.37815,0.0,0.0,26.7563,0.0,0.0,26.7563,20.067225,33.445375,10.0,10.067225,0.0,6.6890751,6.6890751,33.445375,9.9665529,0.0
+2021-01-01 01:00:00,0.0,40.0,0.0,13.37815,53.37815,0.0,0.0,26.7563,0.0,0.0,26.7563,20.067225,33.445375,20.0,0.067225187,0.0,6.6890751,6.6890751,33.445375,10.033106,0.0
+2021-01-01 02:00:00,0.0,60.0,0.0,13.37815,73.37815,0.0,0.0,26.7563,0.0,0.0,26.7563,20.067225,33.445375,30.0,0.0,0.0,6.6890751,6.6890751,33.445375,0.0,9.9327748
+2021-01-01 03:00:00,,,,,,,,,,,,,,,,,,,,,

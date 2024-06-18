@@ -1,3 +1,11 @@
+r"""
+VERSION 2 - working
+geometry parameters from global_specs
+solar in
+electricity out
+biomass out
+"""
+
 # TODO: include water (buses, balance, ARID factor)
 # TODO: fix documentation
 
