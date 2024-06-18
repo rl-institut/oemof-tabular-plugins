@@ -17,11 +17,10 @@ RAW_INPUTS = [
     "storage_capacity_cost",
     "capacity",
     "capacity_potential",
+    "capacity_minimum",
     "expandable",
     "storage_capacity",
     "storage_capacity_potential",
-    "min_capacity",
-    "max_capacity",
     "efficiency",
     "capex",
     "opex_fix",
@@ -64,8 +63,8 @@ def compute_opex_fix_costs(results_df):
 
 def compute_variable_costs(results_df):
     """Calculates variable costs by multiplying the marginal cost by the aggregated flow if the direction is out,
-     and by the carrier cost if the direction is in. The total marginal costs for each asset correspond to the sum
-     of the marginal costs for the in- and output flows"""
+    and by the carrier cost if the direction is in. The total marginal costs for each asset correspond to the sum
+    of the marginal costs for the in- and output flows"""
     if results_df.name[1] == "out":
         if "marginal_cost" not in results_df.index:
             return None
@@ -116,6 +115,65 @@ def compute_water_footprint(results_df):
         return results_df.aggregated_flow * results_df.water_footprint_factor
 
 
+def compute_total_system_cost(results_df):
+    """Calculates the total system cost by summing the total annuity and total variable costs
+    for each component"""
+    total_system_cost = (
+        results_df["total_annuity"].sum() + results_df["total_variable_costs"].sum()
+    )
+    return total_system_cost
+
+
+def compute_total_upfront_investments(results_df):
+    """Calculates the total upfront investments by summing the upfront investments for each component"""
+    total_upfront_investments = results_df["upfront_investment_costs"].sum()
+    return total_upfront_investments
+
+
+def compute_total_emissions(results_df):
+    """Calculates the total upfront investments by summing the upfront investments for each component"""
+    total_emissions = results_df["co2_emissions"].sum()
+    return total_emissions
+
+
+def compute_system_additional_land_requirement(results_df):
+    """Calculates the additional land requirement from optimized capacities by summing the additional
+    land requirement for each component"""
+    additional_land_requirement = results_df["additional_land_requirement"].sum()
+    return additional_land_requirement
+
+
+def compute_system_total_land_requirement(results_df):
+    """Calculates the total land requirement by summing the total land requirement for each component"""
+    total_land_requirement = results_df["total_land_requirement"].sum()
+    return total_land_requirement
+
+
+def compute_total_water_footprint(results_df):
+    """Calculates the total water footprint by summing the total water footprint for each component"""
+    total_water_footprint = results_df["water_footprint"].sum()
+    return total_water_footprint
+
+
+def compute_specific_system_cost(results_df):
+    """Calculates the total upfront investments by summing the upfront investments for each component"""
+    # ToDo: will need to be adapted when non-energetic loads are included - for now only electricity is
+    #  considered but this is not correct
+    # ToDo: NEED TO CHANGE: somehow select only electricity components to calculate LCOE - discuss with Paula
+    total_load = 0
+    total_system_cost = (
+        results_df["total_annuity"].sum() + results_df["total_variable_costs"].sum()
+    )
+    for index, row in results_df.iterrows():
+        # This is a quick fix to not include water - need to talk to Julian about how other demands should
+        # be considered
+        if index[4] == "load" and index[3] == "electricity":
+            print("asset type in index")
+            total_load += row.get("aggregated_flow", 0)
+    specific_system_cost = total_system_cost / total_load
+    return specific_system_cost
+
+
 def _check_arguments(df, column_names, col_name):
     """Check that all required argument are present in the DataFrame columns"""
     for arg in column_names:
@@ -131,69 +189,140 @@ CALCULATED_OUTPUTS = [
         "column_name": "total_capacity",
         "operation": compute_total_capacity,
         "description": "The total capacity is calculated by adding the optimized capacity (investments) "
-                       "to the existing capacity (capacity)",
+        "to the existing capacity (capacity)",
         "argument_names": ["investments", "capacity"],
     },
     {
         "column_name": "total_annuity",
         "operation": compute_total_annuity,
         "description": "Total annuity is calculated by multiplying the optimized capacity "
-                       "by the capacity cost (annuity considering CAPEX, OPEX and WACC)",
+        "by the capacity cost (annuity considering CAPEX, OPEX and WACC)",
         "argument_names": ["investments", "capacity_cost"],
     },
     {
         "column_name": "upfront_investment_costs",
         "operation": compute_upfront_investment_costs,
         "description": "Upfront investment costs are calculated by multiplying the optimized capacity "
-                       "by the CAPEX",
+        "by the CAPEX",
         "argument_names": ["investments", "capex"],
     },
     {
         "column_name": "total_opex_fix_costs",
         "operation": compute_opex_fix_costs,
         "description": "Operation and maintenance costs are calculated by multiplying the optimized capacity "
-                       "by the OPEX",
+        "by the OPEX",
         "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
     },
     {
         "column_name": "total_variable_costs",
         "operation": compute_variable_costs,
         "description": "Variable costs are calculated by multiplying the total flow "
-                       "by the marginal/carrier costs",
+        "by the marginal/carrier costs",
         "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
     },
     {
         "column_name": "renewable_generation",
         "operation": compute_renewable_generation,
         "description": "The renewable generation for each component is computed from the flow and the "
-                       "renewable factor.",
+        "renewable factor.",
         "argument_names": [
             "aggregated_flow",
             "renewable_factor",
         ],
     },
     {
-        "column_name": "cO2_emmissions",
+        "column_name": "co2_emissions",
         "operation": compute_co2_emissions,
-        "description": "CO2 emissions are calculated from the flow and the emission factor.",
+        "description": "CO2 emissions are calculated from the flow and the emission factor",
         "argument_names": ["aggregated_flow", "emission_factor"],
     },
     {
         "column_name": "additional_land_requirement",
         "operation": compute_additional_land_requirement,
-        "description": "The additional land requirement calculates the land required for the optimized capacities.",
-        "argument_names": ["investments", "emission_factor"],
+        "description": "The additional land requirement calculates the land required for the optimized capacities",
+        "argument_names": ["investments", "land_requirement_factor"],
     },
     {
         "column_name": "total_land_requirement",
         "operation": compute_total_land_requirement,
-        "description": "The total land requirement calculates the land required for the total capacities.",
-        "argument_names": ["total_capacity", "emission_factor"],
+        "description": "The total land requirement calculates the land required for the total capacities",
+        "argument_names": ["total_capacity", "land_requirement_factor"],
+    },
+    {
+        "column_name": "water_footprint",
+        "operation": compute_water_footprint,
+        "description": "The water footprint calculates the water footprint for the aggregated flows of each component",
+        "argument_names": ["aggregated_flow", "water_footprint_factor"],
+    },
+]
+
+# ToDo: turn dict into a class (see CALCULATED_OUTPUTS) and decide where this belongs - either here or in processing
+#  or maybe these can be joined with CALCULATED_OUTPUTS and there is another parameter that defines if it is a calculation
+#  per component (to be added to df_results) or a calculation for the whole system (e.g. LCOE, total emissions etc).
+#  Probably this should be included with the other CALCULATED_OUTPUTS eventually, but should ask PF
+CALCULATED_KPIS = [
+    {
+        "column_name": "total_system_cost",
+        "operation": compute_total_system_cost,
+        "description": "The total system cost is calculated by summing up the total annuity (CAPEX and OPEX fix "
+        "multipled by the optimized capacity) and the total variable costs (including carrier and"
+        "marginal costs) for each component and then summing the values up to get the total value"
+        "for the system",
+        "argument_names": ["total_annuity", "total_variable_costs"],
+    },
+    {
+        "column_name": "total_upfront_investments",
+        "operation": compute_total_upfront_investments,
+        "description": "The total upfront investments value is calculated by summing the upfront investment"
+        "costs for each component",
+        "argument_names": ["upfront_investment_costs"],
+    },
+    {
+        "column_name": "specific_system_cost",
+        "operation": compute_specific_system_cost,
+        "description": "T",
+        "argument_names": ["aggregated_flow", "total_annuity", "total_variable_costs"],
+    },
+    {
+        "column_name": "total_emissions",
+        "operation": compute_total_emissions,
+        "description": "The total emissions is calculated by summing the c02 emissions "
+        "for each component",
+        "argument_names": ["co2_emissions"],
+    },
+    {
+        "column_name": "additional_land_requirement",
+        "operation": compute_system_additional_land_requirement,
+        "description": "The total additional land requirement is calculated by summing the additional land requirement "
+        "for each component",
+        "argument_names": ["additional_land_requirement"],
+    },
+    {
+        "column_name": "total_land_requirement",
+        "operation": compute_system_total_land_requirement,
+        "description": "The total land requirement is calculated by summing the total land requirement "
+        "for each component",
+        "argument_names": ["total_land_requirement"],
+    },
+    {
+        "column_name": "total_water_footprint",
+        "operation": compute_total_water_footprint,
+        "description": "The total water footprint is calculated by summing the water footprint required "
+        "for each component",
+        "argument_names": ["water_footprint"],
     },
 ]
 
 # Add docstrings from function handles for documentation purposes
 for calc in CALCULATED_OUTPUTS:
+    func_handle = calc.get("operation", None)
+    if callable(func_handle):
+        calc["docstring"] = func_handle.__doc__
+    else:
+        calc["docstring"] = ""
+
+# Add docstrings from function handles for documentation purposes
+for calc in CALCULATED_KPIS:
     func_handle = calc.get("operation", None)
     if callable(func_handle):
         calc["docstring"] = func_handle.__doc__
@@ -511,3 +640,40 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
             logging.info(
                 f"Removed column '{var_name}' because it contains all None values."
             )
+
+
+def apply_kpi_calculations(results_df, calculations=CALCULATED_KPIS):
+    """Apply calculation and return a new DataFrame with the KPIs.
+
+    Parameters
+    ----------
+    results_df : pd.DataFrame
+        The input DataFrame with raw data.
+    calculations : list of dict
+        List of calculations to be applied. Each calculation is a dictionary
+        with keys: "column_name", "argument_names", and "operation".
+
+    Returns
+    -------
+    pd.DataFrame
+        A new DataFrame containing the calculated KPI values with var_name as the index.
+    """
+    kpis = []
+
+    for calc in calculations:
+        _validate_calculation(calc)
+        var_name = calc.get("column_name")
+        argument_names = calc.get("argument_names", [])
+        func_handle = calc.get("operation")
+
+        try:
+            _check_arguments(results_df, column_names=argument_names, col_name=var_name)
+        except AttributeError as e:
+            logging.warning(e)
+            continue
+
+        kpi_value = func_handle(results_df)
+        kpis.append({"kpi": var_name, "value": kpi_value})
+
+    kpi_df = pd.DataFrame(kpis).set_index("kpi")
+    return kpi_df

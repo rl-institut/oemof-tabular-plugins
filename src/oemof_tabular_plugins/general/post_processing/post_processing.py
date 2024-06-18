@@ -1,16 +1,19 @@
 import logging
 import os
-import pandas as pd
-import numpy as np
 import warnings
-from oemof.tabular.postprocessing.core import Calculator
+
+import pandas as pd
 from oemof.tabular.postprocessing import calculations as clc, naming
+from oemof.tabular.postprocessing.core import Calculator
+
 from oemof_tabular_plugins.datapackage.post_processing import (
     construct_dataframe_from_results,
     process_raw_results,
     process_raw_inputs,
     apply_calculations,
+    apply_kpi_calculations,
 )
+
 
 # ToDo: the functions below need proper testing and appropriate logging info for the user's understanding
 # NOTE: the post-processing module is expected to change once the main multi-index dataframe is created, so
@@ -659,16 +662,26 @@ def create_costs_table(all_scalars, results, capacities_df, storage_capacities_d
 # ------ New post-processing to create tables ------
 # This dictionary contains groups of columns that should be extracted from the df_results to generate a clearer overview
 
+
 # TODO add a column for planned capacity (not optimizable but including costs) in capacities if it gets properly implemented
 #  (planned capacity can be set by setting capacity_minimum == capacity_potential and dispatchable = True
-RESULT_TABLE_COLUMNS = {"costs": ["upfront_investment_costs", "total_annuity", "total_variable_costs"],
-                        "capacities": ["capacity", "storage_capacity", "capacity_potential",
-                                       "storage_capacity_potential", "total_capacity"]
-                        }
+RESULT_TABLE_COLUMNS = {
+    "costs": ["upfront_investment_costs", "total_annuity", "total_variable_costs"],
+    "capacities": [
+        "capacity",
+        "storage_capacity",
+        "capacity_minimum",
+        "capacity_potential",
+        "storage_capacity_potential",
+        "expandable",
+        "investments",
+        "total_capacity",
+    ],
+}
 
 
 def extract_table_from_results(df_results, columns):
-    """ Extracts a set of columns from the df_results DataFrame. The lists of columns to generate these tables can be
+    """Extracts a set of columns from the df_results DataFrame. The lists of columns to generate these tables can be
     defined in RESULT_TABLE_COLUMNS
     :param df_results: multiindex results dataframe with additional columns (OTPCalculator.df_results)
     :param columns: list of columns to generate the sub-table (should be defined in RESULT_TABLE_COLUMNS)
@@ -680,26 +693,23 @@ def extract_table_from_results(df_results, columns):
             df_results[col]
         except KeyError:
             # If the key is not in the df_results dataframe, log it as a warning and pop the column from the list
-            logging.warning(f"The column {col} was not found in the results DataFrame, will be skipped in the subtable")
+            logging.warning(
+                f"The column {col} was not found in the results DataFrame, will be skipped in the subtable"
+            )
             missing_columns.append(col)
 
     columns = [col for col in columns if col not in missing_columns]
     results_table = df_results[columns].copy()
     # TODO some of these names may be confusing because they are just the columns, maybe there should be a
     #  verbose parameter in CALCULATED OUTPUTS that we can then also use here
-    results_table.columns = [col.title().replace("_", " ") for col in results_table.columns]
+    results_table.columns = [
+        col.title().replace("_", " ") for col in results_table.columns
+    ]
     return results_table
 
 
-def create_kpi_df(df_results):
-    # TODO these should also be calculated in a similar way to CALCULATED_OUTPUTS, where the necessary columns are given
-    #  as input and the code checks that the necessary columns exist before performing the calculations. But instead of
-    #  adding the column to the dataframe, the result is just used here to construct the system-wide kpi table
-    pass
-
-
 def save_table_to_csv(table, results_path, filename):
-    """ Saves a DataFrame to a .csv file """
+    """Saves a DataFrame to a .csv file"""
     filepath = os.path.join(results_path, filename)
     table.to_csv(filepath)
 
@@ -715,6 +725,7 @@ class OTPCalculator(Calculator):
         self.df_results = process_raw_results(self.df_results)
         self.df_results = process_raw_inputs(self.df_results, dp_path)
         apply_calculations(self.df_results)
+        self.kpis = apply_kpi_calculations(self.df_results)
 
         super().__init__(input_parameters, energy_system.results)
 
@@ -734,17 +745,20 @@ def post_processing(params, es, results_path, dp_path):
     # print(calculator.df_results)
     results = es.results
     results_by_flow = calculator.df_results
-    results_by_flow.to_csv(results_path + "/results_by_flow.csv", index=True)
+    results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
+    kpis = calculator.kpis
+    kpis.to_csv(results_path + "/kpis.csv", index=True)
 
     # get sub-tables from results dataframe
-    cost_table = extract_table_from_results(calculator.df_results, RESULT_TABLE_COLUMNS["costs"])
-    capacities_table = extract_table_from_results(calculator.df_results, RESULT_TABLE_COLUMNS["capacities"])
+    cost_table = extract_table_from_results(
+        calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
+    )
+    capacities_table = extract_table_from_results(
+        calculator.df_results, RESULT_TABLE_COLUMNS["capacities"]
+    )
 
     # save tables to csv files
-    tables_to_save = {
-        "costs.csv": cost_table,
-        "capacities.csv": capacities_table
-    }
+    tables_to_save = {"costs.csv": cost_table, "capacities.csv": capacities_table}
     for filename, table in tables_to_save.items():
         save_table_to_csv(table, results_path, filename)
 
