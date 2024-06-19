@@ -32,16 +32,27 @@ RAW_INPUTS = [
 ]
 
 
-def compute_total_capacity(results_df):
-    # ToDo: check for storage where there is both capacity and storage capacity
+# Functions for results per component
+def compute_capacity_total(results_df):
+    # ToDo: how it is here is that now total capacity is considering the storage capacity (in MWh) for storage.
+    #  Check how the storage capacities should be displayed in the results to make it not confusing for the user. Maybe
+    #  the storage components need two total capacity results (one for power and one for energy)?
     """Calculates total capacity by adding existing capacity (capacity) to optimized capacity (investments)"""
-    return results_df.capacity + results_df.investments
+    if "storage" in results_df.name:
+        return results_df.storage_capacity + results_df.investments
+    else:
+        return results_df.capacity + results_df.investments
 
 
-def compute_total_annuity(results_df):
-    """Calculates total capacity by adding existing capacity (capacity) to optimized capacity (investments)"""
-    # TODO fix this to use storage_capacity_cost for the storage (or fix on the storage side)
-    return results_df.capacity_cost + results_df.investments
+def compute_annuity_total(results_df):
+    """Calculates total annuity by multiplying the annuity by the optimized capacity"""
+    # ToDo: now storage_capacity_cost is used for the annuity if the component is storage.
+    #  Check that this is correctly applied for storage components or if two different costs should
+    #  be calculated (one for power and one for energy)
+    if "storage" in results_df.name:
+        return results_df.storage_capacity_cost * results_df.investments
+    else:
+        return results_df.capacity_cost * results_df.investments
 
 
 def compute_upfront_investment_costs(results_df):
@@ -91,7 +102,7 @@ def compute_co2_emissions(results_df):
         return results_df.aggregated_flow * results_df.emission_factor
 
 
-def compute_additional_land_requirement(results_df):
+def compute_land_requirement_additional(results_df):
     """Calculates land requirement needed for optimized capacities"""
     if "land_requirement_factor" not in results_df.index:
         return None
@@ -99,12 +110,12 @@ def compute_additional_land_requirement(results_df):
         return results_df.investments * results_df.land_requirement_factor
 
 
-def compute_total_land_requirement(results_df):
+def compute_land_requirement_total(results_df):
     """Calculates land requirement needed for total capacities"""
     if "land_requirement_factor" not in results_df.index:
         return None
     else:
-        return results_df.total_capacity * results_df.land_requirement_factor
+        return results_df.capacity_total * results_df.land_requirement_factor
 
 
 def compute_water_footprint(results_df):
@@ -115,51 +126,149 @@ def compute_water_footprint(results_df):
         return results_df.aggregated_flow * results_df.water_footprint_factor
 
 
-def compute_total_system_cost(results_df):
+# Functions for whole system results
+def compute_system_annuity_total(results_df):
+    """Calculates system total annuity by summing the total annuity for each component"""
+    # ToDo: this method looks through each component and if it is mentioned twice, the annuity only
+    #  gets considered once e.g. for storage, except for a MIMO because the costs only get considered once already.
+    #  This is a quick fix and I didn't have time to figure out how this should be done in the cleanest way
+    seen_components = set()
+    annuity_total = 0
+    for index, row in results_df.iterrows():
+        component_name = index[2]
+        # check if the component has been included before
+        if component_name not in seen_components:
+            annuity_value = row["annuity_total"]
+            if pd.isna(annuity_value):
+                annuity_value = 0
+            annuity_total += annuity_value
+            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
+            # this should definitely be changed once implemented properly
+            if not pd.isna(index[4]):
+                seen_components.add(component_name)
+    return annuity_total
+
+
+def compute_system_variable_costs_total(results_df):
+    """Calculates the total variable costs by summing the variable costs for each component flow"""
+    # This function has not been implemented the same as above because here we want to consider the variable
+    # costs attached to each flow instead of each component
+    variable_costs_total = results_df["variable_costs_total"].sum()
+    return variable_costs_total
+
+
+def compute_system_cost_total(results_df):
     """Calculates the total system cost by summing the total annuity and total variable costs
     for each component"""
-    total_system_cost = (
-        results_df["total_annuity"].sum() + results_df["total_variable_costs"].sum()
-    )
-    return total_system_cost
+    # ToDo: quick fix - I didn't have time but rather than repeating the functions above, it would be good to calculate
+    #  this from the kpis dataframe instead of results_df (then can use the annuity_total and variable_costs_total
+    #  directly. To do this though, the apply_kpi_calculations function has to be adapted
+    seen_components = set()
+    annuity_total = 0
+    for index, row in results_df.iterrows():
+        component_name = index[2]
+        # check if the component has been included before
+        if component_name not in seen_components:
+            annuity_value = row["annuity_total"]
+            if pd.isna(annuity_value):
+                annuity_value = 0
+            annuity_total += annuity_value
+            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
+            # this should definitely be changed once implemented properly
+            if not pd.isna(index[4]):
+                seen_components.add(component_name)
+    variable_costs_total = results_df["variable_costs_total"].sum()
+    system_cost_total = annuity_total + variable_costs_total
+    return system_cost_total
 
 
-def compute_total_upfront_investments(results_df):
+def compute_system_upfront_investments_total(results_df):
     """Calculates the total upfront investments by summing the upfront investments for each component"""
-    total_upfront_investments = results_df["upfront_investment_costs"].sum()
-    return total_upfront_investments
+    # ToDo: this method looks through each component and if it is mentioned twice, the annuity only
+    #  gets considered once e.g. for storage, except for a MIMO because the costs only get considered once already.
+    #  This is a quick fix and I didn't have time to figure out how this should be done in the cleanest way
+    seen_components = set()
+    upfront_investments_total = 0
+    for index, row in results_df.iterrows():
+        component_name = index[2]
+        # check if the component has been included before
+        if component_name not in seen_components:
+            upfront_investment = row["upfront_investment_costs"]
+            if pd.isna(upfront_investment):
+                upfront_investment = 0
+            upfront_investments_total += upfront_investment
+            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
+            # this should definitely be changed once implemented properly
+            if not pd.isna(index[4]):
+                seen_components.add(component_name)
+    return upfront_investments_total
 
 
-def compute_total_emissions(results_df):
-    """Calculates the total upfront investments by summing the upfront investments for each component"""
-    total_emissions = results_df["co2_emissions"].sum()
-    return total_emissions
+def compute_system_co2_emissions_total(results_df):
+    """Calculates the total CO2 emissions by summing up the CO2 emissions on each component flow"""
+    # ToDo: so far these are simply summed for each flow, but should check this is correct in every case
+    emissions_total = results_df["co2_emissions"].sum()
+    return emissions_total
 
 
-def compute_system_additional_land_requirement(results_df):
+def compute_system_land_requirement_additional(results_df):
     """Calculates the additional land requirement from optimized capacities by summing the additional
     land requirement for each component"""
-    additional_land_requirement = results_df["additional_land_requirement"].sum()
-    return additional_land_requirement
+    # ToDo: this method looks through each component and if it is mentioned twice, the annuity only
+    #  gets considered once e.g. for storage, except for a MIMO because the costs only get considered once already.
+    #  This is a quick fix and I didn't have time to figure out how this should be done in the cleanest way
+    seen_components = set()
+    add_land_requirement_total = 0
+    for index, row in results_df.iterrows():
+        component_name = index[2]
+        # check if the component has been included before
+        if component_name not in seen_components:
+            add_land_requirement = row["land_requirement_additional"]
+            if pd.isna(add_land_requirement):
+                add_land_requirement = 0
+            add_land_requirement_total += add_land_requirement
+            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
+            # this should definitely be changed once implemented properly
+            if not pd.isna(index[4]):
+                seen_components.add(component_name)
+    return add_land_requirement_total
 
 
-def compute_system_total_land_requirement(results_df):
+def compute_system_land_requirement_total(results_df):
     """Calculates the total land requirement by summing the total land requirement for each component"""
-    total_land_requirement = results_df["total_land_requirement"].sum()
-    return total_land_requirement
+    # ToDo: this method looks through each component and if it is mentioned twice, the annuity only
+    #  gets considered once e.g. for storage, except for a MIMO because the costs only get considered once already.
+    #  This is a quick fix and I didn't have time to figure out how this should be done in the cleanest way
+    seen_components = set()
+    land_requirement_total = 0
+    for index, row in results_df.iterrows():
+        component_name = index[2]
+        # check if the component has been included before
+        if component_name not in seen_components:
+            land_requirement = row["land_requirement_total"]
+            if pd.isna(land_requirement):
+                land_requirement = 0
+            land_requirement_total += land_requirement
+            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
+            # this should definitely be changed once implemented properly
+            if not pd.isna(index[4]):
+                seen_components.add(component_name)
+    return land_requirement_total
 
 
-def compute_total_water_footprint(results_df):
+def compute_water_footprint_total(results_df):
     """Calculates the total water footprint by summing the total water footprint for each component"""
-    total_water_footprint = results_df["water_footprint"].sum()
-    return total_water_footprint
+    # ToDo: so far these are simply summed for each flow, but should check this is correct in every case
+    water_footprint_total = results_df["water_footprint"].sum()
+    return water_footprint_total
 
 
 def compute_specific_system_cost(results_df):
     """Calculates the total upfront investments by summing the upfront investments for each component"""
     # ToDo: will need to be adapted when non-energetic loads are included - for now only electricity is
     #  considered but this is not correct
-    # ToDo: NEED TO CHANGE: somehow select only electricity components to calculate LCOE - discuss with Paula
+    # ToDo: need to decide how this should be calculated for energy systems with multiple carriers
+    #  (both energetic and non-energetic)
     total_load = 0
     total_system_cost = (
         results_df["total_annuity"].sum() + results_df["total_variable_costs"].sum()
@@ -174,6 +283,28 @@ def compute_specific_system_cost(results_df):
     return specific_system_cost
 
 
+def compute_renewable_share(results_df):
+    """Calculates the renewable share based on the renewable generation of each flow and the
+    total aggregated flow of any component where the renewable factor is set (should be only set on sources)
+    """
+    # ToDo: this might need to be reconsidered when the renewable share is set on a non-source component
+    #  e.g. if the PV panel is a transformer component and the renewable share is on the output. It might still
+    #  work but definitely needs to be checked
+    renewable_generation_total = 0
+    generation_total = 0
+    for index, row in results_df.iterrows():
+        if not pd.isna(row["renewable_factor"]):
+            generation = row["aggregated_flow"]
+            renewable_generation = row["aggregated_flow"] * row["renewable_factor"]
+            generation_total += generation
+            renewable_generation_total += renewable_generation
+    if generation_total == 0:
+        renewable_share = 0
+    else:
+        renewable_share = renewable_generation_total / generation_total
+    return renewable_share
+
+
 def _check_arguments(df, column_names, col_name):
     """Check that all required argument are present in the DataFrame columns"""
     for arg in column_names:
@@ -186,15 +317,15 @@ def _check_arguments(df, column_names, col_name):
 # TODO turn the dict into a class simular to the one of Calculation of oemof.tabular
 CALCULATED_OUTPUTS = [
     {
-        "column_name": "total_capacity",
-        "operation": compute_total_capacity,
+        "column_name": "capacity_total",
+        "operation": compute_capacity_total,
         "description": "The total capacity is calculated by adding the optimized capacity (investments) "
         "to the existing capacity (capacity)",
         "argument_names": ["investments", "capacity"],
     },
     {
-        "column_name": "total_annuity",
-        "operation": compute_total_annuity,
+        "column_name": "annuity_total",
+        "operation": compute_annuity_total,
         "description": "Total annuity is calculated by multiplying the optimized capacity "
         "by the capacity cost (annuity considering CAPEX, OPEX and WACC)",
         "argument_names": ["investments", "capacity_cost"],
@@ -207,14 +338,14 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["investments", "capex"],
     },
     {
-        "column_name": "total_opex_fix_costs",
+        "column_name": "opex_fix_costs_total",
         "operation": compute_opex_fix_costs,
         "description": "Operation and maintenance costs are calculated by multiplying the optimized capacity "
         "by the OPEX",
-        "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
+        "argument_names": ["aggregated_flow", "opex_fix"],
     },
     {
-        "column_name": "total_variable_costs",
+        "column_name": "variable_costs_total",
         "operation": compute_variable_costs,
         "description": "Variable costs are calculated by multiplying the total flow "
         "by the marginal/carrier costs",
@@ -237,16 +368,16 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["aggregated_flow", "emission_factor"],
     },
     {
-        "column_name": "additional_land_requirement",
-        "operation": compute_additional_land_requirement,
+        "column_name": "land_requirement_additional",
+        "operation": compute_land_requirement_additional,
         "description": "The additional land requirement calculates the land required for the optimized capacities",
         "argument_names": ["investments", "land_requirement_factor"],
     },
     {
-        "column_name": "total_land_requirement",
-        "operation": compute_total_land_requirement,
+        "column_name": "land_requirement_total",
+        "operation": compute_land_requirement_total,
         "description": "The total land requirement calculates the land required for the total capacities",
-        "argument_names": ["total_capacity", "land_requirement_factor"],
+        "argument_names": ["capacity_total", "land_requirement_factor"],
     },
     {
         "column_name": "water_footprint",
@@ -262,17 +393,27 @@ CALCULATED_OUTPUTS = [
 #  Probably this should be included with the other CALCULATED_OUTPUTS eventually, but should ask PF
 CALCULATED_KPIS = [
     {
-        "column_name": "total_system_cost",
-        "operation": compute_total_system_cost,
-        "description": "The total system cost is calculated by summing up the total annuity (CAPEX and OPEX fix "
-        "multipled by the optimized capacity) and the total variable costs (including carrier and"
-        "marginal costs) for each component and then summing the values up to get the total value"
-        "for the system",
-        "argument_names": ["total_annuity", "total_variable_costs"],
+        "column_name": "annuity_total",
+        "operation": compute_system_annuity_total,
+        "description": "The system total annuity is calculated by summing up the total annuity for each component",
+        "argument_names": ["annuity_total"],
+    },
+    {
+        "column_name": "variable_costs_total",
+        "operation": compute_system_variable_costs_total,
+        "description": "The system total variable costs is calculated by summing up the total variable costs for "
+        "each component flow",
+        "argument_names": ["variable_costs_total"],
+    },
+    {
+        "column_name": "system_cost_total",
+        "operation": compute_system_cost_total,
+        "description": "The total system cost is calculated by adding the total annuity to the total variable costs",
+        "argument_names": ["annuity_total", "variable_costs_total"],
     },
     {
         "column_name": "total_upfront_investments",
-        "operation": compute_total_upfront_investments,
+        "operation": compute_system_upfront_investments_total,
         "description": "The total upfront investments value is calculated by summing the upfront investment"
         "costs for each component",
         "argument_names": ["upfront_investment_costs"],
@@ -284,32 +425,39 @@ CALCULATED_KPIS = [
         "argument_names": ["aggregated_flow", "total_annuity", "total_variable_costs"],
     },
     {
-        "column_name": "total_emissions",
-        "operation": compute_total_emissions,
+        "column_name": "co2_emissions_total",
+        "operation": compute_system_co2_emissions_total,
         "description": "The total emissions is calculated by summing the c02 emissions "
         "for each component",
         "argument_names": ["co2_emissions"],
     },
     {
-        "column_name": "additional_land_requirement",
-        "operation": compute_system_additional_land_requirement,
+        "column_name": "land_requirement_additional",
+        "operation": compute_system_land_requirement_additional,
         "description": "The total additional land requirement is calculated by summing the additional land requirement "
         "for each component",
-        "argument_names": ["additional_land_requirement"],
+        "argument_names": ["land_requirement_additional"],
     },
     {
-        "column_name": "total_land_requirement",
-        "operation": compute_system_total_land_requirement,
+        "column_name": "land_requirement_total",
+        "operation": compute_system_land_requirement_total,
         "description": "The total land requirement is calculated by summing the total land requirement "
         "for each component",
-        "argument_names": ["total_land_requirement"],
+        "argument_names": ["land_requirement_total"],
     },
     {
         "column_name": "total_water_footprint",
-        "operation": compute_total_water_footprint,
+        "operation": compute_water_footprint_total,
         "description": "The total water footprint is calculated by summing the water footprint required "
         "for each component",
         "argument_names": ["water_footprint"],
+    },
+    {
+        "column_name": "renewable_share",
+        "operation": compute_renewable_share,
+        "description": "The renewable share is calculated by dividing the renewable generation by the total "
+        "generation",
+        "argument_names": ["renewable_factor", "aggregated_flow"],
     },
 ]
 
@@ -634,12 +782,13 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
             func_handle,
             axis=1,
         )
-        # check if the new column contains all None values and remove it if so
-        if results_df[var_name].isna().all():
-            results_df.drop(columns=[var_name], inplace=True)
-            logging.info(
-                f"Removed column '{var_name}' because it contains all None values."
-            )
+        # ToDo: I've commented this out for now but decide if this or some form should be kept in
+        # # check if the new column contains all None values and remove it if so
+        # if results_df[var_name].isna().all():
+        #     results_df.drop(columns=[var_name], inplace=True)
+        #     logging.info(
+        #         f"Removed column '{var_name}' because it contains all None values."
+        #     )
 
 
 def apply_kpi_calculations(results_df, calculations=CALCULATED_KPIS):
