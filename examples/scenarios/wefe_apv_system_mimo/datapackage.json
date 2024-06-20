@@ -262,7 +262,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -316,27 +316,82 @@
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_solar-energy-bus",
+                        "name": "elevation",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "crop_type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "sowing_date",
+                        "type": "date",
+                        "format": "default"
+                    },
+                    {
+                        "name": "minimal_crop_yield",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_solar-energy-bus",
+                        "type": "array",
                         "format": "default"
                     },
                     {
                         "name": "conversion_factor_water-bus-in",
-                        "type": "number",
+                        "type": "array",
                         "format": "default"
                     },
                     {
                         "name": "conversion_factor_electricity-bus",
-                        "type": "number",
+                        "type": "array",
                         "format": "default"
                     },
                     {
                         "name": "conversion_factor_biomass-bus",
-                        "type": "number",
+                        "type": "array",
                         "format": "default"
                     },
                     {
                         "name": "conversion_factor_water-bus-out",
+                        "type": "array",
+                        "format": "default"
+                    },
+                    {
+                        "name": "x",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "y",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tilt",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "pitch",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "area_pv",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "area_apv",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ler",
                         "type": "number",
                         "format": "default"
                     }

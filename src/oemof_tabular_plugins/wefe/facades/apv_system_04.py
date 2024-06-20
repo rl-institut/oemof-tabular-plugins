@@ -10,6 +10,7 @@ water out
 
 # TODO: include water (buses, balance, ARID factor)
 # TODO: fix documentation
+# TODO: check if weather_data and sowing_date have the same year
 
 from dataclasses import field
 from typing import Sequence, Union
@@ -35,11 +36,9 @@ from datetime import datetime
 import pytz
 import os
 
+import pdb
+
 logger.define_logging()
-
-# TODO: user input latitude and crop specifications?
-# TODO: user input weather data -> adjust sequencepath (WEFESiteAnalyst input data)
-
 
 # -------------- RELEVANT PATHS --------------
 currentpath = os.path.abspath(__file__)
@@ -53,7 +52,6 @@ specspath = os.path.join(
 
 # -------------- APV pre-processing --------------
 def pre_processing_apv(scenariopath):
-
     def _apv_production(scenariopath, apv_dict):
         r"""
         Calculate biomass and PV efficiency as full-year hourly conversion factor series
@@ -66,8 +64,9 @@ def pre_processing_apv(scenariopath):
         # ---- Crop growth data from element csv -----
         crop_type = apv_dict['crop_type']
         minimal_crop_yield = apv_dict['minimal_crop_yield']
-        # Transfer sowing date into Timestamp object
-        sowing_date = datetime.strptime(apv_dict['sowing_date'], '%Y-%m-%d').replace(tzinfo=pytz.UTC)
+        # Transfer sowing date into Timestamp object matching the df index
+        index_timezone = df.index.tz
+        sowing_date = pd.Timestamp(apv_dict['sowing_date']).tz_localize(index_timezone)
         z = apv_dict['elevation']
 
         # ----- Crop specific growth parameters from crop_dict -----
@@ -99,7 +98,10 @@ def pre_processing_apv(scenariopath):
 
         # ----- Geometry -----
         def apv_geometry(lat):
-            """ """
+            """
+            Obtain geometry parameters and bifacial_radiance simulation results from geometry.json,
+            interpolate for given latitude and return geometry_params
+            """
 
             # Location-specific, fixed geometry parameters
             # module size from bifacial_radiance 'test_module'
@@ -186,9 +188,9 @@ def pre_processing_apv(scenariopath):
         y = geo_params['y']
         tilt = geo_params['tilt']
         pitch = geo_params['pitch']
-        xgaps = geo_params['xgaps'].pop()
-        fbifacials = geo_params['fbifacials'].pop()
-        fshadings = geo_params['fshadings'].pop()
+        xgaps = geo_params.pop('xgaps')
+        fbifacials = geo_params.pop('fbifacials')
+        fshadings = geo_params.pop('fshadings')
 
         area_pv = x * y * np.cos(tilt)
         geo_params['area_pv'] = area_pv
@@ -370,7 +372,8 @@ def pre_processing_apv(scenariopath):
             soil_water_balance(df)
 
             df['f_drought'] = df.apply(
-                lambda row: drought(row['et_p'], row['et_a'])
+                lambda row: drought(row['et_p'], row['et_a']),
+                axis=1
             )
 
             df['f_solar'] = df['cum_temp'].apply(
@@ -389,8 +392,8 @@ def pre_processing_apv(scenariopath):
 
         # ------- Geometry optimization: Maximize LER -------
         biomass_open = biomass_generation(df, frt=1).sum()
-        electricity_rel = [(1 + fbifacials[i]) * x / ((1 + fbifacials[0]) * (x + xgaps[i])) for i in range(len(xgaps))]
-        biomass_rel = [biomass_generation(df, frt=fshadings[i]).sum() / biomass_open for i in range(len(xgaps))]
+        electricity_rel = [(1 + fbifacials[i]) * x / ((1 + fbifacials[0]) * (x + xgaps[i])) for i in range(3)]
+        biomass_rel = [biomass_generation(df, frt=fshadings[i]).sum() / biomass_open for i in range(3)]
 
         # Define the optimization model
         opti_model = ConcreteModel()
@@ -399,13 +402,13 @@ def pre_processing_apv(scenariopath):
         # Set up the piecewise linear functions for biomass and electricity terms
         opti_model.bio_rel = Var()
         opti_model.bio_rel_pieces = Piecewise(opti_model.bio_rel, opti_model.xgap,
-                                              pw_pts=xgaps,
+                                              pw_pts=xgaps[:3],
                                               f_rule=biomass_rel,
                                               pw_constr_type='EQ')
 
         opti_model.elec_rel = Var()
         opti_model.elec_rel_pieces = Piecewise(opti_model.elec_rel, opti_model.xgap,
-                                               pw_pts=xgaps,
+                                               pw_pts=xgaps[:3],
                                                f_rule=electricity_rel,
                                                pw_constr_type='EQ')
 
@@ -423,7 +426,6 @@ def pre_processing_apv(scenariopath):
         xgap_optimal = opti_model.xgap.value
         ler = opti_model.elec_rel.value + opti_model.bio_rel.value
 
-
         # ----- Results processing -----
         interp_frb = interp1d(xgaps, fbifacials, kind='linear')
         interp_frt = interp1d(xgaps, fshadings, kind='linear')
@@ -434,13 +436,24 @@ def pre_processing_apv(scenariopath):
         biomass_gen = biomass_generation(df, frt=fshading_optimal)
         area_apv = (x + xgap_optimal) * pitch
 
+        # ----- Arbitrary water time series -----
+        df['water_in'] = 2
+        df['water_out'] = 1
+
+        # ----- No nulls in conversion factor lists -----
+        df.replace(0, 0.00001, inplace=True)
+
+
         apv_dict.update(
-            geo_params,
             {
+                **geo_params,
                 'area_apv': area_apv,
                 'ler': ler,
-                'electricity': electricity_gen,
-                'biomass': biomass_gen,
+                'solar': df['ghi'].tolist(),
+                'electricity': electricity_gen.tolist(),
+                'biomass': biomass_gen.tolist(),
+                'water_in': df['water_in'].tolist(),
+                'water_out': df['water_out'].tolist()
             }
         )
 
@@ -461,11 +474,11 @@ def pre_processing_apv(scenariopath):
 
                 # Check if a matching row was found
                 if not apv_row.empty:
-                    # Drop apv_row from Dataframe
-                    element_df = element_df.drop(apv_row.index)
-                    # Convert the matching row to a dictionary
-                    apv_dict = apv_row.iloc[0].to_dict()
                     has_apv = True
+                    # Drop apv_row from Dataframe and convert to dictionary
+                    element_df = element_df.drop(apv_row.index)
+                    apv_dict = apv_row.iloc[0].to_dict()
+
 
                     # Update the dictionary
                     apv_dict = _apv_production(scenariopath, apv_dict)
@@ -476,15 +489,15 @@ def pre_processing_apv(scenariopath):
                                 if 'bus' in key}
                     for key, value in bus_dict.items():
                         if key == 'from_bus_0':
-                            apv_dict[f'conversion_factor_{value}'] = 1
+                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('solar')
                         if key == 'from_bus_1':
-                            apv_dict[f'conversion_factor_{value}'] = 2
+                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('water_in')
                         if key == 'to_bus_0':
-                            apv_dict[f'conversion_factor_{value}'] = sequence(apv_dict['electricity'])
+                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('electricity')
                         if key == 'to_bus_1':
-                            apv_dict[f'conversion_factor_{value}'] = sequence(apv_dict['biomass'])
+                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('biomass')
                         if key == 'to_bus_2':
-                            apv_dict[f'conversion_factor_{value}'] = 5
+                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('water_out')
 
                     # Convert updated dictionary back to DataFrame and concat
                     new_apv_row = pd.DataFrame([apv_dict])

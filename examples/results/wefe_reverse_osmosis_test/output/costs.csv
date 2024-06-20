@@ -1,11 +1,10 @@
 Component,Upfront Investment Cost,Annuity (CAPEX + Fixed O&M),Variable Costs (In),Variable Costs (Out)
 inverter,0.0,0.0,,
 pv,0.0,0.0,,
-backup-electricity-grid,,0.0,,32.02689
+backup-electricity-grid,,0.0,,84.201678
 mimo,20067.225000000002,5767.320465,,
 seawater-source,,0.0,,
 brine-excess,,,,
 permeate-demand,,,,
-third-excess,,,,
 elec-demand,,,,
 electricity-excess,,,,

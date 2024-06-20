@@ -1,11 +1,10 @@
 Component,Type,Carrier,Existing Capacity,Capacity Potential,Optimizable,Optimized Capacity,Total Capacity
 inverter,conversion,electricity,0,,True,0.0,0.0
 pv,volatile,electricity,0.0,inf,True,0.0,0.0
-backup-electricity-grid,dispatchable,electricity,0,inf,True,73.37815,73.37815
+backup-electricity-grid,dispatchable,electricity,0,inf,True,160.33613,160.33613
 mimo,,water,0,inf,True,20.067225,20.067225
-seawater-source,dispatchable,water,0,inf,True,6.6890751,6.6890751
+seawater-source,dispatchable,water,0,inf,True,80.268901,80.268901
 brine-excess,excess,,,,,,0.0
 permeate-demand,load,,,,,,0.0
-third-excess,excess,,,,,,0.0
 elec-demand,load,,,,,,0.0
 electricity-excess,excess,,,,,,0.0
