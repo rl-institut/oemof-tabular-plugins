@@ -1,5 +1,6 @@
 import os
 from oemof.solph import EnergySystem, Model
+from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
 
 # TODO this should be with from oemof.tabular.datapackage import building when https://github.com/oemof/oemof-tabular/pull/173 is merged
@@ -16,7 +17,7 @@ from oemof_tabular_plugins.general import (
     pre_processing,
     logger,
 )
-from oemof_tabular_plugins.wefe.facades import PVPanel
+from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO
 
 
 # -------------- RELEVANT PATHS --------------
@@ -25,18 +26,33 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["general_add_cost_inputs"]
+scenarios = [
+    "general_add_cost_inputs",
+    "general_basic",
+    "general_constraints",
+    "general_custom_attributes",
+    "wefe_custom_attributes",
+    "wefe_pv_panel",
+    "wefe_reverse_osmosis",
+]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
 
 # -------------- ADDITIONAL FUNCTIONALITIES (OEMOF-TABULAR-PLUGINS) --------------
 # include the custom attribute parameters to be included in the model
-custom_attributes = ["emission_factor", "renewable_factor", "land_requirement"]
+# this can be moved somewhere and included in a dict or something similar with all possible additional attributes
+custom_attributes = [
+    "emission_factor",
+    "renewable_factor",
+    "land_requirement_factor",
+    "water_footprint_factor",
+]
 # set whether the multi-objective optimization should be performed
 moo = False
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
+TYPEMAP["mimo"] = MIMO
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
@@ -54,6 +70,7 @@ for scenario in scenarios:
     otp_building.infer_metadata_from_data(
         package_name=scenario,
         path=scenario_dir,
+        typemap=TYPEMAP,
     )
 
     # create energy system object from the datapackage
@@ -62,6 +79,7 @@ for scenario in scenarios:
         attributemap={},
         typemap=TYPEMAP,
     )
+
     logger.info("Energy system created from datapackage")
 
     # create model from energy system (this is just oemof.solph)
@@ -83,8 +101,10 @@ for scenario in scenarios:
 
     # extract parameters and results
     params = parameter_as_dict(es)
-    results = m.results()
+    es.results = processing.results(m)
 
-    post_processing(params, results, results_path)
+    post_processing(
+        params, es, results_path, dp_path=os.path.join(scenario_dir, "datapackage.json")
+    )
 
 print("done")

@@ -108,17 +108,18 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
     return r
 
 
-def infer_package_foreign_keys(package):
+def infer_package_foreign_keys(package, typemap=None):
     """Infer the foreign_keys from data/elements and data/sequences and update meta data
 
     Parameters
     ----------
-    package
-
-    Returns
-    -------
+    package: scenario datapackage
+    typemap: facade typemap
 
     """
+    if typemap is None:
+        typemap = {}
+
     p = package
     sequences_profiles_to_resource = map_sequence_profiles_to_resource_name(p)
 
@@ -133,6 +134,14 @@ def infer_package_foreign_keys(package):
             r = infer_resource_foreign_keys(
                 r, sequences_profiles_to_resource, busses=bus_data.name.to_list()
             )
+
+            if r.name in typemap:
+                facade_type = typemap[r.name]
+                # test if facade_type has the method 'validate_datapackage'
+                if hasattr(facade_type, "validate_datapackage"):
+                    # apply the method if it exists
+                    facade_type.validate_datapackage(r)
+
             p.remove_resource(r.name)
             p.add_resource(r.descriptor)
 
@@ -141,6 +150,7 @@ def infer_metadata_from_data(
     package_name="default-name",
     path=None,
     metadata_filename="datapackage.json",
+    typemap=None,
 ):
     """
 
@@ -185,7 +195,7 @@ def infer_metadata_from_data(
 
     # reload the package from the saved json file
     p = Package(os.path.join(path, metadata_filename))
-    infer_package_foreign_keys(p)
+    infer_package_foreign_keys(p, typemap=typemap)
     p.descriptor["resources"].sort(key=lambda x: (x["path"], x["name"]))
     p.commit()
     p.save(os.path.join(path, metadata_filename))
