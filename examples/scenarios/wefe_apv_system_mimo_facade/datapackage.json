@@ -1,6 +1,6 @@
 {
     "profile": "tabular-data-package",
-    "name": "wefe_apv_system_mimo",
+    "name": "wefe_apv_system_mimo_facade",
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {

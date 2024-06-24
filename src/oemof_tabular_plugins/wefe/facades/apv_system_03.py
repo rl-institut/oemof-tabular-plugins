@@ -30,7 +30,7 @@ import json
 from scipy.interpolate import interp1d
 from datetime import datetime
 import pytz
-
+import pdb
 import os
 
 # TODO: user input latitude and crop specifications?
@@ -195,7 +195,7 @@ class APVSystem(MIMO):
         for key, value in kwargs.items():
             if hasattr(value, "type") and value.type == "bus":
                 if key.startswith('solar_bus_in'):
-                    conversion_factors[f'conversion_factor_{value}'] = sequence(1)
+                    conversion_factors[f'conversion_factor_{value}'] = sequence(self.solar_in_efficiency)
                 if key.startswith('water_bus_in'):
                     conversion_factors[f'conversion_factor_{value}'] = sequence(self.water_in_efficiency)
                 if key.startswith('elec_bus_out'):
@@ -364,7 +364,7 @@ class APVSystem(MIMO):
         """
 
         # Obtain weather data
-        df = pd.read_csv(os.path.join(weatherpath, "apv_mimo_profile.csv"), index_col=0, parse_dates=True)
+        df = pd.read_csv(os.path.join(weatherpath, "mimo_profile.csv"), index_col=0, parse_dates=True)
 
         # Extract crop specific growth parameters from dictionary
         crop_type = self.crop_type
@@ -455,13 +455,14 @@ class APVSystem(MIMO):
 
         df['pv_efficiency'] *= (1 + self.fbifacial)
 
-        self.biomass_efficiency = df['biomass_efficiency']
-        self.pv_efficiency = df['pv_efficiency']
+        self.solar_in_efficiency = df['ghi'].tolist()
+        self.biomass_efficiency = df['biomass_efficiency'].tolist()
+        self.pv_efficiency = df['pv_efficiency'].tolist()
 
         # ------ Arbitrary water input and output time series to check MIMO compatibility ------#
         df['water_in'] = 0.3
         df['water_out'] = 0.1
-        self.water_in_efficiency = df['water_in']
-        self.water_out_efficiency = df['water_out']
+        self.water_in_efficiency = df['water_in'].tolist()
+        self.water_out_efficiency = df['water_out'].tolist()
 
         return self

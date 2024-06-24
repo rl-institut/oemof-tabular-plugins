@@ -1,8 +1,8 @@
 Component,Upfront Investment Cost,Annuity (CAPEX + Fixed O&M),Variable Costs (In),Variable Costs (Out)
-back-up-elec,,0.0,,47225.327895548995
-apv-system,52193.739,15000.4805886,,
+back-up-elec,,0.0,,47078.2152620165
+apv-system,52701.138999999996,15146.307348599998,,
 sun,0.0,0.0,,
-back-up-water,,0.0,,196.83816209400004
+back-up-water,,0.0,,1.928587885919
 biomass-excess,,,,
 demand,,,,
 electricity-excess,,,,

@@ -51,23 +51,20 @@ specspath = os.path.join(
 
 
 # -------------- APV pre-processing --------------
-def pre_processing_apv(scenariopath):
-    def _apv_production(scenariopath, apv_dict):
-        r"""
-        Calculate biomass and PV efficiency as full-year hourly conversion factor series
+def pre_processing_apv(directory):
+
+    def _apv_production(apv_dict, apv_df):
+        """
+        Calculate conversion factors as full-year hourly series.
         """
 
-        # ----- Weather data from sequence csv -----
-        weatherpath = os.path.join(scenariopath, "data", "sequences", "apv_mimo_profile.csv")
-        df = pd.read_csv(weatherpath, index_col=0, parse_dates=True)
-
-        # ---- Crop growth data from element csv -----
+        # ---- Crop parameters from element.csv -----
+        z = apv_dict['elevation']
         crop_type = apv_dict['crop_type']
         minimal_crop_yield = apv_dict['minimal_crop_yield']
-        # Transfer sowing date into Timestamp object matching the df index
-        index_timezone = df.index.tz
+        # Transfer sowing date into Timestamp object matching the apv_df index
+        index_timezone = apv_df.index.tz
         sowing_date = pd.Timestamp(apv_dict['sowing_date']).tz_localize(index_timezone)
-        z = apv_dict['elevation']
 
         # ----- Crop specific growth parameters from crop_dict -----
         t_opt = crop_dict[crop_type]['t_opt']
@@ -83,7 +80,6 @@ def pre_processing_apv(scenariopath):
         rue *= 3.6e-3
 
         # ----- Soil parameters -----
-        z = 259
         rzd = 400  # zeta   ## root zone depth [mm]
         wuc = 0.096  # alpha  ## water uptake constant
         awc = 0.13  # theta_m   ## water holding capacity
@@ -112,14 +108,12 @@ def pre_processing_apv(scenariopath):
             min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
             # tilt should ideally be close to latitude, but allow for rainwater runoff
             tilt = max(round(abs(lat)), min_tilt)
-            rad_tilt = np.radians(tilt)
             # minimum solar noon altitude (solar angle at solstice when sun is straight south (lat>0) or north (lat<0)
             min_solar_angle = 90 - round(abs(lat)) - 23.5
-            rad_min_solar_angle = np.radians(min_solar_angle)
             # minimum distance to prevent the panels from shading each other
-            min_ygap = y * np.sin(rad_tilt) / np.tan(rad_min_solar_angle)
+            min_ygap = y * np.sin(np.radians(tilt)) / np.tan(np.radians(min_solar_angle))
             # define pitch as distance from edge of one module across row up to the edge of the next module
-            pitch = round(y * np.cos(rad_tilt) + min_ygap, 2)
+            pitch = round(y * np.cos(np.radians(tilt)) + min_ygap, 2)
 
             r"""
             Obtain shading and bifaciality factors from global_specs/geometry.json, 
@@ -184,16 +178,13 @@ def pre_processing_apv(scenariopath):
         latitude = apv_dict['lat']
         geo_params = apv_geometry(latitude)
 
-        x = geo_params['x']
-        y = geo_params['y']
+        x = geo_params.pop('x')
+        y = geo_params.pop('y')
         tilt = geo_params['tilt']
         pitch = geo_params['pitch']
         xgaps = geo_params.pop('xgaps')
         fbifacials = geo_params.pop('fbifacials')
         fshadings = geo_params.pop('fshadings')
-
-        area_pv = x * y * np.cos(tilt)
-        geo_params['area_pv'] = area_pv
 
         # ----- General functions for modelling water, biomass and electricity -----
         def development(date, sowing_date, t_air, t_base):
@@ -227,25 +218,25 @@ def pre_processing_apv(scenariopath):
             return f_heat
 
         def power(p_rated, rad, rad_ref, t_air, t_ref, noct):
-            """ Hourly PV power output in relation to incoming radiation """
+            """ Hourly PV power output in relation to incoming radiation [ """
             f_temp = 1 - 3.7e-3 * (t_air + ((noct - 20) / 800) * rad - t_ref)
             p = p_rated * rad / rad_ref * f_temp
             return p
 
-        df['cum_temp'] = df.apply(
+        apv_df['cum_temp'] = apv_df.apply(
             lambda row: development(row.name, sowing_date, row['t_air'], t_base),
             axis=1
         ).cumsum()
 
-        df['f_temp'] = df['t_air'].apply(
+        apv_df['f_temp'] = apv_df['t_air'].apply(
             lambda t_air: temp(t_air, t_opt, t_base)
         )
 
-        df['f_heat'] = df['t_air'].apply(
+        apv_df['f_heat'] = apv_df['t_air'].apply(
             lambda t_air: heat(t_air, t_heat, t_extreme)
         )
 
-        df['pv_power'] = df.apply(
+        apv_df['pv_power'] = apv_df.apply(
             lambda row: power(p_rated, row['ghi'], rad_ref, row['t_air'], t_ref, noct),
             axis=1
         )
@@ -299,15 +290,16 @@ def pre_processing_apv(scenariopath):
                 r = 0
             return r
 
-        def soil_water_balance(df):
+        def soil_water_balance(df, has_irrigation):
             """
-            Soil water content (swc) for timestep i based on
-            precipitation (tp) and surface runoff for timestep i as well as
+            Soil water content (swc) and irrigation (if True) for timestep i based on
+            precipitation (tp), surface runoff for timestep i as well as
             soil water content, deep drainage and actual evapotranspiration (et_a) for timestep i-1
             (ARID) [-]
             """
             df['deep_drain'] = 0
             df['et_a'] = 0
+            df['irrigation'] = 0
             df['swc'] = 0
 
             def deep_drainage(ddc, rzd, water_cap, water_con_bd):
@@ -323,7 +315,10 @@ def pre_processing_apv(scenariopath):
             for index, row in df.iloc[1:].iterrows():
                 df.loc[index, 'deep_drain'] = deep_drainage(ddc=ddc, rzd=rzd, water_cap=awc, water_con_bd=swc_cache)
                 df.loc[index, 'et_a'] = min(wuc * rzd * swc_cache / 24, df.loc[index, 'et_p'])
-                df.loc[index, 'swc'] = swc_cache + (row['tp']  # + row['irrigation']
+                if has_irrigation:
+                    water_deficit = df.loc[index, 'et_a'] - df.loc[index, 'tp_ground']
+                    df.loc[index, 'irrigation'] = water_deficit if water_deficit > 0 else 0
+                df.loc[index, 'swc'] = swc_cache + (row['tp_ground'] + row['irrigation']
                                                     - df.loc[index, 'et_a']
                                                     - row['runoff']
                                                     - df.loc[index, 'deep_drain']
@@ -351,7 +346,7 @@ def pre_processing_apv(scenariopath):
                 f_solar = 0
             return f_solar
 
-        def biomass_generation(df, frt):
+        def biomass_generation(df, shadow_area, frt, has_irrigation):
             """ Biomass generation including the radiation transmission factor (frt) """
             df['g'] = df.apply(
                 lambda row: soil_heat_flux(row['ghi'], frt * row['ghi']),
@@ -365,11 +360,13 @@ def pre_processing_apv(scenariopath):
                 axis=1
             )
 
-            df['runoff'] = df['tp'].apply(
+            df['tp_ground'] = df['tp'] * (1 - shadow_area)
+
+            df['runoff'] = df['tp_ground'].apply(
                 lambda tp: runoff(tp, rcn)
             )
 
-            soil_water_balance(df)
+            soil_water_balance(df, has_irrigation)
 
             df['f_drought'] = df.apply(
                 lambda row: drought(row['et_p'], row['et_a']),
@@ -380,20 +377,37 @@ def pre_processing_apv(scenariopath):
                 lambda cum_temp: solar_interception(cum_temp, t_sum, i50a, i50b, f_solar_max)
             )
 
-            df['biomass_gen'] = frt * df['ghi'] * df['f_solar'] * rue * df['f_temp'] * df[['f_heat', 'f_drought']].min(
-                axis=1)
-
+            df['biomass_gen'] = frt * df['ghi'] * df['f_solar'] * rue * df['f_temp'] * df[
+                ['f_heat', 'f_drought']].min(
+                axis=1
+            )
             return df['biomass_gen']
 
-        def electricity_generation(df, frb):
-            """ Electricity generation including the radiation bifaciality factor (frb) """
-            df['electricity_gen'] = (1 + frb) * df['pv_power']
+        def electricity_generation(df, area, frb, has_bifaciality):
+            """ Electricity generation including the radiation bifaciality factor (frb) [kWh/m²] """
+            frb = 0 if not has_bifaciality else frb
+            panels_per_m2 = 1 / area
+            df['electricity_gen'] = panels_per_m2 * (1 + frb) * df['pv_power']
             return df['electricity_gen']
 
+        def rainwater_harvesting(df, shadow_area, has_harvesting):
+            """ Rain water gained through catchments on PV panels [mm/m²] """
+            if not has_harvesting:
+                df['water_harvest'] = 0
+            else:
+                df['water_harvest'] = shadow_area * df['tp']
+
         # ------- Geometry optimization: Maximize LER -------
-        biomass_open = biomass_generation(df, frt=1).sum()
+        # Shadow area of the PV panel
+        area_pv = x * y * np.cos(np.radians(tilt))
+        relative_pv_areas = [area_pv / ((x + xgaps[i]) * pitch) for i in range(3)]
+        biomass_open = biomass_generation(apv_df, shadow_area=0, frt=1, has_irrigation=False).sum()
         electricity_rel = [(1 + fbifacials[i]) * x / ((1 + fbifacials[0]) * (x + xgaps[i])) for i in range(3)]
-        biomass_rel = [biomass_generation(df, frt=fshadings[i]).sum() / biomass_open for i in range(3)]
+        biomass_rel = [biomass_generation(apv_df,
+                                          shadow_area=relative_pv_areas[i],
+                                          frt=fshadings[i],
+                                          has_irrigation=False).sum()
+                       / biomass_open for i in range(3)]
 
         # Define the optimization model
         opti_model = ConcreteModel()
@@ -424,7 +438,7 @@ def pre_processing_apv(scenariopath):
         solver = SolverFactory('cbc')
         solver.solve(opti_model)
         xgap_optimal = opti_model.xgap.value
-        ler = opti_model.elec_rel.value + opti_model.bio_rel.value
+        ler = opti_model.elec_rel.value + opti_model.bio_rel.value  # Land equivalent ratio
 
         # ----- Results processing -----
         interp_frb = interp1d(xgaps, fbifacials, kind='linear')
@@ -432,38 +446,37 @@ def pre_processing_apv(scenariopath):
         fbifacial_optimal = interp_frb(xgap_optimal)
         fshading_optimal = interp_frt(xgap_optimal)
 
-        electricity_gen = electricity_generation(df, frb=fbifacial_optimal)
-        biomass_gen = biomass_generation(df, frt=fshading_optimal)
         area_apv = (x + xgap_optimal) * pitch
+        gcr = area_pv / area_apv    # Ground coverage ratio
 
-        # ----- Arbitrary water time series -----
-        df['water_in'] = 2
-        df['water_out'] = 1
+        electricity_generation(apv_df, area=area_apv, frb=fbifacial_optimal, has_bifaciality=True)
+        biomass_generation(apv_df, shadow_area=gcr, frt=fshading_optimal, has_irrigation=True)
+        rainwater_harvesting(apv_df, shadow_area=gcr, has_harvesting=True)
 
-        # ----- No nulls in conversion factor lists -----
-        df.replace(0, 0.00001, inplace=True)
-
+        # Replace all non-negative values smaller than 0.00001 with 0.00001, round all floats to 5 decimal places
+        apv_df = apv_df.mask((apv_df < 0.00001) & (apv_df >= 0), 0.00001)
+        apv_df = apv_df.round(5)
 
         apv_dict.update(
             {
                 **geo_params,
+                'xgap': xgap_optimal,
                 'area_apv': area_apv,
+                'gcr': gcr,
                 'ler': ler,
-                'solar': df['ghi'].tolist(),
-                'electricity': electricity_gen.tolist(),
-                'biomass': biomass_gen.tolist(),
-                'water_in': df['water_in'].tolist(),
-                'water_out': df['water_out'].tolist()
             }
         )
 
-        return apv_dict
+        return apv_dict, apv_df
 
-    def _update_apv_element(directory):
+    def _update_apv_element():
         """ """
         has_apv = False
         elements_path = os.path.join(
             directory, 'data', 'elements'
+        )
+        sequences_path = os.path.join(
+            directory, 'data', 'sequences'
         )
         for element in os.listdir(elements_path):
             if element.endswith('.csv'):
@@ -477,35 +490,43 @@ def pre_processing_apv(scenariopath):
                     has_apv = True
                     # Drop apv_row from Dataframe and convert to dictionary
                     element_df = element_df.drop(apv_row.index)
-                    apv_dict = apv_row.iloc[0].to_dict()
+                    element_dict = apv_row.iloc[0].to_dict()
+                    # Obtain matching sequence for the element, save timeindex column for later
+                    sequence_path = os.path.join(sequences_path, element.replace('.csv', '_profile.csv'))
+                    time_df = pd.read_csv(sequence_path, usecols=['timeindex'])
+                    sequence_df = pd.read_csv(sequence_path, sep=',', index_col='timeindex', parse_dates=True)
 
-
-                    # Update the dictionary
-                    apv_dict = _apv_production(scenariopath, apv_dict)
+                    # Update the dictionary and the DataFrame
+                    element_dict, sequence_df = _apv_production(element_dict, sequence_df)
 
                     # following part has to be more robust (eg. INFO if buses are missing)
                     bus_dict = {key: value
-                                for key, value in apv_dict.items()
+                                for key, value in element_dict.items()
                                 if 'bus' in key}
                     for key, value in bus_dict.items():
                         if key == 'from_bus_0':
-                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('solar')
+                            element_dict[f'conversion_factor_{value}'] = 'ghi'
                         if key == 'from_bus_1':
-                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('water_in')
+                            element_dict[f'conversion_factor_{value}'] = 'irrigation'
                         if key == 'to_bus_0':
-                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('electricity')
+                            element_dict[f'conversion_factor_{value}'] = 'electricity_gen'
                         if key == 'to_bus_1':
-                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('biomass')
+                            element_dict[f'conversion_factor_{value}'] = 'biomass_gen'
                         if key == 'to_bus_2':
-                            apv_dict[f'conversion_factor_{value}'] = apv_dict.pop('water_out')
+                            element_dict[f'conversion_factor_{value}'] = 'water_harvest'
 
                     # Convert updated dictionary back to DataFrame and concat
-                    new_apv_row = pd.DataFrame([apv_dict])
+                    new_apv_row = pd.DataFrame([element_dict])
                     element_df = pd.concat([element_df, new_apv_row], ignore_index=True)
+
+                    # Re-insert timeindex column, update both csv files
                     element_df.to_csv(element_path, sep=';', index=False)
+                    time_df.index = sequence_df.index
+                    sequence_df.insert(0, 'timeindex', time_df['timeindex'])
+                    sequence_df.to_csv(sequence_path, sep=',', index=False)
                     logger.info("APV system element discovered and updated")
 
         if not has_apv:
             logger.info("No element found with 'apv-system' in column 'name'.")
 
-    _update_apv_element(scenariopath)
+    _update_apv_element()

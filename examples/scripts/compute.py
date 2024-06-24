@@ -20,8 +20,6 @@ from oemof_tabular_plugins.wefe.facades.apv_system_04 import pre_processing_apv
 
 from oemof_industry.mimo_converter import MIMO
 # from src.oemof_tabular_plugins.wefe.facades import APVSystem
-from oemof_industry.mimo_converter import MIMO
-#from src.oemof_tabular_plugins.wefe.facades import APVSystem
 
 # -------------- RELEVANT PATHS --------------
 # get the project directory by navigating up one level from the current script file
@@ -55,7 +53,7 @@ for scenario in scenarios:
     # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
     pre_processing(scenario_dir, wacc, custom_attributes, moo)
 
-    # pre-processing to create input csv files for MIMO conversion factors
+    # pre-processing to update input csv files if 'name'=='apv-system' for at least one component
     pre_processing_apv(scenario_dir)
 
     # otp_building.infer_metadata_from_data(

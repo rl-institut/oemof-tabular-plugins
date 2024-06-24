@@ -336,31 +336,6 @@
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_solar-energy-bus",
-                        "type": "array",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_water-bus-in",
-                        "type": "array",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_electricity-bus",
-                        "type": "array",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_biomass-bus",
-                        "type": "array",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_water-bus-out",
-                        "type": "array",
-                        "format": "default"
-                    },
-                    {
                         "name": "x",
                         "type": "number",
                         "format": "default"
@@ -392,6 +367,41 @@
                     },
                     {
                         "name": "ler",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_solar-energy-bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_water-bus-in",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_electricity-bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_biomass-bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_water-bus-out",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "xgap",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "gcr",
                         "type": "number",
                         "format": "default"
                     }
@@ -434,6 +444,36 @@
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_solar-energy-bus",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_water-bus-in",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_electricity-bus",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_biomass-bus",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_water-bus-out",
+                        "reference": {
+                            "resource": "mimo_profile"
                         }
                     }
                 ]
@@ -536,56 +576,6 @@
             }
         },
         {
-            "path": "data/sequences/apv_mimo_profile.csv",
-            "profile": "tabular-data-resource",
-            "name": "apv_mimo_profile",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "timeindex",
-                        "type": "datetime",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ghi",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "t_air",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "t_dp",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "e",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "tp",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "windspeed",
-                        "type": "number",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ]
-            }
-        },
-        {
             "path": "data/sequences/dispatchable_profile.csv",
             "profile": "tabular-data-resource",
             "name": "dispatchable_profile",
@@ -631,6 +621,141 @@
                     },
                     {
                         "name": "elec-load-profile",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        },
+        {
+            "path": "data/sequences/mimo_profile.csv",
+            "profile": "tabular-data-resource",
+            "name": "mimo_profile",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "timeindex",
+                        "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_air",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_dp",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "e",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tp",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "windspeed",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cum_temp",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "f_temp",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "f_heat",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "pv_power",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "g",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "et_p",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tp_ground",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "runoff",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "deep_drain",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "et_a",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "irrigation",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "swc",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "f_drought",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "f_solar",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "biomass_gen",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "electricity_gen",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_harvest",
                         "type": "number",
                         "format": "default"
                     }
