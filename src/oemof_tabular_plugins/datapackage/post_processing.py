@@ -277,7 +277,6 @@ def compute_specific_system_cost(results_df):
         # This is a quick fix to not include water - need to talk to Julian about how other demands should
         # be considered
         if index[4] == "load" and index[3] == "electricity":
-            print("asset type in index")
             total_load += row.get("aggregated_flow", 0)
     specific_system_cost = total_system_cost / total_load
     return specific_system_cost
@@ -462,15 +461,7 @@ CALCULATED_KPIS = [
 ]
 
 # Add docstrings from function handles for documentation purposes
-for calc in CALCULATED_OUTPUTS:
-    func_handle = calc.get("operation", None)
-    if callable(func_handle):
-        calc["docstring"] = func_handle.__doc__
-    else:
-        calc["docstring"] = ""
-
-# Add docstrings from function handles for documentation purposes
-for calc in CALCULATED_KPIS:
+for calc in CALCULATED_OUTPUTS + CALCULATED_KPIS:
     func_handle = calc.get("operation", None)
     if callable(func_handle):
         calc["docstring"] = func_handle.__doc__
@@ -519,10 +510,6 @@ def infer_busses_carrier(energy_system):
                     bus_label = getattr(node, attribute).label
                     if bus_label in busses_carrier:
                         if busses_carrier[bus_label] != node.carrier:
-                            print(
-                                "busses carrier[bus label]", busses_carrier[bus_label]
-                            )
-                            print("node.carrier: ", node.carrier)
                             raise ValueError(
                                 f"Two different carriers ({busses_carrier[bus_label]}, {node.carrier}) are associated to the same bus '{bus_label}'"
                             )

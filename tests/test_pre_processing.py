@@ -282,7 +282,6 @@ class TestPreprocessingCosts:
         pre_processing(self.pre_p_dir, wacc=wacc)
         # check that the 'capacity_cost' parameter is added to the scenario csv file
         df = pd.read_csv(os.path.join(self.package_path, f_name), delimiter=";")
-        print(df.columns)
         assert "capacity_cost" in df.columns
 
     def test_no_annuity_all_cost_params_defined_calculates_annuity(self):
@@ -420,7 +419,6 @@ class TestPreprocessingCustomAttributes:
         )
         # read the updated csv file
         updated_df = pd.read_csv(os.path.join(self.package_path, f_name), sep=";")
-        print(updated_df.columns)
         # assert that 'output_parameters' column is in the updated dataframe
         assert "output_parameters" in updated_df.columns, (
             "'output_parameters' column is not present " "in the updated dataframe"

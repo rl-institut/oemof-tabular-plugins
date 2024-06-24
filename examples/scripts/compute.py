@@ -26,7 +26,15 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
-scenarios = ["cp_nigeria_usungwe_example"]
+scenarios = [
+    "general_add_cost_inputs",
+    "general_basic",
+    "general_constraints",
+    "general_custom_attributes",
+    "wefe_custom_attributes",
+    "wefe_pv_panel",
+    "wefe_reverse_osmosis",
+]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
@@ -71,6 +79,7 @@ for scenario in scenarios:
         attributemap={},
         typemap=TYPEMAP,
     )
+
     logger.info("Energy system created from datapackage")
 
     # create model from energy system (this is just oemof.solph)
@@ -92,7 +101,6 @@ for scenario in scenarios:
 
     # extract parameters and results
     params = parameter_as_dict(es)
-    results = m.results()
     es.results = processing.results(m)
 
     post_processing(
