@@ -52,6 +52,8 @@ specspath = os.path.join(
 
 # -------------- APV pre-processing --------------
 def pre_processing_apv(directory):
+    """ """
+    logger.info("APV pre-processing activated")
 
     def _apv_production(apv_dict, apv_df):
         """
@@ -74,6 +76,8 @@ def pre_processing_apv(directory):
         t_sum = crop_dict[crop_type]['t_sum']
         i50a = crop_dict[crop_type]['i50a']
         i50b = crop_dict[crop_type]['i50b']
+        i50maxh = crop_dict[crop_type]['i50maxh']
+        i50maxw = crop_dict[crop_type]['i50maxw']
         f_solar_max = crop_dict[crop_type]['f_solar_max']
         rue = crop_dict[crop_type]['rue']
         # Convert Radiation Use Efficiency from W/m² to MJ/(m²*h)
@@ -330,24 +334,35 @@ def pre_processing_apv(directory):
             f_drought = min(et_p, et_a) / et_p
             return f_drought
 
-        # adapt i50b to drought and heat stress
+        def faster_senescence(cum_temp, i50maxh, i50maxw, f_heat, f_drought):
+            """ Heat and drought stress effect on solar interception due to faster canopy senescence (SIMPLE) [-] """
+            if cum_temp < 1:
+                delta_i50b = 0
+            else:
+                delta_i50b = (i50maxh * (1 - f_heat) + i50maxw * (1 - f_drought)) / 24
+            return delta_i50b
 
-        def solar_interception(cum_temp, t_sum, i50a, i50b, f_solar_max):
-            """ Interception of incoming radiation according to development stage (SIMPLE) [-] """
+        def solar_interception(cum_temp, delta_i50b, t_sum, i50a, i50b, f_solar_max):
+            """ Interception of incoming radiation by plant canopy according to development stage (SIMPLE) [-] """
             cum_temp_to_reach_f_solar_max = i50a - 100 * np.log(
                 1 / 999)  # derived from f_solar = 0.999f_solar_max
             if cum_temp < 1:
                 f_solar = 0
             elif cum_temp < cum_temp_to_reach_f_solar_max:
+                i50b += delta_i50b
                 f_solar = f_solar_max / (1 + np.exp(-0.01 * (cum_temp - i50a)))
             elif cum_temp < t_sum:
+                i50b += delta_i50b
                 f_solar = f_solar_max / (1 + np.exp(0.01 * (cum_temp - (t_sum - i50b))))
             else:
                 f_solar = 0
             return f_solar
 
         def biomass_generation(df, shadow_area, frt, has_irrigation):
-            """ Biomass generation including the radiation transmission factor (frt) """
+            """
+            Biomass generation including the radiation transmission factor (frt),
+            soil water balance with irrigation, solar interception
+            """
             df['g'] = df.apply(
                 lambda row: soil_heat_flux(row['ghi'], frt * row['ghi']),
                 axis=1
@@ -373,8 +388,14 @@ def pre_processing_apv(directory):
                 axis=1
             )
 
-            df['f_solar'] = df['cum_temp'].apply(
-                lambda cum_temp: solar_interception(cum_temp, t_sum, i50a, i50b, f_solar_max)
+            df['delta_i50b'] = df.apply(
+                lambda row: faster_senescence(row['cum_temp'], i50maxh, i50maxw, row['f_heat'], row['f_drought']),
+                axis=1
+            ).cumsum()
+
+            df['f_solar'] = df.apply(
+                lambda row: solar_interception(row['cum_temp'], row['delta_i50b'], t_sum, i50a, i50b, f_solar_max),
+                axis=1
             )
 
             df['biomass_gen'] = frt * df['ghi'] * df['f_solar'] * rue * df['f_temp'] * df[
@@ -472,12 +493,9 @@ def pre_processing_apv(directory):
     def _update_apv_element():
         """ """
         has_apv = False
-        elements_path = os.path.join(
-            directory, 'data', 'elements'
-        )
-        sequences_path = os.path.join(
-            directory, 'data', 'sequences'
-        )
+        elements_path = os.path.join(directory, 'data', 'elements')
+        sequences_path = os.path.join(directory, 'data', 'sequences')
+
         for element in os.listdir(elements_path):
             if element.endswith('.csv'):
                 # Read in csv file, check for row with 'apv-system' in column 'name'
@@ -524,9 +542,12 @@ def pre_processing_apv(directory):
                     time_df.index = sequence_df.index
                     sequence_df.insert(0, 'timeindex', time_df['timeindex'])
                     sequence_df.to_csv(sequence_path, sep=',', index=False)
+
                     logger.info("APV system element discovered and updated")
 
         if not has_apv:
-            logger.info("No element found with 'apv-system' in column 'name'.")
+            logger.info("No element found with 'apv-system' in column 'name'")
 
     _update_apv_element()
+
+    logger.info("APV pre-processing completed")

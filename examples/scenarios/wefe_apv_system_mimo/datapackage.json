@@ -336,16 +336,6 @@
                         "format": "default"
                     },
                     {
-                        "name": "x",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "y",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
                         "name": "tilt",
                         "type": "number",
                         "format": "default"
@@ -356,12 +346,17 @@
                         "format": "default"
                     },
                     {
-                        "name": "area_pv",
+                        "name": "xgap",
                         "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "area_apv",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "gcr",
                         "type": "number",
                         "format": "default"
                     },
@@ -393,16 +388,6 @@
                     {
                         "name": "conversion_factor_water-bus-out",
                         "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "xgap",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "gcr",
-                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -756,6 +741,11 @@
                     },
                     {
                         "name": "water_harvest",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "delta_i50b",
                         "type": "number",
                         "format": "default"
                     }

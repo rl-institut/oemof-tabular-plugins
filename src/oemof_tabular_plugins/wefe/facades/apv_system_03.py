@@ -204,7 +204,6 @@ class APVSystem(MIMO):
                     conversion_factors[f'conversion_factor_{value}'] = sequence(self.biomass_efficiency)
                 if key.startswith('water_bus_out'):
                     conversion_factors[f'conversion_factor_{value}'] = sequence(self.water_out_efficiency)
-        kwargs.update(conversion_factors)
 
         super().__init__(from_bus_0=self.solar_bus_in,
                          from_bus_1=self.water_bus_in,
@@ -212,6 +211,8 @@ class APVSystem(MIMO):
                          to_bus_1=self.bio_bus_out,
                          to_bus_2=self.water_bus_out,
                          **kwargs)
+
+        kwargs.update(conversion_factors)
 
     def _apv_geometry(self):
         """ """
@@ -364,7 +365,7 @@ class APVSystem(MIMO):
         """
 
         # Obtain weather data
-        df = pd.read_csv(os.path.join(weatherpath, "mimo_profile.csv"), index_col=0, parse_dates=True)
+        df = pd.read_csv(os.path.join(weatherpath, "apv_mimo_profile.csv"), index_col=0, parse_dates=True)
 
         # Extract crop specific growth parameters from dictionary
         crop_type = self.crop_type

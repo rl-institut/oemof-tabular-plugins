@@ -19,7 +19,7 @@ from oemof_tabular_plugins.general import (
 from oemof_tabular_plugins.wefe.facades.apv_system_04 import pre_processing_apv
 
 from oemof_industry.mimo_converter import MIMO
-# from src.oemof_tabular_plugins.wefe.facades import APVSystem
+from src.oemof_tabular_plugins.wefe.facades import APVSystem
 
 # -------------- RELEVANT PATHS --------------
 # get the project directory by navigating up one level from the current script file
