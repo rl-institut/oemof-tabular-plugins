@@ -78,6 +78,7 @@ def pre_processing_apv(directory):
         i50b = crop_dict[crop_type]['i50b']
         i50maxh = crop_dict[crop_type]['i50maxh']
         i50maxw = crop_dict[crop_type]['i50maxw']
+        s_water = crop_dict[crop_type]['s_water']
         f_solar_max = crop_dict[crop_type]['f_solar_max']
         rue = crop_dict[crop_type]['rue']
         # Convert Radiation Use Efficiency from W/m² to MJ/(m²*h)
@@ -329,9 +330,10 @@ def pre_processing_apv(directory):
                                                     ) / rzd
                 swc_cache = df.loc[index, 'swc']
 
-        def drought(et_p, et_a):
+        def drought(et_p, et_a, s_water):
             """ Drought stress effect on plant growth (SIMPLE) [-] """
-            f_drought = min(et_p, et_a) / et_p
+            arid = 1 - min(et_p, et_a) / et_p
+            f_drought = 1 - s_water * arid
             return f_drought
 
         def faster_senescence(cum_temp, i50maxh, i50maxw, f_heat, f_drought):
@@ -358,7 +360,7 @@ def pre_processing_apv(directory):
                 f_solar = 0
             return f_solar
 
-        def biomass_generation(df, shadow_area, frt, has_irrigation):
+        def biomass_generation(df, gcr, frt, has_irrigation):
             """
             Biomass generation including the radiation transmission factor (frt),
             soil water balance with irrigation, solar interception
@@ -375,7 +377,7 @@ def pre_processing_apv(directory):
                 axis=1
             )
 
-            df['tp_ground'] = df['tp'] * (1 - shadow_area)
+            df['tp_ground'] = df['tp'] * (1 - gcr)
 
             df['runoff'] = df['tp_ground'].apply(
                 lambda tp: runoff(tp, rcn)
@@ -384,7 +386,7 @@ def pre_processing_apv(directory):
             soil_water_balance(df, has_irrigation)
 
             df['f_drought'] = df.apply(
-                lambda row: drought(row['et_p'], row['et_a']),
+                lambda row: drought(row['et_p'], row['et_a'], s_water),
                 axis=1
             )
 
@@ -411,23 +413,25 @@ def pre_processing_apv(directory):
             df['electricity_gen'] = panels_per_m2 * (1 + frb) * df['pv_power']
             return df['electricity_gen']
 
-        def rainwater_harvesting(df, shadow_area, has_harvesting):
+        def rainwater_harvesting(df, gcr, has_harvesting):
             """ Rain water gained through catchments on PV panels [mm/m²] """
             if not has_harvesting:
                 df['water_harvest'] = 0
             else:
-                df['water_harvest'] = shadow_area * df['tp']
+                df['water_harvest'] = gcr * df['tp']
 
         # ------- Geometry optimization: Maximize LER -------
         # Shadow area of the PV panel
-        area_pv = x * y * np.cos(np.radians(tilt))
-        relative_pv_areas = [area_pv / ((x + xgaps[i]) * pitch) for i in range(3)]
-        biomass_open = biomass_generation(apv_df, shadow_area=0, frt=1, has_irrigation=False).sum()
+        area_pv_shadow = x * y * np.cos(np.radians(tilt))
+        # Ground coverage ratio list
+        gcrs = [area_pv_shadow / ((x + xgaps[i]) * pitch) for i in range(3)]
         electricity_rel = [(1 + fbifacials[i]) * x / ((1 + fbifacials[0]) * (x + xgaps[i])) for i in range(3)]
+        biomass_open = biomass_generation(apv_df, gcr=0, frt=1, has_irrigation=False).sum()
         biomass_rel = [biomass_generation(apv_df,
-                                          shadow_area=relative_pv_areas[i],
+                                          gcr=gcrs[i],
                                           frt=fshadings[i],
-                                          has_irrigation=False).sum()
+                                          has_irrigation=False
+                                          ).sum()
                        / biomass_open for i in range(3)]
 
         # Define the optimization model
@@ -468,11 +472,11 @@ def pre_processing_apv(directory):
         fshading_optimal = interp_frt(xgap_optimal)
 
         area_apv = (x + xgap_optimal) * pitch
-        gcr = area_pv / area_apv    # Ground coverage ratio
+        gcr = area_pv_shadow / area_apv    # Ground coverage ratio
 
         electricity_generation(apv_df, area=area_apv, frb=fbifacial_optimal, has_bifaciality=True)
-        biomass_generation(apv_df, shadow_area=gcr, frt=fshading_optimal, has_irrigation=True)
-        rainwater_harvesting(apv_df, shadow_area=gcr, has_harvesting=True)
+        biomass_generation(apv_df, gcr=gcr, frt=fshading_optimal, has_irrigation=True)
+        rainwater_harvesting(apv_df, gcr=gcr, has_harvesting=True)
 
         # Replace all non-negative values smaller than 0.00001 with 0.00001, round all floats to 5 decimal places
         apv_df = apv_df.mask((apv_df < 0.00001) & (apv_df >= 0), 0.00001)
