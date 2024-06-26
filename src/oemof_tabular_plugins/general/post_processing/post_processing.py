@@ -121,7 +121,9 @@ def post_processing(params, es, results_path, dp_path, dash_app=False):
         save_table_to_csv(table, results_path, filename)
 
     if dash_app is True:
-        demo_app = prepare_app(es, dp_path=dp_path, tables=tables_to_save)
+        demo_app = prepare_app(
+            es, dp_path=dp_path, tables={"capacities": capacities_table, "kpis": kpis}
+        )
         demo_app.run_server(debug=True, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
