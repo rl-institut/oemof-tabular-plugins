@@ -6,6 +6,7 @@ import pandas as pd
 from oemof.tabular.postprocessing import calculations as clc, naming
 from oemof.tabular.postprocessing.core import Calculator
 
+
 from oemof_tabular_plugins.datapackage.post_processing import (
     construct_dataframe_from_results,
     process_raw_results,
@@ -13,6 +14,8 @@ from oemof_tabular_plugins.datapackage.post_processing import (
     apply_calculations,
     apply_kpi_calculations,
 )
+
+from .gui import prepare_app
 
 # ------ New post-processing to create tables ------
 # This dictionary contains groups of columns that should be extracted from the df_results to generate a clearer overview
@@ -85,7 +88,7 @@ class OTPCalculator(Calculator):
         super().__init__(input_parameters, energy_system.results)
 
 
-def post_processing(params, es, results_path, dp_path):
+def post_processing(params, es, results_path, dp_path, dash_app=False):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
     """
@@ -116,6 +119,10 @@ def post_processing(params, es, results_path, dp_path):
     tables_to_save = {"costs.csv": cost_table, "capacities.csv": capacities_table}
     for filename, table in tables_to_save.items():
         save_table_to_csv(table, results_path, filename)
+
+    if dash_app is True:
+        demo_app = prepare_app(es, dp_path=dp_path, tables=tables_to_save)
+        demo_app.run_server(debug=True, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
 
