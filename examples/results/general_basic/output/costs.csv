@@ -1,0 +1,11 @@
+bus,direction,asset,carrier,facade_type
+elec-bus,in,battery-storage,electricity,storage
+elec-bus,in,demand,electricity,load
+elec-bus,in,electricity-excess,electricity,excess
+elec-bus,out,battery-storage,electricity,storage
+elec-bus,out,gas-pp,electricity,conversion
+elec-bus,out,hydro,electricity,volatile
+elec-bus,out,pv,electricity,volatile
+elec-bus,out,wind,electricity,volatile
+gas-bus,in,gas-pp,gas,conversion
+gas-bus,out,gas,gas,dispatchable

@@ -1,0 +1,11 @@
+bus,direction,asset,carrier,facade_type,Upfront Investment Costs
+elec-bus,in,battery-storage,electricity,storage,0.0
+elec-bus,in,demand,electricity,load,
+elec-bus,in,electricity-excess,electricity,excess,
+elec-bus,out,battery-storage,electricity,storage,0.0
+elec-bus,out,gas-pp,electricity,conversion,
+elec-bus,out,hydro,electricity,volatile,0.0
+elec-bus,out,pv,electricity,volatile,0.0
+elec-bus,out,wind,electricity,volatile,0.0
+gas-bus,in,gas-pp,gas,conversion,
+gas-bus,out,gas,gas,dispatchable,
