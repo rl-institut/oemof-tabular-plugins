@@ -3,3 +3,4 @@ numpy==1.26.0
 oemof.tabular @ git+https://github.com/oemof/oemof-tabular.git@dev
 oemof-industry @ git+https://github.com/sedos-project/oemof.industry.git@saltwater
 dash
+Werkzeug==2.2.2
