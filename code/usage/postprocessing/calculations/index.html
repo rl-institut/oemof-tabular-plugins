@@ -11,21 +11,23 @@
       
       
       
+        <link rel="prev" href="../input_costs_parameters/">
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
-        <title>Documentation - oemof-tabular-plugins Documentation</title>
+        <title>Calculations - oemof-tabular-plugins Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.6543a935.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.6543a935.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -44,11 +46,11 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../../css/extra.css">
+      <link rel="stylesheet" href="../../../../css/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -74,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#documentation" class="md-skip">
+        <a href="#performing-custom-post-proccessing-calculations-on-the-results-dataframe" class="md-skip">
           Skip to content
         </a>
       
@@ -94,9 +96,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="oemof-tabular-plugins Documentation" class="md-header__button md-logo" aria-label="oemof-tabular-plugins Documentation" data-md-component="logo">
+    <a href="../../../.." title="oemof-tabular-plugins Documentation" class="md-header__button md-logo" aria-label="oemof-tabular-plugins Documentation" data-md-component="logo">
       
-  <img src="../../img/logo_rli_small.png" alt="logo">
+  <img src="../../../../img/logo_rli_small.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -113,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Documentation
+              Calculations
             
           </span>
         </div>
@@ -177,7 +179,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href="../../../.." class="md-tabs__link">
         
   
     
@@ -192,17 +194,21 @@
         
   
   
+    
+  
   
     
     
       
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../code/install/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../install/" class="md-tabs__link">
           
   
     
@@ -246,9 +252,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="oemof-tabular-plugins Documentation" class="md-nav__button md-logo" aria-label="oemof-tabular-plugins Documentation" data-md-component="logo">
+    <a href="../../../.." title="oemof-tabular-plugins Documentation" class="md-nav__button md-logo" aria-label="oemof-tabular-plugins Documentation" data-md-component="logo">
       
-  <img src="../../img/logo_rli_small.png" alt="logo">
+  <img src="../../../../img/logo_rli_small.png" alt="logo">
 
     </a>
     oemof-tabular-plugins Documentation
@@ -275,7 +281,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -292,8 +298,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -304,19 +312,22 @@
     
     
       
+        
+        
+      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -327,7 +338,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Code Documentation
@@ -352,10 +363,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -364,7 +378,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../code/install/" class="md-nav__link ">
+            <a href="../../../install/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -397,6 +411,8 @@
                 
   
   
+    
+  
   
   
     
@@ -413,19 +429,22 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" checked>
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../code/usage/" class="md-nav__link ">
+            <a href="../../" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -436,13 +455,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_2_2" id="__nav_2_2_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2_2">
             <span class="md-nav__icon md-icon"></span>
             Usage
@@ -455,6 +474,8 @@
                 
   
   
+    
+  
   
   
     
@@ -476,16 +497,16 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_2" checked>
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../code/usage/postprocessing/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -502,7 +523,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2_2_2">
             <span class="md-nav__icon md-icon"></span>
             Postprocessing
@@ -518,7 +539,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../code/usage/postprocessing/input_costs_parameters/" class="md-nav__link">
+      <a href="../input_costs_parameters/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -536,10 +557,28 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../code/usage/postprocessing/calculations/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Calculations
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -548,6 +587,129 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#performing-custom-post-proccessing-calculations-on-the-results-dataframe" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performing custom post-proccessing calculations on the results dataframe
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performing custom post-proccessing calculations on the results dataframe">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#capacity_total" class="md-nav__link">
+    <span class="md-ellipsis">
+      capacity_total
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#annuity_total" class="md-nav__link">
+    <span class="md-ellipsis">
+      annuity_total
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upfront_investment_costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      upfront_investment_costs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opex_fix_costs_total" class="md-nav__link">
+    <span class="md-ellipsis">
+      opex_fix_costs_total
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable_costs_total" class="md-nav__link">
+    <span class="md-ellipsis">
+      variable_costs_total
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renewable_generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      renewable_generation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#co2_emissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      co2_emissions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#land_requirement_additional" class="md-nav__link">
+    <span class="md-ellipsis">
+      land_requirement_additional
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#land_requirement_total" class="md-nav__link">
+    <span class="md-ellipsis">
+      land_requirement_total
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#water_footprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      water_footprint
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -593,8 +755,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -603,74 +763,100 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#readme" class="md-nav__link">
+  <a href="#performing-custom-post-proccessing-calculations-on-the-results-dataframe" class="md-nav__link">
     <span class="md-ellipsis">
-      README
+      Performing custom post-proccessing calculations on the results dataframe
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#changelog" class="md-nav__link">
-    <span class="md-ellipsis">
-      Changelog
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mkdocs" class="md-nav__link">
-    <span class="md-ellipsis">
-      MkDocs
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MkDocs">
+    <nav class="md-nav" aria-label="Performing custom post-proccessing calculations on the results dataframe">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
+  <a href="#capacity_total" class="md-nav__link">
     <span class="md-ellipsis">
-      Install
+      capacity_total
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#build" class="md-nav__link">
+  <a href="#annuity_total" class="md-nav__link">
     <span class="md-ellipsis">
-      Build
+      annuity_total
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#publish" class="md-nav__link">
+  <a href="#upfront_investment_costs" class="md-nav__link">
     <span class="md-ellipsis">
-      Publish
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Publish">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#manually" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manually
+      upfront_investment_costs
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#github-action" class="md-nav__link">
+  <a href="#opex_fix_costs_total" class="md-nav__link">
     <span class="md-ellipsis">
-      GitHub Action
+      opex_fix_costs_total
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable_costs_total" class="md-nav__link">
+    <span class="md-ellipsis">
+      variable_costs_total
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renewable_generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      renewable_generation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#co2_emissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      co2_emissions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#land_requirement_additional" class="md-nav__link">
+    <span class="md-ellipsis">
+      land_requirement_additional
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#land_requirement_total" class="md-nav__link">
+    <span class="md-ellipsis">
+      land_requirement_total
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#water_footprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      water_footprint
     </span>
   </a>
   
@@ -678,29 +864,6 @@
         
       </ul>
     </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mike" class="md-nav__link">
-    <span class="md-ellipsis">
-      Mike
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mkdocstrings" class="md-nav__link">
-    <span class="md-ellipsis">
-      mkdocstrings
-    </span>
-  </a>
   
 </li>
       
@@ -722,48 +885,123 @@
   
 
 
-<h1 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">#</a></h1>
-<h2 id="readme">README<a class="headerlink" href="#readme" title="Permanent link">#</a></h2>
-<p>The repository contains a <code>README.rst</code> file with basic information. <br>
-It gives a short introduction to the project and links to other relevant files.</p>
-<h2 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">#</a></h2>
-<p>The <code>CHANGELOG.md</code> is a record of all notable changes made to a project. <br>
-It is structured by each release and divided by additions, changes, and removals. <br></p>
-<h2 id="mkdocs">MkDocs<a class="headerlink" href="#mkdocs" title="Permanent link">#</a></h2>
-<p><a href="https://www.mkdocs.org/">MkDocs</a> is a fast and simple static site generator that is used for documentation. <br>
-The source files are written in <a href="https://www.markdownguide.org/cheat-sheet/">Markdown</a>, and configured with <code>mkdocs.yml</code>. <br>
-<a href="https://squidfunk.github.io/mkdocs-material/">Material theme</a> enables
-additional features and an elegant design. <br></p>
-<h3 id="install">Install<a class="headerlink" href="#install" title="Permanent link">#</a></h3>
-<p>Install the required packages in a python environment. <br>
-💻 <code>pip install mkdocs</code> install MkDocs <br>
-💻 <code>pip install mkdocs-material</code> install the material theme</p>
-<h3 id="build">Build<a class="headerlink" href="#build" title="Permanent link">#</a></h3>
-<p>Generate the documentation locally. <br>
-💻 <code>mkdocs serve</code> start the local live version of the documentation <br>
-💻 <code>mkdocs build</code> create a folder <code>site</code> with the documentation</p>
-<h3 id="publish">Publish<a class="headerlink" href="#publish" title="Permanent link">#</a></h3>
-<h4 id="manually">Manually<a class="headerlink" href="#manually" title="Permanent link">#</a></h4>
-<p>Publish documentation on <strong>GitHub Pages</strong>. <br>
-💻 <code>mkdocs gh-deploy</code> manually deploys the documentation files</p>
-<h4 id="github-action">GitHub Action<a class="headerlink" href="#github-action" title="Permanent link">#</a></h4>
-<p>🐙 Deploy the documentation with <strong>GitHub Actions</strong>. <br>
-The file <code>.github\workflows\gh-pages.yml</code> creates an automated GitHub workflow. <br>
-It is configured to be pushed to the branch <code>gh-page</code> and then deployed online. <br>
-A commit on the <code>production</code> branch triggers the workflow.</p>
-<h3 id="mike">Mike<a class="headerlink" href="#mike" title="Permanent link">#</a></h3>
-<p>The package <a href="https://github.com/jimporter/mike">mike</a> is used to deploy <a href="https://squidfunk.github.io/mkdocs-material/setup/setting-up-versioning/?h=versioning">multiple versions</a> of the documentation.<br>
-💻 <code>pip install mike</code> install mike <br>
-💻 <code>mike deploy --push --update-aliases 0.1.0 latest</code> deploys the latest version <br>
-💻 <code>mike set-default --push latest</code> Set the default version to latest</p>
-<h2 id="mkdocstrings">mkdocstrings<a class="headerlink" href="#mkdocstrings" title="Permanent link">#</a></h2>
-<p><a href="https://mkdocstrings.github.io/">mkdocstrings</a> generates automatic
-documentation (autodocs) from <a href="https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html">Google style docstrings</a>. <br>
-💻 <code>pip install mkdocstrings</code> install mkdocstrings</p>
-<div class="admonition note">
-<p class="admonition-title">Used Icons</p>
-<p>🐙 GitHub | 💠 git | 📝 File | 💻 Command Line</p>
-</div>
+  <h1>Calculations</h1>
+
+<h2 id="performing-custom-post-proccessing-calculations-on-the-results-dataframe">Performing custom post-proccessing calculations on the results dataframe<a class="headerlink" href="#performing-custom-post-proccessing-calculations-on-the-results-dataframe" title="Permanent link">#</a></h2>
+<p>The user can define calculation to be applied on the results dataframe. The default calculations are listed in <code>CALCULATED_OUTPUTS</code>
+A calculation constists of the following dict structure
+<div class="highlight"><pre><span></span><code>    {
+        &quot;column_name&quot;: &quot;this is the name of the column of the dataframe in which the result of the calculation will be stored&quot;,
+        &quot;operation&quot;: this should be a function handle,
+        &quot;description&quot;: &quot;this is used for documentation purposes it should describe as extensively as possible what operation is performed and list the potential hypotheses&quot;,
+        &quot;argument_names&quot;: [&quot;name of a column of the results data frame needed for this calculation&quot;, &quot;name of another column of the results data frame&quot;, ...],
+    },
+</code></pre></div></p>
+<p>Here are the current calculations already available by default in oemof-tabular-plugins</p>
+<hr />
+<h3 id="capacity_total">capacity_total<a class="headerlink" href="#capacity_total" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: The total capacity is calculated by adding the optimized capacity (investments) to the existing capacity (capacity)</p>
+<p><strong>function name</strong>: compute_capacity_total</p>
+<p><strong>docstring</strong>: Calculates total capacity by adding existing capacity (capacity) to optimized capacity (investments)</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>investments</li>
+<li><a href="/code/usage/postprocessing/input_costs_parameters#capacity">capacity</a></li>
+</ol>
+<hr />
+<h3 id="annuity_total">annuity_total<a class="headerlink" href="#annuity_total" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: Total annuity is calculated by multiplying the optimized capacity by the capacity cost (annuity considering CAPEX, OPEX and WACC)</p>
+<p><strong>function name</strong>: compute_annuity_total</p>
+<p><strong>docstring</strong>: Calculates total annuity by multiplying the annuity by the optimized capacity</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>investments</li>
+<li><a href="/code/usage/postprocessing/input_costs_parameters#capacity_cost">capacity_cost</a></li>
+</ol>
+<hr />
+<h3 id="upfront_investment_costs">upfront_investment_costs<a class="headerlink" href="#upfront_investment_costs" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: Upfront investment costs are calculated by multiplying the optimized capacity by the CAPEX</p>
+<p><strong>function name</strong>: compute_upfront_investment_costs</p>
+<p><strong>docstring</strong>: Calculates investment costs by multiplying capex with optimized capacity (investments)</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>investments</li>
+<li>capex</li>
+</ol>
+<hr />
+<h3 id="opex_fix_costs_total">opex_fix_costs_total<a class="headerlink" href="#opex_fix_costs_total" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: Operation and maintenance costs are calculated by multiplying the optimized capacity by the OPEX</p>
+<p><strong>function name</strong>: compute_opex_fix_costs</p>
+<p><strong>docstring</strong>: Calculates yearly opex costs by multiplying opex with optimized capacity (investments)</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>aggregated_flow</li>
+<li>opex_fix</li>
+</ol>
+<hr />
+<h3 id="variable_costs_total">variable_costs_total<a class="headerlink" href="#variable_costs_total" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: Variable costs are calculated by multiplying the total flow by the marginal/carrier costs</p>
+<p><strong>function name</strong>: compute_variable_costs</p>
+<p><strong>docstring</strong>: Calculates variable costs by multiplying the marginal cost by the aggregated flow if the direction is out,
+    and by the carrier cost if the direction is in. The total marginal costs for each asset correspond to the sum
+    of the marginal costs for the in- and output flows</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>aggregated_flow</li>
+<li><a href="/code/usage/postprocessing/input_costs_parameters#marginal_cost">marginal_cost</a></li>
+<li><a href="/code/usage/postprocessing/input_costs_parameters#carrier_cost">carrier_cost</a></li>
+</ol>
+<hr />
+<h3 id="renewable_generation">renewable_generation<a class="headerlink" href="#renewable_generation" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: The renewable generation for each component is computed from the flow and the renewable factor.</p>
+<p><strong>function name</strong>: compute_renewable_generation</p>
+<p><strong>docstring</strong>: Calculates renewable generation by multiplying aggregated flow by renewable factor</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>aggregated_flow</li>
+<li>renewable_factor</li>
+</ol>
+<hr />
+<h3 id="co2_emissions">co2_emissions<a class="headerlink" href="#co2_emissions" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: CO2 emissions are calculated from the flow and the emission factor</p>
+<p><strong>function name</strong>: compute_co2_emissions</p>
+<p><strong>docstring</strong>: Calculates CO2 emissions by multiplying aggregated flow by emission factor</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>aggregated_flow</li>
+<li>emission_factor</li>
+</ol>
+<hr />
+<h3 id="land_requirement_additional">land_requirement_additional<a class="headerlink" href="#land_requirement_additional" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: The additional land requirement calculates the land required for the optimized capacities</p>
+<p><strong>function name</strong>: compute_land_requirement_additional</p>
+<p><strong>docstring</strong>: Calculates land requirement needed for optimized capacities</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>investments</li>
+<li>land_requirement_factor</li>
+</ol>
+<hr />
+<h3 id="land_requirement_total">land_requirement_total<a class="headerlink" href="#land_requirement_total" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: The total land requirement calculates the land required for the total capacities</p>
+<p><strong>function name</strong>: compute_land_requirement_total</p>
+<p><strong>docstring</strong>: Calculates land requirement needed for total capacities</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li><a href="#capacity_total">capacity_total</a></li>
+<li>land_requirement_factor</li>
+</ol>
+<hr />
+<h3 id="water_footprint">water_footprint<a class="headerlink" href="#water_footprint" title="Permanent link">#</a></h3>
+<p><strong>description</strong>: The water footprint calculates the water footprint for the aggregated flows of each component</p>
+<p><strong>function name</strong>: compute_water_footprint</p>
+<p><strong>docstring</strong>: Calculates water footprint by multiplying aggregated flow by water footprint factor</p>
+<p><strong>depends on</strong>:</p>
+<ol>
+<li>aggregated_flow</li>
+<li>water_footprint_factor</li>
+</ol>
+<hr />
 
 
 
@@ -811,10 +1049,10 @@ documentation (autodocs) from <a href="https://sphinxcontrib-napoleon.readthedoc
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.path", "navigation.tracking", "navigation.top", "toc.follow"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.path", "navigation.tracking", "navigation.top", "toc.follow"], "search": "../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.ad660dcc.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>

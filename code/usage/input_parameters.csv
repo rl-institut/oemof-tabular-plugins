@@ -1,0 +1,17 @@
+label,description,unit,type,restriction
+efficiency,Efficiency of charging and discharging process.,,str,0 < x <= 100
+storage_capacity_cost,Investment costs for the storage unit e.g in €/MWh-capacity,,int,
+storage_capacity,The total capacity of the storage (e.g. in MWh),,,
+capacity,The installed power of the generator (e.g. in MW). If not set the capacity will be optimized (s. also `capacity_cost` argument). In case of storage this corresponds to the maximum production capacity,,,
+marginal_cost,"Marginal cost for one unit of produced output, i.e. for a powerplant: mc = fuel_cost + co2_cost + ... (in Euro / MWh) if timestep length is one hour",,,
+capacity_cost,"Investment costs per unit of capacity (e.g. Euro / MW). If capacity is not set, this value will be used for optimizing the generators capacity.",,,
+carrier_cost,Carrier cost for one unit of used input.,,,
+expandable,"True, if capacity can be expanded within optimization. Default: False.",,,
+output_parameters,Parameters to set on the output edge of the component (see. oemof.solph Edge/Flow class for possible arguments),,,
+capacity_potential,Max install capacity if capacity is to be expanded,,,
+capacity_minimum,Minimum install capacity if capacity is to be expanded,,,
+lifetime,Lifetime of the component in years. Necessary for multi-period investment optimization. Note: Only applicable for a multi-period model.,,,
+age ,"The initial age of a flow (usually given in years); once it reaches its lifetime (considering also an initial age), the flow is forced to 0. Note: Only applicable for a multi-period model.",,,
+fixed_costs ,The fixed costs associated with a flow. Note: Only applicable for a multi-period model.,,,
+renewable_factor, some factor,,,
+conversion_factor_brine-bus,,,,
