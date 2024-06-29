@@ -109,18 +109,18 @@ def sankey(energy_system, ts=None):
                         )
                     ].sum()
                 except Exception as e:
-                    print(e)
-                    import pdb
-
-                    pdb.set_trace()
+                    val = flows[((component.label, bus_label), "flow")].sum()
 
                 if ts is not None:
-                    val = flows[
-                        (
-                            (component.label, bus_label),
-                            (component.label, bus_label, "flow"),
-                        )
-                    ][ts]
+                    try:
+                        val = flows[
+                            (
+                                (component.label, bus_label),
+                                (component.label, bus_label, "flow"),
+                            )
+                        ][ts]
+                    except:
+                        val = flows[((component.label, bus_label), "flow")][ts]
                 # if val == 0:
                 #     val = 1
                 values.append(val)
@@ -133,16 +133,30 @@ def sankey(energy_system, ts=None):
                 sources.append(labels.index(bus_label))
                 targets.append(labels.index(component.label))
 
-                val = flows[
-                    ((bus_label, component.label), (bus_label, component.label, "flow"))
-                ].sum()
-                if ts is not None:
+                try:
                     val = flows[
                         (
                             (bus_label, component.label),
                             (bus_label, component.label, "flow"),
                         )
-                    ][ts]
+                    ].sum()
+                except Exception as e:
+                    val = flows[((bus_label, component.label), "flow")].sum()
+                if ts is not None:
+                    try:
+                        val = flows[
+                            (
+                                (bus_label, component.label),
+                                (bus_label, component.label, "flow"),
+                            )
+                        ][ts]
+                    except:
+                        val = flows[
+                            (
+                                (bus_label, component.label),
+                                "flow",
+                            )
+                        ][ts]
                 values.append(val)
 
     fig = go.Figure(
@@ -172,7 +186,7 @@ def sankey(energy_system, ts=None):
     return fig.to_dict()
 
 
-def prepare_app(energy_system, dp_path, tables):
+def prepare_app(energy_system, dp_path, tables, units=None):
 
     # TODO to display energy system
     energy_system_graph = f"energy_system.png"
@@ -234,6 +248,12 @@ def prepare_app(energy_system, dp_path, tables):
                 columns={"asset": "component name", "Investments": "optimized value"},
                 inplace=True,
             )
+
+        def set_value(row_number, assigned_value):
+            return assigned_value.get(row_number, None)
+
+        df["unit"] = df[df.columns[0]].apply(set_value, args=(units,))
+
         tables_figure.append(html.H4(table))
         tables_figure.append(
             dash_table.DataTable(
