@@ -100,6 +100,21 @@ def post_processing(
     :param results_path: results directory path
     :param dp_path: path to the datapackage.json file
     """
+
+    if parameters_units is None:
+        #  Units of Capacities and Kpis in Results
+        parameters_units = {
+            "battery_storage": "[kWh]",
+            "inverter": "[kW]",
+            "pv-panel": "[kW]",
+            "water-storage": "[m³]",
+            "mimo": "[m³/h]",
+            "annuity_total": "[$]",
+            "total_upfront_investments": "[$]",
+            "land_requirement_total": "[m²]",
+            "total_water_footprint": "[m³]",
+        }
+
     # initiate calculator for post-processing
     calculator = OTPCalculator(params, es, dp_path)
     # print(calculator.df_results)
