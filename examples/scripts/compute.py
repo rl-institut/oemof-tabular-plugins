@@ -109,6 +109,11 @@ for scenario in scenarios:
         results_path,
         dp_path=os.path.join(scenario_dir, "datapackage.json"),
         dash_app=True,
+        parameters_units={
+            "inverter": "kW",
+            "pv-panel": "kW",
+            "total_brine_produced": "kg",
+        },
     )
 
 print("done")
