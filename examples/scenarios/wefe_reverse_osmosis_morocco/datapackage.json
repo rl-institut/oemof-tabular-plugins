@@ -646,12 +646,12 @@
                     },
                     {
                         "name": "permeate",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "elec",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
