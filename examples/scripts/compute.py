@@ -50,11 +50,11 @@ for scenario in scenarios:
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
-    # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-    pre_processing(scenario_dir, wacc, custom_attributes, moo)
-
-    # pre-processing to update input csv files if 'name'=='apv-system' for at least one component
-    pre_processing_apv(scenario_dir)
+    # # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
+    # pre_processing(scenario_dir, wacc, custom_attributes, moo)
+    #
+    # # pre-processing to update input csv files if 'name'=='apv-system' for at least one component
+    # pre_processing_apv(scenario_dir)
 
     # otp_building.infer_metadata_from_data(
     #     package_name=scenario,

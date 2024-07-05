@@ -1,6 +1,6 @@
 r"""
-VERSION 4 - not working
-Only functions to create csv input for MIMO facade
+VERSION 4 - working
+Functions to create csv input for MIMO facade including conversion factors and other performance indicators
 solar in
 water in
 electricity out
@@ -8,23 +8,10 @@ biomass out
 water out
 """
 
-# TODO: include water (buses, balance, ARID factor)
-# TODO: fix documentation
-# TODO: check if weather_data and sowing_date have the same year
+# TODO: improve documentation
+# TODO: sequence_path is defined too strictly, might cause problems
 
-from dataclasses import field
-from typing import Sequence, Union
-
-from oemof.solph._plumbing import sequence
-from oemof.solph.buses import Bus
-from oemof.solph.components import Converter
-from oemof.solph.flows import Flow
-
-from oemof.tabular._facade import Facade, dataclass_facade
-from oemof_industry.mimo_converter import MIMO
-
-import logging
-from oemof.tools import logger, economics
+from oemof.tools import logger
 
 from src.oemof_tabular_plugins.wefe.global_specs.crops import crop_dict
 from pyomo.environ import ConcreteModel, Var, Objective, SolverFactory, Piecewise, Constraint, maximize
@@ -32,8 +19,6 @@ import numpy as np
 import pandas as pd
 import json
 from scipy.interpolate import interp1d
-from datetime import datetime
-import pytz
 import os
 
 import pdb
@@ -47,13 +32,10 @@ specspath = os.path.join(
     "wefe", "global_specs")
 
 
-# elementspath = os.path.join(os.path.dirname(sequencepath), "elements")
-
-
 # -------------- APV pre-processing --------------
 def pre_processing_apv(directory):
     """ """
-    logger.info("APV pre-processing activated")
+    logger.info("APV pre-processing activated...this may take up to 2 minutes")
 
     def _apv_production(apv_dict, apv_df):
         """
@@ -81,7 +63,7 @@ def pre_processing_apv(directory):
         s_water = crop_dict[crop_type]['s_water']
         f_solar_max = crop_dict[crop_type]['f_solar_max']
         rue = crop_dict[crop_type]['rue']
-        # Convert Radiation Use Efficiency from W/m² to MJ/(m²*h)
+        # Convert Radiation Use Efficiency from g/(MJ*m²*h) to g/(W*m²)
         rue *= 3.6e-3
 
         # ----- Soil parameters -----
@@ -92,15 +74,18 @@ def pre_processing_apv(directory):
         ddc = 0.55  # beta      ## deep drainage coefficient
 
         # ----- PV parameters -----
-        p_rated = 270  # [Wp]
-        rad_ref = 1000  # [W/m²]
-        t_ref = 25  # [°C]
-        noct = 48  # [°C]
+        # Module: Boviet solar BVM7610M-XXX-H-HC-BF-DG 450W
+        p_rated = 450  # rated power [Wp]
+        rad_ref = 800  # reference irradiation [W/m²]
+        t_ref = 20  # reference temp [°C]
+        noct = 45  # normal operating cell temperature [°C]
+        x = 1.109  # width (E/W) [m]   ## test module for simulation: 1.036
+        y = 1.908  # length (N/S) [m]   ## test module for simulation: 1.74
 
         # ----- Geometry -----
         def apv_geometry(lat):
             """
-            Obtain geometry parameters and bifacial_radiance simulation results from geometry.json,
+            Obtain bifacial_radiance simulation results from geometry.json (xgaps, frts, frbs),
             interpolate for given latitude and return geometry_params
             """
 
@@ -223,7 +208,7 @@ def pre_processing_apv(directory):
             return f_heat
 
         def power(p_rated, rad, rad_ref, t_air, t_ref, noct):
-            """ Hourly PV power output in relation to incoming radiation [ """
+            """ Hourly PV power output in relation to incoming radiation [W] """
             f_temp = 1 - 3.7e-3 * (t_air + ((noct - 20) / 800) * rad - t_ref)
             p = p_rated * rad / rad_ref * f_temp
             return p
@@ -256,7 +241,7 @@ def pre_processing_apv(directory):
             return g
 
         def potential_evapotranspiration(z, t_air, t_dp, w10, irr_w, g_w):
-            """ Potential evapotranspiration for reference grass (FAO56) [mm/h] """
+            """ Potential evapotranspiration for reference grass (FAO56) [mm] """
             cp_air = 1.013e-3  # specific heat at constant pressure [MJ/(kg °C)]
             epsilon = 0.622  # ratio molecular weight of water vapour/dry air [-]
             h_vap = 2.45  # latent heat of vaporization [MJ/kg]
@@ -286,29 +271,29 @@ def pre_processing_apv(directory):
             return et_p
 
         def runoff(p, rcn):
-            """ Surface runoff of precipitation (ARID) [mm/h] """
+            """ Surface runoff of precipitation (ARID) [mm] """
             s = 25400 / rcn - 254
             i_a = 0.2 * s
             if p > i_a:
                 r = (p - i_a) ** 2 / (p + i_a - s) / 24
             else:
-                r = 0
+                r = 0.0
             return r
 
         def soil_water_balance(df, has_irrigation):
             """
-            Soil water content (swc) and irrigation (if True) for timestep i based on
-            precipitation (tp), surface runoff for timestep i as well as
-            soil water content, deep drainage and actual evapotranspiration (et_a) for timestep i-1
-            (ARID) [-]
+            Soil water content (swc) [-] and irrigation [mm] (if True) for timestep i based on
+            precipitation (tp) [mm], surface runoff [mm] for timestep i as well as
+            soil water content, deep drainage [mm] and actual evapotranspiration (et_a) [mm] for timestep i-1
+            (ARID)
             """
-            df['deep_drain'] = 0
-            df['et_a'] = 0
-            df['irrigation'] = 0
-            df['swc'] = 0
+            df['deep_drain'] = 0.0
+            df['et_a'] = 0.0
+            df['irrigation'] = 0.0
+            df['swc'] = 0.0
 
             def deep_drainage(ddc, rzd, water_cap, water_con_bd):
-                """ Deep drainage of soil water (ARID) [mm/h] """
+                """ Deep drainage of soil water (ARID) [mm] """
                 if water_con_bd > water_cap:
                     d = ddc * rzd * (water_con_bd - water_cap) / 24
                 else:
@@ -319,15 +304,20 @@ def pre_processing_apv(directory):
             df.loc[df.index[0], 'swc'] = swc_cache
             for index, row in df.iloc[1:].iterrows():
                 df.loc[index, 'deep_drain'] = deep_drainage(ddc=ddc, rzd=rzd, water_cap=awc, water_con_bd=swc_cache)
-                df.loc[index, 'et_a'] = min(wuc * rzd * swc_cache / 24, df.loc[index, 'et_p'])
+                df.loc[index, 'et_a'] = min(wuc * rzd * swc_cache / 24, row['et_p'])
+
                 if has_irrigation:
-                    water_deficit = df.loc[index, 'et_a'] - df.loc[index, 'tp_ground']
-                    df.loc[index, 'irrigation'] = water_deficit if water_deficit > 0 else 0
-                df.loc[index, 'swc'] = swc_cache + (row['tp_ground'] + row['irrigation']
-                                                    - df.loc[index, 'et_a']
-                                                    - row['runoff']
-                                                    - df.loc[index, 'deep_drain']
-                                                    ) / rzd
+                    water_deficit = df.loc[index, 'et_a'] - row['tp_ground']
+                    df.at[index, 'irrigation'] = max(water_deficit, 0)
+
+                delta_swc = (row['tp_ground']
+                             - row['runoff']
+                             - df.loc[index, 'deep_drain']
+                             - df.loc[index, 'et_a']
+                             + df.loc[index, 'irrigation']
+                             ) / rzd
+
+                df.loc[index, 'swc'] = swc_cache + delta_swc
                 swc_cache = df.loc[index, 'swc']
 
         def drought(et_p, et_a, s_water):
@@ -360,24 +350,26 @@ def pre_processing_apv(directory):
                 f_solar = 0
             return f_solar
 
-        def biomass_generation(df, gcr, frt, has_irrigation):
+        def biomass_generation(df, albedo, gcr, frt, has_irrigation, has_harvesting):
             """
-            Biomass generation including the radiation transmission factor (frt),
-            soil water balance with irrigation, solar interception
+            Biomass generation [g/m²] including the radiation transmission factor (frt),
+            soil water balance with irrigation [mm], solar interception [-]
             """
+            df['rad_net'] = frt * df['ghi'] * (1 - albedo)
+
             df['g'] = df.apply(
-                lambda row: soil_heat_flux(row['ghi'], frt * row['ghi']),
+                lambda row: soil_heat_flux(row['ghi'], row['rad_net']),
                 axis=1
             )
 
             df['et_p'] = df.apply(
                 lambda row: potential_evapotranspiration(
-                    z, row['t_air'], row['t_dp'], row['windspeed'], frt * row['ghi'], row['g']
+                    z, row['t_air'], row['t_dp'], row['windspeed'], frt * row['rad_net'], row['g']
                 ),
                 axis=1
             )
 
-            df['tp_ground'] = df['tp'] * (1 - gcr)
+            df['tp_ground'] = df['tp'] * (1 - gcr) if has_harvesting else df['tp']
 
             df['runoff'] = df['tp_ground'].apply(
                 lambda tp: runoff(tp, rcn)
@@ -401,16 +393,21 @@ def pre_processing_apv(directory):
             )
 
             df['biomass_gen'] = frt * df['ghi'] * df['f_solar'] * rue * df['f_temp'] * df[
-                ['f_heat', 'f_drought']].min(
-                axis=1
-            )
+                ['f_heat', 'f_drought']].min(axis=1)
+
             return df['biomass_gen']
+
+        def electricity_relative_output(frb, xgap, has_bifaciality):
+            """ Relative electricity output [-] merely for LER calculation """
+            frb = 0 if not has_bifaciality else frb
+            relative_output = (1 + frb) * x / ((1 + frb) * (x + xgap))
+            return relative_output
 
         def electricity_generation(df, area, frb, has_bifaciality):
             """ Electricity generation including the radiation bifaciality factor (frb) [kWh/m²] """
             frb = 0 if not has_bifaciality else frb
             panels_per_m2 = 1 / area
-            df['electricity_gen'] = panels_per_m2 * (1 + frb) * df['pv_power']
+            df['electricity_gen'] = panels_per_m2 * (1 + frb) * df['pv_power'] / 1000
             return df['electricity_gen']
 
         def rainwater_harvesting(df, gcr, has_harvesting):
@@ -423,72 +420,87 @@ def pre_processing_apv(directory):
         # ------- Geometry optimization: Maximize LER -------
         # Shadow area of the PV panel
         area_pv_shadow = x * y * np.cos(np.radians(tilt))
-        # Ground coverage ratio list
-        gcrs = [area_pv_shadow / ((x + xgaps[i]) * pitch) for i in range(3)]
-        electricity_rel = [(1 + fbifacials[i]) * x / ((1 + fbifacials[0]) * (x + xgaps[i])) for i in range(3)]
-        biomass_open = biomass_generation(apv_df, gcr=0, frt=1, has_irrigation=False).sum()
-        biomass_rel = [biomass_generation(apv_df,
-                                          gcr=gcrs[i],
-                                          frt=fshadings[i],
-                                          has_irrigation=False
-                                          ).sum()
-                       / biomass_open for i in range(3)]
+        has_optimization = True
+        if has_optimization:
+            # Ground coverage ratio list
+            gcrs = [area_pv_shadow / ((x + xgaps[i]) * pitch) for i in range(len(xgaps))]
+            electricity_rel = [electricity_relative_output(frb=fbifacials[i],
+                                                           xgap=xgaps[i],
+                                                           has_bifaciality=True) for i in range(len(xgaps))]
+            biomass_open = biomass_generation(apv_df,
+                                              albedo=0.23,
+                                              gcr=0,
+                                              frt=1,
+                                              has_irrigation=False,
+                                              has_harvesting=False
+                                              ).sum()
+            biomass_rel = [biomass_generation(apv_df,
+                                              albedo=0.23,
+                                              gcr=gcrs[i],
+                                              frt=fshadings[i],
+                                              has_irrigation=False,
+                                              has_harvesting=False
+                                              ).sum() / biomass_open for i in range(len(xgaps))]
 
-        # Define the optimization model
-        opti_model = ConcreteModel()
-        opti_model.xgap = Var(bounds=(min(xgaps), max(xgaps)))
+            # Define the optimization model
+            opti_model = ConcreteModel()
+            opti_model.xgap = Var(bounds=(min(xgaps), max(xgaps)))
 
-        # Set up the piecewise linear functions for biomass and electricity terms
-        opti_model.bio_rel = Var()
-        opti_model.bio_rel_pieces = Piecewise(opti_model.bio_rel, opti_model.xgap,
-                                              pw_pts=xgaps[:3],
-                                              f_rule=biomass_rel,
-                                              pw_constr_type='EQ')
+            # Set up the piecewise linear functions for biomass and electricity terms
+            opti_model.bio_rel = Var()
+            opti_model.bio_rel_pieces = Piecewise(opti_model.bio_rel, opti_model.xgap,
+                                                  pw_pts=xgaps,
+                                                  f_rule=biomass_rel,
+                                                  pw_constr_type='EQ')
 
-        opti_model.elec_rel = Var()
-        opti_model.elec_rel_pieces = Piecewise(opti_model.elec_rel, opti_model.xgap,
-                                               pw_pts=xgaps[:3],
-                                               f_rule=electricity_rel,
-                                               pw_constr_type='EQ')
+            opti_model.elec_rel = Var()
+            opti_model.elec_rel_pieces = Piecewise(opti_model.elec_rel, opti_model.xgap,
+                                                   pw_pts=xgaps,
+                                                   f_rule=electricity_rel,
+                                                   pw_constr_type='EQ')
 
-        # Minimum relative crop yield constraint
-        min_bio_rel = minimal_crop_yield
-        opti_model.min_shading_constraint = Constraint(expr=opti_model.bio_rel >= min_bio_rel)
+            # Minimum relative crop yield constraint
+            min_bio_rel = minimal_crop_yield
+            opti_model.min_shading_constraint = Constraint(expr=opti_model.bio_rel >= min_bio_rel)
 
-        # Optimization
-        def objective_rule(model):
-            return model.elec_rel + model.bio_rel
+            # Optimization
+            def objective_rule(model):
+                return model.elec_rel + model.bio_rel
 
-        opti_model.objective = Objective(rule=objective_rule, sense=maximize)
-        solver = SolverFactory('cbc')
-        solver.solve(opti_model)
-        xgap_optimal = opti_model.xgap.value
-        ler = opti_model.elec_rel.value + opti_model.bio_rel.value  # Land equivalent ratio
+            opti_model.objective = Objective(rule=objective_rule, sense=maximize)
+            solver = SolverFactory('cbc')
+            solver.solve(opti_model)
 
         # ----- Results processing -----
+        xgap_optimal = opti_model.xgap.value if has_optimization else 2
+        area_apv = (x + xgap_optimal) * pitch
+        gcr = area_pv_shadow / area_apv  # Ground coverage ratio
+        ler = opti_model.elec_rel.value + opti_model.bio_rel.value if has_optimization else 13  # Land equivalent ratio
+        capacity_cost = apv_dict['capacity_cost'] * p_rated * 1e-3 / area_apv
+
         interp_frb = interp1d(xgaps, fbifacials, kind='linear')
         interp_frt = interp1d(xgaps, fshadings, kind='linear')
         fbifacial_optimal = interp_frb(xgap_optimal)
         fshading_optimal = interp_frt(xgap_optimal)
 
-        area_apv = (x + xgap_optimal) * pitch
-        gcr = area_pv_shadow / area_apv    # Ground coverage ratio
-
         electricity_generation(apv_df, area=area_apv, frb=fbifacial_optimal, has_bifaciality=True)
-        biomass_generation(apv_df, gcr=gcr, frt=fshading_optimal, has_irrigation=True)
-        rainwater_harvesting(apv_df, gcr=gcr, has_harvesting=True)
+        biomass_generation(apv_df, albedo=0.23, gcr=gcr, frt=fshading_optimal, has_irrigation=True,
+                           has_harvesting=False)
+        rainwater_harvesting(apv_df, gcr=gcr, has_harvesting=False)
 
-        # Replace all non-negative values smaller than 0.00001 with 0.00001, round all floats to 5 decimal places
-        apv_df = apv_df.mask((apv_df < 0.00001) & (apv_df >= 0), 0.00001)
+        # Replace all values smaller than 0.00001 with 0.00001 (incl. negative values),
+        # round all floats to 5 decimal places
+        apv_df = apv_df.mask((apv_df <= 1e-5), 1e-5)
         apv_df = apv_df.round(5)
 
         apv_dict.update(
             {
                 **geo_params,
-                'xgap': xgap_optimal,
-                'area_apv': area_apv,
-                'gcr': gcr,
-                'ler': ler,
+                'xgap': round(xgap_optimal, 2),
+                'area_apv': round(area_apv, 2),
+                'gcr': round(gcr, 2),
+                'ler': round(ler, 2),
+                'capacity_cost': round(capacity_cost, 2)
             }
         )
 

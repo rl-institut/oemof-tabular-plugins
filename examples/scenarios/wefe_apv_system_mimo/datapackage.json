@@ -262,7 +262,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -302,12 +302,12 @@
                     },
                     {
                         "name": "opex_fix",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "lifetime",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -495,7 +495,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -535,7 +535,7 @@
                     },
                     {
                         "name": "lifetime",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     }
                 ],
@@ -640,11 +640,6 @@
                         "format": "default"
                     },
                     {
-                        "name": "t_dp",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
                         "name": "e",
                         "type": "number",
                         "format": "default"
@@ -656,6 +651,11 @@
                     },
                     {
                         "name": "windspeed",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_dp",
                         "type": "number",
                         "format": "default"
                     },
@@ -676,6 +676,11 @@
                     },
                     {
                         "name": "pv_power",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "rad_net",
                         "type": "number",
                         "format": "default"
                     },
@@ -725,6 +730,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "delta_i50b",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "f_solar",
                         "type": "number",
                         "format": "default"
@@ -741,11 +751,6 @@
                     },
                     {
                         "name": "water_harvest",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "delta_i50b",
                         "type": "number",
                         "format": "default"
                     }
