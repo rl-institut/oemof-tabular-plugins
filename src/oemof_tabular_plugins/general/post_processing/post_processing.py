@@ -6,6 +6,7 @@ import pandas as pd
 from oemof.tabular.postprocessing import calculations as clc, naming
 from oemof.tabular.postprocessing.core import Calculator
 
+
 from oemof_tabular_plugins.datapackage.post_processing import (
     construct_dataframe_from_results,
     process_raw_results,
@@ -13,6 +14,8 @@ from oemof_tabular_plugins.datapackage.post_processing import (
     apply_calculations,
     apply_kpi_calculations,
 )
+
+from .gui import prepare_app
 
 # ------ New post-processing to create tables ------
 # This dictionary contains groups of columns that should be extracted from the df_results to generate a clearer overview
@@ -85,7 +88,9 @@ class OTPCalculator(Calculator):
         super().__init__(input_parameters, energy_system.results)
 
 
-def post_processing(params, es, results_path, dp_path):
+def post_processing(
+    params, es, results_path, dp_path, dash_app=False, parameters_units=None
+):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
     """
@@ -95,6 +100,21 @@ def post_processing(params, es, results_path, dp_path):
     :param results_path: results directory path
     :param dp_path: path to the datapackage.json file
     """
+
+    if parameters_units is None:
+        #  Units of Capacities and Kpis in Results
+        parameters_units = {
+            "battery_storage": "[kWh]",
+            "inverter": "[kW]",
+            "pv-panel": "[kW]",
+            "water-storage": "[m³]",
+            "mimo": "[m³/h]",
+            "annuity_total": "[$]",
+            "total_upfront_investments": "[$]",
+            "land_requirement_total": "[m²]",
+            "total_water_footprint": "[m³]",
+        }
+
     # initiate calculator for post-processing
     calculator = OTPCalculator(params, es, dp_path)
     # print(calculator.df_results)
@@ -114,8 +134,34 @@ def post_processing(params, es, results_path, dp_path):
 
     # save tables to csv files
     tables_to_save = {"costs.csv": cost_table, "capacities.csv": capacities_table}
+    if "mimo" in results_by_flow.index.get_level_values("asset"):
+        kpis.loc["total_water_produced"] = results_by_flow.loc["permeate-bus", "in"][
+            "aggregated_flow"
+        ].sum()
+        kpis.loc["total_brine_produced"] = results_by_flow.loc["brine-bus", "in"][
+            "aggregated_flow"
+        ].sum()
+        kpis.loc["total_electricity_produced"] = results_by_flow.loc[
+            "ac-elec-bus", "in"
+        ]["aggregated_flow"].sum()
+
     for filename, table in tables_to_save.items():
         save_table_to_csv(table, results_path, filename)
+
+    if dash_app is True:
+        # ignore the dispachable sources optimized capacities
+        capacities_table = capacities_table[
+            capacities_table.index.get_level_values("facade_type") != "dispatchable"
+        ]
+        # eliminate double occurence of same asset
+        capacities_table = capacities_table.groupby("asset").mean()
+        demo_app = prepare_app(
+            es,
+            dp_path=dp_path,
+            tables={"capacities": capacities_table, "kpis": kpis},
+            units=parameters_units,
+        )
+        demo_app.run_server(debug=True, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
 
