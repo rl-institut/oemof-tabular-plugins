@@ -1,4 +1,6 @@
 import os
+
+import pandas as pd
 from oemof.solph import EnergySystem, Model
 from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
@@ -17,7 +19,7 @@ from oemof_tabular_plugins.general import (
     pre_processing,
     logger,
 )
-from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO
+from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO, pre_processing_apv
 
 
 # -------------- RELEVANT PATHS --------------
@@ -27,13 +29,19 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "general_add_cost_inputs",
-    "general_basic",
-    "general_constraints",
-    "general_custom_attributes",
-    "wefe_custom_attributes",
-    "wefe_pv_panel",
-    "wefe_reverse_osmosis",
+    "wefe_apv_load"
+    # "wefe_apv_excess-only"
+    # "wefe_apv_light_3-disp_excess-only"
+    # "wefe_apv"
+    # "wefe_apv_light_excess-only"
+    # "wefe_apv_light"
+    # "general_add_cost_inputs",
+    # "general_basic",
+    # "general_constraints",
+    # "general_custom_attributes",
+    # "wefe_custom_attributes",
+    # "wefe_pv_panel",
+    # "wefe_reverse_osmosis",
 ]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
@@ -52,7 +60,7 @@ custom_attributes = [
 moo = False
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
-TYPEMAP["mimo"] = MIMO
+TYPEMAP["apv-system"] = MIMO
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
@@ -64,14 +72,17 @@ for scenario in scenarios:
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
-    # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-    pre_processing(scenario_dir, wacc, custom_attributes, moo)
+    # # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
+    # pre_processing(scenario_dir, wacc, custom_attributes, moo)
+    #
+    # # pre-processing to look for "apv-system" in MIMO and update accordingly
+    # pre_processing_apv(scenario_dir)
 
-    otp_building.infer_metadata_from_data(
-        package_name=scenario,
-        path=scenario_dir,
-        typemap=TYPEMAP,
-    )
+    # otp_building.infer_metadata_from_data(
+    #     package_name=scenario,
+    #     path=scenario_dir,
+    #     typemap=TYPEMAP,
+    # )
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(
@@ -79,6 +90,13 @@ for scenario in scenarios:
         attributemap={},
         typemap=TYPEMAP,
     )
+
+    # # Show energy system components for debugging purposes (doesnt run)
+    # from oemof_visio import ESGraphRenderer
+    # gr = ESGraphRenderer(energy_system=es)
+    # gr.render()
+    # import pdb; pdb.set_trace()
+
 
     logger.info("Energy system created from datapackage")
 
@@ -100,8 +118,10 @@ for scenario in scenarios:
     m.solve("cbc")
 
     # extract parameters and results
-    params = parameter_as_dict(es)
     es.results = processing.results(m)
+    # es.dump(dpath=".", filename="apv_case1.oemof")
+
+    params = parameter_as_dict(es)
 
     post_processing(
         params,

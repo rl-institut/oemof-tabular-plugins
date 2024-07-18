@@ -1,0 +1,2 @@
+bus,direction,asset,carrier,facade_type,Capacity,Expandable,Investments
+solar-energy-bus,out,sun,solar,volatile,320.0,0.0,

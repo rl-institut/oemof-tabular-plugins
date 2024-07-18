@@ -38,10 +38,24 @@ def compute_capacity_total(results_df):
     #  Check how the storage capacities should be displayed in the results to make it not confusing for the user. Maybe
     #  the storage components need two total capacity results (one for power and one for energy)?
     """Calculates total capacity by adding existing capacity (capacity) to optimized capacity (investments)"""
+
+    optimized_capacity = results_df.investments
+
     if "storage" in results_df.name:
-        return results_df.storage_capacity + results_df.investments
+        installed_capacity = results_df.storage_capacity
     else:
-        return results_df.capacity + results_df.investments
+        installed_capacity = results_df.capacity
+
+    if isinstance(optimized_capacity, float) and isinstance(installed_capacity, float):
+        total = installed_capacity + optimized_capacity
+    elif (isinstance(optimized_capacity, float) is False) and isinstance(installed_capacity, float):
+        total = installed_capacity
+    elif isinstance(optimized_capacity, float) and (isinstance(installed_capacity, float) is False):
+        total = optimized_capacity
+    else:
+        total = np.nan
+    return total
+
 
 
 def compute_annuity_total(results_df):
@@ -49,10 +63,19 @@ def compute_annuity_total(results_df):
     # ToDo: now storage_capacity_cost is used for the annuity if the component is storage.
     #  Check that this is correctly applied for storage components or if two different costs should
     #  be calculated (one for power and one for energy)
+
+    optimized_capacity = results_df.investments
+
     if "storage" in results_df.name:
-        return results_df.storage_capacity_cost * results_df.investments
+        annuity = results_df.storage_capacity_cost
     else:
-        return results_df.capacity_cost * results_df.investments
+        annuity = results_df.capacity_cost
+
+    if isinstance(optimized_capacity, float) and isinstance(annuity, float):
+        total = annuity * optimized_capacity
+    else:
+        total = np.nan
+    return total
 
 
 def compute_upfront_investment_costs(results_df):
@@ -60,17 +83,20 @@ def compute_upfront_investment_costs(results_df):
     """Calculates investment costs by multiplying capex with optimized capacity (investments)"""
     if "capex" not in results_df.index:
         return None
-    else:
+    elif isinstance(results_df.capex, float) and isinstance(results_df.investments, float):
         return results_df.capex * results_df.investments
+    else:
+        return np.nan
 
 
 def compute_opex_fix_costs(results_df):
     """Calculates yearly opex costs by multiplying opex with optimized capacity (investments)"""
     if "opex_fix" not in results_df.index:
         return None
-    else:
+    elif isinstance(results_df.capex, float) and isinstance(results_df.investments, float):
         return results_df.opex_fix * results_df.investments
-
+    else:
+        return np.nan
 
 def compute_variable_costs(results_df):
     """Calculates variable costs by multiplying the marginal cost by the aggregated flow if the direction is out,
@@ -503,8 +529,9 @@ def infer_busses_carrier(energy_system):
     for node in energy_system.nodes:
         if hasattr(node, "carrier"):
             # quick fix to work for MIMO component
+            # assigned buses as defined in mimo.csv for apv-system (another quick fix)
             # ToDo: assign carrier to busses instead of components to avoid problems
-            for attribute in ("bus", "from_bus", "from_bus_0", "to_bus_1"):
+            for attribute in ("from_bus_0", "from_bus_1", "from_bus_2", "to_bus_0", "to_bus_1", "to_bus_2"):
                 if hasattr(node, attribute):
 
                     bus_label = getattr(node, attribute).label

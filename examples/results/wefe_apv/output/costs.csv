@@ -1,0 +1,13 @@
+bus,direction,asset,carrier,facade_type,Upfront Investment Costs
+biomass-bus,in,biomass-excess,solar,excess,
+biomass-bus,out,apv-system,solar,,
+electricity-bus,in,demand,solar,load,
+electricity-bus,in,electricity-excess,solar,excess,
+electricity-bus,out,apv-system,solar,,
+electricity-bus,out,back-up-elec,solar,dispatchable,
+solar-energy-bus,in,apv-system,solar,,
+solar-energy-bus,out,sun,solar,volatile,
+water-bus-in,in,apv-system,solar,,
+water-bus-in,out,back-up-water,solar,dispatchable,
+water-bus-out,in,water-excess,solar,excess,
+water-bus-out,out,apv-system,solar,,

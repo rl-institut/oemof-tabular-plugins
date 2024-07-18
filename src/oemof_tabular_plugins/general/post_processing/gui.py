@@ -121,8 +121,8 @@ def sankey(energy_system, ts=None):
                         ][ts]
                     except:
                         val = flows[((component.label, bus_label), "flow")][ts]
-                # if val == 0:
-                #     val = 1
+                if val <= 1000:
+                    val = 0
                 values.append(val)
 
             for component in bus.outputs:
@@ -157,6 +157,9 @@ def sankey(energy_system, ts=None):
                                 "flow",
                             )
                         ][ts]
+
+                if val <= 1000:
+                    val = 0
                 values.append(val)
 
     fig = go.Figure(
@@ -219,6 +222,7 @@ def prepare_app(energy_system, dp_path, tables, units=None):
                         x=g.index, y=g.values * pow(-1, idx_asset), name=t[0][idx_asset]
                     )
                 )
+
         # else:
         #     capacity_battery = asset_results.capacity.battery
         #     if capacity_battery != 0:

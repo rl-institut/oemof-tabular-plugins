@@ -1,0 +1,13 @@
+bus,direction,asset,carrier,facade_type,Capacity,Expandable,Investments
+biomass-bus,in,biomass-excess,solar,excess,,,
+biomass-bus,out,apv-system,solar,,1.0,0.0,
+electricity-bus,in,electricity-excess,solar,excess,,,
+electricity-bus,out,apv-system,solar,,1.0,0.0,
+rain-bus,in,apv-system,solar,,1.0,0.0,
+rain-bus,out,rain,solar,dispatchable,0.0,1.0,1e-07
+solar-energy-bus,in,apv-system,solar,,1.0,0.0,
+solar-energy-bus,out,sun,solar,volatile,1000.0,0.0,
+water-bus-in,in,apv-system,solar,,1.0,0.0,
+water-bus-in,out,back-up-water,solar,dispatchable,0.0,1.0,207.99
+water-bus-out,in,water-excess,solar,excess,,,
+water-bus-out,out,apv-system,solar,,1.0,0.0,

@@ -1,0 +1,22 @@
+digraph {
+	"solar-ener
+gy-bus" [fontsize=10]
+	"water-bus-
+in" [fontsize=10]
+	"electricit
+y-bus" [fontsize=10]
+	"biomass-bu
+s" [fontsize=10]
+	"water-bus-
+out" [fontsize=10]
+	"back-up-wa
+ter" [fontsize=10]
+	"electricit
+y-excess" [fontsize=10]
+	"biomass-ex
+cess" [fontsize=10]
+	"water-exce
+ss" [fontsize=10]
+	"apv-system" [fontsize=10]
+	sun [fontsize=10]
+}
