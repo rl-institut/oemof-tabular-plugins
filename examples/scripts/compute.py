@@ -29,8 +29,8 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "wefe_apv_load"
-    # "wefe_apv_excess-only"
+    # "wefe_apv_load"
+    "wefe_apv_excess-only"
     # "wefe_apv_light_3-disp_excess-only"
     # "wefe_apv"
     # "wefe_apv_light_excess-only"
@@ -72,17 +72,17 @@ for scenario in scenarios:
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
-    # # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-    # pre_processing(scenario_dir, wacc, custom_attributes, moo)
-    #
-    # # pre-processing to look for "apv-system" in MIMO and update accordingly
-    # pre_processing_apv(scenario_dir)
+    # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
+    pre_processing(scenario_dir, wacc, custom_attributes, moo)
 
-    # otp_building.infer_metadata_from_data(
-    #     package_name=scenario,
-    #     path=scenario_dir,
-    #     typemap=TYPEMAP,
-    # )
+    # pre-processing to look for "apv-system" in MIMO and update accordingly
+    pre_processing_apv(scenario_dir)
+
+    otp_building.infer_metadata_from_data(
+        package_name=scenario,
+        path=scenario_dir,
+        typemap=TYPEMAP,
+    )
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(
@@ -91,7 +91,7 @@ for scenario in scenarios:
         typemap=TYPEMAP,
     )
 
-    # # Show energy system components for debugging purposes (doesnt run)
+    # # Show energy system components for debugging purposes (doesnt run yet)
     # from oemof_visio import ESGraphRenderer
     # gr = ESGraphRenderer(energy_system=es)
     # gr.render()

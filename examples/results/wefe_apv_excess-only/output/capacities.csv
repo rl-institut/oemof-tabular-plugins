@@ -8,6 +8,6 @@ rain-bus,out,rain,mimo,dispatchable,0.0,1.0,959.3216
 solar-energy-bus,in,apv-system,mimo,,320.0,0.0,
 solar-energy-bus,out,sun,mimo,volatile,320.0,0.0,
 water-bus-in,in,apv-system,mimo,,320.0,0.0,
-water-bus-in,out,back-up-water,mimo,dispatchable,0.0,1.0,86.825766
+water-bus-in,out,back-up-water,mimo,dispatchable,0.0,1.0,190.22449
 water-bus-out,in,water-excess,mimo,excess,,,
 water-bus-out,out,apv-system,mimo,,320.0,0.0,

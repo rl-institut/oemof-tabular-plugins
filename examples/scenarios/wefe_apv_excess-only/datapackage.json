@@ -116,6 +116,12 @@
                             "resource": "bus",
                             "fields": "name"
                         }
+                    },
+                    {
+                        "fields": "bus",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
                     }
                 ]
             }
@@ -300,7 +306,27 @@
                         "format": "default"
                     },
                     {
+                        "name": "frt",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "frb",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "area_apv",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "numpanels",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "kwp",
                         "type": "number",
                         "format": "default"
                     },
@@ -315,32 +341,32 @@
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_solar-energy-bus",
+                        "name": "conversion_factor_solar-radiation",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_water-bus-in",
+                        "name": "conversion_factor_irrigation",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_rain-bus",
+                        "name": "conversion_factor_precipitation",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_electricity-bus",
+                        "name": "conversion_factor_electricity",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_biomass-bus",
+                        "name": "conversion_factor_biomass",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_water-bus-out",
+                        "name": "conversion_factor_water-harvest",
                         "type": "string",
                         "format": "default"
                     }
@@ -351,10 +377,23 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
+                        "fields": "primary",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
                         "fields": "from_bus_0",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "from_bus_1",
+                        "reference": {
+                            "resource": "mimo_profile"
                         }
                     },
                     {
@@ -393,37 +432,44 @@
                         }
                     },
                     {
-                        "fields": "conversion_factor_solar-energy-bus",
+                        "fields": "conversion_factor_solar-radiation",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_water-bus-in",
+                        "fields": "conversion_factor_irrigation",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_rain-bus",
+                        "fields": "conversion_factor_irrigation",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_precipitation",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_electricity-bus",
+                        "fields": "conversion_factor_electricity",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_biomass-bus",
+                        "fields": "conversion_factor_biomass",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_water-bus-out",
+                        "fields": "conversion_factor_water-harvest",
                         "reference": {
                             "resource": "mimo_profile"
                         }
@@ -718,6 +764,11 @@
                     },
                     {
                         "name": "water_harvest",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi_kW",
                         "type": "number",
                         "format": "default"
                     }

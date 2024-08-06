@@ -13,13 +13,15 @@ water out
 
 from oemof.tools import logger
 
-from src.oemof_tabular_plugins.wefe.global_specs.crops import crop_dict
+from oemof_tabular_plugins.wefe.global_specs.crops import crop_dict
+from oemof_tabular_plugins.general.pre_processing.pre_processing import calculate_annuity
 from pyomo.environ import ConcreteModel, Var, Objective, SolverFactory, Piecewise, Constraint, maximize
 import numpy as np
 import pandas as pd
 import json
 from scipy.interpolate import interp1d
 import os
+import matplotlib.pyplot as plt
 
 import pdb
 
@@ -67,11 +69,12 @@ def pre_processing_apv(directory):
         rue *= 3.6e-3
 
         # ----- Soil parameters -----
-        rzd = 400  # zeta   ## root zone depth [mm]
+        # Average tomato data from SIMPLE
+        rzd = 900  # zeta   ## root zone depth [mm]
         wuc = 0.096  # alpha  ## water uptake constant
-        awc = 0.13  # theta_m   ## water holding capacity
-        rcn = 65  # eta     ## runoff curve number
-        ddc = 0.55  # beta      ## deep drainage coefficient
+        awc = 0.165  # theta_m   ## water holding capacity
+        rcn = 75.5  # eta     ## runoff curve number
+        ddc = 0.3  # beta      ## deep drainage coefficient
 
         # ----- PV parameters -----
         # Module: Boviet solar BVM7610M-XXX-H-HC-BF-DG 450W
@@ -234,7 +237,7 @@ def pre_processing_apv(directory):
         # ----- Geometry-dependent functions for modelling water, biomass and electricity -----
         def soil_heat_flux(ghi, irr_w):
             """ Soil heat flux as fraction of incoming radiation (FAO56) [W/m²] """
-            if ghi > 0:
+            if ghi > 1e-5:
                 g = 0.1 * irr_w
             else:
                 g = 0.5 * irr_w
@@ -307,7 +310,7 @@ def pre_processing_apv(directory):
                 df.loc[index, 'et_a'] = min(wuc * rzd * swc_cache / 24, row['et_p'])
 
                 if has_irrigation:
-                    water_deficit = df.loc[index, 'et_a'] - row['tp_ground']
+                    water_deficit = df.loc[index, 'et_a'] - (row['tp_ground'] - row['runoff'])
                     df.at[index, 'irrigation'] = max(water_deficit, 0)
 
                 delta_swc = (row['tp_ground']
@@ -364,7 +367,7 @@ def pre_processing_apv(directory):
 
             df['et_p'] = df.apply(
                 lambda row: potential_evapotranspiration(
-                    z, row['t_air'], row['t_dp'], row['windspeed'], frt * row['rad_net'], row['g']
+                    z, row['t_air'], row['t_dp'], row['windspeed'], row['rad_net'], row['g']
                 ),
                 axis=1
             )
@@ -397,10 +400,10 @@ def pre_processing_apv(directory):
 
             return df['biomass_gen']
 
-        def electricity_relative_output(frb, xgap, has_bifaciality):
+        def electricity_relative_output(frb0, frb, xgap, has_bifaciality):
             """ Relative electricity output [-] merely for LER calculation """
-            frb = 0 if not has_bifaciality else frb
-            relative_output = (1 + frb) * x / ((1 + frb) * (x + xgap))
+            frb, frb0 = 0 if not has_bifaciality else frb, frb0
+            relative_output = (1 + frb) * x / ((1 + frb0) * (x + xgap))
             return relative_output
 
         def electricity_generation(df, area, frb, has_bifaciality):
@@ -424,23 +427,39 @@ def pre_processing_apv(directory):
         if has_optimization:
             # Ground coverage ratio list
             gcrs = [area_pv_shadow / ((x + xgaps[i]) * pitch) for i in range(len(xgaps))]
-            electricity_rel = [electricity_relative_output(frb=fbifacials[i],
+            electricity_rel = [electricity_relative_output(frb0=fbifacials[0],
+                                                           frb=fbifacials[i],
                                                            xgap=xgaps[i],
                                                            has_bifaciality=True) for i in range(len(xgaps))]
             biomass_open = biomass_generation(apv_df,
                                               albedo=0.23,
                                               gcr=0,
                                               frt=1,
-                                              has_irrigation=False,
+                                              has_irrigation=True,
                                               has_harvesting=False
                                               ).sum()
+            irrigation_open = apv_df['irrigation'].sum()
             biomass_rel = [biomass_generation(apv_df,
                                               albedo=0.23,
                                               gcr=gcrs[i],
                                               frt=fshadings[i],
-                                              has_irrigation=False,
+                                              has_irrigation=True,
                                               has_harvesting=False
                                               ).sum() / biomass_open for i in range(len(xgaps))]
+
+            # Plot optimization problem
+            ler_list = [electricity_rel[i] + biomass_rel[i] for i in range(len(xgaps))]
+
+            plt.figure(figsize=(11, 5.5))
+            plt.plot(xgaps, electricity_rel, '-*', color='orange', label='relative electricity yield')
+            plt.plot(xgaps, biomass_rel, '-o', color='green', label='relative biomass yield')
+            plt.plot(xgaps, ler_list, '-x', color='blue', label='LER')
+            plt.xlabel('xgap [m]', fontsize=12)
+            plt.ylabel(r'$\text{E}_{el,rel}$, $\text{m}_{bio,rel}$, $\text{LER}$  [-]', fontsize=12)
+            plt.grid(True)
+            plt.legend()
+
+            plt.savefig('ler_maximization.pdf')
 
             # Define the optimization model
             opti_model = ConcreteModel()
@@ -474,14 +493,16 @@ def pre_processing_apv(directory):
         # ----- Results processing -----
         xgap_optimal = opti_model.xgap.value if has_optimization else 2
         area_apv = (x + xgap_optimal) * pitch
+        numpanels = apv_dict['capacity'] / area_apv
+        kwp = numpanels * p_rated * 1e-3
         gcr = area_pv_shadow / area_apv  # Ground coverage ratio
         ler = opti_model.elec_rel.value + opti_model.bio_rel.value if has_optimization else 13  # Land equivalent ratio
-        capacity_cost = apv_dict['capacity_cost'] * p_rated * 1e-3 / area_apv
+        capacity_cost = apv_dict['capacity_cost'] * p_rated * 1e-3 / area_apv   # update annuity from USD/kWp to USD/m^2
 
         interp_frb = interp1d(xgaps, fbifacials, kind='linear')
         interp_frt = interp1d(xgaps, fshadings, kind='linear')
-        fbifacial_optimal = interp_frb(xgap_optimal)
-        fshading_optimal = interp_frt(xgap_optimal)
+        fbifacial_optimal = interp_frb(xgap_optimal).item()
+        fshading_optimal = interp_frt(xgap_optimal).item()
 
         electricity_generation(apv_df, area=area_apv, frb=fbifacial_optimal, has_bifaciality=True)
         biomass_generation(apv_df, albedo=0.23, gcr=gcr, frt=fshading_optimal, has_irrigation=True,
@@ -489,8 +510,7 @@ def pre_processing_apv(directory):
         rainwater_harvesting(apv_df, gcr=gcr, has_harvesting=False)
 
         # Convert GHI from W to kW
-        apv_df['ghi'] = apv_df['ghi'] / 1000
-
+        apv_df['ghi_kW'] = apv_df['ghi'] / 1000
         # Replace all values smaller than 0.00001 with 0.0000000001 (incl. negative values),
         apv_df = apv_df.mask((apv_df <= 1e-5), 1e-10)
 
@@ -501,7 +521,11 @@ def pre_processing_apv(directory):
             {
                 **geo_params,
                 'xgap': round(xgap_optimal, 2),
+                'frt': round(fshading_optimal, 2),
+                'frb': round(fbifacial_optimal, 2),
                 'area_apv': round(area_apv, 2),
+                'numpanels': round(numpanels, 0),
+                'kwp': round(kwp, 2),
                 'gcr': round(gcr, 2),
                 'ler': round(ler, 2),
                 'capacity_cost': round(capacity_cost, 2)
@@ -543,7 +567,7 @@ def pre_processing_apv(directory):
                                 if 'bus' in key}
                     for key, value in bus_dict.items():
                         if key == 'from_bus_0':
-                            element_dict[f'conversion_factor_{value}'] = 'ghi'
+                            element_dict[f'conversion_factor_{value}'] = 'ghi_kW'
                         if key == 'from_bus_1':
                             element_dict[f'conversion_factor_{value}'] = 'irrigation'
                         if key == 'from_bus_2':
