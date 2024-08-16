@@ -15,7 +15,7 @@ crop_dict = {
         's_water': 1.0,
         'f_solar_max': 0.95
     },
-    'wheat_batten': {
+    'wheat': {
         't_sum': 2150,
         'hi': 0.34,
         'i50a': 280,
@@ -31,7 +31,7 @@ crop_dict = {
         's_water': 0.4,
         'f_solar_max': 0.95
     },
-    'tomato_sunnysd': {
+    'tomato': {
         't_sum': 2800,
         'hi': 0.68,
         'i50a': 520,

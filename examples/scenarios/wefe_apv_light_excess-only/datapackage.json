@@ -140,6 +140,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
                         "name": "bus",
                         "type": "string",
                         "format": "default"
@@ -181,11 +186,6 @@
                     },
                     {
                         "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier",
                         "type": "string",
                         "format": "default"
                     },
@@ -255,13 +255,18 @@
                         "format": "default"
                     },
                     {
-                        "name": "lat",
+                        "name": "latitude",
                         "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "elevation",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "pv_type",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -275,8 +280,18 @@
                         "format": "default"
                     },
                     {
-                        "name": "minimal_crop_yield",
+                        "name": "harvest_date",
+                        "type": "date",
+                        "format": "default"
+                    },
+                    {
+                        "name": "minimum_relative_yield",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "Unnamed: 22",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -295,7 +310,27 @@
                         "format": "default"
                     },
                     {
+                        "name": "frt",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "frb",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "area_apv",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "numpanels",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "kwp",
                         "type": "number",
                         "format": "default"
                     },
@@ -311,27 +346,27 @@
                     },
                     {
                         "name": "conversion_factor_solar-energy-bus",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "conversion_factor_water-bus-in",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "conversion_factor_electricity-bus",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "conversion_factor_biomass-bus",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "conversion_factor_water-bus-out",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
@@ -373,6 +408,36 @@
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_solar-energy-bus",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_water-bus-in",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_electricity-bus",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_biomass-bus",
+                        "reference": {
+                            "resource": "mimo_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_water-bus-out",
+                        "reference": {
+                            "resource": "mimo_profile"
                         }
                     }
                 ]
@@ -429,7 +494,7 @@
                     },
                     {
                         "name": "profile",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -463,6 +528,12 @@
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "profile",
+                        "reference": {
+                            "resource": "volatile_profile"
                         }
                     }
                 ]
@@ -579,7 +650,7 @@
                     },
                     {
                         "name": "f_heat",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -659,6 +730,11 @@
                     },
                     {
                         "name": "water_harvest",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi_kW",
                         "type": "number",
                         "format": "default"
                     }

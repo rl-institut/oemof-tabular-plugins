@@ -116,12 +116,6 @@
                             "resource": "bus",
                             "fields": "name"
                         }
-                    },
-                    {
-                        "fields": "bus",
-                        "reference": {
-                            "resource": "mimo_profile"
-                        }
                     }
                 ]
             }
@@ -153,6 +147,11 @@
                     {
                         "name": "marginal_cost",
                         "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
@@ -196,11 +195,6 @@
                         "format": "default"
                     },
                     {
-                        "name": "carrier",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
                         "name": "expandable",
                         "type": "boolean",
                         "format": "default"
@@ -212,7 +206,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -266,13 +260,18 @@
                         "format": "default"
                     },
                     {
-                        "name": "lat",
+                        "name": "latitude",
                         "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "elevation",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "pv_type",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -286,7 +285,12 @@
                         "format": "default"
                     },
                     {
-                        "name": "minimal_crop_yield",
+                        "name": "harvest_date",
+                        "type": "date",
+                        "format": "default"
+                    },
+                    {
+                        "name": "minimum_relative_yield",
                         "type": "number",
                         "format": "default"
                     },
@@ -341,32 +345,32 @@
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_solar-radiation",
+                        "name": "conversion_factor_solar-energy-bus",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_irrigation",
+                        "name": "conversion_factor_irrigation-bus",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_precipitation",
+                        "name": "conversion_factor_precipitation-bus",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_electricity",
+                        "name": "conversion_factor_electricity-bus",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_biomass",
+                        "name": "conversion_factor_biomass-bus",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_water-harvest",
+                        "name": "conversion_factor_water-harvest-bus",
                         "type": "string",
                         "format": "default"
                     }
@@ -377,23 +381,10 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "primary",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
                         "fields": "from_bus_0",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "from_bus_1",
-                        "reference": {
-                            "resource": "mimo_profile"
                         }
                     },
                     {
@@ -432,44 +423,37 @@
                         }
                     },
                     {
-                        "fields": "conversion_factor_solar-radiation",
+                        "fields": "conversion_factor_solar-energy-bus",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_irrigation",
+                        "fields": "conversion_factor_irrigation-bus",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_irrigation",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "conversion_factor_precipitation",
+                        "fields": "conversion_factor_precipitation-bus",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_electricity",
+                        "fields": "conversion_factor_electricity-bus",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_biomass",
+                        "fields": "conversion_factor_biomass-bus",
                         "reference": {
                             "resource": "mimo_profile"
                         }
                     },
                     {
-                        "fields": "conversion_factor_water-harvest",
+                        "fields": "conversion_factor_water-harvest-bus",
                         "reference": {
                             "resource": "mimo_profile"
                         }

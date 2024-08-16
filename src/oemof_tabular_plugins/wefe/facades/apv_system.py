@@ -1,5 +1,5 @@
 r"""
-VERSION 4 - working
+VERSION 5 - working
 Functions to create csv input for MIMO facade including conversion factors and other performance indicators
 solar in
 water in
@@ -13,17 +13,14 @@ water out
 
 from oemof.tools import logger
 
-from oemof_tabular_plugins.wefe.global_specs.crops import crop_dict
-from oemof_tabular_plugins.general.pre_processing.pre_processing import calculate_annuity
+from oemof_tabular_plugins.wefe.global_specs import crop_dict, soil_dict, pv_dict
 from pyomo.environ import ConcreteModel, Var, Objective, SolverFactory, Piecewise, Constraint, maximize
 import numpy as np
 import pandas as pd
 import json
 from scipy.interpolate import interp1d
 import os
-import matplotlib.pyplot as plt
 
-import pdb
 
 logger.define_logging()
 
@@ -36,28 +33,57 @@ specspath = os.path.join(
 
 # -------------- APV pre-processing --------------
 def pre_processing_apv(directory):
-    """ """
-    logger.info("APV pre-processing activated...this may take up to 2 minutes")
+    """
+    This pre_processing function looks for an element corresponding to the MIMO facade with 'name' == 'apv-system'
+    and assigns geometry and performance indicators as well as conversion factor time series.
+
+    If the element is an apv_system, the following parameters are required in the element.csv file:
+    -------------------------------------------------------------------------------------------------
+    latitude
+    elevation
+    pv_type
+    crop_type
+    sowing_date
+    harvest_date
+    minimum_relative_yield
+
+
+    Parameters
+    --------------------------------
+    directory: scenario directory
+
+
+    Returns
+    --------------------------------
+    Updated element.csv
+    Updated element_profile.csv
+
+    """
+
+    logger.info("APV pre-processing activated...this may take up to 3 minutes")
 
     def _apv_production(apv_dict, apv_df):
         """
-        Calculate conversion factors as full-year hourly series.
+        Calculate conversion factors as full-year hourly series and .
         """
 
-        # ---- Crop parameters from element.csv -----
+        # ---- Parameters from element.csv -----
+        latitude = apv_dict['latitude']
         z = apv_dict['elevation']
         crop_type = apv_dict['crop_type']
-        minimal_crop_yield = apv_dict['minimal_crop_yield']
-        # Transfer sowing date into Timestamp object matching the apv_df index
+        minimum_relative_yield = apv_dict['minimum_relative_yield']
+        pv_type = apv_dict['pv_type']
+        # Convert dates to Timestamp objects matching the apv_df index
         index_timezone = apv_df.index.tz
         sowing_date = pd.Timestamp(apv_dict['sowing_date']).tz_localize(index_timezone)
+        harvest_date = pd.Timestamp(apv_dict['harvest_date']).tz_localize(index_timezone)
 
         # ----- Crop specific growth parameters from crop_dict -----
-        t_opt = crop_dict[crop_type]['t_opt']
-        t_base = crop_dict[crop_type]['t_base']
-        t_heat = crop_dict[crop_type]['t_max']
-        t_extreme = crop_dict[crop_type]['t_ext']
-        t_sum = crop_dict[crop_type]['t_sum']
+        t_base = crop_dict[crop_type]['t_base']             # minimum temperature for growth, impaired growth
+        t_opt = crop_dict[crop_type]['t_opt']               # optimal temperature for growth
+        t_heat = crop_dict[crop_type]['t_max']              # heat stress begins, impaired growth
+        t_extreme = crop_dict[crop_type]['t_ext']           # extreme heat stress, no growth
+        t_sum = crop_dict[crop_type]['t_sum']               # cumulative temperature until harvest
         i50a = crop_dict[crop_type]['i50a']
         i50b = crop_dict[crop_type]['i50b']
         i50maxh = crop_dict[crop_type]['i50maxh']
@@ -68,34 +94,30 @@ def pre_processing_apv(directory):
         # Convert Radiation Use Efficiency from g/(MJ*m²*h) to g/(W*m²)
         rue *= 3.6e-3
 
-        # ----- Soil parameters -----
-        # Average tomato data from SIMPLE
-        rzd = 900  # zeta   ## root zone depth [mm]
-        wuc = 0.096  # alpha  ## water uptake constant
-        awc = 0.165  # theta_m   ## water holding capacity
-        rcn = 75.5  # eta     ## runoff curve number
-        ddc = 0.3  # beta      ## deep drainage coefficient
+        # ----- Crop specific soil parameters from soil_dict -----
+        wuc = 0.096                        # alpha      ## water uptake constant
+        rzd = soil_dict[crop_type]['rzd']  # zeta       ## root zone depth [mm]
+        awc = soil_dict[crop_type]['rzd']  # theta_m    ## water holding capacity
+        rcn = soil_dict[crop_type]['rzd']  # eta        ## runoff curve number
+        ddc = soil_dict[crop_type]['rzd']  # beta       ## deep drainage coefficient
 
         # ----- PV parameters -----
-        # Module: Boviet solar BVM7610M-XXX-H-HC-BF-DG 450W
-        p_rated = 450  # rated power [Wp]
-        rad_ref = 800  # reference irradiation [W/m²]
-        t_ref = 20  # reference temp [°C]
-        noct = 45  # normal operating cell temperature [°C]
-        x = 1.109  # width (E/W) [m]   ## test module for simulation: 1.036
-        y = 1.908  # length (N/S) [m]   ## test module for simulation: 1.74
+        p_rated = pv_dict[pv_type]['p_rated']           # rated power [Wp]
+        rad_ref = pv_dict[pv_type]['rad_ref']           # reference irradiation [W/m²]
+        t_ref = pv_dict[pv_type]['t_ref']               # reference temp [°C]
+        noct = pv_dict[pv_type]['noct']                 # normal operating cell temperature [°C]
+        x = pv_dict[pv_type]['x']                       # width (E/W) [m]   ## test module for raytracing results: 1.036
+        y = pv_dict[pv_type]['y']                       # length (N/S) [m]   ## test module for raytracing results: 1.74
+        has_bifaciality = pv_dict[pv_type]['bifacial']  # bifacial pv module (True/False)
 
         # ----- Geometry -----
-        def apv_geometry(lat):
+        def apv_geometry(lat, y):
             """
+            Calculate tilt and pitch based on latitude and module length.
             Obtain bifacial_radiance simulation results from geometry.json (xgaps, frts, frbs),
-            interpolate for given latitude and return geometry_params
+            interpolate for given latitude.
+            Return geometry_params.
             """
-
-            # Location-specific, fixed geometry parameters
-            # module size from bifacial_radiance 'test_module'
-            y = 1.74  # module length (y = N/S)
-            x = 1.036  # module width (x = E/W)
             # IBC minimum slope (by means of PV: tilt) for proper rainwater runoff
             min_slope = 0.25 / 12
             min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
@@ -107,11 +129,6 @@ def pre_processing_apv(directory):
             min_ygap = y * np.sin(np.radians(tilt)) / np.tan(np.radians(min_solar_angle))
             # define pitch as distance from edge of one module across row up to the edge of the next module
             pitch = round(y * np.cos(np.radians(tilt)) + min_ygap, 2)
-
-            r"""
-            Obtain shading and bifaciality factors from global_specs/geometry.json, 
-            interpolate for given latitude
-            """
 
             # Load the geometry data
             geometrypath = os.path.join(specspath, "geometry.json")
@@ -130,13 +147,13 @@ def pre_processing_apv(directory):
                                      for k, v in lat_results.items()} for lat, lat_results in geometry.items()}
 
             def latitude_interpolation(lat, geometry):
-                # Extracting data
                 lats = list(geometry.keys())
 
                 # Interpolating fbifacial and fshading for each xgap
-                xgaps = geometry[lats[0]]['xgaps'].tolist() \
-                    if isinstance(geometry[lats[0]]['xgaps'], np.ndarray) \
-                    else geometry[lats[0]]['xgaps']
+                if isinstance(geometry[lats[0]]['xgaps'], np.ndarray):
+                    xgaps = geometry[lats[0]]['xgaps'].tolist()
+                else:
+                    xgaps = geometry[lats[0]]['xgaps']
                 fbifacial_interp_funcs = []
                 fshading_interp_funcs = []
 
@@ -159,8 +176,6 @@ def pre_processing_apv(directory):
             interpolated = latitude_interpolation(lat, geometry)
 
             return {
-                'x': x,
-                'y': y,
                 'tilt': tilt,
                 'pitch': pitch,
                 'xgaps': interpolated['xgaps'],
@@ -168,11 +183,8 @@ def pre_processing_apv(directory):
                 'fshadings': interpolated['fshadings'],
             }
 
-        latitude = apv_dict['lat']
-        geo_params = apv_geometry(latitude)
+        geo_params = apv_geometry(latitude, y)
 
-        x = geo_params.pop('x')
-        y = geo_params.pop('y')
         tilt = geo_params['tilt']
         pitch = geo_params['pitch']
         xgaps = geo_params.pop('xgaps')
@@ -189,6 +201,11 @@ def pre_processing_apv(directory):
             else:
                 delta_cum_temp = 0
             return delta_cum_temp
+
+        def custom_cultivation_period(df, harvest_date):
+            """ Calculates new t_sum for plant growth curve if custom harvest_date is given """
+            if harvest_date in apv_df.index:
+                return df.loc[harvest_date, 'cum_temp']
 
         def temp(t_air, t_opt, t_base):
             """ Temperature effect on plant growth (SIMPLE) [-] """
@@ -220,6 +237,8 @@ def pre_processing_apv(directory):
             lambda row: development(row.name, sowing_date, row['t_air'], t_base),
             axis=1
         ).cumsum()
+
+        t_sum = custom_cultivation_period(apv_df, harvest_date)
 
         apv_df['f_temp'] = apv_df['t_air'].apply(
             lambda t_air: temp(t_air, t_opt, t_base)
@@ -447,20 +466,6 @@ def pre_processing_apv(directory):
                                               has_harvesting=False
                                               ).sum() / biomass_open for i in range(len(xgaps))]
 
-            # Plot optimization problem
-            ler_list = [electricity_rel[i] + biomass_rel[i] for i in range(len(xgaps))]
-
-            plt.figure(figsize=(11, 5.5))
-            plt.plot(xgaps, electricity_rel, '-*', color='orange', label='relative electricity yield')
-            plt.plot(xgaps, biomass_rel, '-o', color='green', label='relative biomass yield')
-            plt.plot(xgaps, ler_list, '-x', color='blue', label='LER')
-            plt.xlabel('xgap [m]', fontsize=12)
-            plt.ylabel(r'$\text{E}_{el,rel}$, $\text{m}_{bio,rel}$, $\text{LER}$  [-]', fontsize=12)
-            plt.grid(True)
-            plt.legend()
-
-            plt.savefig('ler_maximization.pdf')
-
             # Define the optimization model
             opti_model = ConcreteModel()
             opti_model.xgap = Var(bounds=(min(xgaps), max(xgaps)))
@@ -479,7 +484,7 @@ def pre_processing_apv(directory):
                                                    pw_constr_type='EQ')
 
             # Minimum relative crop yield constraint
-            min_bio_rel = minimal_crop_yield
+            min_bio_rel = minimum_relative_yield
             opti_model.min_shading_constraint = Constraint(expr=opti_model.bio_rel >= min_bio_rel)
 
             # Optimization

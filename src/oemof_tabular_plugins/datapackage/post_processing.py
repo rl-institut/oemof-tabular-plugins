@@ -531,7 +531,7 @@ def infer_busses_carrier(energy_system):
             # quick fix to work for MIMO component
             # assigned buses as defined in mimo.csv for apv-system (another quick fix)
             # ToDo: assign carrier to busses instead of components to avoid problems
-            for attribute in ("from_bus_0", "from_bus_1", "from_bus_2", "to_bus_0", "to_bus_1", "to_bus_2"):
+            for attribute in ("bus", "from_bus", "from_bus_0", "from_bus_1", "from_bus_2", "to_bus", "to_bus_0", "to_bus_1", "to_bus_2"):
                 if hasattr(node, attribute):
 
                     bus_label = getattr(node, attribute).label
