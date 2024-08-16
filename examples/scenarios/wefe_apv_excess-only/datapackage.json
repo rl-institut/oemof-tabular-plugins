@@ -755,6 +755,21 @@
                         "name": "ghi_kW",
                         "type": "number",
                         "format": "default"
+                    },
+                    {
+                        "name": "cum_temp_base_year",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cum_temp_extension",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cum_temp_cache",
+                        "type": "number",
+                        "format": "default"
                     }
                 ],
                 "missingValues": [

@@ -8,6 +8,7 @@ biomass out
 water out
 """
 
+# TODO: specify user inputs/GUI interaction -> make code more robust
 # TODO: improve documentation
 # TODO: sequence_path is defined too strictly, might cause problems
 
@@ -64,8 +65,14 @@ def pre_processing_apv(directory):
 
     def _apv_production(apv_dict, apv_df):
         """
-        Calculate conversion factors as full-year hourly series and .
+        Calculate conversion factors as full-year hourly series
         """
+        # ---- Boolean values for simulation design ----
+        has_sowing_date = True                  # user input
+        has_harvest_date = True                 # user input
+        has_bifaciality = True                  # to be extracted from pv_dict database according to selected module
+        has_irrigation = True                   # user input
+        has_harvesting = False                  # user input
 
         # ---- Parameters from element.csv -----
         latitude = apv_dict['latitude']
@@ -75,8 +82,8 @@ def pre_processing_apv(directory):
         pv_type = apv_dict['pv_type']
         # Convert dates to Timestamp objects matching the apv_df index
         index_timezone = apv_df.index.tz
-        sowing_date = pd.Timestamp(apv_dict['sowing_date']).tz_localize(index_timezone)
-        harvest_date = pd.Timestamp(apv_dict['harvest_date']).tz_localize(index_timezone)
+        sowing_date = pd.Timestamp(apv_dict['sowing_date']).tz_localize(index_timezone) if has_sowing_date else apv_df.index[-1]
+        harvest_date = pd.Timestamp(apv_dict['harvest_date']).tz_localize(index_timezone) if has_harvest_date else None
 
         # ----- Crop specific growth parameters from crop_dict -----
         t_base = crop_dict[crop_type]['t_base']             # minimum temperature for growth, impaired growth
@@ -101,7 +108,7 @@ def pre_processing_apv(directory):
         rcn = soil_dict[crop_type]['rzd']  # eta        ## runoff curve number
         ddc = soil_dict[crop_type]['rzd']  # beta       ## deep drainage coefficient
 
-        # ----- PV parameters -----
+        # ----- PV parameters from pv_dict -----
         p_rated = pv_dict[pv_type]['p_rated']           # rated power [Wp]
         rad_ref = pv_dict[pv_type]['rad_ref']           # reference irradiation [W/m²]
         t_ref = pv_dict[pv_type]['t_ref']               # reference temp [°C]
@@ -192,14 +199,41 @@ def pre_processing_apv(directory):
         fshadings = geo_params.pop('fshadings')
 
         # ----- General functions for modelling water, biomass and electricity -----
-        def development(date, sowing_date, t_air, t_base):
-            """ Cumulative temperature experienced by plant as measure for plant development (SIMPLE) [K] """
+        def development_base_year(date, sowing_date, t_air, t_base):
+            """
+            Cumulative temperature experienced by plant as measure for plant development (SIMPLE) [K]
+            from sowing_date until end of the same year (base year)
+            """
             if date < sowing_date:
                 delta_cum_temp = 0
             elif t_air > t_base:
                 delta_cum_temp = (t_air - t_base) / 24  # SIMPLE crop model has daily temp values, convert to hourly
             else:
                 delta_cum_temp = 0
+            return delta_cum_temp
+
+        def development_extension(date, harvest_date, t_air, t_base):
+            """
+            Additional cumulative temperature experienced by plant as measure for plant development
+            if growth extends to following year (harvest_date < sowing_date if year ignored) [K]
+            """
+            if date > harvest_date:
+                delta_cum_temp = 0
+            elif t_air > t_base:
+                delta_cum_temp = (t_air - t_base) / 24  # SIMPLE crop model has daily temp values, convert to hourly
+            else:
+                delta_cum_temp = 0
+            return delta_cum_temp
+
+        def development_cache(date, harvest_date, cum_temp_base_cache, cum_temp_ext_cache):
+            """
+            Cumulative temperature experienced in the base year cached for extension in the following year [K],
+            cumulative temperature experienced in the following year until harvest_date removed afterwards
+            """
+            if date <= harvest_date:
+                delta_cum_temp = cum_temp_base_cache
+            else:
+                delta_cum_temp = -cum_temp_ext_cache
             return delta_cum_temp
 
         def custom_cultivation_period(df, harvest_date):
@@ -233,12 +267,27 @@ def pre_processing_apv(directory):
             p = p_rated * rad / rad_ref * f_temp
             return p
 
-        apv_df['cum_temp'] = apv_df.apply(
-            lambda row: development(row.name, sowing_date, row['t_air'], t_base),
+        apv_df['cum_temp_base_year'] = apv_df.apply(
+            lambda row: development_base_year(row.name, sowing_date, row['t_air'], t_base),
             axis=1
         ).cumsum()
 
-        t_sum = custom_cultivation_period(apv_df, harvest_date)
+        apv_df['cum_temp_extension'] = apv_df.apply(
+            lambda row: development_extension(row.name, harvest_date, row['t_air'], t_base),
+            axis=1
+        ).cumsum()
+
+        cum_temp_base_cache = apv_df['cum_temp_base_year'].iat[-1]
+        cum_temp_ext_cache = apv_df['cum_temp_extension'].iat[-1]
+
+        apv_df['cum_temp_cache'] = apv_df.apply(
+            lambda row: development_cache(row.name, harvest_date, cum_temp_base_cache, cum_temp_ext_cache),
+            axis=1
+        )
+
+        apv_df['cum_temp'] = apv_df['cum_temp_base_year'] + apv_df['cum_temp_extension'] + apv_df['cum_temp_cache']
+
+        t_sum = custom_cultivation_period(apv_df, harvest_date) if has_harvest_date else t_sum
 
         apv_df['f_temp'] = apv_df['t_air'].apply(
             lambda t_air: temp(t_air, t_opt, t_base)
