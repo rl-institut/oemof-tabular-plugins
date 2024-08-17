@@ -293,6 +293,6 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
                     element_path, element_df, custom_attributes
                 )
             elif moo is True:
-                pre_processing_moo()
+                pre_processing_moo(wacc, element, element_path, element_df)
     logger.info("Pre-processing completed")
     return

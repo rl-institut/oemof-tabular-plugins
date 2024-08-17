@@ -27,12 +27,12 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "general_add_cost_inputs",
-    "general_basic",
-    "general_constraints",
-    "general_custom_attributes",
-    "wefe_custom_attributes",
-    "wefe_pv_panel",
+    #"general_add_cost_inputs",
+    #"general_basic",
+    #"general_constraints",
+    #"general_custom_attributes",
+    #"wefe_custom_attributes",
+    #"wefe_pv_panel",
     "wefe_reverse_osmosis",
 ]
 # weighted average cost of capital (WACC) - might move later
@@ -43,13 +43,16 @@ wacc = 0.06
 # include the custom attribute parameters to be included in the model
 # this can be moved somewhere and included in a dict or something similar with all possible additional attributes
 custom_attributes = [
-    "emission_factor",
+    "ghg_emission_factor",
     "renewable_factor",
     "land_requirement_factor",
     "water_footprint_factor",
+    "land_requirement",
+    "water_footprint",
+    "ghg_emissions"
 ]
 # set whether the multi-objective optimization should be performed
-moo = False
+moo = True
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
 TYPEMAP["mimo"] = MIMO

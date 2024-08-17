@@ -1,4 +1,23 @@
-def pre_processing_moo():
+# from .pre_processing import calculate_annuity
+from oemof.tools import logger, economics
+# from .pre_processing import calculate_annuity
+
+
+def calculate_annuity(capex, opex_fix, lifetime, wacc):
+    """
+    Calculates the total annuity for each component, including CAPEX and fixed OPEX.
+    :param capex: CAPEX (currency/MW*) *or the unit you choose to use throughout the model e.g. kW/GW
+    :param opex_fix: fixed OPEX (currency/MW*/year)
+    :param lifetime: lifetime of the component (years)
+    :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
+    :return: total annuity (currency/MW*/year)
+    """
+    annuity_capex = economics.annuity(capex, lifetime, wacc)
+    annuity_opex_fix = opex_fix
+    annuity_total = round(annuity_capex + annuity_opex_fix, 2)
+    return annuity_total
+
+def pre_processing_moo(wacc, element, element_path, element_df):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -29,6 +48,37 @@ def pre_processing_moo():
     This value will be entered in the csv file under 'capacity_cost'
     The csv file will be updated
 
+
     :return:
     """
+
+    # check if any of the required columns are missing
+    cost_columns = {"capex", "opex_fix", "lifetime"}
+    missing_columns = cost_columns - set(element_df.columns)
+
+    # for every element other than storage, the MOO Indicator is 'capacity_cost'
+    # for storage, the annuity cost parameter is 'storage_capacity_cost'
+    if element != "storage.csv":
+        moo_indicator = "capacity_cost"
+    else:
+        moo_indicator = "storage_capacity_cost"
+        # loop through each entry in the csv file
+    for index, row in element_df.iterrows():
+        # define the row name
+        row_name = row["name"]
+        # store the parameters
+        #TODO not each of the csvs has actually capacity cost
+        # -> create ELIF clauses in a way that moo_indicator/capacity cost is calculated where needed
+        capex = row["capex"]
+        opex_fix = row["opex_fix"]
+        lifetime = row["lifetime"]
+        capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
+    element_df.at[index, moo_indicator] = float(capacity_cost)
+    # log info message
+    logger.info(
+        f"the annuity ('{moo_indicator}') has been calculated and updated for"
+        f" '{row_name}' in '{element}'.")
+
+    # save the updated dataframe to the csv file
+    element_df.to_csv(element_path, sep=";", index=False)
     return
