@@ -48,13 +48,14 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     This value will be entered in the csv file under 'capacity_cost'
     The csv file will be updated
 
-
-    :return:
+    Applies pre-processing costs to the input CSV files, where the annuity ('capacity_cost') is either
+    used directly if stated, or if left empty then calculated using the calculate_annuity function,
+    or if all parameters are stated a choice is given.
+    :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
+    :param element: csv filename
+    :param element_path: path of the csv file
+    :param element_df: dataframe containing data from the csv file
     """
-
-    # check if any of the required columns are missing
-    cost_columns = {"capex", "opex_fix", "lifetime"}
-    missing_columns = cost_columns - set(element_df.columns)
 
     # for every element other than storage, the MOO Indicator is 'capacity_cost'
     # for storage, the annuity cost parameter is 'storage_capacity_cost'
@@ -63,22 +64,43 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     else:
         moo_indicator = "storage_capacity_cost"
         # loop through each entry in the csv file
+
+    # ---------------- Possible SCENARIOS ----------------
+
+    if element in ["bus.csv", "load.csv", "excess.csv"]:
+        scenario = "no moo indicator"
+    elif element in ["conversion.csv", "mimo.csv", "storage.csv", "volatile.csv"]:
+        scenario = "moo indicator calculation"
+    elif element in "dispatchable.csv":
+        scenario = "dispatchable moo indicator calculation"
+    else:
+        scenario = "no moo indicator_raise error undefined tech"
+
+    # ---------------- ACTIONS TAKEN FOR EACH SCENARIO ----------------
     for index, row in element_df.iterrows():
         # define the row name
         row_name = row["name"]
-        # store the parameters
-        #TODO not each of the csvs has actually capacity cost
-        # -> create ELIF clauses in a way that moo_indicator/capacity cost is calculated where needed
-        capex = row["capex"]
-        opex_fix = row["opex_fix"]
-        lifetime = row["lifetime"]
-        capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
-    element_df.at[index, moo_indicator] = float(capacity_cost)
-    # log info message
-    logger.info(
-        f"the annuity ('{moo_indicator}') has been calculated and updated for"
-        f" '{row_name}' in '{element}'.")
+        if scenario == "moo indicator calculation":
+            # store the parameters
+            capex = row["capex"]
+            opex_fix = row["opex_fix"]
+            lifetime = row["lifetime"]
+            capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
+            element_df.at[index, moo_indicator] = float(capacity_cost)
+            # log info message
+            logger.info(
+            f"the annuity ('{moo_indicator}') has been calculated and updated for"
+            f" '{row_name}' in '{element}'.")
 
+        elif scenario == "dispatchable moo indicator calculation":
+            logger.info(
+                f"'{element}' does not contain all '{moo_indicator}' parameter. Skipping for now, working on it later..."
+            )
+
+        elif scenario == "no moo indicator":
+            logger.info(
+                f"'{element}' does not contain '{moo_indicator}' parameter. Skipping..."
+            )
     # save the updated dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
     return
