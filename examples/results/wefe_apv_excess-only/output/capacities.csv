@@ -4,7 +4,7 @@ biomass-bus,out,apv-system,biomass,,320.0,0.0,
 electricity-bus,in,electricity-excess,electricity,excess,,,
 electricity-bus,out,apv-system,electricity,,320.0,0.0,
 irrigation-bus,in,apv-system,water,,320.0,0.0,
-irrigation-bus,out,water-source,water,dispatchable,0.0,1.0,337.51076
+irrigation-bus,out,water-source,water,dispatchable,0.0,1.0,345.03669
 precipitation-bus,in,apv-system,water,,320.0,0.0,
 precipitation-bus,out,atmosphere,water,dispatchable,0.0,1.0,959.3216
 solar-energy-bus,in,apv-system,solar,,320.0,0.0,

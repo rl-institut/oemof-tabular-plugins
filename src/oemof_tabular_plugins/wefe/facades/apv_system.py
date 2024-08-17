@@ -8,7 +8,7 @@ biomass out
 water out
 """
 
-# TODO: specify user inputs/GUI interaction -> make code more robust
+# TODO: specify user inputs/GUI interaction -> make code more robust (especially boolean values)
 # TODO: improve documentation
 # TODO: sequence_path is defined too strictly, might cause problems
 
@@ -65,25 +65,32 @@ def pre_processing_apv(directory):
 
     def _apv_production(apv_dict, apv_df):
         """
-        Calculate conversion factors as full-year hourly series
+        Calculate geometry parameters, performance indicators and full-year hourly conversion factor time series
         """
-        # ---- Boolean values for simulation design ----
-        has_sowing_date = True                  # user input
-        has_harvest_date = True                 # user input
-        has_bifaciality = True                  # to be extracted from pv_dict database according to selected module
-        has_irrigation = True                   # user input
-        has_harvesting = False                  # user input
 
         # ---- Parameters from element.csv -----
+        has_irrigation = apv_dict['has_irrigation']
+        has_rainwater_harvesting = apv_dict['has_rainwater_harvesting']
         latitude = apv_dict['latitude']
         z = apv_dict['elevation']
         crop_type = apv_dict['crop_type']
         minimum_relative_yield = apv_dict['minimum_relative_yield']
         pv_type = apv_dict['pv_type']
         # Convert dates to Timestamp objects matching the apv_df index
+        index_year = str(pd.to_datetime(apv_df.index[0]).year)
         index_timezone = apv_df.index.tz
-        sowing_date = pd.Timestamp(apv_dict['sowing_date']).tz_localize(index_timezone) if has_sowing_date else apv_df.index[-1]
-        harvest_date = pd.Timestamp(apv_dict['harvest_date']).tz_localize(index_timezone) if has_harvest_date else None
+        if isinstance(apv_dict['sowing_date'], str) and isinstance(apv_dict['harvest_date'], str):
+            sowing_date = pd.Timestamp(index_year + '-' + apv_dict['sowing_date']).tz_localize(index_timezone)
+            harvest_date = pd.Timestamp(index_year + '-' + apv_dict['harvest_date']).tz_localize(index_timezone)
+            custom_harvest = True
+        elif isinstance(apv_dict['sowing_date'], str) and not isinstance(apv_dict['harvest_date'], str):
+            sowing_date = pd.Timestamp(index_year + '-' + apv_dict['sowing_date']).tz_localize(index_timezone)
+            harvest_date = sowing_date
+            custom_harvest = False
+        else:
+            sowing_date = apv_df.index[0]
+            harvest_date = apv_df.index[-1]
+            custom_harvest = False
 
         # ----- Crop specific growth parameters from crop_dict -----
         t_base = crop_dict[crop_type]['t_base']             # minimum temperature for growth, impaired growth
@@ -227,8 +234,8 @@ def pre_processing_apv(directory):
 
         def development_cache(date, harvest_date, cum_temp_base_cache, cum_temp_ext_cache):
             """
-            Cumulative temperature experienced in the base year cached for extension in the following year [K],
-            cumulative temperature experienced in the following year until harvest_date removed afterwards
+            Cumulative temperature experienced in the base year cached for extension in the following year,
+            cumulative temperature experienced in the following year until harvest_date removed afterwards [K]
             """
             if date <= harvest_date:
                 delta_cum_temp = cum_temp_base_cache
@@ -237,7 +244,7 @@ def pre_processing_apv(directory):
             return delta_cum_temp
 
         def custom_cultivation_period(df, harvest_date):
-            """ Calculates new t_sum for plant growth curve if custom harvest_date is given """
+            """ Calculates new t_sum for plant growth curve if custom harvest_date is given [K] """
             if harvest_date in apv_df.index:
                 return df.loc[harvest_date, 'cum_temp']
 
@@ -287,7 +294,7 @@ def pre_processing_apv(directory):
 
         apv_df['cum_temp'] = apv_df['cum_temp_base_year'] + apv_df['cum_temp_extension'] + apv_df['cum_temp_cache']
 
-        t_sum = custom_cultivation_period(apv_df, harvest_date) if has_harvest_date else t_sum
+        t_sum = custom_cultivation_period(apv_df, harvest_date) if custom_harvest else t_sum
 
         apv_df['f_temp'] = apv_df['t_air'].apply(
             lambda t_air: temp(t_air, t_opt, t_base)
@@ -421,7 +428,7 @@ def pre_processing_apv(directory):
                 f_solar = 0
             return f_solar
 
-        def biomass_generation(df, albedo, gcr, frt, has_irrigation, has_harvesting):
+        def biomass_generation(df, albedo, gcr, frt, has_irrigation, has_rainwater_harvesting):
             """
             Biomass generation [g/m²] including the radiation transmission factor (frt),
             soil water balance with irrigation [mm], solar interception [-]
@@ -440,7 +447,7 @@ def pre_processing_apv(directory):
                 axis=1
             )
 
-            df['tp_ground'] = df['tp'] * (1 - gcr) if has_harvesting else df['tp']
+            df['tp_ground'] = df['tp'] * (1 - gcr) if has_rainwater_harvesting else df['tp']
 
             df['runoff'] = df['tp_ground'].apply(
                 lambda tp: runoff(tp, rcn)
@@ -481,9 +488,9 @@ def pre_processing_apv(directory):
             df['electricity_gen'] = panels_per_m2 * (1 + frb) * df['pv_power'] / 1000
             return df['electricity_gen']
 
-        def rainwater_harvesting(df, gcr, has_harvesting):
+        def rainwater_harvesting(df, gcr, has_rainwater_harvesting):
             """ Rain water gained through catchments on PV panels [mm/m²] """
-            if not has_harvesting:
+            if not has_rainwater_harvesting:
                 df['water_harvest'] = 0.0
             else:
                 df['water_harvest'] = gcr * df['tp']
@@ -498,21 +505,21 @@ def pre_processing_apv(directory):
             electricity_rel = [electricity_relative_output(frb0=fbifacials[0],
                                                            frb=fbifacials[i],
                                                            xgap=xgaps[i],
-                                                           has_bifaciality=True) for i in range(len(xgaps))]
+                                                           has_bifaciality=has_bifaciality) for i in range(len(xgaps))]
             biomass_open = biomass_generation(apv_df,
                                               albedo=0.23,
                                               gcr=0,
                                               frt=1,
-                                              has_irrigation=True,
-                                              has_harvesting=False
+                                              has_irrigation=has_irrigation,
+                                              has_rainwater_harvesting=has_rainwater_harvesting
                                               ).sum()
             irrigation_open = apv_df['irrigation'].sum()
             biomass_rel = [biomass_generation(apv_df,
                                               albedo=0.23,
                                               gcr=gcrs[i],
                                               frt=fshadings[i],
-                                              has_irrigation=True,
-                                              has_harvesting=False
+                                              has_irrigation=has_irrigation,
+                                              has_rainwater_harvesting=has_rainwater_harvesting
                                               ).sum() / biomass_open for i in range(len(xgaps))]
 
             # Define the optimization model
@@ -558,10 +565,10 @@ def pre_processing_apv(directory):
         fbifacial_optimal = interp_frb(xgap_optimal).item()
         fshading_optimal = interp_frt(xgap_optimal).item()
 
-        electricity_generation(apv_df, area=area_apv, frb=fbifacial_optimal, has_bifaciality=True)
-        biomass_generation(apv_df, albedo=0.23, gcr=gcr, frt=fshading_optimal, has_irrigation=True,
-                           has_harvesting=False)
-        rainwater_harvesting(apv_df, gcr=gcr, has_harvesting=False)
+        electricity_generation(apv_df, area=area_apv, frb=fbifacial_optimal, has_bifaciality=has_bifaciality)
+        biomass_generation(apv_df, albedo=0.23, gcr=gcr, frt=fshading_optimal, has_irrigation=has_irrigation,
+                           has_rainwater_harvesting=has_rainwater_harvesting)
+        rainwater_harvesting(apv_df, gcr=gcr, has_rainwater_harvesting=has_rainwater_harvesting)
 
         # Convert GHI from W to kW
         apv_df['ghi_kW'] = apv_df['ghi'] / 1000

@@ -281,12 +281,12 @@
                     },
                     {
                         "name": "sowing_date",
-                        "type": "date",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "harvest_date",
-                        "type": "date",
+                        "type": "string",
                         "format": "default"
                     },
                     {

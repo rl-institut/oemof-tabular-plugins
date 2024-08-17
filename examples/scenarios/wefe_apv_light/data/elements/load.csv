@@ -1,2 +1,2 @@
-name;amount;profile;type;bus;carrier
-demand;1;elec-load-profile;load;electricity-bus;electricity
+name;amount;profile;type;bus
+demand;1;elec-load-profile;load;electricity-bus

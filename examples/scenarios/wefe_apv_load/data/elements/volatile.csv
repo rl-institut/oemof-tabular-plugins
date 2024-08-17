@@ -1,2 +1,0 @@
-name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;profile;expandable;capex;opex_fix;lifetime
-rain;volatile;water;rain;1;0.0;rain-bus;0.0;5;False;0.0;0.0;30

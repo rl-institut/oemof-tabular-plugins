@@ -342,12 +342,12 @@
                     },
                     {
                         "name": "sowing_date",
-                        "type": "date",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "harvest_date",
-                        "type": "date",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -441,6 +441,13 @@
                 ],
                 "primaryKey": "name",
                 "foreignKeys": [
+                    {
+                        "fields": "primary",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
                     {
                         "fields": "from_bus_0",
                         "reference": {
@@ -815,6 +822,21 @@
                     {
                         "name": "ghi_kW",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cum_temp_base_year",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cum_temp_extension",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cum_temp_cache",
+                        "type": "integer",
                         "format": "default"
                     }
                 ],

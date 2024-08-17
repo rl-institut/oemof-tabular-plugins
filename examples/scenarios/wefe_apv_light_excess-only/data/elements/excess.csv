@@ -1,4 +1,4 @@
-name;type;carrier;bus;marginal_cost
-electricity-excess;excess;electricity;electricity-bus;0
-biomass-excess;excess;biomass;biomass-bus;0
-water-excess;excess;water;water-bus-out;0
+name;type;bus;marginal_cost;carrier
+electricity-excess;excess;electricity-bus;0;electricity
+biomass-excess;excess;biomass-bus;0;biomass
+water-excess;excess;water-harvest-bus;0;water
