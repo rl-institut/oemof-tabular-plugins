@@ -600,14 +600,14 @@ def construct_multi_index_levels(flow_tuple, busses_info, assets_info=None):
     return answer
 
 
-def construct_dataframe_from_results(energy_system, bus_carrier=True, asset_type=True):
+def construct_dataframe_from_results(energy_system, bus_carrier=None, asset_type=True):
     """
 
     Parameters
     ----------
     energy_system: oemof.solph.EnergySystem instance
-    bus_carrier: bool (opt)
-        If set to true, the multi-index of the DataFrame will have a level about bus carrier
+    bus_carrier: dict (opt) mapping the bus name to its carrier
+        If not None the multi-index of the DataFrame will have a level about bus carrier
     asset_type: bool (opt)
         If set to true, the multi-index of the DataFrame will have a level about the asset type
 
@@ -622,11 +622,16 @@ def construct_dataframe_from_results(energy_system, bus_carrier=True, asset_type
         "asset",
     ]
 
-    busses_info = infer_busses_carrier(energy_system)
-    if bus_carrier is False:
+    if bus_carrier is None:
+        busses_info = infer_busses_carrier(energy_system)
         busses_info = list(busses_info.keys())
+        logging.warning(
+            "No carrier column found in data/elements/bus.csv file within datapackage, the bus-carrier mapping"
+        )
     else:
+        busses_info = bus_carrier
         mi_levels.append("carrier")
+        logging.info("Bus to carrier mapping found in bus.csv file of datapackage")
 
     if asset_type is True:
         assets_info = infer_asset_types(energy_system)

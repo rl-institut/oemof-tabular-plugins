@@ -1,5 +1,6 @@
 import logging
 import os
+from datapackage import Package
 import warnings
 
 import pandas as pd
@@ -78,8 +79,18 @@ def save_table_to_csv(table, results_path, filename):
 # --------------------------------------------------
 class OTPCalculator(Calculator):
     def __init__(self, input_parameters, energy_system, dp_path):
+        # lookup bus-carrier mapping in the dp_path, if existing
+        p = Package(dp_path)
+        bus_data = pd.DataFrame.from_records(p.get_resource("bus").read(keyed=True))
+        bus_carrier = None
+        if "carrier" in bus_data.columns:
+            bus_carrier = {
+                row[1]["name"]: row[1]["carrier"] for row in bus_data.iterrows()
+            }
 
-        self.df_results = construct_dataframe_from_results(energy_system)
+        self.df_results = construct_dataframe_from_results(
+            energy_system, bus_carrier=bus_carrier
+        )
         self.df_results = process_raw_results(self.df_results)
         self.df_results = process_raw_inputs(self.df_results, dp_path)
         apply_calculations(self.df_results)
