@@ -508,13 +508,14 @@ def infer_busses_carrier(energy_system):
                 if hasattr(node, attribute):
 
                     bus_label = getattr(node, attribute).label
-                    if bus_label in busses_carrier:
-                        if busses_carrier[bus_label] != node.carrier:
-                            raise ValueError(
-                                f"Two different carriers ({busses_carrier[bus_label]}, {node.carrier}) are associated to the same bus '{bus_label}'"
-                            )
-                    else:
-                        busses_carrier[bus_label] = node.carrier
+                    if node.carrier != "":
+                        if bus_label in busses_carrier:
+                            if busses_carrier[bus_label] != node.carrier:
+                                raise ValueError(
+                                    f"Two different carriers ({busses_carrier[bus_label]}, {node.carrier}) are associated to the same bus '{bus_label}'"
+                                )
+                        else:
+                            busses_carrier[bus_label] = node.carrier
 
     busses = [node.label for node in energy_system.nodes if isinstance(node, solph.Bus)]
 
