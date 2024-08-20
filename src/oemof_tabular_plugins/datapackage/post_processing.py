@@ -744,7 +744,7 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
     return df_results.join(inputs_df.T.apply(pd.to_numeric, downcast="float"))
 
 
-def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
+def apply_calculations(results_df, calculations=None):
     """Apply calculation and populate the columns of the results_df
 
     Parameters
@@ -762,6 +762,9 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
     -------
 
     """
+    if calculations is None:
+        calculations = []
+
     for calc in calculations:
         _validate_calculation(calc)
         var_name = calc.get("column_name")
@@ -786,7 +789,7 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
         #     )
 
 
-def apply_kpi_calculations(results_df, calculations=CALCULATED_KPIS):
+def apply_kpi_calculations(results_df, calculations=None):
     """Apply calculation and return a new DataFrame with the KPIs.
 
     Parameters
@@ -802,6 +805,10 @@ def apply_kpi_calculations(results_df, calculations=CALCULATED_KPIS):
     pd.DataFrame
         A new DataFrame containing the calculated KPI values with var_name as the index.
     """
+
+    if calculations is None:
+        calculations = []
+
     kpis = []
 
     for calc in calculations:
@@ -819,5 +826,8 @@ def apply_kpi_calculations(results_df, calculations=CALCULATED_KPIS):
         kpi_value = func_handle(results_df)
         kpis.append({"kpi": var_name, "value": kpi_value})
 
-    kpi_df = pd.DataFrame(kpis).set_index("kpi")
-    return kpi_df
+    if kpis:
+        answer = pd.DataFrame(kpis).set_index("kpi")
+    else:
+        answer = None
+    return answer
