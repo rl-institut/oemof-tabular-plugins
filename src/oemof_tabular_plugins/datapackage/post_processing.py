@@ -542,7 +542,10 @@ def infer_asset_types(energy_system):
     asset_types = {}
     for node in energy_system.nodes:
         if isinstance(node, solph.Bus) is False:
-            asset_types[node.label] = node.type
+            asset_type = node.type
+            if asset_type is None:
+                asset_type = node.tech
+            asset_types[node.label] = asset_type
     return asset_types
 
 
