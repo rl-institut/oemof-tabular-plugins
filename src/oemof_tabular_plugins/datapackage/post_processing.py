@@ -642,7 +642,7 @@ def construct_dataframe_from_results(
             busses_info = infer_busses_carrier(energy_system)
             mi_levels.append("carrier")
             logging.warning(
-                "No carrier column found in data/elements/bus.csv file within datapackage, the bus-carrier mapping will be inferred from the component's carrier"
+                "No carrier column found in 'elements/bus.csv' file of datapackage, the bus-carrier mapping will be inferred from the component's carrier"
             )
         else:
             busses_info = [
@@ -657,7 +657,9 @@ def construct_dataframe_from_results(
     else:
         busses_info = bus_carrier
         mi_levels.append("carrier")
-        logging.info("Bus to carrier mapping found in bus.csv file of datapackage")
+        logging.info(
+            "Bus to carrier mapping found in 'elements/bus.csv' file of datapackage"
+        )
 
     if asset_type is True:
         assets_info = infer_asset_types(energy_system)
