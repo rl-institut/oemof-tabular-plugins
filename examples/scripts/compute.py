@@ -53,6 +53,7 @@ custom_attributes = [
 ]
 # set whether the multi-objective optimization should be performed
 moo = True
+
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
 TYPEMAP["mimo"] = MIMO

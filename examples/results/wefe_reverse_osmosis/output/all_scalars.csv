@@ -13,6 +13,7 @@ inverter,flow_in_elec,756.34502,,conversion,electricity,inverter
 inverter,flow_out_elec,680.710512,,conversion,electricity,inverter
 inverter,invest_costs_out_elec,7.174855143206254e-12,,conversion,electricity,inverter
 inverter,invest_out_elec,363.04561,,conversion,electricity,inverter
+inverter,summed_variable_costs_out_elec,7.280326331550803e-08,,conversion,electricity,inverter
 pv,flow_out_elec,756.34502,,volatile,electricity,pv
 pv,invest_costs_out_elec,9.963235062510462e-11,,volatile,electricity,pv
 pv,invest_out_elec,504.23001,,volatile,electricity,pv
@@ -44,4 +45,4 @@ brine-excess,flow_in_bus,90.913682,,excess,,
 permeate-demand,flow_in_bus,60.0,DE,load,,
 elec-demand,flow_in_elec,120.0,DE,load,,
 electricity-excess,flow_in_elec,257.664902,,excess,,
-system,total_system_cost,5.33318470550022e-09,,,,
+system,total_system_cost,7.813644802100825e-08,,,,

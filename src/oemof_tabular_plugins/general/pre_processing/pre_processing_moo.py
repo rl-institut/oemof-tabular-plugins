@@ -17,6 +17,7 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     annuity_total = round(annuity_capex + annuity_opex_fix, 2)
     return annuity_total
 
+
 def pre_processing_moo(wacc, element, element_path, element_df):
     """This function will run the multi-objective optimization
 
@@ -26,7 +27,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
     Inputs
     Weights: defined by model-user e.g. percentages up to 1
-        (in optiMG, the user defining this will be e.g. local prosumers)
+        (in OptiMG, the user defining this will be e.g. local prosumers)
     0.5 for costs 0.2 for emissions 0.2 for land requirement 0.1 for water dissipated
     Has to add up to 1, otherwise error
 
@@ -66,11 +67,12 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     total_renewable_water_resources = 54 * 10 ** 9  # Unit: [m³/a], Source: CIA (2011),
     # https://www.cia.gov/the-world-factbook/field/total-renewable-water-resources/
 
-    # Customizable Weights (have to be provided later by web app user)
+    # -------------- MOO Customizable Weights ------------------
     wf_cost = 0.2
-    wf_GHG = 0.2
+    wf_ghg = 0.2
     wf_lr = 0.3
     wf_wf = 0.3
+    # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------
     moo_variable_var = "marginal_cost"
@@ -90,7 +92,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
         scenario = "no moo variables"
     elif element in ["conversion.csv", "mimo.csv", "storage.csv", "volatile.csv"]:
         scenario = "moo variable calculation"
-    elif element in "dispatchable.csv":
+    elif element == "dispatchable.csv":
         scenario = "dispatchable moo variable calculation"
     else:
         scenario = "no moo variables_raise error undefined tech"
@@ -114,7 +116,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                         global_land_surface * wf_lr
                         )
             moo_variable_flow = (
-                                ghg_emission_factor / global_GHG * wf_GHG +
+                                ghg_emission_factor / global_GHG * wf_ghg +
                                 water_footprint_factor / total_renewable_water_resources * wf_wf
                                 )
 
@@ -123,12 +125,25 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
             # log info message
             logger.info(
-            f"the annuity ('{moo_variable_fix}') has been calculated and updated for"
+            f"'{moo_variable_fix}' and {moo_variable_var} have been calculated and updated for"
             f" '{row_name}' in '{element}'.")
 
         elif scenario == "dispatchable moo indicator calculation":
+            # store the parameters
+            capex = row["capex"]
+            opex_fix = row["opex_fix"]
+            lifetime = row["lifetime"]
+            ghg_emission_factor = row["ghg_emission_factor"]
+            water_footprint_factor = row["water_footprint_factor"]
+
+            moo_variable_flow = (
+                                ghg_emission_factor / global_GHG * wf_ghg +
+                                water_footprint_factor / total_renewable_water_resources * wf_wf
+                                )
+            element_df.at[index, moo_variable_var] = float(moo_variable_flow)
             logger.info(
-                f"'{element}' does not contain all '{moo_variable_fix}' parameter. Skipping for now, working on it later..."
+                f"'{element}' is a disptachable source.'{moo_variable_var}' has been calculated for"
+                f" '{row_name}' in '{element}'."
             )
 
         elif scenario == "no moo indicator":
