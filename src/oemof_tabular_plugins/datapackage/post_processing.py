@@ -517,10 +517,17 @@ def infer_busses_carrier(energy_system):
                         else:
                             busses_carrier[bus_label] = node.carrier
 
+    if not busses_carrier:
+        raise ValueError(
+            "The bus-carrier mapping is empty, this is likely due to missing 'carrier' attributes in the csv files of the elements folder of the datapackage. The simpler way to fix this, is to add a 'carrier' column in the 'elements/bus.csv' file"
+        )
+
+    # Check that every bus has a carrier assigned to it
     busses = [node.label for node in energy_system.nodes if isinstance(node, solph.Bus)]
 
     for bus_label in busses:
         if bus_label not in busses_carrier:
+            print("busses carriers", busses_carrier)
             raise ValueError(
                 f"Bus '{bus_label}' is missing from the busses carrier dict inferred from the EnergySystem instance"
             )
@@ -604,7 +611,9 @@ def construct_multi_index_levels(flow_tuple, busses_info, assets_info=None):
     return answer
 
 
-def construct_dataframe_from_results(energy_system, bus_carrier=None, asset_type=True):
+def construct_dataframe_from_results(
+    energy_system, bus_carrier=None, infer_bus_carrier=True, asset_type=True
+):
     """
 
     Parameters
@@ -612,6 +621,8 @@ def construct_dataframe_from_results(energy_system, bus_carrier=None, asset_type
     energy_system: oemof.solph.EnergySystem instance
     bus_carrier: dict (opt) mapping the bus name to its carrier
         If not None the multi-index of the DataFrame will have a level about bus carrier
+    infer_bus_carrier: bool (opt)
+        if True and bus_carrier is none, the bus-carrier mapping will be inferred
     asset_type: bool (opt)
         If set to true, the multi-index of the DataFrame will have a level about the asset type
 
@@ -627,11 +638,22 @@ def construct_dataframe_from_results(energy_system, bus_carrier=None, asset_type
     ]
 
     if bus_carrier is None:
-        busses_info = infer_busses_carrier(energy_system)
-        busses_info = list(busses_info.keys())
-        logging.warning(
-            "No carrier column found in data/elements/bus.csv file within datapackage, the bus-carrier mapping"
-        )
+        if infer_bus_carrier is True:
+            busses_info = infer_busses_carrier(energy_system)
+            mi_levels.append("carrier")
+            logging.warning(
+                "No carrier column found in data/elements/bus.csv file within datapackage, the bus-carrier mapping will be inferred from the component's carrier"
+            )
+        else:
+            busses_info = [
+                node.label
+                for node in energy_system.nodes
+                if isinstance(node, solph.Bus)
+            ]
+            logging.info(
+                "No bus-carrier mapping found and infer_bus_carrier set to 'False'. Result dataframe will not contain 'carrier' in its MultiIndex levels."
+            )
+
     else:
         busses_info = bus_carrier
         mi_levels.append("carrier")

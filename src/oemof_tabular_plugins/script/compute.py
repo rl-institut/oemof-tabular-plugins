@@ -27,6 +27,10 @@ def compute_scenario(
     custom_attributes=None,
     typemap=None,
     moo=False,
+    dash_app=False,
+    parameters_units=None,
+    infer_bus_carrier=True,
+    skip_preprocessing=False,
 ):
     """
 
@@ -45,15 +49,10 @@ def compute_scenario(
 
     """
     if scenario_name is None:
-        scenario = os.path.dirname(scenario_dir)
+        scenario_name = os.path.basename(scenario_dir)
 
     if custom_attributes is None:
-        custom_attributes = [
-            "emission_factor",
-            "renewable_factor",
-            "land_requirement_factor",
-            "water_footprint_factor",
-        ]
+        custom_attributes = []
 
     if typemap is None:
         typemap = TYPEMAP
@@ -62,8 +61,9 @@ def compute_scenario(
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
-    # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-    pre_processing(scenario_dir, wacc, custom_attributes, moo)
+    if skip_preprocessing is False:
+        # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
+        pre_processing(scenario_dir, wacc, custom_attributes, moo)
 
     otp_building.infer_metadata_from_data(
         package_name=scenario_name,
@@ -101,11 +101,12 @@ def compute_scenario(
     params = parameter_as_dict(es)
     es.results = processing.results(m)
 
-    post_processing(
+    return post_processing(
         params,
         es,
         results_path,
         dp_path=os.path.join(scenario_dir, "datapackage.json"),
-        dash_app=True,
-        parameters_units=None,
+        dash_app=dash_app,
+        parameters_units=parameters_units,
+        infer_bus_carrier=infer_bus_carrier,
     )

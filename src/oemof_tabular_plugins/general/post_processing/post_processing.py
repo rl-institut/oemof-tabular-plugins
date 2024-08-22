@@ -78,7 +78,9 @@ def save_table_to_csv(table, results_path, filename):
 
 # --------------------------------------------------
 class OTPCalculator(Calculator):
-    def __init__(self, input_parameters, energy_system, dp_path):
+    def __init__(
+        self, input_parameters, energy_system, dp_path, infer_bus_carrier=True
+    ):
         # lookup bus-carrier mapping in the dp_path, if existing
         p = Package(dp_path)
         bus_data = pd.DataFrame.from_records(p.get_resource("bus").read(keyed=True))
@@ -89,7 +91,7 @@ class OTPCalculator(Calculator):
             }
 
         self.df_results = construct_dataframe_from_results(
-            energy_system, bus_carrier=bus_carrier
+            energy_system, bus_carrier=bus_carrier, infer_bus_carrier=infer_bus_carrier
         )
         self.df_results = process_raw_results(self.df_results)
         self.df_results = process_raw_inputs(self.df_results, dp_path)
@@ -100,7 +102,13 @@ class OTPCalculator(Calculator):
 
 
 def post_processing(
-    params, es, results_path, dp_path, dash_app=False, parameters_units=None
+    params,
+    es,
+    results_path,
+    dp_path,
+    dash_app=False,
+    parameters_units=None,
+    infer_bus_carrier=True,
 ):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
@@ -127,34 +135,39 @@ def post_processing(
         }
 
     # initiate calculator for post-processing
-    calculator = OTPCalculator(params, es, dp_path)
-    # print(calculator.df_results)
-    results = es.results
+    calculator = OTPCalculator(params, es, dp_path, infer_bus_carrier=infer_bus_carrier)
+
+    tables_to_save = {}
+
     results_by_flow = calculator.df_results
-    results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
+    if results_by_flow is not None:
+        results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
+        # get sub-tables from results dataframe
+        cost_table = extract_table_from_results(
+            calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
+        )
+        capacities_table = extract_table_from_results(
+            calculator.df_results, RESULT_TABLE_COLUMNS["capacities"]
+        )
+
+        # save tables to csv files
+        tables_to_save.update(
+            {"costs.csv": cost_table, "capacities.csv": capacities_table}
+        )
     kpis = calculator.kpis
-    kpis.to_csv(results_path + "/kpis.csv", index=True)
+    if kpis is not None:
+        kpis.to_csv(results_path + "/kpis.csv", index=True)
 
-    # get sub-tables from results dataframe
-    cost_table = extract_table_from_results(
-        calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
-    )
-    capacities_table = extract_table_from_results(
-        calculator.df_results, RESULT_TABLE_COLUMNS["capacities"]
-    )
-
-    # save tables to csv files
-    tables_to_save = {"costs.csv": cost_table, "capacities.csv": capacities_table}
-    if "mimo" in results_by_flow.index.get_level_values("asset"):
-        kpis.loc["total_water_produced"] = results_by_flow.loc["permeate-bus", "in"][
-            "aggregated_flow"
-        ].sum()
-        kpis.loc["total_brine_produced"] = results_by_flow.loc["brine-bus", "in"][
-            "aggregated_flow"
-        ].sum()
-        kpis.loc["total_electricity_produced"] = results_by_flow.loc[
-            "ac-elec-bus", "in"
-        ]["aggregated_flow"].sum()
+        if "mimo" in results_by_flow.index.get_level_values("asset"):
+            kpis.loc["total_water_produced"] = results_by_flow.loc[
+                "permeate-bus", "in"
+            ]["aggregated_flow"].sum()
+            kpis.loc["total_brine_produced"] = results_by_flow.loc["brine-bus", "in"][
+                "aggregated_flow"
+            ].sum()
+            kpis.loc["total_electricity_produced"] = results_by_flow.loc[
+                "ac-elec-bus", "in"
+            ]["aggregated_flow"].sum()
 
     for filename, table in tables_to_save.items():
         save_table_to_csv(table, results_path, filename)
@@ -175,7 +188,7 @@ def post_processing(
         demo_app.run_server(debug=True, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
-
+    results = es.results
     # calculate scalars using functions from clc module
     aggregated_flows = clc.AggregatedFlows(calculator).result
     storage_losses = clc.StorageLosses(calculator).result
@@ -226,4 +239,4 @@ def post_processing(
     filepath_name_all_sequences = os.path.join(results_path, "all_sequences.csv")
     all_sequences.sequences.to_csv(filepath_name_all_sequences)
 
-    return
+    return calculator
