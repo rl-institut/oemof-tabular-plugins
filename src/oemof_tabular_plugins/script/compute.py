@@ -31,6 +31,7 @@ def compute_scenario(
     parameters_units=None,
     infer_bus_carrier=True,
     skip_preprocessing=False,
+    skip_infer_datapackage_metadata=False,
 ):
     """
 
@@ -43,6 +44,12 @@ def compute_scenario(
     custom_attributes
     typemap: default to oemof.tabular.facades.TYPEMAP
     moo
+    skip_preprocessing: bool (opt)
+        If True, the pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC will not take place
+        Default: False
+    skip_infer_datapackage_metadata: bool (opt)
+        If True, the file datapackage.json will not be updated with the possible changes in elements/*.csv and sequences/*.csv
+        Default: False
 
     Returns
     -------
@@ -65,11 +72,12 @@ def compute_scenario(
         # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
         pre_processing(scenario_dir, wacc, custom_attributes, moo)
 
-    otp_building.infer_metadata_from_data(
-        package_name=scenario_name,
-        path=scenario_dir,
-        typemap=typemap,
-    )
+    if skip_infer_datapackage_metadata is False:
+        otp_building.infer_metadata_from_data(
+            package_name=scenario_name,
+            path=scenario_dir,
+            typemap=typemap,
+        )
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(
