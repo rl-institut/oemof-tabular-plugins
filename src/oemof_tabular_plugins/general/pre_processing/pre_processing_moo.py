@@ -105,7 +105,6 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             # store the parameters
             capex = row["capex"]
             opex_fix = row["opex_fix"]
-            opex_var = row["opex_var"]
             lifetime = row["lifetime"]
             ghg_emission_factor = row["ghg_emission_factor"]
             land_requirement_factor = row["land_requirement_factor"]
@@ -118,8 +117,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                         )
             moo_variable_flow = (
                                 ghg_emission_factor / global_GHG * wf_ghg +
-                                water_footprint_factor / total_renewable_water_resources * wf_wf +
-                                opex_var/global_GDP * wf_cost
+                                water_footprint_factor / total_renewable_water_resources * wf_wf
                                 )
 
             element_df.at[index, moo_variable_fix] = float(moo_variable_capacity)
@@ -132,14 +130,15 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
         elif scenario == "dispatchable moo indicator calculation":
             # store the parameters
-            opex_var = row["carrier_cost"]
+            capex = row["capex"]
+            opex_fix = row["opex_fix"]
+            lifetime = row["lifetime"]
             ghg_emission_factor = row["ghg_emission_factor"]
             water_footprint_factor = row["water_footprint_factor"]
 
             moo_variable_flow = (
                                 ghg_emission_factor / global_GHG * wf_ghg +
-                                water_footprint_factor / total_renewable_water_resources * wf_wf +
-                                opex_var / global_GDP * wf_cost
+                                water_footprint_factor / total_renewable_water_resources * wf_wf
                                 )
             element_df.at[index, moo_variable_var] = float(moo_variable_flow)
             logger.info(
