@@ -48,14 +48,17 @@ def compute_capacity_total(results_df):
 
     if isinstance(optimized_capacity, float) and isinstance(installed_capacity, float):
         total = installed_capacity + optimized_capacity
-    elif (isinstance(optimized_capacity, float) is False) and isinstance(installed_capacity, float):
+    elif (isinstance(optimized_capacity, float) is False) and isinstance(
+        installed_capacity, float
+    ):
         total = installed_capacity
-    elif isinstance(optimized_capacity, float) and (isinstance(installed_capacity, float) is False):
+    elif isinstance(optimized_capacity, float) and (
+        isinstance(installed_capacity, float) is False
+    ):
         total = optimized_capacity
     else:
         total = np.nan
     return total
-
 
 
 def compute_annuity_total(results_df):
@@ -83,7 +86,9 @@ def compute_upfront_investment_costs(results_df):
     """Calculates investment costs by multiplying capex with optimized capacity (investments)"""
     if "capex" not in results_df.index:
         return None
-    elif isinstance(results_df.capex, float) and isinstance(results_df.investments, float):
+    elif isinstance(results_df.capex, float) and isinstance(
+        results_df.investments, float
+    ):
         return results_df.capex * results_df.investments
     else:
         return np.nan
@@ -93,10 +98,13 @@ def compute_opex_fix_costs(results_df):
     """Calculates yearly opex costs by multiplying opex with optimized capacity (investments)"""
     if "opex_fix" not in results_df.index:
         return None
-    elif isinstance(results_df.capex, float) and isinstance(results_df.investments, float):
+    elif isinstance(results_df.capex, float) and isinstance(
+        results_df.investments, float
+    ):
         return results_df.opex_fix * results_df.investments
     else:
         return np.nan
+
 
 def compute_variable_costs(results_df):
     """Calculates variable costs by multiplying the marginal cost by the aggregated flow if the direction is out,
@@ -531,22 +539,40 @@ def infer_busses_carrier(energy_system):
             # quick fix to work for MIMO component
             # assigned buses as defined in mimo.csv for apv-system (another quick fix)
             # ToDo: assign carrier to busses instead of components to avoid problems
-            for attribute in ("bus", "from_bus", "from_bus_0", "from_bus_1", "from_bus_2", "to_bus", "to_bus_0", "to_bus_1", "to_bus_2"):
+            for attribute in (
+                "bus",
+                "from_bus",
+                "from_bus_0",
+                "from_bus_1",
+                "from_bus_2",
+                "to_bus",
+                "to_bus_0",
+                "to_bus_1",
+                "to_bus_2",
+            ):
                 if hasattr(node, attribute):
 
                     bus_label = getattr(node, attribute).label
-                    if bus_label in busses_carrier:
-                        if busses_carrier[bus_label] != node.carrier:
-                            raise ValueError(
-                                f"Two different carriers ({busses_carrier[bus_label]}, {node.carrier}) are associated to the same bus '{bus_label}'"
-                            )
-                    else:
-                        busses_carrier[bus_label] = node.carrier
+                    if node.carrier != "":
+                        if bus_label in busses_carrier:
+                            if busses_carrier[bus_label] != node.carrier:
+                                raise ValueError(
+                                    f"Two different carriers ({busses_carrier[bus_label]}, {node.carrier}) are associated to the same bus '{bus_label}'"
+                                )
+                        else:
+                            busses_carrier[bus_label] = node.carrier
 
+    if not busses_carrier:
+        raise ValueError(
+            "The bus-carrier mapping is empty, this is likely due to missing 'carrier' attributes in the csv files of the elements folder of the datapackage. The simpler way to fix this, is to add a 'carrier' column in the 'elements/bus.csv' file"
+        )
+
+    # Check that every bus has a carrier assigned to it
     busses = [node.label for node in energy_system.nodes if isinstance(node, solph.Bus)]
 
     for bus_label in busses:
         if bus_label not in busses_carrier:
+            print("busses carriers", busses_carrier)
             raise ValueError(
                 f"Bus '{bus_label}' is missing from the busses carrier dict inferred from the EnergySystem instance"
             )
@@ -569,7 +595,10 @@ def infer_asset_types(energy_system):
     asset_types = {}
     for node in energy_system.nodes:
         if isinstance(node, solph.Bus) is False:
-            asset_types[node.label] = node.type
+            asset_type = node.type
+            if asset_type is None:
+                asset_type = node.tech
+            asset_types[node.label] = asset_type
     return asset_types
 
 
@@ -627,14 +656,18 @@ def construct_multi_index_levels(flow_tuple, busses_info, assets_info=None):
     return answer
 
 
-def construct_dataframe_from_results(energy_system, bus_carrier=True, asset_type=True):
+def construct_dataframe_from_results(
+    energy_system, bus_carrier=None, infer_bus_carrier=True, asset_type=True
+):
     """
 
     Parameters
     ----------
     energy_system: oemof.solph.EnergySystem instance
-    bus_carrier: bool (opt)
-        If set to true, the multi-index of the DataFrame will have a level about bus carrier
+    bus_carrier: dict (opt) mapping the bus name to its carrier
+        If not None the multi-index of the DataFrame will have a level about bus carrier
+    infer_bus_carrier: bool (opt)
+        if True and bus_carrier is none, the bus-carrier mapping will be inferred
     asset_type: bool (opt)
         If set to true, the multi-index of the DataFrame will have a level about the asset type
 
@@ -649,11 +682,29 @@ def construct_dataframe_from_results(energy_system, bus_carrier=True, asset_type
         "asset",
     ]
 
-    busses_info = infer_busses_carrier(energy_system)
-    if bus_carrier is False:
-        busses_info = list(busses_info.keys())
+    if bus_carrier is None:
+        if infer_bus_carrier is True:
+            busses_info = infer_busses_carrier(energy_system)
+            mi_levels.append("carrier")
+            logging.warning(
+                "No carrier column found in 'elements/bus.csv' file of datapackage, the bus-carrier mapping will be inferred from the component's carrier"
+            )
+        else:
+            busses_info = [
+                node.label
+                for node in energy_system.nodes
+                if isinstance(node, solph.Bus)
+            ]
+            logging.info(
+                "No bus-carrier mapping found and infer_bus_carrier set to 'False'. Result dataframe will not contain 'carrier' in its MultiIndex levels."
+            )
+
     else:
+        busses_info = bus_carrier
         mi_levels.append("carrier")
+        logging.info(
+            "Bus to carrier mapping found in 'elements/bus.csv' file of datapackage"
+        )
 
     if asset_type is True:
         assets_info = infer_asset_types(energy_system)
@@ -763,7 +814,7 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
     return df_results.join(inputs_df.T.apply(pd.to_numeric, downcast="float"))
 
 
-def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
+def apply_calculations(results_df, calculations=None):
     """Apply calculation and populate the columns of the results_df
 
     Parameters
@@ -781,6 +832,9 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
     -------
 
     """
+    if calculations is None:
+        calculations = []
+
     for calc in calculations:
         _validate_calculation(calc)
         var_name = calc.get("column_name")
@@ -805,7 +859,7 @@ def apply_calculations(results_df, calculations=CALCULATED_OUTPUTS):
         #     )
 
 
-def apply_kpi_calculations(results_df, calculations=CALCULATED_KPIS):
+def apply_kpi_calculations(results_df, calculations=None):
     """Apply calculation and return a new DataFrame with the KPIs.
 
     Parameters
@@ -821,6 +875,10 @@ def apply_kpi_calculations(results_df, calculations=CALCULATED_KPIS):
     pd.DataFrame
         A new DataFrame containing the calculated KPI values with var_name as the index.
     """
+
+    if calculations is None:
+        calculations = []
+
     kpis = []
 
     for calc in calculations:
@@ -838,5 +896,8 @@ def apply_kpi_calculations(results_df, calculations=CALCULATED_KPIS):
         kpi_value = func_handle(results_df)
         kpis.append({"kpi": var_name, "value": kpi_value})
 
-    kpi_df = pd.DataFrame(kpis).set_index("kpi")
-    return kpi_df
+    if kpis:
+        answer = pd.DataFrame(kpis).set_index("kpi")
+    else:
+        answer = None
+    return answer
