@@ -611,9 +611,6 @@ def construct_dataframe_from_results(
     else:
         busses_info = bus_carrier
         mi_levels.append("carrier")
-        logging.info(
-            "Bus to carrier mapping found in 'elements/bus.csv' file of datapackage"
-        )
 
     if asset_type is True:
         assets_info = infer_asset_types(energy_system)

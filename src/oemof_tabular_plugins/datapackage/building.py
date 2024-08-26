@@ -1,5 +1,6 @@
 import os
 import warnings
+import logging
 import pandas as pd
 from oemof.tabular.datapackage import building
 from datapackage import Package
@@ -190,6 +191,9 @@ def infer_busses_carrier(package, infer_from_component=True):
         else:
             return
     else:
+        logging.info(
+            "Bus to carrier mapping found in 'elements/bus.csv' file of datapackage"
+        )
         busses_carrier = bus_carrier
 
     if not busses_carrier:
