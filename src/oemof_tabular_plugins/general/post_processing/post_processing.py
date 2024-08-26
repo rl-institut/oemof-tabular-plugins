@@ -14,6 +14,11 @@ from oemof_tabular_plugins.datapackage.post_processing import (
     process_raw_inputs,
     apply_calculations,
     apply_kpi_calculations,
+    RAW_INPUTS,
+    RAW_OUTPUTS,
+    PROCESSED_RAW_OUTPUTS,
+    CALCULATED_OUTPUTS,
+    CALCULATED_KPIS,
 )
 
 from .gui import prepare_app
@@ -93,12 +98,41 @@ class OTPCalculator(Calculator):
         self.df_results = construct_dataframe_from_results(
             energy_system, bus_carrier=bus_carrier, infer_bus_carrier=infer_bus_carrier
         )
+        self.n_timesteps = len(energy_system.timeindex)
+
         self.df_results = process_raw_results(self.df_results)
         self.df_results = process_raw_inputs(self.df_results, dp_path)
-        apply_calculations(self.df_results)
-        self.kpis = apply_kpi_calculations(self.df_results)
+        self.kpis = None
 
         super().__init__(input_parameters, energy_system.results)
+
+    def apply_calculations(self, calculations):
+        apply_calculations(self.df_results, calculations=calculations)
+
+    def apply_kpi_calculations(self, calculations):
+        self.kpis = apply_kpi_calculations(self.df_results, calculations=calculations)
+
+    def __scalars(self, scalar_category):
+        """Ignore the flow data columns (by construction those are the first columns after the multi-index)"""
+        scalars = self.df_results.iloc[:, self.n_timesteps :]
+        answer = scalars
+        if scalar_category == "raw_inputs":
+            existing_cols = []
+            for c in scalars.columns:
+                if c in RAW_INPUTS:
+                    existing_cols.append(c)
+            answer = scalars[existing_cols]
+        elif scalar_category == "outputs":
+            answer = scalars[scalars.columns.difference(RAW_INPUTS)]
+        return answer
+
+    @property
+    def raw_inputs(self):
+        return self.__scalars("raw_inputs")
+
+    @property
+    def calculated_outputs(self):
+        return self.__scalars("outputs")
 
 
 def post_processing(
@@ -109,6 +143,8 @@ def post_processing(
     dash_app=False,
     parameters_units=None,
     infer_bus_carrier=True,
+    calculations=None,
+    kpi_calculations=None,
 ):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
@@ -134,8 +170,14 @@ def post_processing(
             "total_water_footprint": "[m³]",
         }
 
+    if calculations is None:
+        calculations = CALCULATED_OUTPUTS
+    if kpi_calculations is None:
+        kpi_calculations = CALCULATED_KPIS
     # initiate calculator for post-processing
     calculator = OTPCalculator(params, es, dp_path, infer_bus_carrier=infer_bus_carrier)
+    calculator.apply_calculations(calculations)
+    calculator.apply_kpi_calculations(kpi_calculations)
 
     tables_to_save = {}
 
