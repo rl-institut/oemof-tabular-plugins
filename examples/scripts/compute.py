@@ -23,7 +23,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # list of scenarios to be evaluated
 scenarios = [
     "wefe_apv_excess-only",
-    # "wefe_apv",
+    "wefe_apv",
     # "wefe_apv_light_excess-only",
     # "wefe_apv_light",
     # "general_add_cost_inputs",
@@ -68,6 +68,8 @@ for scenario in scenarios:
         custom_attributes=custom_attributes,
         typemap=TYPEMAP,
         moo=moo,
+        skip_preprocessing=True,
+        skip_infer_datapackage_metadata=True,
     )
 
 

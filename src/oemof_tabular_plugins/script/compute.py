@@ -18,6 +18,9 @@ from oemof_tabular_plugins.general import (
     logger,
 )
 
+# TODO move this at the component preprocessing level
+from oemof_tabular_plugins.wefe.facades import pre_processing_apv
+
 
 def compute_scenario(
     scenario_dir,
@@ -71,6 +74,9 @@ def compute_scenario(
     if skip_preprocessing is False:
         # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
         pre_processing(scenario_dir, wacc, custom_attributes, moo)
+        # TODO move this to the component pre-processing instead
+        # pre-processing to look for "apv-system" in MIMO and update accordingly
+        pre_processing_apv(scenario_dir)
 
     if skip_infer_datapackage_metadata is False:
         otp_building.infer_metadata_from_data(
@@ -87,6 +93,12 @@ def compute_scenario(
     )
 
     logger.info("Energy system created from datapackage")
+
+    # # Show energy system components for debugging purposes (doesnt run yet)
+    from oemof_visio import ESGraphRenderer
+
+    gr = ESGraphRenderer(energy_system=es)
+    gr.render()
 
     # create model from energy system (this is just oemof.solph)
     m = Model(es)
