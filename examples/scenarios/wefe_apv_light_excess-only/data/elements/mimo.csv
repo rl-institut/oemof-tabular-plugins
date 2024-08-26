@@ -1,2 +1,0 @@
-type;name;tech;expandable;primary;capacity;capacity_cost;from_bus_0;from_bus_1;from_bus_2;to_bus_0;to_bus_1;to_bus_2;capex;opex_fix;lifetime;latitude;elevation;pv_type;crop_type;sowing_date;harvest_date;minimum_relative_yield;has_irrigation;has_rainwater_harvesting
-apv-system;apv-system;mimo;False;solar-energy-bus;320;270.83;solar-energy-bus;irrigation-bus;precipitation-bus;electricity-bus;biomass-bus;water-harvest-bus;2970.8;55.0;30.0;30.04;71.0;boviet_450;cassava;10-15;;0.3;True;False
