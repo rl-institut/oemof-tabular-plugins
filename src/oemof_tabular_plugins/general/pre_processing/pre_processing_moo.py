@@ -141,9 +141,6 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
         elif scenario == MOO_DISPATCHABLE_SCEN:
             # store the parameters
-            capex = row["capex"]
-            opex_fix = row["opex_fix"]
-            lifetime = row["lifetime"]
             ghg_emission_factor = row["ghg_emission_factor"]
             water_footprint_factor = row["water_footprint_factor"]
 
