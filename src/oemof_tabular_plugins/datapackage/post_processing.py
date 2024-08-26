@@ -44,6 +44,11 @@ def compute_capacity_total(results_df):
         return results_df.capacity + results_df.investments
 
 
+def compute_capacity_added(results_df):
+    """Calculates duplicate optimized capacity (investments) into a column with a better name"""
+    return results_df.investments
+
+
 def compute_annuity_total(results_df):
     """Calculates total annuity by multiplying the annuity by the optimized capacity"""
     # ToDo: now storage_capacity_cost is used for the annuity if the component is storage.
@@ -323,6 +328,12 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["investments", "capacity"],
     },
     {
+        "column_name": "capacity_added",
+        "operation": compute_capacity_added,
+        "description": "The optimized capacity column is duplicated with a better name than 'investments'",
+        "argument_names": ["investments"],
+    },
+    {
         "column_name": "annuity_total",
         "operation": compute_annuity_total,
         "description": "Total annuity is calculated by multiplying the optimized capacity "
@@ -366,6 +377,7 @@ CALCULATED_OUTPUTS = [
         "description": "CO2 emissions are calculated from the flow and the emission factor",
         "argument_names": ["aggregated_flow", "emission_factor"],
     },
+    # TODO this is specific to APV, should not be added here but rather in wefe/post_processing
     {
         "column_name": "land_requirement_additional",
         "operation": compute_land_requirement_additional,
