@@ -4,6 +4,7 @@ import pandas as pd
 from datapackage import Package
 import oemof.solph as solph
 import numpy as np
+from oemof_tabular_plugins.datapackage.building import infer_busses_carrier
 
 # ToDo: check to see if the storage optimized input/output (invest_out) and
 #  optimized capacity (invest) are saved correctly
@@ -485,56 +486,6 @@ def _validate_calculation(calculation):
         )
 
 
-def infer_busses_carrier(energy_system):
-    """Loop through the nodes of an energy system and infer the carrier of busses from them
-
-    Parameters
-    ----------
-    energy_system: oemof.solph.EnergySystem instance
-
-    Returns
-    -------
-    dict mapping the busses labels to their carrier
-
-    """
-
-    busses_carrier = {}
-
-    for node in energy_system.nodes:
-        if hasattr(node, "carrier"):
-            # quick fix to work for MIMO component
-            # ToDo: assign carrier to busses instead of components to avoid problems
-            for attribute in ("bus", "from_bus", "from_bus_0", "to_bus_1"):
-                if hasattr(node, attribute):
-
-                    bus_label = getattr(node, attribute).label
-                    if node.carrier != "":
-                        if bus_label in busses_carrier:
-                            if busses_carrier[bus_label] != node.carrier:
-                                raise ValueError(
-                                    f"Two different carriers ({busses_carrier[bus_label]}, {node.carrier}) are associated to the same bus '{bus_label}'"
-                                )
-                        else:
-                            busses_carrier[bus_label] = node.carrier
-
-    if not busses_carrier:
-        raise ValueError(
-            "The bus-carrier mapping is empty, this is likely due to missing 'carrier' attributes in the csv files of the elements folder of the datapackage. The simpler way to fix this, is to add a 'carrier' column in the 'elements/bus.csv' file"
-        )
-
-    # Check that every bus has a carrier assigned to it
-    busses = [node.label for node in energy_system.nodes if isinstance(node, solph.Bus)]
-
-    for bus_label in busses:
-        if bus_label not in busses_carrier:
-            print("busses carriers", busses_carrier)
-            raise ValueError(
-                f"Bus '{bus_label}' is missing from the busses carrier dict inferred from the EnergySystem instance"
-            )
-
-    return busses_carrier
-
-
 def infer_asset_types(energy_system):
     """Loop through the nodes of an energy system and infer their types
 
@@ -612,7 +563,7 @@ def construct_multi_index_levels(flow_tuple, busses_info, assets_info=None):
 
 
 def construct_dataframe_from_results(
-    energy_system, bus_carrier=None, infer_bus_carrier=True, asset_type=True
+    energy_system, dp_path=None, infer_bus_carrier=True, asset_type=True
 ):
     """
 
@@ -636,10 +587,13 @@ def construct_dataframe_from_results(
         "direction",
         "asset",
     ]
+    # lookup bus-carrier mapping in the dp_path, if existing
+    p = Package(dp_path)
+    bus_carrier = infer_busses_carrier(p, infer_from_component=False)
 
     if bus_carrier is None:
         if infer_bus_carrier is True:
-            busses_info = infer_busses_carrier(energy_system)
+            busses_info = infer_busses_carrier(p)
             mi_levels.append("carrier")
             logging.warning(
                 "No carrier column found in 'elements/bus.csv' file of datapackage, the bus-carrier mapping will be inferred from the component's carrier"
