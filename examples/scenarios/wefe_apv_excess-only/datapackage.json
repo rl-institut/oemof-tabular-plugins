@@ -1,8 +1,309 @@
 {
     "profile": "tabular-data-package",
     "name": "wefe_apv_excess-only",
-    "oemof_tabular_version": "0.0.5",
+    "oemof_tabular_version": "0.0.6dev",
     "resources": [
+        {
+            "path": "data/elements/apv-system.csv",
+            "profile": "tabular-data-resource",
+            "name": "apv-system",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "primary",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "from_bus_0",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "from_bus_1",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "from_bus_2",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "to_bus_0",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "to_bus_1",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "to_bus_2",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "latitude",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "elevation",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "pv_type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "crop_type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "sowing_date",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "harvest_date",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "minimum_relative_yield",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "has_irrigation",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "has_rainwater_harvesting",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tilt",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "pitch",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "xgap",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "frt",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "frb",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "area_apv",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "numpanels",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "kwp",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "gcr",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ler",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_solar-energy-bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_irrigation-bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_precipitation-bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_electricity-bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_biomass-bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "conversion_factor_water-harvest-bus",
+                        "type": "string",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "from_bus_0",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "from_bus_1",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "from_bus_2",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "to_bus_0",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "to_bus_1",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "to_bus_2",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_solar-energy-bus",
+                        "reference": {
+                            "resource": "apv-system_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_irrigation-bus",
+                        "reference": {
+                            "resource": "apv-system_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_precipitation-bus",
+                        "reference": {
+                            "resource": "apv-system_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_electricity-bus",
+                        "reference": {
+                            "resource": "apv-system_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_biomass-bus",
+                        "reference": {
+                            "resource": "apv-system_profile"
+                        }
+                    },
+                    {
+                        "fields": "conversion_factor_water-harvest-bus",
+                        "reference": {
+                            "resource": "apv-system_profile"
+                        }
+                    }
+                ]
+            }
+        },
         {
             "path": "data/elements/bus.csv",
             "profile": "tabular-data-resource",
@@ -171,297 +472,6 @@
             }
         },
         {
-            "path": "data/elements/mimo.csv",
-            "profile": "tabular-data-resource",
-            "name": "mimo",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "tech",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "expandable",
-                        "type": "boolean",
-                        "format": "default"
-                    },
-                    {
-                        "name": "primary",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "from_bus_0",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "from_bus_1",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "from_bus_2",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "to_bus_0",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "to_bus_1",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "to_bus_2",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capex",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "opex_fix",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "lifetime",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "latitude",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "elevation",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "pv_type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "crop_type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "sowing_date",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "harvest_date",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "minimum_relative_yield",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "tilt",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "pitch",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "xgap",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "frt",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "frb",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "area_apv",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "numpanels",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "kwp",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "gcr",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ler",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_solar-energy-bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_irrigation-bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_precipitation-bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_electricity-bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_biomass-bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "conversion_factor_water-harvest-bus",
-                        "type": "string",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ],
-                "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "from_bus_0",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "from_bus_1",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "from_bus_2",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus_0",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus_1",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus_2",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "conversion_factor_solar-energy-bus",
-                        "reference": {
-                            "resource": "mimo_profile"
-                        }
-                    },
-                    {
-                        "fields": "conversion_factor_irrigation-bus",
-                        "reference": {
-                            "resource": "mimo_profile"
-                        }
-                    },
-                    {
-                        "fields": "conversion_factor_precipitation-bus",
-                        "reference": {
-                            "resource": "mimo_profile"
-                        }
-                    },
-                    {
-                        "fields": "conversion_factor_electricity-bus",
-                        "reference": {
-                            "resource": "mimo_profile"
-                        }
-                    },
-                    {
-                        "fields": "conversion_factor_biomass-bus",
-                        "reference": {
-                            "resource": "mimo_profile"
-                        }
-                    },
-                    {
-                        "fields": "conversion_factor_water-harvest-bus",
-                        "reference": {
-                            "resource": "mimo_profile"
-                        }
-                    }
-                ]
-            }
-        },
-        {
             "path": "data/elements/volatile.csv",
             "profile": "tabular-data-resource",
             "name": "volatile",
@@ -558,64 +568,9 @@
             }
         },
         {
-            "path": "data/sequences/dispatchable_profile.csv",
+            "path": "data/sequences/apv-system_profile.csv",
             "profile": "tabular-data-resource",
-            "name": "dispatchable_profile",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "timeindex",
-                        "type": "datetime",
-                        "format": "default"
-                    },
-                    {
-                        "name": "elec-profile",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "water-profile",
-                        "type": "integer",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ]
-            }
-        },
-        {
-            "path": "data/sequences/load_profile.csv",
-            "profile": "tabular-data-resource",
-            "name": "load_profile",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "timeindex",
-                        "type": "datetime",
-                        "format": "default"
-                    },
-                    {
-                        "name": "elec-load-profile",
-                        "type": "number",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ]
-            }
-        },
-        {
-            "path": "data/sequences/mimo_profile.csv",
-            "profile": "tabular-data-resource",
-            "name": "mimo_profile",
+            "name": "apv-system_profile",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
@@ -768,6 +723,61 @@
                     },
                     {
                         "name": "cum_temp_cache",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        },
+        {
+            "path": "data/sequences/dispatchable_profile.csv",
+            "profile": "tabular-data-resource",
+            "name": "dispatchable_profile",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "timeindex",
+                        "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "elec-profile",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water-profile",
+                        "type": "integer",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        },
+        {
+            "path": "data/sequences/load_profile.csv",
+            "profile": "tabular-data-resource",
+            "name": "load_profile",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "timeindex",
+                        "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "elec-load-profile",
                         "type": "number",
                         "format": "default"
                     }
