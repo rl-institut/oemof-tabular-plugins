@@ -69,6 +69,7 @@ for scenario in scenarios:
         custom_attributes=custom_attributes,
         typemap=TYPEMAP,
         moo=moo,
+        dash_app=True,
     )
 
 
