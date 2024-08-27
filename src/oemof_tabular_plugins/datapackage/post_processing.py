@@ -293,7 +293,7 @@ def compute_specific_system_cost(results_df):
     #  (both energetic and non-energetic)
     total_load = 0
     total_system_cost = (
-        results_df["annuity_total"].sum() + results_df["total_variable_costs"].sum()
+        results_df["annuity_total"].sum() + results_df["variable_costs_total"].sum()
     )
     for index, row in results_df.iterrows():
         # This is a quick fix to not include water - need to talk to Julian about how other demands should
@@ -450,7 +450,7 @@ CALCULATED_KPIS = [
         "column_name": "specific_system_cost",
         "operation": compute_specific_system_cost,
         "description": "T",
-        "argument_names": ["aggregated_flow", "annuity_total", "total_variable_costs"],
+        "argument_names": ["aggregated_flow", "annuity_total", "variable_costs_total"],
     },
     {
         "column_name": "co2_emissions_total",

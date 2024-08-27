@@ -30,7 +30,7 @@ from .gui import prepare_app
 # TODO add a column for planned capacity (not optimizable but including costs) in capacities if it gets properly
 #  implemented (planned capacity can be set by setting capacity_minimum == capacity_potential and dispatchable = True
 RESULT_TABLE_COLUMNS = {
-    "costs": ["upfront_investment_costs", "annuity_total", "total_variable_costs"],
+    "costs": ["upfront_investment_costs", "annuity_total", "variable_costs_total"],
     "capacities": [
         "capacity",
         "storage_capacity",
