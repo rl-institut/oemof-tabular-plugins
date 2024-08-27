@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
     "name": "aiwa",
-    "oemof_tabular_version": "0.0.5",
+    "oemof_tabular_version": "0.0.6dev",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -25,6 +25,11 @@
                     {
                         "name": "balanced",
                         "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
