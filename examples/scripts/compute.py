@@ -53,6 +53,7 @@ moo = True
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
 TYPEMAP["mimo"] = MIMO
+#TYPEMAP["crop"] = CROP
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:

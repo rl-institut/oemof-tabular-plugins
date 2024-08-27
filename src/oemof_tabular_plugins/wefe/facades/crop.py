@@ -81,7 +81,7 @@ class Crop(Converter, Facade):
     SHOULD INCLUDE FUNCTIONS AND EXAMPLE HERE
 
     """
-    def _apv_production(crop_dict, crop_df):
+    def _crop_production(crop_dict, crop_df):
         """
         Calculate geometry parameters, performance indicators and full-year hourly conversion factor time series
         """
