@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - layout for multi-objective optimization (MOO)
 - a new workflow for automated tests
 - new function for adding additional foreign keys to datapackage.json in src/oemof_tabular_plugins/datapackage/building.py
+- function `infer_busses_carrier` to get the carriers assigned to each bus either explicitly (ie directly defined in `bus.csv` resource) or implicitly (ie via the carriers assigned to components connected to busses). The explicit method can lead to logical errors such as two carriers assigned to a single bus which is then raised as an error.
 
 ### Changed
 - structure of the general package and the wefe package
