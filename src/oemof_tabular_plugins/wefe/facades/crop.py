@@ -163,6 +163,36 @@ class Crop(Converter, Facade):
             f_temp = 1
         return f_temp
 
+    apv_df['cum_temp_base_year'] = apv_df.apply(
+        lambda row: development_base_year(row.name, sowing_date, row['t_air'], t_base),
+        axis=1
+    ).cumsum()
+
+    apv_df['cum_temp_extension'] = apv_df.apply(
+        lambda row: development_extension(row.name, harvest_date, row['t_air'], t_base),
+        axis=1
+    ).cumsum()
+
+    cum_temp_base_cache = apv_df['cum_temp_base_year'].iat[-1]
+    cum_temp_ext_cache = apv_df['cum_temp_extension'].iat[-1]
+
+    apv_df['cum_temp_cache'] = apv_df.apply(
+        lambda row: development_cache(row.name, harvest_date, cum_temp_base_cache, cum_temp_ext_cache),
+        axis=1
+    )
+
+    apv_df['cum_temp'] = apv_df['cum_temp_base_year'] + apv_df['cum_temp_extension'] + apv_df['cum_temp_cache']
+
+    t_sum = custom_cultivation_period(apv_df, harvest_date) if custom_harvest else t_sum
+
+    apv_df['f_temp'] = apv_df['t_air'].apply(
+        lambda t_air: temp(t_air, t_opt, t_base)
+    )
+
+    apv_df['f_heat'] = apv_df['t_air'].apply(
+        lambda t_air: heat(t_air, t_heat, t_extreme)
+    )
+
     def heat(t_air, t_heat, t_extreme):
         """ Heat stress effect on plant growth (SIMPLE) [-] """
         if t_air <= t_heat:
