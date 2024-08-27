@@ -1,5 +1,6 @@
 import logging
 import os
+from datapackage import Package
 import warnings
 
 import pandas as pd
@@ -13,6 +14,11 @@ from oemof_tabular_plugins.datapackage.post_processing import (
     process_raw_inputs,
     apply_calculations,
     apply_kpi_calculations,
+    RAW_INPUTS,
+    RAW_OUTPUTS,
+    PROCESSED_RAW_OUTPUTS,
+    CALCULATED_OUTPUTS,
+    CALCULATED_KPIS,
 )
 
 from .gui import prepare_app
@@ -24,7 +30,7 @@ from .gui import prepare_app
 # TODO add a column for planned capacity (not optimizable but including costs) in capacities if it gets properly
 #  implemented (planned capacity can be set by setting capacity_minimum == capacity_potential and dispatchable = True
 RESULT_TABLE_COLUMNS = {
-    "costs": ["upfront_investment_costs", "total_annuity", "total_variable_costs"],
+    "costs": ["upfront_investment_costs", "annuity_total", "variable_costs_total"],
     "capacities": [
         "capacity",
         "storage_capacity",
@@ -33,7 +39,7 @@ RESULT_TABLE_COLUMNS = {
         "storage_capacity_potential",
         "expandable",
         "investments",
-        "total_capacity",
+        "capacity_total",
     ],
 }
 
@@ -77,19 +83,60 @@ def save_table_to_csv(table, results_path, filename):
 
 # --------------------------------------------------
 class OTPCalculator(Calculator):
-    def __init__(self, input_parameters, energy_system, dp_path):
+    def __init__(
+        self, input_parameters, energy_system, dp_path, infer_bus_carrier=True
+    ):
 
-        self.df_results = construct_dataframe_from_results(energy_system)
+        self.df_results = construct_dataframe_from_results(
+            energy_system, dp_path=dp_path, infer_bus_carrier=infer_bus_carrier
+        )
+        self.n_timesteps = len(energy_system.timeindex)
+
         self.df_results = process_raw_results(self.df_results)
         self.df_results = process_raw_inputs(self.df_results, dp_path)
-        apply_calculations(self.df_results)
-        self.kpis = apply_kpi_calculations(self.df_results)
+        self.kpis = None
 
         super().__init__(input_parameters, energy_system.results)
 
+    def apply_calculations(self, calculations):
+        apply_calculations(self.df_results, calculations=calculations)
+
+    def apply_kpi_calculations(self, calculations):
+        self.kpis = apply_kpi_calculations(self.df_results, calculations=calculations)
+
+    def __scalars(self, scalar_category):
+        """Ignore the flow data columns (by construction those are the first columns after the multi-index)"""
+        scalars = self.df_results.iloc[:, self.n_timesteps :]
+        answer = scalars
+        if scalar_category == "raw_inputs":
+            existing_cols = []
+            for c in scalars.columns:
+                if c in RAW_INPUTS:
+                    existing_cols.append(c)
+            answer = scalars[existing_cols]
+        elif scalar_category == "outputs":
+            answer = scalars[scalars.columns.difference(RAW_INPUTS)]
+        return answer
+
+    @property
+    def raw_inputs(self):
+        return self.__scalars("raw_inputs")
+
+    @property
+    def calculated_outputs(self):
+        return self.__scalars("outputs")
+
 
 def post_processing(
-    params, es, results_path, dp_path, dash_app=False, parameters_units=None
+    params,
+    es,
+    results_path,
+    dp_path,
+    dash_app=False,
+    parameters_units=None,
+    infer_bus_carrier=True,
+    calculations=None,
+    kpi_calculations=None,
 ):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
@@ -115,35 +162,46 @@ def post_processing(
             "total_water_footprint": "[m³]",
         }
 
+    if calculations is None:
+        calculations = CALCULATED_OUTPUTS
+    if kpi_calculations is None:
+        kpi_calculations = CALCULATED_KPIS
     # initiate calculator for post-processing
-    calculator = OTPCalculator(params, es, dp_path)
-    # print(calculator.df_results)
-    results = es.results
+    calculator = OTPCalculator(params, es, dp_path, infer_bus_carrier=infer_bus_carrier)
+    calculator.apply_calculations(calculations)
+    calculator.apply_kpi_calculations(kpi_calculations)
+
+    tables_to_save = {}
+
     results_by_flow = calculator.df_results
-    results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
+    if results_by_flow is not None:
+        results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
+        # get sub-tables from results dataframe
+        cost_table = extract_table_from_results(
+            calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
+        )
+        capacities_table = extract_table_from_results(
+            calculator.df_results, RESULT_TABLE_COLUMNS["capacities"]
+        )
+
+        # save tables to csv files
+        tables_to_save.update(
+            {"costs.csv": cost_table, "capacities.csv": capacities_table}
+        )
     kpis = calculator.kpis
-    kpis.to_csv(results_path + "/kpis.csv", index=True)
+    if kpis is not None:
+        kpis.to_csv(results_path + "/kpis.csv", index=True)
 
-    # get sub-tables from results dataframe
-    cost_table = extract_table_from_results(
-        calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
-    )
-    capacities_table = extract_table_from_results(
-        calculator.df_results, RESULT_TABLE_COLUMNS["capacities"]
-    )
-
-    # save tables to csv files
-    tables_to_save = {"costs.csv": cost_table, "capacities.csv": capacities_table}
-    if "mimo" in results_by_flow.index.get_level_values("asset"):
-        kpis.loc["total_water_produced"] = results_by_flow.loc["permeate-bus", "in"][
-            "aggregated_flow"
-        ].sum()
-        kpis.loc["total_brine_produced"] = results_by_flow.loc["brine-bus", "in"][
-            "aggregated_flow"
-        ].sum()
-        kpis.loc["total_electricity_produced"] = results_by_flow.loc[
-            "ac-elec-bus", "in"
-        ]["aggregated_flow"].sum()
+        if "mimo" in results_by_flow.index.get_level_values("asset"):
+            kpis.loc["total_water_produced"] = results_by_flow.loc[
+                "permeate-bus", "in"
+            ]["aggregated_flow"].sum()
+            kpis.loc["total_brine_produced"] = results_by_flow.loc["brine-bus", "in"][
+                "aggregated_flow"
+            ].sum()
+            kpis.loc["total_electricity_produced"] = results_by_flow.loc[
+                "ac-elec-bus", "in"
+            ]["aggregated_flow"].sum()
 
     for filename, table in tables_to_save.items():
         save_table_to_csv(table, results_path, filename)
@@ -164,7 +222,7 @@ def post_processing(
         demo_app.run_server(debug=True, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
-
+    results = es.results
     # calculate scalars using functions from clc module
     aggregated_flows = clc.AggregatedFlows(calculator).result
     storage_losses = clc.StorageLosses(calculator).result
@@ -215,4 +273,4 @@ def post_processing(
     filepath_name_all_sequences = os.path.join(results_path, "all_sequences.csv")
     all_sequences.sequences.to_csv(filepath_name_all_sequences)
 
-    return
+    return calculator

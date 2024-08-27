@@ -1,0 +1,2 @@
+name;type;tech;capacity;capacity_cost;bus;marginal_cost;profile;expandable;capex;opex_fix;lifetime
+pv;volatile;pv;0.0;1010.0;dc-elec-bus;0.0;pv-profile;True;1000.0;10.0;20.0

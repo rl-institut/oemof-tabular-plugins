@@ -1,5 +1,6 @@
 import os
 import warnings
+import logging
 import pandas as pd
 from oemof.tabular.datapackage import building
 from datapackage import Package
@@ -146,6 +147,73 @@ def infer_package_foreign_keys(package, typemap=None):
             p.add_resource(r.descriptor)
 
 
+def infer_busses_carrier(package, infer_from_component=True):
+    """Loop through the nodes of an energy system and infer the carrier of busses from them
+
+    Parameters
+    ----------
+    package: datapackage.Package instance
+    infer_from_component: bool
+        if True, the bus carrier mapping will be inferred from the components if not found in 'bus'
+        resource of the package
+
+    Returns
+    -------
+    dict mapping the busses labels to their carrier
+
+    """
+
+    bus_data = pd.DataFrame.from_records(package.get_resource("bus").read(keyed=True))
+    bus_carrier = None
+    if "carrier" in bus_data.columns:
+        bus_carrier = {row[1]["name"]: row[1]["carrier"] for row in bus_data.iterrows()}
+
+    if bus_carrier is None:
+        busses_carrier = {}
+        if infer_from_component is True:
+            for node_type in package.resources:
+                if node_type.name != "bus":
+                    fields = [f.name for f in node_type.schema.fields]
+                    if "carrier" in fields:
+                        nodes = node_type.read(keyed=True)
+                        for attribute in ("bus", "from_bus", "from_bus_0", "to_bus_1"):
+                            for node in nodes:
+                                if attribute in node and node["carrier"] != "":
+
+                                    bus_label = node[attribute]
+                                    if bus_label in busses_carrier:
+                                        if busses_carrier[bus_label] != node["carrier"]:
+                                            raise ValueError(
+                                                f"Two different carriers ({busses_carrier[bus_label]}, {node['carrier']}) are associated to the same bus '{bus_label}'"
+                                            )
+                                    else:
+                                        busses_carrier[bus_label] = node["carrier"]
+        else:
+            return
+    else:
+        logging.info(
+            "Bus to carrier mapping found in 'elements/bus.csv' file of datapackage"
+        )
+        busses_carrier = bus_carrier
+
+    if not busses_carrier:
+        raise ValueError(
+            "The bus-carrier mapping is empty, this is likely due to missing 'carrier' attributes in the csv files of the elements folder of the datapackage. The simpler way to fix this, is to add a 'carrier' column in the 'elements/bus.csv' file"
+        )
+
+    # Check that every bus has a carrier assigned to it
+    busses = bus_data.name.to_list()
+
+    for bus_label in busses:
+        if bus_label not in busses_carrier:
+            print("busses carriers", busses_carrier)
+            raise ValueError(
+                f"Bus '{bus_label}' is missing from the busses carrier dict inferred from the EnergySystem instance"
+            )
+
+    return busses_carrier
+
+
 def infer_metadata_from_data(
     package_name="default-name",
     path=None,
@@ -199,3 +267,4 @@ def infer_metadata_from_data(
     p.descriptor["resources"].sort(key=lambda x: (x["path"], x["name"]))
     p.commit()
     p.save(os.path.join(path, metadata_filename))
+    infer_busses_carrier(p)
