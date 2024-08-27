@@ -28,6 +28,7 @@ RAW_INPUTS = [
     "lifetime",
     "renewable_factor",
     "emission_factor",
+    "ghg_emission_factor",
     "land_requirement_factor",
     "water_footprint_factor",
 ]
@@ -101,6 +102,14 @@ def compute_co2_emissions(results_df):
         return None
     else:
         return results_df.aggregated_flow * results_df.emission_factor
+
+
+def compute_ghg_emissions(results_df):
+    """Calculates ghg emissions by multiplying aggregated flow by emission factor"""
+    if "ghg_emission_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.aggregated_flow * results_df.ghg_emission_factor
 
 
 def compute_land_requirement_additional(results_df):
@@ -284,7 +293,7 @@ def compute_specific_system_cost(results_df):
     #  (both energetic and non-energetic)
     total_load = 0
     total_system_cost = (
-        results_df["total_annuity"].sum() + results_df["total_variable_costs"].sum()
+        results_df["annuity_total"].sum() + results_df["total_variable_costs"].sum()
     )
     for index, row in results_df.iterrows():
         # This is a quick fix to not include water - need to talk to Julian about how other demands should
@@ -380,6 +389,13 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["aggregated_flow", "emission_factor"],
     },
     {
+        "column_name": "ghg_emissions",
+        "operation": compute_ghg_emissions,
+        "description": "GHG emissions are calculated from the flow and the emission factor",
+        "argument_names": ["aggregated_flow", "ghg_emission_factor"],
+    },
+    # TODO this is specific to APV, should not be added here but rather in wefe/post_processing
+    {
         "column_name": "land_requirement_additional",
         "operation": compute_land_requirement_additional,
         "description": "The additional land requirement calculates the land required for the optimized capacities",
@@ -434,7 +450,7 @@ CALCULATED_KPIS = [
         "column_name": "specific_system_cost",
         "operation": compute_specific_system_cost,
         "description": "T",
-        "argument_names": ["aggregated_flow", "total_annuity", "total_variable_costs"],
+        "argument_names": ["aggregated_flow", "annuity_total", "total_variable_costs"],
     },
     {
         "column_name": "co2_emissions_total",
