@@ -1,6 +1,6 @@
 {
     "profile": "tabular-data-package",
-    "name": "arusi",
+    "name": "wefe_reverse_osmosis",
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {
@@ -66,7 +66,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -91,7 +91,7 @@
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -116,22 +116,22 @@
                     },
                     {
                         "name": "capex",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "opex_fix",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "lifetime",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -157,6 +157,16 @@
                     {
                         "name": "water_footprint",
                         "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "Unnamed: 23",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
                         "format": "default"
                     }
                 ],
@@ -238,7 +248,7 @@
                     },
                     {
                         "name": "profile",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -275,6 +285,11 @@
                         "name": "water_footprint",
                         "type": "integer",
                         "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
                     }
                 ],
                 "missingValues": [
@@ -287,12 +302,6 @@
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
-                            "resource": "volatile_profile"
                         }
                     }
                 ]
@@ -399,12 +408,6 @@
                             "resource": "bus",
                             "fields": "name"
                         }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
-                            "resource": "load_profile"
-                        }
                     }
                 ]
             }
@@ -450,7 +453,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -520,7 +523,7 @@
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -547,42 +550,18 @@
                         "name": "water_footprint",
                         "type": "integer",
                         "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
                     }
                 ],
                 "missingValues": [
                     ""
                 ],
                 "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "from_bus_0",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "from_bus_1",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus_0",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus_1",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    }
-                ]
+                "foreignKeys": []
             }
         },
         {
@@ -861,12 +840,6 @@
                             "resource": "bus",
                             "fields": "name"
                         }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
-                            "resource": "volatile_profile"
-                        }
                     }
                 ]
             }
@@ -917,21 +890,6 @@
                     },
                     {
                         "name": "pv-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "solar-irradiance",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "wind",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ac-discharge-profile",
                         "type": "number",
                         "format": "default"
                     }

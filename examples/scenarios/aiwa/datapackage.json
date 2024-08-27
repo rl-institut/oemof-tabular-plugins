@@ -1,6 +1,6 @@
 {
     "profile": "tabular-data-package",
-    "name": "arusi",
+    "name": "aiwa",
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {

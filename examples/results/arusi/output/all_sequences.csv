@@ -1,7 +1,7 @@
 source,#pv,ac-discharge,ac-discharge-bus,ac-elec-bus,ac-elec-bus,ac-elec-bus,ac-elec-bus,backup-electricity-grid,battery-storage,battery-storage,brine-bus,dc-elec-bus,diesel,diesel-bus,diesel-generator,inverter,nanofiltration,permeate-bus,permeate-bus,pv-panel,seawater-bus,seawater-source,solar-bus,solar-resource,sw-ro,sw-ro,water-storage,water-storage,water-truck,wind-bus,wind-resource,wind-turbine
 target,dc-elec-bus,ac-discharge-bus,nanofiltration,battery-storage,elec-demand,electricity-excess,sw-ro,ac-elec-bus,nan,ac-elec-bus,brine-excess,inverter,diesel-bus,diesel-generator,ac-elec-bus,ac-elec-bus,permeate-bus,permeate-demand,water-storage,dc-elec-bus,sw-ro,seawater-bus,pv-panel,solar-bus,brine-bus,permeate-bus,nan,permeate-bus,permeate-bus,wind-turbine,wind-bus,ac-elec-bus
 var_name,flow,flow,flow,flow,flow,flow,flow,flow,storage_content,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,flow,storage_content,flow,flow,flow,flow,flow
-2021-01-01 00:00:00,0.0,0.0,0.0,0.0,20.0,282.43649,0.0,0.0,0.0,0.0,-0.0,0.0,336.04054,336.04054,302.43649,-0.0,-0.0,10.0,0.0,-0.0,-0.0,0.0,-0.0,0.0,-0.0,-0.0,20.20202,10.0,0.0,-0.0,0.0,-0.0
-2021-01-01 01:00:00,0.0,0.0,0.0,0.0,40.0,262.43649,0.0,0.0,0.0,0.0,-0.0,-0.0,336.04054,336.04054,302.43649,-0.0,-0.0,20.0,0.0,-0.0,-0.0,0.0,-0.0,0.0,-0.0,-0.0,0.0,20.0,0.0,-0.0,0.0,-0.0
-2021-01-01 02:00:00,0.0,0.0,0.0,0.0,60.0,0.0,242.43649,0.0,0.0,0.0,74.077815,-0.0,336.04054,336.04054,302.43649,-0.0,-0.0,30.0,30.609122,-0.0,-0.0,0.0,-0.0,0.0,74.077815,60.609122,30.30303,0.0,0.0,-0.0,0.0,-0.0
+2021-01-01 00:00:00,0.0,0.0,0.0,0.0,20.0,0.0,0.0,8.0,0.0,0.0,-0.0,0.0,13.333333,13.333333,12.0,-0.0,-0.0,10.0,0.0,-0.0,0.0,0.0,-0.0,0.0,-0.0,-0.0,0.0,0.0,10.0,-0.0,0.0,-0.0
+2021-01-01 01:00:00,0.0,0.0,0.0,0.0,40.0,0.0,0.0,28.0,0.0,0.0,-0.0,-0.0,13.333333,13.333333,12.0,-0.0,-0.0,20.0,0.0,-0.0,0.0,0.0,-0.0,0.0,-0.0,-0.0,0.0,0.0,20.0,-0.0,0.0,-0.0
+2021-01-01 02:00:00,0.0,0.0,0.0,0.0,60.0,0.0,0.0,48.0,0.0,0.0,-0.0,-0.0,13.333333,13.333333,12.0,-0.0,-0.0,30.0,0.0,-0.0,0.0,0.0,-0.0,0.0,-0.0,-0.0,0.0,0.0,30.0,-0.0,0.0,-0.0
 2021-01-01 03:00:00,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
