@@ -1,0 +1,8 @@
+name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;carrier_cost;profile;expandable;land_requirement_factor;ghg_emission_factor;water_footprint_factor;land_requirement;ghg_emissions;water_footprint
+seawater-source;dispatchable;water;source;0;0;seawater-bus;3.3125371360665476e-10;0;1;True;0;10.0;50;0;0;0
+backup-electricity-grid;dispatchable;energy;source;0;0;ac-elec-bus;2.2299465240641714e-12;0;1;True;0;0.417;0;0;0;0
+solar-resource;dispatchable;energy;source;0;0;solar-bus;0.0;0;solar-irradiance;True;0;0.0;0;0;0;0
+wind-resource;dispatchable;energy;source;0;0;wind-bus;0.0;0;wind;True;0;0.0;0;0;0;0
+ac-discharge;dispatchable;water;source;0;0;ac-discharge-bus;0.0;0;ac-discharge-profile;False;0;0.0;0;0;0;0
+water-truck;dispatchable;water;source;0;0;permeate-bus;5.555555555555555e-10;100000000000;;True;0;0.0;100;0;0;0
+diesel;dispatchable;energy;source;0;0;diesel-bus;1.1111111111111111e-11;500;1;True;0;0.0;2;0;0;0
