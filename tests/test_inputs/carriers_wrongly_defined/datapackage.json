@@ -1,6 +1,6 @@
 {
     "profile": "tabular-data-package",
-    "name": "carriers_in_components_only",
+    "name": "carriers_wrongly_defined",
     "oemof_tabular_version": "0.0.6dev",
     "resources": [
         {

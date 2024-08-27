@@ -6,6 +6,7 @@ from oemof_tabular_plugins.script import compute_scenario
 from unittest.mock import patch
 import json
 from oemof.tabular.facades import TYPEMAP
+from oemof_tabular_plugins.datapackage.building import infer_metadata_from_data
 from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO
 
 
@@ -63,9 +64,14 @@ class TestPostProcessingBusCarrierMapping:
         The carriers are defined within a column 'carrier' of 'elements/bus.csv' file
         """
         f_name = "carriers_in_busses_only"
-        calc = self.compute_scenario(f_name)
-
-        assert "carrier" in calc.df_results.index.names
+        infer_metadata_from_data(
+            package_name=f_name,
+            path=os.path.join(self.pre_p_dir, f_name),
+            typemap=TYPEMAP,
+        )
+        # TODO add this assertion once oemof.tabular does not require carrier in its facade attributes (default to "")
+        # calc = self.compute_scenario(f_name)
+        # assert "carrier" in calc.df_results.index.names
         assert any(
             record.levelname == "INFO"
             and "Bus to carrier mapping found in 'elements/bus.csv' file of datapackage"
@@ -126,7 +132,11 @@ class TestPostProcessingBusCarrierMapping:
         """
         f_name = "carriers_not_defined"
         with pytest.raises(ValueError) as e_info:
-            self.compute_scenario(f_name)
+            infer_metadata_from_data(
+                package_name=f_name,
+                path=os.path.join(self.pre_p_dir, f_name),
+                typemap=TYPEMAP,
+            )
 
         assert "The bus-carrier mapping is empty" in str(e_info.value)
 
@@ -136,7 +146,11 @@ class TestPostProcessingBusCarrierMapping:
         """
         f_name = "carriers_under_defined"
         with pytest.raises(ValueError) as e_info:
-            self.compute_scenario(f_name)
+            infer_metadata_from_data(
+                package_name=f_name,
+                path=os.path.join(self.pre_p_dir, f_name),
+                typemap=TYPEMAP,
+            )
 
         assert (
             "Bus 'permeate-bus' is missing from the busses carrier dict inferred from the EnergySystem instance"
@@ -149,6 +163,10 @@ class TestPostProcessingBusCarrierMapping:
         """
         f_name = "carriers_wrongly_defined"
         with pytest.raises(ValueError) as e_info:
-            self.compute_scenario(f_name)
+            infer_metadata_from_data(
+                package_name=f_name,
+                path=os.path.join(self.pre_p_dir, f_name),
+                typemap=TYPEMAP,
+            )
 
         assert "are associated to the same bus" in str(e_info.value)
