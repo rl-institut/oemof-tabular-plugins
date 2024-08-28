@@ -81,38 +81,41 @@ class Crop(Converter, Facade):
     SHOULD INCLUDE FUNCTIONS AND EXAMPLE HERE
 
     """
-    def _crop_production(crop_dict, crop_df):
+
+    def _crop_production(self, crop_dict, crop_df):
         """
         Calculate geometry parameters, performance indicators and full-year hourly conversion factor time series
         """
-    crop_type = crop_dict['crop_type']
-    minimum_relative_yield = crop_dict['minimum_relative_yield']
+        crop_type = crop_dict["crop_type"]
+        minimum_relative_yield = crop_dict["minimum_relative_yield"]
 
-    # ----- Crop specific growth parameters from crop_dict -----
-    t_base = crop_dict[crop_type]['t_base']  # minimum temperature for growth, impaired growth
-    t_opt = crop_dict[crop_type]['t_opt']  # optimal temperature for growth
-    t_heat = crop_dict[crop_type]['t_max']  # heat stress begins, impaired growth
-    t_extreme = crop_dict[crop_type]['t_ext']  # extreme heat stress, no growth
-    t_sum = crop_dict[crop_type]['t_sum']  # cumulative temperature until harvest
-    i50a = crop_dict[crop_type]['i50a']
-    i50b = crop_dict[crop_type]['i50b']
-    i50maxh = crop_dict[crop_type]['i50maxh']
-    i50maxw = crop_dict[crop_type]['i50maxw']
-    s_water = crop_dict[crop_type]['s_water']
-    f_solar_max = crop_dict[crop_type]['f_solar_max']
-    rue = crop_dict[crop_type]['rue']
-    # Convert Radiation Use Efficiency from g/(MJ*m²*h) to g/(W*m²)
-    rue *= 3.6e-3
+        # ----- Crop specific growth parameters from crop_dict -----
+        t_base = crop_dict[crop_type][
+            "t_base"
+        ]  # minimum temperature for growth, impaired growth
+        t_opt = crop_dict[crop_type]["t_opt"]  # optimal temperature for growth
+        t_heat = crop_dict[crop_type]["t_max"]  # heat stress begins, impaired growth
+        t_extreme = crop_dict[crop_type]["t_ext"]  # extreme heat stress, no growth
+        t_sum = crop_dict[crop_type]["t_sum"]  # cumulative temperature until harvest
+        i50a = crop_dict[crop_type]["i50a"]
+        i50b = crop_dict[crop_type]["i50b"]
+        i50maxh = crop_dict[crop_type]["i50maxh"]
+        i50maxw = crop_dict[crop_type]["i50maxw"]
+        s_water = crop_dict[crop_type]["s_water"]
+        f_solar_max = crop_dict[crop_type]["f_solar_max"]
+        rue = crop_dict[crop_type]["rue"]
+        # Convert Radiation Use Efficiency from g/(MJ*m²*h) to g/(W*m²)
+        rue *= 3.6e-3
 
-    # ----- Crop specific soil parameters from soil_dict -----
-    wuc = 0.096  # alpha      ## water uptake constant
-    rzd = soil_dict[crop_type]['rzd']  # zeta       ## root zone depth [mm]
-    awc = soil_dict[crop_type]['rzd']  # theta_m    ## water holding capacity
-    rcn = soil_dict[crop_type]['rzd']  # eta        ## runoff curve number
-    ddc = soil_dict[crop_type]['rzd']  # beta       ## deep drainage coefficient
+        # ----- Crop specific soil parameters from soil_dict -----
+        wuc = 0.096  # alpha      ## water uptake constant
+        rzd = soil_dict[crop_type]["rzd"]  # zeta       ## root zone depth [mm]
+        awc = soil_dict[crop_type]["rzd"]  # theta_m    ## water holding capacity
+        rcn = soil_dict[crop_type]["rzd"]  # eta        ## runoff curve number
+        ddc = soil_dict[crop_type]["rzd"]  # beta       ## deep drainage coefficient
 
-# TODO @PF do we need this kind of data type determination here?
-    def development_base_year(date, sowing_date, t_air, t_base):
+    # TODO @PF do we need this kind of data type determination here?
+    def development_base_year(self, date, sowing_date, t_air, t_base):
         """
         Cumulative temperature experienced by plant as measure for plant development (SIMPLE) [K]
         from sowing_date until end of the same year (base year)
@@ -120,12 +123,14 @@ class Crop(Converter, Facade):
         if date < sowing_date:
             delta_cum_temp = 0
         elif t_air > t_base:
-            delta_cum_temp = (t_air - t_base) / 24  # SIMPLE crop model has daily temp values, convert to hourly
+            delta_cum_temp = (
+                t_air - t_base
+            ) / 24  # SIMPLE crop model has daily temp values, convert to hourly
         else:
             delta_cum_temp = 0
         return delta_cum_temp
 
-    def development_extension(date, harvest_date, t_air, t_base):
+    def development_extension(self, date, harvest_date, t_air, t_base):
         """
         Additional cumulative temperature experienced by plant as measure for plant development
         if growth extends to following year (harvest_date < sowing_date if year ignored) [K]
@@ -133,12 +138,16 @@ class Crop(Converter, Facade):
         if date > harvest_date:
             delta_cum_temp = 0
         elif t_air > t_base:
-            delta_cum_temp = (t_air - t_base) / 24  # SIMPLE crop model has daily temp values, convert to hourly
+            delta_cum_temp = (
+                t_air - t_base
+            ) / 24  # SIMPLE crop model has daily temp values, convert to hourly
         else:
             delta_cum_temp = 0
         return delta_cum_temp
 
-    def development_cache(date, harvest_date, cum_temp_base_cache, cum_temp_ext_cache):
+    def development_cache(
+        self, date, harvest_date, cum_temp_base_cache, cum_temp_ext_cache
+    ):
         """
         Cumulative temperature experienced in the base year cached for extension in the following year,
         cumulative temperature experienced in the following year until harvest_date removed afterwards [K]
@@ -149,12 +158,13 @@ class Crop(Converter, Facade):
             delta_cum_temp = -cum_temp_ext_cache
         return delta_cum_temp
 
-    def custom_cultivation_period(df, harvest_date):
-        """ Calculates new t_sum for plant growth curve if custom harvest_date is given [K] """
-        if harvest_date in crop_df.index:
-            return df.loc[harvest_date, 'cum_temp']
-    def temp(t_air, t_opt, t_base):
-        """ Temperature effect on plant growth (SIMPLE) [-] """
+    def custom_cultivation_period(self, df, harvest_date):
+        """Calculates new t_sum for plant growth curve if custom harvest_date is given [K]"""
+        if harvest_date in df.index:
+            return df.loc[harvest_date, "cum_temp"]
+
+    def temp(self, t_air, t_opt, t_base):
+        """Temperature effect on plant growth (SIMPLE) [-]"""
         if t_air < t_base:
             f_temp = 0
         elif t_base <= t_air < t_opt:
@@ -163,38 +173,56 @@ class Crop(Converter, Facade):
             f_temp = 1
         return f_temp
 
-    apv_df['cum_temp_base_year'] = apv_df.apply(
-        lambda row: development_base_year(row.name, sowing_date, row['t_air'], t_base),
-        axis=1
-    ).cumsum()
+    def unknown_method(
+        self, apv_df, t_base, harvest_date, sowing_date, custom_harvest, t_sum
+    ):
+        # TODO some variable are defined in other methods, where is this code supposed to be ran?
+        apv_df["cum_temp_base_year"] = apv_df.apply(
+            lambda row: self.development_base_year(
+                row.name, sowing_date, row["t_air"], t_base
+            ),
+            axis=1,
+        ).cumsum()
 
-    apv_df['cum_temp_extension'] = apv_df.apply(
-        lambda row: development_extension(row.name, harvest_date, row['t_air'], t_base),
-        axis=1
-    ).cumsum()
+        apv_df["cum_temp_extension"] = apv_df.apply(
+            lambda row: self.development_extension(
+                row.name, harvest_date, row["t_air"], t_base
+            ),
+            axis=1,
+        ).cumsum()
 
-    cum_temp_base_cache = apv_df['cum_temp_base_year'].iat[-1]
-    cum_temp_ext_cache = apv_df['cum_temp_extension'].iat[-1]
+        cum_temp_base_cache = apv_df["cum_temp_base_year"].iat[-1]
+        cum_temp_ext_cache = apv_df["cum_temp_extension"].iat[-1]
 
-    apv_df['cum_temp_cache'] = apv_df.apply(
-        lambda row: development_cache(row.name, harvest_date, cum_temp_base_cache, cum_temp_ext_cache),
-        axis=1
-    )
+        apv_df["cum_temp_cache"] = apv_df.apply(
+            lambda row: self.development_cache(
+                row.name, harvest_date, cum_temp_base_cache, cum_temp_ext_cache
+            ),
+            axis=1,
+        )
 
-    apv_df['cum_temp'] = apv_df['cum_temp_base_year'] + apv_df['cum_temp_extension'] + apv_df['cum_temp_cache']
+        apv_df["cum_temp"] = (
+            apv_df["cum_temp_base_year"]
+            + apv_df["cum_temp_extension"]
+            + apv_df["cum_temp_cache"]
+        )
 
-    t_sum = custom_cultivation_period(apv_df, harvest_date) if custom_harvest else t_sum
+        t_sum = (
+            self.custom_cultivation_period(apv_df, harvest_date)
+            if custom_harvest
+            else t_sum
+        )
 
-    apv_df['f_temp'] = apv_df['t_air'].apply(
-        lambda t_air: temp(t_air, t_opt, t_base)
-    )
+        apv_df["f_temp"] = apv_df["t_air"].apply(
+            lambda t_air: self.temp(t_air, t_opt, t_base)
+        )
 
-    apv_df['f_heat'] = apv_df['t_air'].apply(
-        lambda t_air: heat(t_air, t_heat, t_extreme)
-    )
+        apv_df["f_heat"] = apv_df["t_air"].apply(
+            lambda t_air: self.heat(t_air, t_heat, t_extreme)
+        )
 
-    def heat(t_air, t_heat, t_extreme):
-        """ Heat stress effect on plant growth (SIMPLE) [-] """
+    def heat(self, t_air, t_heat, t_extreme):
+        """Heat stress effect on plant growth (SIMPLE) [-]"""
         if t_air <= t_heat:
             f_heat = 1
         elif t_heat < t_air <= t_extreme:
@@ -203,14 +231,11 @@ class Crop(Converter, Facade):
             f_heat = 0
         return f_heat
 
-
     def build_solph_components(self):
         """ """
         # assign the air temperature and solar irradiance
         t_air_values = self.t_air
         ghi_values = self.ghi
-
-
 
         # calculates the crop growth factors
         pv_tf_values = []
