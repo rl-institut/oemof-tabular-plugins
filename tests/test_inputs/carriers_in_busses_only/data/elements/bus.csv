@@ -1,0 +1,6 @@
+name;type;balanced;carrier
+seawater-bus;bus;True;seawater
+ac-elec-bus;bus;True;electricity
+dc-elec-bus;bus;True;electricity
+permeate-bus;bus;True;water
+brine-bus;bus;True;brine
