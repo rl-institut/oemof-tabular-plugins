@@ -1,22 +1,31 @@
 from dataclasses import field
 from typing import Sequence, Union
 
+import numpy as np
+import pandas as pd
+
 from oemof.solph._plumbing import sequence
 from oemof.solph.buses import Bus
 from oemof.solph.components import Converter
 from oemof.solph.flows import Flow
 
-from oemof.tabular._facade import Facade, dataclass_facade
+import dataclasses
+from oemof.tabular._facade import dataclass_facade, Facade
+from oemof.tabular.facades import Conversion
+from oemof_tabular_plugins.wefe.global_specs.crops import crop_dict
 
 
 @dataclass_facade
-class Crop(Converter, Facade):
+# @dataclasses.dataclass(unsafe_hash=False, frozen=False, eq=False)
+class SimpleCrop(Converter, Facade):
     r"""Crop Model Converter with one input and one output. The crop growth factor
     is calculated out drought, heat, temperature, and water availabilty impact
      and considered for biomass production calculation.
 
     Parameters
     ----------
+    crop_type: str
+        the name of crop as defined in global_specs/crops.py
     from_bus: oemof.solph.Bus
         An oemof bus instance where the PV panel unit is connected to with
         its input.
@@ -45,6 +54,23 @@ class Crop(Converter, Facade):
     output_parameters: dict (optional)
         Set parameters on the output edge of the conversion unit
          (see oemof.solph for more information on possible parameters)
+
+    ghi: time series
+        Global horizontal irradiance
+    et_0: time series
+        potential evapotranspiration [m³]
+
+    t_air: time series
+        Ambient air temperature
+
+    vwc: time series
+        the voluemtric water content (vwc) in the root zone depth in m³; metric to express soil moisture
+
+
+    SHOULD INCLUDE FUNCTIONS AND EXAMPLE HERE
+
+    # TODO these parameters below are most likely provided by crop_dict
+
     light_saturation_point: numeric
         [lux]
     HI: numeric
@@ -69,187 +95,200 @@ class Crop(Converter, Facade):
         sensitivity of RUE to the ARID index for specific plant (simple crop model)
     rzd: numeric
         root zone depth [m]
-    t_air: time series
-        Ambient air temperature
-    vwc: time series
-        the voluemtric water content (vwc) in the root zone depth in m³; metric to express soil moisture
-    ghi: time series
-        Global horizontal irradiance
-    et_0: time series
-        potential evapotranspiration [m³]
-
-    SHOULD INCLUDE FUNCTIONS AND EXAMPLE HERE
 
     """
 
-    def _crop_production(self, crop_dict, crop_df):
+    from_bus: Bus
+
+    to_bus: Bus
+
+    carrier: str
+
+    tech: str
+
+    capacity: float = None
+
+    marginal_cost: float = 0
+
+    carrier_cost: float = 0
+
+    capacity_cost: float = None
+
+    expandable: bool = False
+
+    capacity_potential: float = float("+inf")
+
+    capacity_minimum: float = None
+
+    input_parameters: dict = field(default_factory=dict)
+
+    output_parameters: dict = field(default_factory=dict)
+
+    crop_type: str = ""
+
+    t_air: Union[float, Sequence[float]] = None
+
+    ghi: Union[float, Sequence[float]] = None
+
+    et_0: Union[float, Sequence[float]] = None
+
+    vwc: Union[float, Sequence[float]] = None
+
+    sowing_date: str = ""  # TODO check for dates formats YYYY-MM-DD
+    harvest_date: str = ""
+
+    # def __init__(self,crop_type, t_air, ghi, et_0, vwc, sowing_date,harvest_date,*args, **kwargs):
+    #
+    #     super().__init__(*args,**kwargs)
+    #     self.crop_type=crop_type
+    #     self.t_air =t_air
+    #     self.ghi = ghi
+    #     self.et_0 = et_0
+    #     self.vwc = vwc
+    #     self.sowing_date=sowing_date
+    #     self.harvest_date=harvest_date
+
+    @classmethod
+    def processing_raw_inputs(self, resource, results_df):
+        # function to apply on df from above
+
+        return results_df
+
+    # @classmethod
+    # def validate_datapackage(self, resource):
+    #     # modify the resource (datapackage.resource)
+    #     # should it return the resource?
+    #     pass
+    def get_crop_param(self, param_name):
+        return crop_dict[self.crop_type][param_name]
+
+    # efficiency equals biomass production factor calculate in the facade crop.py; caapcity equals area [m²]
+
+    def calc_te(self, t_air, t_opt, t_base, rue, **kwargs):
+        r"""
+        Calculates the temperature on the biomass rate
+        ----
+        Parameters
+        ----------
+        t_air: ambient temperature as pd.series or list
+        t_opt: optimum temperature for biomass growth
+        t_base: base temperature for biomass growth
+        rue: Radiation use efficiency (above ground only and without respiration
+        c_wh_to_mj: conversion factor Watt Hours (WH) to Mega Joules (MJ)
+        Returns
+        -------
+        te : list of numerical values:
+             temperature coefficients for calculating biomass rate
+
         """
-        Calculate geometry parameters, performance indicators and full-year hourly conversion factor time series
+        # Introduce conversion factor Watt Hours (WH) to Mega Joules (MJ)
+        c_wh_to_mj = 3.6 * 10 ** (-3)
+        # Check if input arguments have proper type and length
+        if not isinstance(t_air, (list, pd.Series)):
+            t_air = [t_air]
+            print("Argument 'temp' is not of type list or pd.Series!")
+        te = []  # creating a list
+        # Calculate te
+        for t in t_air:
+            if t < t_base:
+                x = 0
+                te.append(x)
+
+            elif t_base <= t <= t_opt:
+                x = (t - t_base) / (t_opt - t_base) * rue * c_wh_to_mj
+                te.append(x)
+
+            elif t > t_opt:
+                x = 1 * rue * c_wh_to_mj
+                te.append(x)
+        return np.array(te)
+
+    def calc_arid(self, et_o, vwc, s_water, rzd, **kwargs):
+        r"""
+        Calculates the soil water availability impact on the biomass rate
+        arid factor derived from simple crop model and Woli et al. (2012), divided by 24 to transform to hourly values
+        ----
+        Parameters
+        ----------
+        et_o: potential evapotranspiration
+        vwc: volumetric water content
+        rzd: root zone depth
+
+        Returns
+        -------
+        arid : list of numerical values:
+             aridity factor affecting the biomass rate
+
         """
-        crop_type = crop_dict["crop_type"]
-        minimum_relative_yield = crop_dict["minimum_relative_yield"]
+        et_o = np.array(et_o)
+        vwc = np.array(vwc)
 
-        # ----- Crop specific growth parameters from crop_dict -----
-        t_base = crop_dict[crop_type][
-            "t_base"
-        ]  # minimum temperature for growth, impaired growth
-        t_opt = crop_dict[crop_type]["t_opt"]  # optimal temperature for growth
-        t_heat = crop_dict[crop_type]["t_max"]  # heat stress begins, impaired growth
-        t_extreme = crop_dict[crop_type]["t_ext"]  # extreme heat stress, no growth
-        t_sum = crop_dict[crop_type]["t_sum"]  # cumulative temperature until harvest
-        i50a = crop_dict[crop_type]["i50a"]
-        i50b = crop_dict[crop_type]["i50b"]
-        i50maxh = crop_dict[crop_type]["i50maxh"]
-        i50maxw = crop_dict[crop_type]["i50maxw"]
-        s_water = crop_dict[crop_type]["s_water"]
-        f_solar_max = crop_dict[crop_type]["f_solar_max"]
-        rue = crop_dict[crop_type]["rue"]
-        # Convert Radiation Use Efficiency from g/(MJ*m²*h) to g/(W*m²)
-        rue *= 3.6e-3
+        # Calculate arid
 
-        # ----- Crop specific soil parameters from soil_dict -----
-        wuc = 0.096  # alpha      ## water uptake constant
-        rzd = soil_dict[crop_type]["rzd"]  # zeta       ## root zone depth [mm]
-        awc = soil_dict[crop_type]["rzd"]  # theta_m    ## water holding capacity
-        rcn = soil_dict[crop_type]["rzd"]  # eta        ## runoff curve number
-        ddc = soil_dict[crop_type]["rzd"]  # beta       ## deep drainage coefficient
-
-    # TODO @PF do we need this kind of data type determination here?
-    def development_base_year(self, date, sowing_date, t_air, t_base):
-        """
-        Cumulative temperature experienced by plant as measure for plant development (SIMPLE) [K]
-        from sowing_date until end of the same year (base year)
-        """
-        if date < sowing_date:
-            delta_cum_temp = 0
-        elif t_air > t_base:
-            delta_cum_temp = (
-                t_air - t_base
-            ) / 24  # SIMPLE crop model has daily temp values, convert to hourly
-        else:
-            delta_cum_temp = 0
-        return delta_cum_temp
-
-    def development_extension(self, date, harvest_date, t_air, t_base):
-        """
-        Additional cumulative temperature experienced by plant as measure for plant development
-        if growth extends to following year (harvest_date < sowing_date if year ignored) [K]
-        """
-        if date > harvest_date:
-            delta_cum_temp = 0
-        elif t_air > t_base:
-            delta_cum_temp = (
-                t_air - t_base
-            ) / 24  # SIMPLE crop model has daily temp values, convert to hourly
-        else:
-            delta_cum_temp = 0
-        return delta_cum_temp
-
-    def development_cache(
-        self, date, harvest_date, cum_temp_base_cache, cum_temp_ext_cache
-    ):
-        """
-        Cumulative temperature experienced in the base year cached for extension in the following year,
-        cumulative temperature experienced in the following year until harvest_date removed afterwards [K]
-        """
-        if date <= harvest_date:
-            delta_cum_temp = cum_temp_base_cache
-        else:
-            delta_cum_temp = -cum_temp_ext_cache
-        return delta_cum_temp
-
-    def custom_cultivation_period(self, df, harvest_date):
-        """Calculates new t_sum for plant growth curve if custom harvest_date is given [K]"""
-        if harvest_date in df.index:
-            return df.loc[harvest_date, "cum_temp"]
-
-    def temp(self, t_air, t_opt, t_base):
-        """Temperature effect on plant growth (SIMPLE) [-]"""
-        if t_air < t_base:
-            f_temp = 0
-        elif t_base <= t_air < t_opt:
-            f_temp = (t_air - t_base) / (t_opt - t_base)
-        else:
-            f_temp = 1
-        return f_temp
-
-    def unknown_method(
-        self, apv_df, t_base, harvest_date, sowing_date, custom_harvest, t_sum
-    ):
-        # TODO some variable are defined in other methods, where is this code supposed to be ran?
-        apv_df["cum_temp_base_year"] = apv_df.apply(
-            lambda row: self.development_base_year(
-                row.name, sowing_date, row["t_air"], t_base
-            ),
-            axis=1,
-        ).cumsum()
-
-        apv_df["cum_temp_extension"] = apv_df.apply(
-            lambda row: self.development_extension(
-                row.name, harvest_date, row["t_air"], t_base
-            ),
-            axis=1,
-        ).cumsum()
-
-        cum_temp_base_cache = apv_df["cum_temp_base_year"].iat[-1]
-        cum_temp_ext_cache = apv_df["cum_temp_extension"].iat[-1]
-
-        apv_df["cum_temp_cache"] = apv_df.apply(
-            lambda row: self.development_cache(
-                row.name, harvest_date, cum_temp_base_cache, cum_temp_ext_cache
-            ),
-            axis=1,
+        # TODO why the loop as wi is constantly overwritten ...?
+        wi = []
+        for e in et_o:
+            for m in vwc:
+                wi = 1 - s_water * (1 - min(abs(e), (0.096 / 24) * m * rzd) / abs(e))
+        # TODO I think this should read like that
+        wi = 1 - s_water * (
+            1 - np.minimum(abs(et_o), (0.096 / 24) * vwc * rzd) / abs(et_o)
         )
+        return wi
 
-        apv_df["cum_temp"] = (
-            apv_df["cum_temp_base_year"]
-            + apv_df["cum_temp_extension"]
-            + apv_df["cum_temp_cache"]
-        )
+    def calc_hi(self, t_max, t_opt, t_ext, **kwargs):
+        r"""
+        Calculates the heat impact on the biomass rate
+        ----
+        Parameters
+        ----------
+        t_max: daily maximum temperature as pd.series or list
+        t_ext: threshold temperature when biomass growth rate starts to be reduced by heat stress
+        t_opt: optimum temperature for biomass growth
+        Returns
+        -------
+        hi : list of numerical values:
+             temperature coefficients for calculating biomass rate
 
-        t_sum = (
-            self.custom_cultivation_period(apv_df, harvest_date)
-            if custom_harvest
-            else t_sum
-        )
+        """
 
-        apv_df["f_temp"] = apv_df["t_air"].apply(
-            lambda t_air: self.temp(t_air, t_opt, t_base)
-        )
+        # Check if input arguments have proper type and length
+        if not isinstance(t_max, (list, pd.Series)):
+            t_max = [t_max]
+            # raise TypeError("Argument t_max is not of type list or pd.Series!")
+        hi = []  # creating a list
+        # Calculate te
+        for t in t_max:
+            if t <= t_opt:
+                x = 1
+                hi.append(x)
 
-        apv_df["f_heat"] = apv_df["t_air"].apply(
-            lambda t_air: self.heat(t_air, t_heat, t_extreme)
-        )
+            elif t_opt < t <= t_ext:
+                x = (t - t_opt) / (t_ext - t_opt)
+                hi.append(x)
 
-    def heat(self, t_air, t_heat, t_extreme):
-        """Heat stress effect on plant growth (SIMPLE) [-]"""
-        if t_air <= t_heat:
-            f_heat = 1
-        elif t_heat < t_air <= t_extreme:
-            f_heat = 1 - (t_air - t_heat) / (t_extreme - t_heat)
-        else:
-            f_heat = 0
-        return f_heat
+            elif t > t_ext:
+                x = 0
+                hi.append(x)
+
+        return np.array(hi)
+
+    @property
+    def efficiency(self):
+
+        crop_params = crop_dict[self.crop_type]
+        te = self.calc_te(self.t_air, **crop_params)
+        arid = self.calc_arid(self.et_0, self.vwc, **crop_params)
+        hi = self.calc_hi(**crop_params)
+        return te * arid * hi
 
     def build_solph_components(self):
         """ """
-        # assign the air temperature and solar irradiance
-        t_air_values = self.t_air
-        ghi_values = self.ghi
-
-        # calculates the crop growth factors
-        pv_tf_values = []
-        for t_air, ghi in zip(t_air_values, ghi_values):
-            t_c = t_air + ((self.noct - 20) / 800) * ghi
-            pv_tf = (
-                self.p_rpv * (1 / self.r_ref) * (1 + self.n_t * (t_c - self.t_c_ref))
-            )
-            pv_tf_values.append(pv_tf)
 
         self.conversion_factors.update(
             {
                 self.from_bus: sequence(1),
-                self.to_bus: sequence(pv_tf_values),
+                self.to_bus: sequence(self.efficiency),
             }
         )
 
@@ -272,12 +311,5 @@ class Crop(Converter, Facade):
             }
         )
 
-        def processing_raw_inputs(self, resource, results_df):
-            # function to apply on df from above
 
-            return results_df
 
-        def validate_datapackage(self, resource):
-            # modify the resource (datapackage.resource)
-            # should it return the resource?
-            pass

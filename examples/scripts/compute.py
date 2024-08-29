@@ -11,7 +11,7 @@ from oemof.tabular import datapackage  # noqa
 from oemof.tabular.facades import TYPEMAP
 
 
-from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO
+from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO, SimpleCrop
 
 
 # -------------- RELEVANT PATHS --------------
@@ -53,7 +53,7 @@ moo = True
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
 TYPEMAP["pv-panel"] = PVPanel
 TYPEMAP["mimo"] = MIMO
-#TYPEMAP["crop"] = CROP
+TYPEMAP["crop"] = SimpleCrop
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
