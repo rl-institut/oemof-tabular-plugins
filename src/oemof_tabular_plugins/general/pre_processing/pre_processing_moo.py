@@ -96,7 +96,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
     # ---------------- Possible SCENARIOS ----------------
 
-    if element in ["bus.csv", "load.csv", "excess.csv"]:
+    if element in ["bus.csv", "load.csv", "excess.csv", "crop.csv"]:
         scenario = NO_MOO_VARIABLE_SCEN
     elif element in ["conversion.csv", "mimo.csv", "storage.csv", "volatile.csv"]:
         scenario = MOO_VARIABLE_SCEN
