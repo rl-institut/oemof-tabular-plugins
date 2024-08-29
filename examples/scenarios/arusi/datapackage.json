@@ -233,7 +233,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -369,25 +369,25 @@
                     {
                         "fields": "vwc",
                         "reference": {
-                            "resource": "test"
+                            "resource": "volatile_profile"
                         }
                     },
                     {
                         "fields": "ghi",
                         "reference": {
-                            "resource": "test"
+                            "resource": "volatile_profile"
                         }
                     },
                     {
                         "fields": "t_air",
                         "reference": {
-                            "resource": "test"
+                            "resource": "volatile_profile"
                         }
                     },
                     {
                         "fields": "et_0",
                         "reference": {
-                            "resource": "test"
+                            "resource": "volatile_profile"
                         }
                     }
                 ]
@@ -1101,9 +1101,9 @@
             }
         },
         {
-            "path": "data/sequences/test.csv",
+            "path": "data/sequences/volatile_profile.csv",
             "profile": "tabular-data-resource",
-            "name": "test",
+            "name": "volatile_profile",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
@@ -1147,26 +1147,6 @@
                     {
                         "name": "windspeed",
                         "type": "number",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ]
-            }
-        },
-        {
-            "path": "data/sequences/volatile_profile.csv",
-            "profile": "tabular-data-resource",
-            "name": "volatile_profile",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "timeindex;pv-profile;solar-irradiance;wind;ac-discharge-profile;et_0;vwz;",
-                        "type": "string",
                         "format": "default"
                     }
                 ],

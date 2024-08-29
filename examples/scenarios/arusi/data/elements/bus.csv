@@ -8,3 +8,4 @@ solar-bus;bus;True;energy
 wind-bus;bus;True;energy
 ac-discharge-bus;bus;True;water
 diesel-bus;bus;True;energy
+banana-bus;bus;True;banana
