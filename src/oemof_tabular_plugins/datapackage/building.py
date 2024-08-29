@@ -121,6 +121,38 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
     return r
 
 
+def check_profiles(package):
+    """Check that values of foreign keys to resources in data/sequences have a match in target sequence headers
+    Parameters
+    ----------
+    package: datapackage instance
+    Returns
+    -------
+    None, raises an error if a value assigned under the foreign key field does not match target sequence headers
+
+    """
+    for r in package.resources:
+        fkeys = r.descriptor["schema"].get("foreignKeys", [])
+        if fkeys:
+
+            data = pd.DataFrame.from_records(r.read(keyed=True))
+            for foreign_key in fkeys:
+                fk_field = foreign_key["fields"]
+                fk_target = foreign_key["reference"]["resource"]
+                if fk_target != "bus":
+                    for fk_value in data[fk_field].dropna().unique():
+                        sequence_descriptor = package.get_resource(fk_target).descriptor
+                        sequence_headers = [
+                            f"{f['name']}"
+                            for f in sequence_descriptor["schema"].get("fields", [])
+                        ]
+                        if fk_value not in sequence_headers:
+                            raise ValueError(
+                                f"The value {fk_value} of the field {fk_field} within the resource {r.name} does not match the headers of its resource within '{sequence_descriptor['path']}'\n"
+                                f"possible values for the field {fk_field} are: {', '.join(sequence_headers)}"
+                            )
+
+
 def infer_package_foreign_keys(package, typemap=None):
     """Infer the foreign_keys from data/elements and data/sequences and update meta data
 
@@ -280,3 +312,4 @@ def infer_metadata_from_data(
     p.commit()
     p.save(os.path.join(path, metadata_filename))
     infer_busses_carrier(p)
+    check_profiles(p)
