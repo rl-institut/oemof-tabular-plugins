@@ -2,6 +2,7 @@ import os
 import warnings
 import logging
 import pandas as pd
+from tableschema.exceptions import CastError
 from oemof.tabular.datapackage import building
 from datapackage import Package
 
@@ -79,7 +80,12 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
 
     """
     r = resource
-    data = pd.DataFrame.from_records(r.read(keyed=True))
+    try:
+        data = pd.DataFrame.from_records(r.read(keyed=True))
+    except CastError:
+        raise ValueError(
+            f"Error while parsing the resource '{r.descriptor.get('path', r.name)}'. Check that all lines in the file have same number of records. Sometimes it might also a ',' instead of ';' as separator or vice versa."
+        )
     # TODO not sure this should be set here
     r.descriptor["schema"]["primaryKey"] = "name"
     if "foreignKeys" not in r.descriptor["schema"]:
