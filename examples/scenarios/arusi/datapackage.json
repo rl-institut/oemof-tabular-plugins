@@ -188,6 +188,212 @@
             }
         },
         {
+            "path": "data/elements/crop.csv",
+            "profile": "tabular-data-resource",
+            "name": "crop",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_potential",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_minimum",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "marginal_cost",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier_cost",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "efficiency",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "from_bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "to_bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "crop_type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "sowing_date",
+                        "type": "date",
+                        "format": "default"
+                    },
+                    {
+                        "name": "harvest_date",
+                        "type": "date",
+                        "format": "default"
+                    },
+                    {
+                        "name": "vwc",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "land_requirement_factor",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghg_emission_factor",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_footprint_factor",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "land_requirement",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghg_emissions",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_footprint",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_air",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "et_0",
+                        "type": "string",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "from_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "to_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "vwc",
+                        "reference": {
+                            "resource": "test"
+                        }
+                    },
+                    {
+                        "fields": "ghi",
+                        "reference": {
+                            "resource": "test"
+                        }
+                    },
+                    {
+                        "fields": "t_air",
+                        "reference": {
+                            "resource": "test"
+                        }
+                    },
+                    {
+                        "fields": "et_0",
+                        "reference": {
+                            "resource": "test"
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "path": "data/elements/dispatchable.csv",
             "profile": "tabular-data-resource",
             "name": "dispatchable",
@@ -292,12 +498,6 @@
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
-                            "resource": "volatile_profile"
                         }
                     }
                 ]
@@ -866,12 +1066,6 @@
                             "resource": "bus",
                             "fields": "name"
                         }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
-                            "resource": "volatile_profile"
-                        }
                     }
                 ]
             }
@@ -907,9 +1101,9 @@
             }
         },
         {
-            "path": "data/sequences/volatile_profile.csv",
+            "path": "data/sequences/test.csv",
             "profile": "tabular-data-resource",
-            "name": "volatile_profile",
+            "name": "test",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
@@ -921,23 +1115,58 @@
                         "format": "default"
                     },
                     {
-                        "name": "pv-profile",
+                        "name": "pev",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "solar-irradiance",
+                        "name": "vwc_rzd",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "wind",
+                        "name": "ghi",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "ac-discharge-profile",
+                        "name": "t_air",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "e",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tp",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "windspeed",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        },
+        {
+            "path": "data/sequences/volatile_profile.csv",
+            "profile": "tabular-data-resource",
+            "name": "volatile_profile",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "timeindex;pv-profile;solar-irradiance;wind;ac-discharge-profile;et_0;vwz;",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
