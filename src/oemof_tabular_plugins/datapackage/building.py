@@ -9,6 +9,10 @@ from datapackage import Package
 # from oemof.tabular.config import config
 import oemof_tabular_plugins.datapackage.config as config
 
+PROFILE_FIELDS = ["profile"]
+
+STR_FIELDS = ["name", "carrier", "tech", "type", "region", "crop_type"]
+
 
 def map_sequence_profiles_to_resource_name(p, excluded_profiles=("timeindex",)):
     """Look in every resource which is a sequence and map each of its fields to itself
@@ -82,9 +86,8 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
         r.descriptor["schema"]["foreignKeys"] = []
 
     for field in r.schema.fields:
-        if field.type == "string":
+        if field.type == "string" and field.name not in STR_FIELDS:
             for potential_fk in data[field.name].dropna().unique():
-
                 if potential_fk in sequences_profiles_to_resource:
                     # this is actually a wrong format and should be with a "fields" field under the "reference" fields
 
@@ -97,13 +100,22 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
 
                     if fk not in r.descriptor["schema"]["foreignKeys"]:
                         r.descriptor["schema"]["foreignKeys"].append(fk)
-                if potential_fk in busses:
+                elif potential_fk in busses:
                     fk = {
                         "fields": field.name,
                         "reference": {"resource": "bus", "fields": "name"},
                     }
                     if fk not in r.descriptor["schema"]["foreignKeys"]:
                         r.descriptor["schema"]["foreignKeys"].append(fk)
+                else:
+                    # check for specific fields which are meant to link to profile
+                    possible_field_values = [
+                        f"'{seq}'" for seq in sequences_profiles_to_resource
+                    ]
+                    logging.warning(
+                        f"The value '{potential_fk}' of the field '{field.name}' of the resource '{r.name}' does not match the headers of any sequences. "
+                        f"If this field is meant to be a foreign key to a sequence, then possible values are: {','.join(possible_field_values)}"
+                    )
 
     r.commit()
     return r
