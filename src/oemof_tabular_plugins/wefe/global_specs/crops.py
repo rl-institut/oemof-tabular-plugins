@@ -1,3 +1,5 @@
+# Source: https://doi.org/10.1016/j.eja.2019.01.009
+
 crop_dict = {
     "banana": {
         "t_sum": 6600,
@@ -6,7 +8,7 @@ crop_dict = {
         "i50b": 400,
         "t_base": 10,
         "t_opt": 25,
-        "rue": 0.80,
+        "rue": 0.80,  # g/MJ/m²
         "i50maxh": 100,
         "i50maxw": 5,
         "t_max": 34,
@@ -14,7 +16,7 @@ crop_dict = {
         "s_co2": 0.07,
         "s_water": 2.5,
         "f_solar_max": 0.95,
-        "rzd": 0.4,  # TODO absolutely not sure of this value
+        "rzd": 1.5,  # TODO absolutely not sure of this value maybe in mm?
     },
     "cassava": {
         "t_sum": 5400,
