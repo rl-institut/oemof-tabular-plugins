@@ -164,7 +164,7 @@ class SimpleCrop(Converter, Facade):
 
     # efficiency equals biomass production factor calculate in the facade crop.py; caapcity equals area [m²]
 
-    def calc_te(self, t_air, t_opt, t_base, rue, **kwargs):
+    def calc_Ftemp(self, t_air, t_opt, t_base, **kwargs):
         r"""
         Calculates the temperature on the biomass rate
         ----
@@ -173,19 +173,21 @@ class SimpleCrop(Converter, Facade):
         t_air: ambient temperature as pd.series or list
         t_opt: optimum temperature for biomass growth
         t_base: base temperature for biomass growth
-        rue: Radiation use efficiency (above ground only and without respiration
-        c_wh_to_mj: conversion factor Watt Hours (WH) to Mega Joules (MJ)
+
         Returns
         -------
         te : list of numerical values:
              temperature coefficients for calculating biomass rate
 
+        Notes
+        -----
+        Corresponds to Fig 1.(a) of https://doi.org/10.1016/j.eja.2019.01.009
+
+
         """
-        # Introduce conversion factor Watt Hours (WH) to Mega Joules (MJ)
-        c_wh_to_mj = 3.6 * 10 ** (-3)
+
         # Check if input arguments have proper type and length
         if not isinstance(t_air, (list, pd.Series)):
-            t_air = [t_air]
             print("Argument 'temp' is not of type list or pd.Series!")
         te = []  # creating a list
         # Calculate te
@@ -195,15 +197,15 @@ class SimpleCrop(Converter, Facade):
                 te.append(x)
 
             elif t_base <= t <= t_opt:
-                x = (t - t_base) / (t_opt - t_base) * rue * c_wh_to_mj
+                x = (t - t_base) / (t_opt - t_base)
                 te.append(x)
 
             elif t > t_opt:
-                x = 1 * rue * c_wh_to_mj
+                x = 1
                 te.append(x)
         return np.array(te)
 
-    def calc_arid(self, et_o, vwc, s_water, rzd, **kwargs):
+    def calc_Fwater(self, et_o, vwc, s_water, **kwargs):
         r"""
         Calculates the soil water availability impact on the biomass rate
         arid factor derived from simple crop model and Woli et al. (2012), divided by 24 to transform to hourly values
@@ -212,31 +214,31 @@ class SimpleCrop(Converter, Facade):
         ----------
         et_o: potential evapotranspiration
         vwc: volumetric water content
-        rzd: root zone depth
+        s_water: Sensitivity of RUE (or harvest index) to drought stress (ARID index)
 
         Returns
         -------
         arid : list of numerical values:
              aridity factor affecting the biomass rate
 
+        Notes
+        -----
+        Corresponds to Fig 1.(d) of https://doi.org/10.1016/j.eja.2019.01.009
+
+
         """
-        et_o = np.array(et_o)
-        vwc = np.array(vwc)
 
-        # Calculate arid
+        def arid(et_o, vwc):
+            et_o = np.array(et_o)
+            vwc = np.array(vwc)
 
-        # TODO why the loop as wi is constantly overwritten ...?
-        wi = []
-        for e in et_o:
-            for m in vwc:
-                wi = 1 - s_water * (1 - min(abs(e), (0.096 / 24) * m * rzd) / abs(e))
-        # TODO I think this should read like that
-        wi = 1 - s_water * (
-            1 - np.minimum(abs(et_o), (0.096 / 24) * vwc * rzd) / abs(et_o)
-        )
-        return wi
+            # Calculate arid
+            wi = 1 - np.minimum(abs(et_o), 0.096 * vwc) / abs(et_o)
+            return wi
 
-    def calc_Fheat(t_air, t_max, t_ext, **kwargs):
+        return 1 - s_water * arid(et_o, vwc)
+
+    def calc_Fheat(self, t_air, t_max, t_ext, **kwargs):
         r"""
         Calculates the heat impact on the biomass rate
         ----
@@ -249,6 +251,10 @@ class SimpleCrop(Converter, Facade):
         -------
         hi : list of numerical values:
              temperature coefficients for calculating biomass rate
+
+        Notes
+        -----
+        Corresponds to Fig 1.(b) of https://doi.org/10.1016/j.eja.2019.01.009
 
         """
 
@@ -311,11 +317,19 @@ class SimpleCrop(Converter, Facade):
     @property
     def efficiency(self):
 
+        # Conversion factor Watt Hours (WH) to Mega Joules (MJ)
+        c_wh_to_mj = 3.6e-3
         crop_params = crop_dict[self.crop_type]
-        te = self.calc_te(self.t_air, **crop_params)
-        arid = self.calc_arid(self.et_0, self.vwc, **crop_params)
-        hi = self.calc_Fheat(t_air=self.t_air, **crop_params)
-        return te * arid * hi
+        fTEMP = self.calc_Ftemp(self.t_air, **crop_params)
+        fWATER = self.calc_Fwater(self.et_0, self.vwc, **crop_params)
+        fHEAT = self.calc_Fheat(t_air=self.t_air, **crop_params)
+
+        rue = self.get_crop_param("rue")
+        hi = self.get_crop_param("hi")
+
+        return (
+            hi * rue * fTEMP * np.minimum(fWATER, fHEAT) * c_wh_to_mj
+        )  # * fSOLAR * fCO2
 
     def build_solph_components(self):
         """ """
@@ -323,7 +337,7 @@ class SimpleCrop(Converter, Facade):
         self.conversion_factors.update(
             {
                 self.from_bus: sequence(1),
-                self.to_bus: sequence(self.efficiency),
+                self.to_bus: sequence(abs(self.efficiency)),
             }
         )
 
