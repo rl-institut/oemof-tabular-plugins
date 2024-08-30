@@ -1,0 +1,2 @@
+name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;carrier_cost;profile;expandable
+solar-resource;dispatchable;energy;source;100;0;solar-bus;0.0;0;ghi;False
