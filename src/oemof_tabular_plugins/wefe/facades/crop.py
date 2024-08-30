@@ -236,15 +236,15 @@ class SimpleCrop(Converter, Facade):
         )
         return wi
 
-    def calc_hi(self, t_max, t_opt, t_ext, **kwargs):
+    def calc_Fheat(t_air, t_max, t_ext, **kwargs):
         r"""
         Calculates the heat impact on the biomass rate
         ----
         Parameters
         ----------
-        t_max: daily maximum temperature as pd.series or list
-        t_ext: threshold temperature when biomass growth rate starts to be reduced by heat stress
-        t_opt: optimum temperature for biomass growth
+        t_air: Hourly timeseries of air temperature as pd.series or list
+        t_max: Threshold temperature to start accelerating senescence from heat stress (°C)
+        t_ext: Threshold temperature when biomass growth rate starts to be reduced by heat stress (°C)
         Returns
         -------
         hi : list of numerical values:
@@ -252,26 +252,61 @@ class SimpleCrop(Converter, Facade):
 
         """
 
-        # Check if input arguments have proper type and length
-        if not isinstance(t_max, (list, pd.Series)):
-            t_max = [t_max]
-            # raise TypeError("Argument t_max is not of type list or pd.Series!")
-        hi = []  # creating a list
-        # Calculate te
-        for t in t_max:
-            if t <= t_opt:
+        def paper_function(t_max, t_heat, t_ext):
+            """function witin https://doi.org/10.1016/j.eja.2019.01.009"""
+            if t_max <= t_heat:
                 x = 1
-                hi.append(x)
-
-            elif t_opt < t <= t_ext:
-                x = (t - t_opt) / (t_ext - t_opt)
-                hi.append(x)
-
-            elif t > t_ext:
+            elif t_heat < t_max <= t_ext:
+                x = 1 - (t_max - t_heat) / (t_ext - t_heat)
+            elif t_max > t_ext:
                 x = 0
-                hi.append(x)
+            return x
 
-        return np.array(hi)
+        # Check if input arguments have proper type and length
+        if not isinstance(t_air, (list, pd.Series, np.ndarray)):
+            raise TypeError("Argument t_air is not of type list or pd.Series!")
+
+        n_timesteps = len(t_air)
+
+        if n_timesteps == 0:
+            raise ValueError("Argument t_air is empty")
+
+        n_hours_in_day = 24
+
+        n_days, n_hours = np.divmod(n_timesteps, n_hours_in_day)
+
+        # in the paper they provide T_heat as T_max in the table 1a
+        t_heat = t_max
+        hi = []  # creating a list
+
+        if n_days == 0:
+            # there is less than a day, returing same value n_timesteps times
+            n_timesteps = n_hours
+            t_max = np.max(t_air)
+            hi.append(np.ones(n_timesteps) * paper_function(t_max, t_heat, t_ext))
+        else:
+            # there is one day or more
+            if n_hours != 0:
+                N = n_days + 1
+            else:
+                N = n_days
+            for i in range(0, N):
+                if i == n_days:
+                    if n_hours != 0:
+                        # last day is not a full day
+                        n_timesteps = n_hours
+                    else:
+                        # last day is a full day
+                        n_timesteps = n_hours_in_day
+                else:
+                    # it is a full day
+                    n_timesteps = n_hours_in_day
+                t_max = np.max(
+                    t_air[(i * n_hours_in_day) : (i * n_hours_in_day + n_timesteps)]
+                )
+                hi.append(np.ones(n_timesteps) * paper_function(t_max, t_heat, t_ext))
+
+        return np.hstack(hi)
 
     @property
     def efficiency(self):
@@ -279,7 +314,7 @@ class SimpleCrop(Converter, Facade):
         crop_params = crop_dict[self.crop_type]
         te = self.calc_te(self.t_air, **crop_params)
         arid = self.calc_arid(self.et_0, self.vwc, **crop_params)
-        hi = self.calc_hi(**crop_params)
+        hi = self.calc_Fheat(t_air=self.t_air, **crop_params)
         return te * arid * hi
 
     def build_solph_components(self):
@@ -310,6 +345,3 @@ class SimpleCrop(Converter, Facade):
                 )
             }
         )
-
-
-
