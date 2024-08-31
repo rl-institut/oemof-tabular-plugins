@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
     "name": "aiwa",
-    "oemof_tabular_version": "0.0.6dev",
+    "oemof_tabular_version": "0.0.5",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -218,12 +218,12 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -238,7 +238,7 @@
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -278,7 +278,7 @@
                     },
                     {
                         "name": "water_footprint",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
@@ -499,7 +499,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "conversion_factor_permeate-bus",
+                        "name": "conversion_factor_drinking-water-bus",
                         "type": "number",
                         "format": "default"
                     },
