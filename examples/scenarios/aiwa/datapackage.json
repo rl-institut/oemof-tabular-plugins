@@ -278,7 +278,7 @@
                     },
                     {
                         "name": "water_footprint",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -938,6 +938,11 @@
                     {
                         "name": "ac-discharge-profile",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "precipitation-profile",
+                        "type": "integer",
                         "format": "default"
                     }
                 ],

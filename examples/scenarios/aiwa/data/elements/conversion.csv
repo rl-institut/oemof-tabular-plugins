@@ -2,3 +2,4 @@ name;type;carrier;tech;capacity;capacity_potential;capacity_minimum;capacity_cos
 inverter;conversion;energy;inverter;0.0;;;1.976295800190575e-14;1.0695187165775402e-10;0.0;0.9;dc-elec-bus;ac-elec-bus;True;100.0;1.0;20.0;1.0;20;0;0;0;0
 pv-panel;conversion;energy;pv_panel;0.0;;;2.5207508678746197e-13;0.0;0.0;0.2;solar-bus;dc-elec-bus;True;1378.0;18.0;24.0;9.29;0;0;0;0;0
 wind-turbine;conversion;energy;energy-conversion;0.0;;;3.4635440003078824e-13;0.0;0.0;0.4;wind-bus;ac-elec-bus;True;2000.0;12.0;20.0;3.0;0;0;0;0;0
+rainwater-harvesting;conversion;water;rainwater-harvesting;0.0;;;2.807689337053629e-13;5.5555555555555555e-12;;0.95;precipitation-bus;service-water-bus;True;245.0;61.0;4.0;20.0;0;1;0;0;0

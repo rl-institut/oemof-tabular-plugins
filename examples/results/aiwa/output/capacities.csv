@@ -1,11 +1,10 @@
 bus,direction,asset,carrier,facade_type,Capacity,Storage Capacity,Expandable,Investments,Capacity Total
-ac-discharge-bus,out,ac-discharge,water,dispatchable,0.0,,0.0,,
 ac-elec-bus,in,battery-storage,electricity,storage,0.0,0.0,1.0,-0.0,0.0
 ac-elec-bus,in,elec-demand,electricity,load,,,,,
 ac-elec-bus,in,electricity-excess,electricity,excess,,,,,
 ac-elec-bus,in,sw-ro,electricity,ro,0.0,,1.0,,
-ac-elec-bus,out,backup-electricity-grid,electricity,dispatchable,0.0,,1.0,60.0,60.0
 ac-elec-bus,out,battery-storage,electricity,storage,0.0,0.0,1.0,-0.0,0.0
+ac-elec-bus,out,electricity-grid,electricity,dispatchable,0.0,,1.0,60.0,60.0
 ac-elec-bus,out,inverter,electricity,conversion,0.0,,1.0,-0.0,0.0
 ac-elec-bus,out,wind-turbine,electricity,conversion,0.0,,1.0,-0.0,0.0
 brine-bus,in,brine-excess,water,excess,,,,,
@@ -15,13 +14,17 @@ dc-elec-bus,out,#pv,electricity,volatile,0.0,,1.0,-0.0,0.0
 dc-elec-bus,out,pv-panel,electricity,conversion,0.0,,1.0,-0.0,0.0
 drinking-water-bus,in,drinking-water-demand,water,load,,,,,
 drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
+drinking-water-bus,out,bottled-water,water,dispatchable,0.0,,1.0,30.0,30.0
 drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
 drinking-water-bus,out,sw-ro,water,ro,0.0,,1.0,,
-drinking-water-bus,out,water-botellon,water,dispatchable,0.0,,1.0,30.0,30.0
+precipitation-bus,in,rainwater-harvesting,water,conversion,0.0,,1.0,,
+precipitation-bus,out,precipitation,water,dispatchable,0.0,,0.0,,
 seawater-bus,in,sw-ro,water,ro,0.0,,1.0,-0.0,0.0
 seawater-bus,out,seawater-source,water,dispatchable,0.0,,1.0,-0.0,0.0
 service-water-bus,in,service-water-demand,water,load,,,,,
 service-water-bus,in,service-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
+service-water-bus,out,condensed-water,water,dispatchable,0.0,,0.0,,
+service-water-bus,out,rainwater-harvesting,water,conversion,0.0,,1.0,-0.0,0.0
 service-water-bus,out,service-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
 service-water-bus,out,water-truck,water,dispatchable,0.0,,1.0,30.0,30.0
 solar-bus,in,pv-panel,energy,conversion,0.0,,1.0,,

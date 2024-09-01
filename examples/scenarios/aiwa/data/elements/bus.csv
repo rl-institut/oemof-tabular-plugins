@@ -5,6 +5,6 @@ dc-elec-bus;bus;True;electricity
 brine-bus;bus;True;water
 solar-bus;bus;True;energy
 wind-bus;bus;True;energy
-ac-discharge-bus;bus;True;water
 drinking-water-bus;bus;True;water
 service-water-bus;bus;True;water
+precipitation-bus;bus;True;water
