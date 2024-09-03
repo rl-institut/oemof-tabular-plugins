@@ -128,6 +128,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             water_footprint_factor = row["water_footprint_factor"]
 
             annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
+            print(f"capex: {capex}, lifetime: {lifetime}, wacc: {wacc}")
             moo_variable_capacity = (
                 carrier_cost / global_GDP
                 + annuity / global_GDP * wf_cost
