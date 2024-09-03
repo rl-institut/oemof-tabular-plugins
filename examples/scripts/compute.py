@@ -46,6 +46,7 @@ custom_attributes = [
     "land_requirement",
     "water_footprint",
     "ghg_emissions",
+    "resource_cost",
 ]
 # set whether the multi-objective optimization should be performed
 moo = True

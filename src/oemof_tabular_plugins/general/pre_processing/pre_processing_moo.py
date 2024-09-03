@@ -116,18 +116,23 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             capex = row["capex"]
             opex_fix = row["opex_fix"]
             lifetime = row["lifetime"]
-            #carrier_cost = row["carrier_cost"]
+            if "carrier_cost" in row:
+                carrier_cost = row["carrier_cost"]
+            elif "resource_cost" in row:
+                carrier_cost = row["resource_cost"]
+
             ghg_emission_factor = row["ghg_emission_factor"]
             land_requirement_factor = row["land_requirement_factor"]
             water_footprint_factor = row["water_footprint_factor"]
 
             annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
             moo_variable_capacity = (
-                annuity / global_GDP * wf_cost
+                carrier_cost / global_GDP
+                + annuity / global_GDP * wf_cost
                 + land_requirement_factor / global_land_surface * wf_lr
             )
             moo_variable_flow = (
-            ghg_emission_factor / global_GHG * wf_ghg
+                ghg_emission_factor / global_GHG * wf_ghg
                 + water_footprint_factor / total_renewable_water_resources * wf_wf
             )
 
