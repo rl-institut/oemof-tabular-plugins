@@ -116,10 +116,12 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             capex = row["capex"]
             opex_fix = row["opex_fix"]
             lifetime = row["lifetime"]
-            if "carrier_cost" in row:
-                carrier_cost = row["carrier_cost"]
-            elif "resource_cost" in row:
+            if "resource_cost" in row:
                 carrier_cost = row["resource_cost"]
+            else:
+                raise AttributeError(
+                    f"The column 'resource_cost' is missing from component {row_name} within resource '{element}' and is needed for multi-objective cost calculation. The resource_cost is the cost of one unit of flow (could be EUR/kWh or EUR/kg, EUR/m³ etc "
+                )
 
             ghg_emission_factor = row["ghg_emission_factor"]
             land_requirement_factor = row["land_requirement_factor"]
