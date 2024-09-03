@@ -1,3 +1,4 @@
 type;profile;name;region;year;bus;amount
-load;permeate;permeate-demand;DE;2021;permeate-bus;1
-load;elec;elec-demand;DE;2021;ac-elec-bus;1
+load;drinking-water;drinking-water-demand;CO;2021;drinking-water-bus;1
+load;service-water;service-water-demand;CO;2021;service-water-bus;1
+load;electricity;electricity-demand;DE;2021;ac-elec-bus;1
