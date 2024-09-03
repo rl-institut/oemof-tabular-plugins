@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
     "name": "aiwa",
-    "oemof_tabular_version": "0.0.5",
+    "oemof_tabular_version": "0.0.6dev",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -71,7 +71,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -96,7 +96,7 @@
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -121,17 +121,22 @@
                     },
                     {
                         "name": "capex",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "opex_fix",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "lifetime",
-                        "type": "number",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "resource_cost",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -237,7 +242,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "carrier_cost",
+                        "name": "resource_cost",
                         "type": "number",
                         "format": "default"
                     },
@@ -455,7 +460,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -490,7 +495,7 @@
                     },
                     {
                         "name": "conversion_factor_seawater-bus",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -510,17 +515,17 @@
                     },
                     {
                         "name": "capex",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "opex_fix",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "lifetime",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -529,8 +534,13 @@
                         "format": "default"
                     },
                     {
+                        "name": "resource_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
                         "name": "land_requirement_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -690,7 +700,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "carrier_cost",
+                        "name": "resource_cost",
                         "type": "integer",
                         "format": "default"
                     },
@@ -825,7 +835,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "carrier_cost",
+                        "name": "resource_cost",
                         "type": "integer",
                         "format": "default"
                     },
