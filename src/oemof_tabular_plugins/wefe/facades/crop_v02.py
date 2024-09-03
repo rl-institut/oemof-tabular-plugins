@@ -214,6 +214,9 @@ class SimpleCrop(Converter, Facade):
             sowing_date = pd.Timestamp(year + '-' + sowing_date).tz_localize(timezone)
             harvest_date = pd.Timestamp(year + '-' + harvest_date).tz_localize(timezone)
             custom_harvest = True
+            # If harvest and sowing date are the same, move harvest date one time step back to avoid problems
+            if sowing_date == harvest_date:
+                harvest_date = dates[dates.index(harvest_date) - 1]
         # Opt. 2: only sowing date, harvest_date (end of cultivation period) is one day before (following year),
         # maturity according to SIMPLE
         elif sowing_date and not harvest_date:
@@ -227,25 +230,6 @@ class SimpleCrop(Converter, Facade):
             custom_harvest = False
 
         print(f"sowing date: {sowing_date}\nharvest date: {harvest_date}\ncustom cultivation period: {custom_harvest}")
-
-        # def development_base_year(time_index, sowing_date, t_air, t_base):
-        #     """
-        #     Cumulative temperature experienced by plant as measure for plant development
-        #     from sowing_date until end of the same year (base year)
-        #     """
-        #
-        #     cumulative_temp = [0 for i in range(len(dates))]  # creating a list
-        #     # Cultivation period within one year
-        #     if sowing_date < harvest_date:
-        #         for temp, date in zip(t_air, dates):
-        #             if date < sowing_date:
-        #                 delta_tt = 0
-        #             else:
-        #                 delta_tt = 13
-        #     # Cultivation period extends to next year, harvest_date < sowing_date
-        #     else:
-        #         for temp, date in zip(t_air, dates):
-
 
         def development_base_year(time_index, sowing_date, t_air, t_base):
             """
@@ -344,7 +328,6 @@ class SimpleCrop(Converter, Facade):
         # plt.show()
 
         return np.array(f_solar_list)
-
 
     def calc_Ftemp(self, t_air, t_opt, t_base, **kwargs):
         r"""
@@ -513,14 +496,14 @@ class SimpleCrop(Converter, Facade):
         rue = self.get_crop_param("rue")
         hi = self.get_crop_param("hi")
 
-        plt.plot(self.time_index, fTEMP, label='f_temp')
-        plt.plot(self.time_index, fWATER, label='f_water')
-        plt.plot(self.time_index, fHEAT, label='f_heat')
-        plt.plot(self.time_index, fSOLAR, label='f_solar')
-        plt.grid(True)
-        plt.legend()
-
-        plt.show()
+        # plt.plot(self.time_index, fTEMP, label='f_temp')
+        # plt.plot(self.time_index, fWATER, label='f_water')
+        # plt.plot(self.time_index, fHEAT, label='f_heat')
+        # plt.plot(self.time_index, fSOLAR, label='f_solar')
+        # plt.grid(True)
+        # plt.legend()
+        #
+        # plt.show()
 
         return (
             hi * rue * fSOLAR * fTEMP * np.minimum(fWATER, fHEAT) * c_wh_to_mj
