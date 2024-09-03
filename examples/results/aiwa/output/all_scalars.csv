@@ -47,6 +47,7 @@ sw-ro,flow_out_bus,0.0,,,water,ro
 sw-ro,flow_out_water,0.0,,,water,ro
 sw-ro,invest_costs_in_bus,-0.0,,,water,ro
 sw-ro,invest_in_bus,-0.0,,,water,ro
+precipitation,flow_out_bus,0.0,,dispatchable,water,source
 seawater-source,flow_out_bus,0.0,,dispatchable,water,source
 bottled-water,flow_out_water,60.0,,dispatchable,water,source
 condensed-water,flow_out_water,0.0,,dispatchable,water,source

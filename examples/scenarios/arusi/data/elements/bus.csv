@@ -11,3 +11,5 @@ banana-bus;bus;True;banana
 river-flow-bus;bus;True;energy
 precipitation-bus;bus;True;water
 river-water-bus;bus;True;water
+groundwater-bus;bus;True;water
+brine-bus;bus;True;water

@@ -2,7 +2,7 @@ bus,direction,asset,carrier,facade_type,Upfront Investment Costs,Annuity Total,V
 ac-elec-bus,in,battery-storage,electricity,storage,-0.0,-0.0,
 ac-elec-bus,in,elec-demand,electricity,load,,,
 ac-elec-bus,in,electricity-excess,electricity,excess,,,
-ac-elec-bus,in,sw-ro,electricity,ro,,,
+ac-elec-bus,in,sw-ro,electricity,ro,,,0.0
 ac-elec-bus,out,battery-storage,electricity,storage,-0.0,-0.0,0.0
 ac-elec-bus,out,electricity-grid,electricity,dispatchable,,0.0,6.417112284259896e-11
 ac-elec-bus,out,inverter,electricity,conversion,-0.0,-0.0,0.0
@@ -17,9 +17,9 @@ drinking-water-bus,in,drinking-water-storage,water,storage,-0.0,-0.0,
 drinking-water-bus,out,bottled-water,water,dispatchable,,0.0,0.0
 drinking-water-bus,out,drinking-water-storage,water,storage,-0.0,-0.0,0.0
 drinking-water-bus,out,sw-ro,water,ro,,,0.0
-precipitation-bus,in,rainwater-harvesting,water,conversion,,,
+precipitation-bus,in,rainwater-harvesting,water,conversion,,,0.0
 precipitation-bus,out,precipitation,water,dispatchable,,,0.0
-seawater-bus,in,sw-ro,water,ro,-0.0,-0.0,
+seawater-bus,in,sw-ro,water,ro,-0.0,-0.0,0.0
 seawater-bus,out,seawater-source,water,dispatchable,,-0.0,0.0
 service-water-bus,in,service-water-demand,water,load,,,
 service-water-bus,in,service-water-storage,water,storage,-0.0,-0.0,

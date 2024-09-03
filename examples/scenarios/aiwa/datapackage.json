@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
     "name": "aiwa",
-    "oemof_tabular_version": "0.0.6dev",
+    "oemof_tabular_version": "0.0.5",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -258,7 +258,7 @@
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -268,17 +268,17 @@
                     },
                     {
                         "name": "water_footprint_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -733,16 +733,6 @@
                         "name": "water_footprint",
                         "type": "integer",
                         "format": "default"
-                    },
-                    {
-                        "name": "Unnamed: 23",
-                        "type": "object",
-                        "format": "default"
-                    },
-                    {
-                        "name": "output_parameters",
-                        "type": "string",
-                        "format": "default"
                     }
                 ],
                 "missingValues": [
@@ -866,17 +856,7 @@
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "Unnamed: 19",
-                        "type": "object",
-                        "format": "default"
-                    },
-                    {
-                        "name": "output_parameters",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     }
                 ],

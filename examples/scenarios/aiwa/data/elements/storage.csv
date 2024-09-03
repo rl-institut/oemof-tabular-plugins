@@ -1,4 +1,4 @@
 name;carrier;tech;storage_capacity;storage_capacity_potential;capacity;efficiency;capacity_cost;storage_capacity_cost;marginal_cost;type;bus;invest_relation_output_capacity;expandable;capex;opex_fix;lifetime;resource_cost;land_requirement_factor;ghg_emission_factor;water_footprint_factor;land_requirement;ghg_emissions;water_footprint
-battery-storage;energy;battery;0;;0;0.92;0;8.64597602550211E-14;1.71122994652406E-11;storage;ac-elec-bus;1;True;350;8;15;2;3;3.2;0;0;0;0
-drinking-water-storage;water;storage;0;;0;0.99;0;1.19844681389978E-13;1.12299465240642E-11;storage;drinking-water-bus;1;True;186;45;20;2;4;2.1;0;0;0;0
-service-water-storage;water;storage;0;;0;0.99;0;1.19844681389978E-13;1.12299465240642E-11;storage;service-water-bus;1;True;186;45;20;2;4;2.1;0;0;0;0
+battery-storage;energy;battery;0;;0;0.92;0;1.0471976445482203e-13;1.7112299465240645e-11;storage;ac-elec-bus;1.0;True;350;8;15;2;3;3.2;0;0;0;0
+drinking-water-storage;water;storage;0;;0;0.99;0;1.3810468558977932e-13;1.1229946524064171e-11;storage;drinking-water-bus;1.0;True;186;45;20;2;4;2.1;0;0;0;0
+service-water-storage;water;storage;0;;0;0.99;0;1.3810468558977932e-13;1.1229946524064171e-11;storage;service-water-bus;1.0;True;186;45;20;2;4;2.1;0;0;0;0
