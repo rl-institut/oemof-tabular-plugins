@@ -1,0 +1,442 @@
+{
+    "profile": "tabular-data-package",
+    "name": "test_crop_v02",
+    "oemof_tabular_version": "0.0.5",
+    "resources": [
+        {
+            "path": "data/elements/bus.csv",
+            "profile": "tabular-data-resource",
+            "name": "bus",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "balanced",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": []
+            }
+        },
+        {
+            "path": "data/elements/crop.csv",
+            "profile": "tabular-data-resource",
+            "name": "crop",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_potential",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_minimum",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "marginal_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "efficiency",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "from_bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "to_bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "crop_type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "sowing_date",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "harvest_date",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "vwc",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "land_requirement_factor",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghg_emission_factor",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_footprint_factor",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "land_requirement",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghg_emissions",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_footprint",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_air",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "et_0",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "time_index",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "from_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "to_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "vwc",
+                        "reference": {
+                            "resource": "simple_crop_full_year"
+                        }
+                    },
+                    {
+                        "fields": "ghi",
+                        "reference": {
+                            "resource": "simple_crop_full_year"
+                        }
+                    },
+                    {
+                        "fields": "t_air",
+                        "reference": {
+                            "resource": "simple_crop_full_year"
+                        }
+                    },
+                    {
+                        "fields": "et_0",
+                        "reference": {
+                            "resource": "simple_crop_full_year"
+                        }
+                    },
+                    {
+                        "fields": "time_index",
+                        "reference": {
+                            "resource": "simple_crop_full_year"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "path": "data/elements/dispatchable.csv",
+            "profile": "tabular-data-resource",
+            "name": "dispatchable",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "marginal_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "profile",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "profile",
+                        "reference": {
+                            "resource": "simple_crop_full_year"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "path": "data/elements/excess.csv",
+            "profile": "tabular-data-resource",
+            "name": "excess",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "marginal_cost",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "path": "data/sequences/simple_crop_full_year.csv",
+            "profile": "tabular-data-resource",
+            "name": "simple_crop_full_year",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "timeindex",
+                        "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "time",
+                        "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_air",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "e",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "vwc_rzd",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        }
+    ]
+}
