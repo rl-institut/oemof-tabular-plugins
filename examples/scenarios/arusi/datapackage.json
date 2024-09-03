@@ -424,12 +424,12 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -459,7 +459,7 @@
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -469,22 +469,22 @@
                     },
                     {
                         "name": "water_footprint_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     }
                 ],

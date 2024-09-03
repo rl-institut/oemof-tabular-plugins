@@ -3,3 +3,5 @@ inverter;conversion;energy;inverter;0.0;;;1.976295800190575e-14;1.06951871657754
 pv-panel;conversion;energy;pv_panel;0.0;;;2.5207508678746197e-13;0.0;0.0;0.2;solar-bus-pv;dc-elec-bus;True;1378.0;18.0;24.0;9.29;0.0;0.0;0.0;0.0;0.0
 wind-turbine;conversion;energy;energy-conversion;0.0;;;3.4635440003078824e-13;0.0;0.0;0.4;wind-bus;ac-elec-bus;True;2000.0;12.0;20.0;3.0;0.0;0.0;0.0;0.0;0.0
 diesel-generator;conversion;energy;diesel-generator;12.0;;;3.651301531084433e-14;3.8057040998217465e-11;0.2;0.9;diesel-bus;ac-elec-bus;True;50.0;10.0;10.0;2.0;4.0;3.0;0.0;0.0;0.0
+rainwater-harvesting;conversion;water;rainwater-harvesting;0.0;;;2.404842553113787e-13;1.0695187165775402e-10;0.0;0.95;precipitation-bus;service-water-bus;True;245.0;61.0;4.0;0.0;20.0;0.0;1.0;0.0;0.0
+river-water-uptake;conversion;water;river-water-uptake;0.0;;;2.404842553113787e-13;1.0695187165775402e-10;0.0;0.95;river-water-bus;service-water-bus;True;245.0;61.0;4.0;0.0;20.0;0.0;1.0;0.0;0.0
