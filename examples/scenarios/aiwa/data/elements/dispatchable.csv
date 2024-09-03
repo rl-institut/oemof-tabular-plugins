@@ -6,4 +6,4 @@ wind-resource;dispatchable;energy;source;0.0;0.0;wind-bus;0.0;0.0;wind;True;0;0.
 condensed-water;dispatchable;water;source;0.0;0.0;service-water-bus;0.0;0.0;ac-discharge-profile;False;0;0.0;0;0;0;0.0
 water-truck;dispatchable;water;source;0.0;0.0;service-water-bus;3.430778371954843e-10;5.2;;True;0;60.0;4;0;0;0.0
 bottled-water;dispatchable;water;source;0.0;0.0;drinking-water-bus;0.0;62.2;;True;0;0.0;0;0;0;0.0
-precipitation;dispatchable;water;source;0.0;0.0;precipitation-bus;0.0;;precipitation-profile;False;0;0.0;0;0;0;0.0
+precipitation;dispatchable;water;source;0.0;0.0;precipitation-bus;0.0;0.0;precipitation-profile;False;0;0.0;0;0;0;0.0

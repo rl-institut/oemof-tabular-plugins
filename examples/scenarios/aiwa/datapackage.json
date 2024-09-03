@@ -524,6 +524,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "carrier_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
                         "name": "land_requirement_factor",
                         "type": "number",
                         "format": "default"
@@ -685,18 +690,23 @@
                         "format": "default"
                     },
                     {
+                        "name": "carrier_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
                         "name": "land_requirement_factor",
                         "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emission_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -716,12 +726,12 @@
                     },
                     {
                         "name": "Unnamed: 23",
-                        "type": "string",
+                        "type": "object",
                         "format": "default"
                     },
                     {
                         "name": "output_parameters",
-                        "type": "object",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
@@ -815,6 +825,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "carrier_cost",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
                         "name": "land_requirement_factor",
                         "type": "integer",
                         "format": "default"
@@ -841,17 +856,17 @@
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "Unnamed: 19",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "output_parameters",
+                        "name": "Unnamed: 19",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
