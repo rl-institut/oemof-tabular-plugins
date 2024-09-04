@@ -10,7 +10,7 @@ from oemof_tabular_plugins.script import compute_scenario
 from oemof.tabular import datapackage  # noqa
 
 
-from oemof_tabular_plugins.wefe import TYPEMAP
+from oemof_tabular_plugins.wefe import WEFE_TYPEMAP as TYPEMAP
 
 # -------------- RELEVANT PATHS --------------
 # get the project directory by navigating up one level from the current script file
