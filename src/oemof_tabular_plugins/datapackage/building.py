@@ -241,14 +241,6 @@ def infer_metadata_from_data(
 
         Compare the fields of a resource to a list of field names known to be foreign keys. If the field name is within the list, it is used to populate the dict 'foreign_keys'
         """
-        for field in resource.schema.fields:
-            if field.name in config.SPECIAL_FIELD_NAMES:
-                fk_descriptor = config.SPECIAL_FIELD_NAMES[field.name]
-                if fk_descriptor in foreign_keys:
-                    if resource.name not in foreign_keys[fk_descriptor]:
-                        foreign_keys[fk_descriptor].append(resource.name)
-                else:
-                    foreign_keys[fk_descriptor] = [resource.name]
 
     for r in p0.resources:
         if os.sep + "elements" + os.sep in r.descriptor["path"]:
@@ -257,7 +249,6 @@ def infer_metadata_from_data(
     building.infer_metadata(
         package_name=package_name,
         path=path,
-        foreign_keys=foreign_keys,
         metadata_filename=metadata_filename,
     )
 
