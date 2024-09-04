@@ -43,7 +43,7 @@ solar-resource-crop,invest_out_bus,-0.0,,dispatchable,energy,source
 solar-resource-pv,invest_out_bus,-0.0,,dispatchable,energy,source
 wind-resource,invest_out_bus,-0.0,,dispatchable,energy,source
 river-flow,invest_out_flow,-0.0,,dispatchable,energy,source
-diesel,summed_variable_costs_out_bus,1.7142856999999997e-08,,dispatchable,energy,source
+diesel,summed_variable_costs_out_bus,1.7142857e-08,,dispatchable,energy,source
 river-flow,summed_variable_costs_out_flow,0.0,,dispatchable,energy,source
 microfiltration,flow_in_elec,0.0,,water-filtration,water,filtration
 water-filtration,flow_in_elec,0.0,,,water,filtration
@@ -56,22 +56,20 @@ water-filtration,invest_costs_in_water,-0.0,,,water,filtration
 microfiltration,invest_costs_out_water,-0.0,,water-filtration,water,filtration
 water-filtration,invest_in_water,-0.0,,,water,filtration
 microfiltration,invest_out_water,-0.0,,water-filtration,water,filtration
-water pump,flow_in_bus,200.0,,water-pump,water,pumping
-water pump,flow_in_elec,1.09,,water-pump,water,pumping
-water pump,flow_out_water,200.0,,water-pump,water,pumping
-water pump,invest_costs_out_water,6.8548764821607345e-12,,water-pump,water,pumping
-water pump,invest_out_water,90.0,,water-pump,water,pumping
+water pump,flow_in_bus,200.470575,,water-pump,water,pumping
+water pump,flow_in_elec,1.09256463,,water-pump,water,pumping
+water pump,flow_out_water,200.470575,,water-pump,water,pumping
+water pump,invest_costs_out_water,2750.4562889999997,,water-pump,water,pumping
+water pump,invest_out_water,66.823525,,water-pump,water,pumping
 rainwater-harvesting,flow_in_bus,0.0,,conversion,water,rainwater-harvesting
 rainwater-harvesting,flow_out_water,0.0,,conversion,water,rainwater-harvesting
 rainwater-harvesting,invest_costs_out_water,-0.0,,conversion,water,rainwater-harvesting
 rainwater-harvesting,invest_out_water,-0.0,,conversion,water,rainwater-harvesting
-rainwater-harvesting,summed_variable_costs_out_water,0.0,,conversion,water,rainwater-harvesting
 river-water-uptake,flow_in_water,0.0,,conversion,water,river-water-uptake
 river-water-uptake,flow_out_water,0.0,,conversion,water,river-water-uptake
 river-water-uptake,invest_costs_out_water,-0.0,,conversion,water,river-water-uptake
 river-water-uptake,invest_out_water,-0.0,,conversion,water,river-water-uptake
-river-water-uptake,summed_variable_costs_out_water,0.0,,conversion,water,river-water-uptake
-groundwater,flow_out_bus,200.0,,dispatchable,water,source
+groundwater,flow_out_bus,200.470575,,dispatchable,water,source
 precipitation,flow_out_bus,0.0,,dispatchable,water,source
 bottled-water,flow_out_water,60.0,,dispatchable,water,source
 river-water,flow_out_water,0.0,,dispatchable,water,source
@@ -79,36 +77,36 @@ groundwater,invest_costs_out_bus,0.0,,dispatchable,water,source
 precipitation,invest_costs_out_bus,-0.0,,dispatchable,water,source
 bottled-water,invest_costs_out_water,0.0,,dispatchable,water,source
 river-water,invest_costs_out_water,-0.0,,dispatchable,water,source
-groundwater,invest_out_bus,90.0,,dispatchable,water,source
+groundwater,invest_out_bus,66.823525,,dispatchable,water,source
 precipitation,invest_out_bus,-0.0,,dispatchable,water,source
 bottled-water,invest_out_water,30.0,,dispatchable,water,source
 river-water,invest_out_water,-0.0,,dispatchable,water,source
-groundwater,summed_variable_costs_out_bus,1.111111111111111e-08,,dispatchable,water,source
+groundwater,summed_variable_costs_out_bus,1.1137254166666667e-08,,dispatchable,water,source
 river-water,summed_variable_costs_out_water,0.0,,dispatchable,water,source
 drinking-water-storage,flow_in_water,0.0,,storage,water,storage
-service-water-storage,flow_in_water,0.0,,storage,water,storage
+service-water-storage,flow_in_water,23.6470504,,storage,water,storage
 drinking-water-storage,flow_out_water,0.0,,storage,water,storage
-service-water-storage,flow_out_water,0.0,,storage,water,storage
+service-water-storage,flow_out_water,23.176475,,storage,water,storage
 drinking-water-storage,invest,-0.0,,storage,water,storage
-service-water-storage,invest,-0.0,,storage,water,storage
+service-water-storage,invest,23.41058,,storage,water,storage
 drinking-water-storage,invest_costs,-0.0,,storage,water,storage
-service-water-storage,invest_costs,-0.0,,storage,water,storage
+service-water-storage,invest_costs,189.625698,,storage,water,storage
 drinking-water-storage,invest_costs_in_water,-0.0,,storage,water,storage
-service-water-storage,invest_costs_in_water,-0.0,,storage,water,storage
+service-water-storage,invest_costs_in_water,0.0,,storage,water,storage
 drinking-water-storage,invest_costs_out_water,-0.0,,storage,water,storage
-service-water-storage,invest_costs_out_water,-0.0,,storage,water,storage
+service-water-storage,invest_costs_out_water,0.0,,storage,water,storage
 drinking-water-storage,invest_in_water,-0.0,,storage,water,storage
-service-water-storage,invest_in_water,-0.0,,storage,water,storage
+service-water-storage,invest_in_water,23.41058,,storage,water,storage
 drinking-water-storage,invest_out_water,-0.0,,storage,water,storage
-service-water-storage,invest_out_water,-0.0,,storage,water,storage
+service-water-storage,invest_out_water,23.41058,,storage,water,storage
 drinking-water-storage,storage_losses,0.0,,storage,water,storage
-service-water-storage,storage_losses,0.0,,storage,water,storage
+service-water-storage,storage_losses,0.4705754000000013,,storage,water,storage
 drinking-water-storage,summed_variable_costs_out_water,0.0,,storage,water,storage
-service-water-storage,summed_variable_costs_out_water,0.0,,storage,water,storage
+service-water-storage,summed_variable_costs_out_water,2.602705748663102e-10,,storage,water,storage
 banana-production,flow_in_bus,0.0,,excess,,
 brine-excess,flow_in_bus,0.0,,excess,,
 electricity-demand,flow_in_elec,120.0,DE,load,,
-electricity-excess,flow_in_elec,418.90999999999997,,excess,,
+electricity-excess,flow_in_elec,418.90743,,excess,,
 drinking-water-demand,flow_in_water,60.0,CO,load,,
 service-water-demand,flow_in_water,200.0,CO,load,,
-system,total_system_cost,4.719130427101573e-08,,,,
+system,total_system_cost,2940.0819870474706,,,,

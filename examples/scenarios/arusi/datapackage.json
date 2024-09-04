@@ -163,6 +163,11 @@
                         "name": "water_footprint",
                         "type": "number",
                         "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
                     }
                 ],
                 "missingValues": [
@@ -345,6 +350,11 @@
                         "name": "et_0",
                         "type": "string",
                         "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
                     }
                 ],
                 "missingValues": [
@@ -485,6 +495,11 @@
                     {
                         "name": "water_footprint",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
                         "format": "default"
                     }
                 ],
@@ -768,6 +783,11 @@
                         "name": "water_footprint",
                         "type": "integer",
                         "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
                     }
                 ],
                 "missingValues": [
@@ -938,6 +958,11 @@
                     {
                         "name": "Unnamed: 24",
                         "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
                         "format": "default"
                     }
                 ],
@@ -1242,6 +1267,11 @@
                     {
                         "name": "water_footprint",
                         "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
                         "format": "default"
                     }
                 ],
