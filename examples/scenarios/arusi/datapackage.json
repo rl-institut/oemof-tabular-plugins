@@ -535,7 +535,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -997,7 +997,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
