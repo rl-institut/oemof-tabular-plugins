@@ -1,5 +1,7 @@
 # from .pre_processing import calculate_annuity
 from oemof.tools import logger, economics
+import numpy as np
+import logging
 
 # from .pre_processing import calculate_annuity
 
@@ -98,8 +100,14 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
     if element in ["bus.csv", "load.csv", "excess.csv", "crop.csv"]:
         scenario = NO_MOO_VARIABLE_SCEN
-    elif element in ["conversion.csv", "mimo.csv", "storage.csv", "volatile.csv", "water_filtration.csv",
-                     "water_pumps.csv"]:
+    elif element in [
+        "conversion.csv",
+        "mimo.csv",
+        "storage.csv",
+        "volatile.csv",
+        "water_filtration.csv",
+        "water_pumps.csv",
+    ]:
         scenario = MOO_VARIABLE_SCEN
     elif element == "dispatchable.csv":
         scenario = MOO_DISPATCHABLE_SCEN
@@ -139,14 +147,30 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                 + water_footprint_factor / total_renewable_water_resources * wf_wf
             )
 
-            element_df.at[index, moo_variable_fix] = float(moo_variable_capacity)
-            element_df.at[index, moo_variable_var] = float(moo_variable_flow)
+            if not np.isnan(moo_variable_capacity):
+                element_df.at[index, moo_variable_fix] = float(moo_variable_capacity)
+                # log info message
+                logger.info(
+                    f"'{moo_variable_fix}' has been calculated and updated for"
+                    f" '{row_name}' in '{element}'."
+                )
+            else:
+                logging.warning(
+                    f"'{moo_variable_fix}' could not be calculated and will not be updated for"
+                    f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
+                )
 
-            # log info message
-            logger.info(
-                f"'{moo_variable_fix}' and {moo_variable_var} have been calculated and updated for"
-                f" '{row_name}' in '{element}'."
-            )
+            if not np.isnan(moo_variable_flow):
+                element_df.at[index, moo_variable_var] = float(moo_variable_flow)
+                logger.info(
+                    f"'{moo_variable_var}' has been calculated and updated for"
+                    f" '{row_name}' in '{element}'."
+                )
+            else:
+                logging.warning(
+                    f"'{moo_variable_var}' could not be calculated and will not be updated for"
+                    f" '{row_name}' in '{element}'."
+                )
 
         elif scenario == MOO_DISPATCHABLE_SCEN:
             # store the parameters
