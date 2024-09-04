@@ -1,17 +1,10 @@
 import os
 import shutil
-import pandas as pd
 import pytest
 from oemof_tabular_plugins.script import compute_scenario
-from unittest.mock import patch
-import json
-from oemof.tabular.facades import TYPEMAP
 from oemof_tabular_plugins.datapackage.building import infer_metadata_from_data
-from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO
 
-
-TYPEMAP["pv-panel"] = PVPanel
-TYPEMAP["mimo"] = MIMO
+from oemof_tabular_plugins.wefe import WEFE_TYPEMAP as TYPEMAP
 
 
 class TestPostProcessingBusCarrierMapping:

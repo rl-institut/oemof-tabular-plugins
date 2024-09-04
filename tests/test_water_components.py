@@ -40,7 +40,7 @@ class TestWaterComponents:
             typemap=TYPEMAP,
             infer_bus_carrier=infer_bus_carrier,
             skip_preprocessing=False,
-            skip_infer_datapackage_metadata=False,
+            skip_infer_datapackage_metadata=True,
         )
 
     def teardown_method(self):
