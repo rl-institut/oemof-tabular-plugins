@@ -98,7 +98,8 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
     if element in ["bus.csv", "load.csv", "excess.csv", "crop.csv"]:
         scenario = NO_MOO_VARIABLE_SCEN
-    elif element in ["conversion.csv", "mimo.csv", "storage.csv", "volatile.csv"]:
+    elif element in ["conversion.csv", "mimo.csv", "storage.csv", "volatile.csv", "water_filtration.csv",
+                     "water_pumps.csv"]:
         scenario = MOO_VARIABLE_SCEN
     elif element == "dispatchable.csv":
         scenario = MOO_DISPATCHABLE_SCEN
@@ -126,9 +127,8 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             ghg_emission_factor = row["ghg_emission_factor"]
             land_requirement_factor = row["land_requirement_factor"]
             water_footprint_factor = row["water_footprint_factor"]
-
-            annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
             print(f"capex: {capex}, lifetime: {lifetime}, wacc: {wacc}")
+            annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
             moo_variable_capacity = (
                 carrier_cost / global_GDP
                 + annuity / global_GDP * wf_cost
