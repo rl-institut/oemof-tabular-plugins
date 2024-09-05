@@ -15,6 +15,10 @@ from oemof.tabular.facades import Conversion
 from oemof_tabular_plugins.wefe.global_specs.crops import crop_dict
 
 
+# SOME PLOTS AND PRINTS FOR DEBUGGING PURPOSES
+import matplotlib.pyplot as plt
+
+
 @dataclass_facade
 # @dataclasses.dataclass(unsafe_hash=False, frozen=False, eq=False)
 class SimpleCrop(Converter, Facade):
@@ -126,6 +130,8 @@ class SimpleCrop(Converter, Facade):
 
     crop_type: str = ""
 
+    time_index: Union[float, Sequence[float]] = None
+
     t_air: Union[float, Sequence[float]] = None
 
     ghi: Union[float, Sequence[float]] = None
@@ -134,8 +140,9 @@ class SimpleCrop(Converter, Facade):
 
     vwc: Union[float, Sequence[float]] = None
 
-    sowing_date: str = ""  # TODO check for dates formats YYYY-MM-DD
-    harvest_date: str = ""
+    sowing_date: str = ""  # TODO: MM-DD format
+
+    harvest_date: str = ""  # TODO: MM-DD format
 
     # def __init__(self,crop_type, t_air, ghi, et_0, vwc, sowing_date,harvest_date,*args, **kwargs):
     #
@@ -163,6 +170,182 @@ class SimpleCrop(Converter, Facade):
         return crop_dict[self.crop_type][param_name]
 
     # efficiency equals biomass production factor calculate in the facade crop.py; caapcity equals area [m²]
+
+    def calc_Fsolar(
+        self,
+        time_index,
+        sowing_date,
+        harvest_date,
+        t_air,
+        t_base,
+        t_sum,
+        i50a,
+        i50b,
+        f_solar_max,
+        **kwargs,
+    ):
+        """Calculates f_solar, the factor for interception of incoming solar radiation by plant canopy
+            according to development stage [-].
+            ----
+        Parameters
+        ----------
+        time_index: time as pd.series or list
+        sowing_date: time of sowing/start of cultivation period as str in "MM-DD" format
+        harvest_date: time of harvest/end of cultivation period as str in "MM-DD" format
+        t_air: ambient temperature as pd.series or list
+        t_base: base temperature for biomass growth
+        t_sum: cumulative temperature required from sowing to maturity
+        i50a: cumulative temperature required from sowing on to reach 50% of solar radiation interception during growth
+        i50b: cumulative temperature required until maturity to fall back to 50% of solar interception during decline
+        f_solar_max: maximum factor for solar interception
+
+        Returns
+        -------
+        f_solar_list : list of numerical values:
+             solar interception coefficients for calculating biomass rate
+
+        Notes
+        -------
+        This resembles the plant growth curve displayed in Fig 1.(e) of https://doi.org/10.1016/j.eja.2019.01.009
+
+        """
+        # Check input time series compatibility
+        if not isinstance(t_air, (list, pd.Series)):
+            print("Argument 'temp' is not of type list or pd.Series!")
+        if not isinstance(time_index, (list, pd.Series)):
+            print("Argument 'time index' is not of type list or pd.Series!")
+        if len(t_air) != len(time_index):
+            raise ValueError("Length mismatch between t_air and time_index profiles.")
+
+        # Convert dates to Timestamp objects matching the time index
+        dates = list(pd.to_datetime(time_index))
+        year = str(dates[0].year)
+        timezone = dates[0].tz
+        # Opt. 1: sowing_date and harvest date given, plant maturity (t_sum) will be updated (custom_harvest=True)
+        if sowing_date and harvest_date:
+            sowing_date = pd.Timestamp(year + "-" + sowing_date).tz_localize(timezone)
+            harvest_date = pd.Timestamp(year + "-" + harvest_date).tz_localize(timezone)
+            custom_harvest = True
+            # If harvest and sowing date are the same, move harvest date one time step back to avoid problems
+            if sowing_date == harvest_date:
+                harvest_date = dates[dates.index(harvest_date) - 1]
+        # Opt. 2: only sowing date, harvest_date (end of cultivation period) is one day before (following year),
+        # maturity according to SIMPLE
+        elif sowing_date and not harvest_date:
+            sowing_date = pd.Timestamp(year + "-" + sowing_date).tz_localize(timezone)
+            harvest_date = dates[dates.index(sowing_date) - 1]
+            custom_harvest = False
+        # Opt. 3: no dates, growth from start of the year till maturity (from SIMPLE)
+        else:
+            sowing_date = dates[0]
+            harvest_date = dates[-1]
+            custom_harvest = False
+
+        print(
+            f"sowing date: {sowing_date}\nharvest date: {harvest_date}\ncustom cultivation period: {custom_harvest}"
+        )
+
+        def development_base_year(time_index, sowing_date, t_air, t_base):
+            """
+            Cumulative temperature experienced by plant as measure for plant development
+            from sowing_date until end of the same year (base year)
+            """
+
+            delta_tt_list = []  # creating a list
+            for temp, date in zip(t_air, time_index):
+                if date < sowing_date:
+                    delta_tt = 0
+                else:
+                    if temp > t_base:
+                        delta_tt = (
+                            temp - t_base
+                        ) / 24  # SIMPLE crop model has daily temp values, convert to hourly
+                    else:
+                        delta_tt = 0
+                delta_tt_list.append(delta_tt)
+            cumulative_temp = np.cumsum(delta_tt_list)
+            return cumulative_temp
+
+        def development_extension(time_index, sowing_date, harvest_date, t_air, t_base):
+            """
+            Additional cumulative temperature experienced by plant as measure for plant development
+            if growth extends to following year (until harvest_date if such is given).
+            Note that harvest_date (MM-DD) has to be before sowing_date (MM-DD), growth cannot extend beyond one year in total.
+            """
+            delta_tt_list = []  # creating a list
+            for temp, date in zip(t_air, time_index):
+                if date < harvest_date < sowing_date:
+                    if temp > t_base:
+                        delta_tt = (
+                            temp - t_base
+                        ) / 24  # SIMPLE crop model has daily temp values, convert to hourly
+                    else:
+                        delta_tt = 0
+                else:
+                    delta_tt = 0
+                delta_tt_list.append(delta_tt)
+            cumulative_temp = np.cumsum(delta_tt_list)
+            return cumulative_temp
+
+        def development_cache(
+            time_index,
+            sowing_date,
+            harvest_date,
+            cum_temp_base_cache,
+            cum_temp_ext_cache,
+        ):
+            """
+            Cumulative temperature experienced in the base year cached for extension in the following year,
+            cumulative temperature experienced in the following year until harvest_date removed afterwards
+            so it does not interfer with base year [K]
+            """
+            delta_tt_list = []  # creating a list
+            for date in time_index:
+                if date <= harvest_date < sowing_date:
+                    delta_tt = cum_temp_base_cache
+                else:
+                    delta_tt = -cum_temp_ext_cache
+                delta_tt_list.append(delta_tt)
+            return np.array(delta_tt_list)
+
+        # Create 3 lists for cumulative_temperature: base year, following year (extension), cached values
+        cumulative_temp_1 = development_base_year(dates, sowing_date, t_air, t_base)
+        cum_temp_base_cache = cumulative_temp_1[-1]
+
+        cumulative_temp_2 = development_extension(
+            dates, sowing_date, harvest_date, t_air, t_base
+        )
+        cum_temp_ext_cache = cumulative_temp_2[-1]
+
+        cumulative_temp_3 = development_cache(
+            dates, sowing_date, harvest_date, cum_temp_base_cache, cum_temp_ext_cache
+        )
+
+        # Add the three lists together to get total cumulative temperature
+        cumulative_temp = cumulative_temp_1 + cumulative_temp_2 + cumulative_temp_3
+
+        # Update t_sum if custom_harvest = True (custom harvest date provided instead of maturity according to SIMPLE)
+        t_sum = cumulative_temp[dates.index(harvest_date)] if custom_harvest else t_sum
+        # print(f"t_sum: {t_sum}")
+
+        # Assumption for transition point from growth period to senescence (decline) period: f_solar = 0.999f_solar_max
+        # with f_solar being a function of cum_temp
+        cum_temp_to_reach_f_solar_max = i50a - 100 * np.log(1 / 999)
+
+        # f_solar(cum_temp) according to SIMPLE
+        f_solar_list = []
+        for cum_temp in cumulative_temp:
+            if cum_temp < 1:
+                f_solar = 0
+            elif cum_temp < cum_temp_to_reach_f_solar_max:
+                f_solar = f_solar_max / (1 + np.exp(-0.01 * (cum_temp - i50a)))
+            elif cum_temp < t_sum:
+                f_solar = f_solar_max / (1 + np.exp(0.01 * (cum_temp - (t_sum - i50b))))
+            else:
+                f_solar = 0
+            f_solar_list.append(f_solar)
+
+        return np.array(f_solar_list)
 
     def calc_Ftemp(self, t_air, t_opt, t_base, **kwargs):
         r"""
@@ -203,6 +386,7 @@ class SimpleCrop(Converter, Facade):
             elif t > t_opt:
                 x = 1
                 te.append(x)
+
         return np.array(te)
 
     def calc_Fwater(self, et_o, vwc, s_water, **kwargs):
@@ -236,7 +420,8 @@ class SimpleCrop(Converter, Facade):
             wi = 1 - np.minimum(abs(et_o), 0.096 * vwc) / abs(et_o)
             return wi
 
-        return 1 - s_water * arid(et_o, vwc)
+        f_water_list = 1 - s_water * arid(et_o, vwc)
+        return np.array(f_water_list)
 
     def calc_Fheat(self, t_air, t_max, t_ext, **kwargs):
         r"""
@@ -323,13 +508,18 @@ class SimpleCrop(Converter, Facade):
         fTEMP = self.calc_Ftemp(self.t_air, **crop_params)
         fWATER = self.calc_Fwater(self.et_0, self.vwc, **crop_params)
         fHEAT = self.calc_Fheat(t_air=self.t_air, **crop_params)
+        fSOLAR = self.calc_Fsolar(
+            time_index=self.time_index,
+            t_air=self.t_air,
+            sowing_date=self.sowing_date,
+            harvest_date=self.harvest_date,
+            **crop_params,
+        )
 
         rue = self.get_crop_param("rue")
         hi = self.get_crop_param("hi")
 
-        return (
-            hi * rue * fTEMP * np.minimum(fWATER, fHEAT) * c_wh_to_mj
-        )  # * fSOLAR * fCO2
+        return hi * rue * fSOLAR * fTEMP * np.minimum(fWATER, fHEAT) * c_wh_to_mj
 
     def build_solph_components(self):
         """ """
