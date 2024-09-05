@@ -191,7 +191,7 @@ def infer_package_foreign_keys(package, typemap=None):
                 # test if facade_type has the method 'validate_datapackage'
                 if hasattr(facade_type, "validate_datapackage"):
                     # apply the method if it exists
-                    facade_type.validate_datapackage(r)
+                    r = facade_type.validate_datapackage(r)
 
             p.remove_resource(r.name)
             p.add_resource(r.descriptor)
