@@ -22,7 +22,7 @@ def validate_mimo_datapackage(cls, resource):
                 # remove the foreign_key regarding 'primary' from the resource
                 resource.descriptor["schema"]["foreignKeys"].remove(foreign_key)
                 break
-    pass
+    return resource
 
 
 def processing_mimo_raw_inputs(cls, resource, results_df):

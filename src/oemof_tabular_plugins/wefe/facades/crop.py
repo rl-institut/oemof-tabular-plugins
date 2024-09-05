@@ -144,16 +144,18 @@ class SimpleCrop(Converter, Facade):
 
     harvest_date: str = ""  # TODO: MM-DD format
 
-    # def __init__(self,crop_type, t_air, ghi, et_0, vwc, sowing_date,harvest_date,*args, **kwargs):
-    #
-    #     super().__init__(*args,**kwargs)
-    #     self.crop_type=crop_type
-    #     self.t_air =t_air
-    #     self.ghi = ghi
-    #     self.et_0 = et_0
-    #     self.vwc = vwc
-    #     self.sowing_date=sowing_date
-    #     self.harvest_date=harvest_date
+    @classmethod
+    def validate_datapackage(self, resource):
+        # check that the crop_type matches the one provided in the crop_dict
+        data = pd.DataFrame.from_records(resource.read(keyed=True))
+
+        for i, row in data[["crop_type", "name", "type"]].iterrows():
+            if row.crop_type not in crop_dict:
+
+                raise KeyError(
+                    f"On line {i+1} of resource '{resource.descriptor['path']}', the crop_type attribute '{row.crop_type}' of the component of type '{row.type}', named '{row['name']}', is not available in the crop specs dict (wefe/gloabal_specs/crops.py). Available crop types are: {', '.join([k for k in crop_dict.keys()])}"
+                )
+        return resource
 
     @classmethod
     def processing_raw_inputs(self, resource, results_df):
