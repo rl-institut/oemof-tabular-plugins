@@ -26,8 +26,8 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    # "aiwa"
-      "arusi"
+      "aiwa"
+    # "arusi"
 ]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
