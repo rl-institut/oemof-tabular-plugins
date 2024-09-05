@@ -56,7 +56,7 @@ for scenario in scenarios:
     scenario_dir = os.path.join(project_dir, "scenarios", scenario)
     results_path = os.path.join(project_dir, "results", scenario, "output")
 
-    compute_scenario(
+    calculator = compute_scenario(
         scenario_dir,
         results_path,
         wacc,
@@ -66,6 +66,14 @@ for scenario in scenarios:
         moo=moo,
         dash_app=True,
     )
+    df = calculator.df_results
+    print(df)
+    print(calculator.raw_outputs)
+    print(calculator.calculated_outputs)
+    print(calculator.raw_inputs)
+    import pdb
+
+    pdb.set_trace()
 
 
 print("done")
