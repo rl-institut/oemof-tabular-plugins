@@ -1,3 +1,4 @@
 name;type;balanced;carrier
 solar-bus;bus;True;energy
 banana-bus;bus;True;banana
+biomass-bus;bus;True;biomass

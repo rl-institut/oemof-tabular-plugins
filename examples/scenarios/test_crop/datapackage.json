@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
-    "name": "test_crop_v02",
-    "oemof_tabular_version": "0.0.5",
+    "name": "test_crop",
+    "oemof_tabular_version": "0.0.6dev",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -115,6 +115,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "biomass_bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
                         "name": "expandable",
                         "type": "boolean",
                         "format": "default"
@@ -224,6 +229,13 @@
                     },
                     {
                         "fields": "harvest_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "biomass_bus",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
@@ -374,7 +386,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     }
                 ],
