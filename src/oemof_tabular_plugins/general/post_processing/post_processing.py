@@ -132,6 +132,13 @@ class OTPCalculator(Calculator):
         return answer
 
     @property
+    def raw_outputs(self):
+        self.df_results.iloc[:, : self.n_timesteps]
+        cols = self.df_results.iloc[:, : self.n_timesteps].columns.tolist()
+        cols = cols + RAW_OUTPUTS + PROCESSED_RAW_OUTPUTS
+        return self.df_results[cols]
+
+    @property
     def raw_inputs(self):
         return self.__scalars("raw_inputs")
 
@@ -296,7 +303,7 @@ def post_processing(
             services=services_table,
             units=parameters_units,
         )
-        demo_app.run_server(debug=True, port=8060)
+        demo_app.run_server(debug=False, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
     if hasattr(calculator, "scalar_params"):
