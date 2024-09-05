@@ -243,7 +243,7 @@
                     },
                     {
                         "name": "capacity_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -278,17 +278,17 @@
                     },
                     {
                         "name": "capex",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "opex_fix",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "lifetime",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {

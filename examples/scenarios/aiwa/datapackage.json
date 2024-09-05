@@ -676,7 +676,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -706,7 +706,7 @@
                     },
                     {
                         "name": "opex_fix",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -721,12 +721,12 @@
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emission_factor",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
