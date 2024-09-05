@@ -36,6 +36,9 @@ class SimpleCrop(Converter, Facade):
     harvest_bus: oemof.solph.Bus
         An oemof bus instance where the PV panel unit is connected to with
         its crop-harvest output. The unit is kg
+    biomass_bus: oemof.solph.Bus
+        An oemof bus instance where the SimpleCrop is connected with its
+        non-edible biomass output. The unit is kg
     capacity: numeric
         The capacity of crop. It is expressed in cultivated area [m²]
     marginal_cost: numeric
@@ -109,6 +112,8 @@ class SimpleCrop(Converter, Facade):
     carrier: str
 
     tech: str
+
+    biomass_bus: Bus = None
 
     capacity: float = None
 
@@ -506,6 +511,7 @@ class SimpleCrop(Converter, Facade):
 
         # Conversion factor Watt Hours (WH) to Mega Joules (MJ)
         c_wh_to_mj = 3.6e-3
+        c_kg_to_g = 1e-3
         crop_params = crop_dict[self.crop_type]
         fTEMP = self.calc_Ftemp(self.t_air, **crop_params)
         fWATER = self.calc_Fwater(self.et_0, self.vwc, **crop_params)
@@ -519,17 +525,16 @@ class SimpleCrop(Converter, Facade):
         )
 
         rue = self.get_crop_param("rue")
-        hi = self.get_crop_param("hi")
 
-        return hi * rue * fSOLAR * fTEMP * np.minimum(fWATER, fHEAT) * c_wh_to_mj
+        return rue * fSOLAR * fTEMP * np.minimum(fWATER, fHEAT) * c_wh_to_mj * c_kg_to_g
 
     def build_solph_components(self):
         """ """
-
+        hi = self.get_crop_param("hi")
         self.conversion_factors.update(
             {
-                self.from_bus: sequence(1),
-                self.to_bus: sequence(abs(self.efficiency)),
+                self.solar_bus: sequence(1),
+                self.harvest_bus: sequence(hi * abs(self.efficiency)),
             }
         )
 
@@ -551,3 +556,13 @@ class SimpleCrop(Converter, Facade):
                 )
             }
         )
+
+        if self.biomass_bus is not None:
+            self.conversion_factors.update(
+                {self.biomass_bus: sequence((1 - hi) * abs(self.efficiency))}
+            )
+            self.outputs.update(
+                {
+                    self.biomass_bus: Flow(),
+                }
+            )
