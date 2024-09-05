@@ -30,12 +30,12 @@ class SimpleCrop(Converter, Facade):
     ----------
     crop_type: str
         the name of crop as defined in global_specs/crops.py
-    from_bus: oemof.solph.Bus
+    solar_bus: oemof.solph.Bus
+        An oemof bus instance where the SimpleCrop unit is connected to with
+        its input, it is expected to provide W/m² irradiance.
+    harvest_bus: oemof.solph.Bus
         An oemof bus instance where the PV panel unit is connected to with
-        its input.
-    to_bus: oemof.solph.Bus
-        An oemof bus instance where the PV panel unit is connected to with
-        its output.
+        its crop-harvest output. The unit is kg
     capacity: numeric
         The capacity of crop. It is expressed in cultivated area [m²]
     marginal_cost: numeric
@@ -102,9 +102,9 @@ class SimpleCrop(Converter, Facade):
 
     """
 
-    from_bus: Bus
+    solar_bus: Bus
 
-    to_bus: Bus
+    harvest_bus: Bus
 
     carrier: str
 
@@ -535,7 +535,7 @@ class SimpleCrop(Converter, Facade):
 
         self.inputs.update(
             {
-                self.from_bus: Flow(
+                self.solar_bus: Flow(
                     variable_costs=self.carrier_cost, **self.input_parameters
                 )
             }
@@ -543,7 +543,7 @@ class SimpleCrop(Converter, Facade):
 
         self.outputs.update(
             {
-                self.to_bus: Flow(
+                self.harvest_bus: Flow(
                     nominal_value=self._nominal_value(),
                     variable_costs=self.marginal_cost,
                     investment=self._investment(),

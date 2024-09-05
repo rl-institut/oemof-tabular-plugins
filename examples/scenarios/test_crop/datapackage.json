@@ -105,12 +105,12 @@
                         "format": "default"
                     },
                     {
-                        "name": "from_bus",
+                        "name": "solar_bus",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "to_bus",
+                        "name": "harvest_bus",
                         "type": "string",
                         "format": "default"
                     },
@@ -216,14 +216,14 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "from_bus",
+                        "fields": "solar_bus",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
                         }
                     },
                     {
-                        "fields": "to_bus",
+                        "fields": "harvest_bus",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
