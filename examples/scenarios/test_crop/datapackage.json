@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
-    "name": "test_crop",
-    "oemof_tabular_version": "0.0.6dev",
+    "name": "test_crop_v02",
+    "oemof_tabular_version": "0.0.5",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -141,12 +141,12 @@
                     },
                     {
                         "name": "sowing_date",
-                        "type": "date",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "harvest_date",
-                        "type": "date",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -200,6 +200,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "time_index",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
                         "name": "output_parameters",
                         "type": "object",
                         "format": "default"
@@ -227,25 +232,31 @@
                     {
                         "fields": "vwc",
                         "reference": {
-                            "resource": "single_day"
+                            "resource": "simple_crop_full_year"
                         }
                     },
                     {
                         "fields": "ghi",
                         "reference": {
-                            "resource": "single_day"
+                            "resource": "simple_crop_full_year"
                         }
                     },
                     {
                         "fields": "t_air",
                         "reference": {
-                            "resource": "single_day"
+                            "resource": "simple_crop_full_year"
                         }
                     },
                     {
                         "fields": "et_0",
                         "reference": {
-                            "resource": "single_day"
+                            "resource": "simple_crop_full_year"
+                        }
+                    },
+                    {
+                        "fields": "time_index",
+                        "reference": {
+                            "resource": "simple_crop_full_year"
                         }
                     }
                 ]
@@ -331,7 +342,7 @@
                     {
                         "fields": "profile",
                         "reference": {
-                            "resource": "single_day"
+                            "resource": "simple_crop_full_year"
                         }
                     }
                 ]
@@ -383,9 +394,9 @@
             }
         },
         {
-            "path": "data/sequences/single_day.csv",
+            "path": "data/sequences/simple_crop_full_year.csv",
             "profile": "tabular-data-resource",
-            "name": "single_day",
+            "name": "simple_crop_full_year",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
@@ -397,8 +408,8 @@
                         "format": "default"
                     },
                     {
-                        "name": "vwc_rzd",
-                        "type": "number",
+                        "name": "time",
+                        "type": "datetime",
                         "format": "default"
                     },
                     {
@@ -413,6 +424,11 @@
                     },
                     {
                         "name": "e",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "vwc_rzd",
                         "type": "number",
                         "format": "default"
                     }
