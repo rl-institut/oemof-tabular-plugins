@@ -135,7 +135,7 @@ class SimpleCrop(Converter, Facade):
 
     crop_type: str = ""
 
-    time_index: Union[float, Sequence[float]] = None
+    timeindex: Union[float, Sequence[float]] = None
 
     t_air: Union[float, Sequence[float]] = None
 
@@ -180,7 +180,7 @@ class SimpleCrop(Converter, Facade):
 
     def calc_Fsolar(
         self,
-        time_index,
+        timeindex,
         sowing_date,
         harvest_date,
         t_air,
@@ -196,7 +196,7 @@ class SimpleCrop(Converter, Facade):
             ----
         Parameters
         ----------
-        time_index: time as pd.series or list
+        timeindex: time as pd.series or list
         sowing_date: time of sowing/start of cultivation period as str in "MM-DD" format
         harvest_date: time of harvest/end of cultivation period as str in "MM-DD" format
         t_air: ambient temperature as pd.series or list
@@ -219,13 +219,13 @@ class SimpleCrop(Converter, Facade):
         # Check input time series compatibility
         if not isinstance(t_air, (list, pd.Series)):
             print("Argument 'temp' is not of type list or pd.Series!")
-        if not isinstance(time_index, (list, pd.Series)):
-            print("Argument 'time index' is not of type list or pd.Series!")
-        if len(t_air) != len(time_index):
-            raise ValueError("Length mismatch between t_air and time_index profiles.")
+        if not isinstance(timeindex, (list, pd.Series)):
+            print("Argument 'timeindex' is not of type list or pd.Series!")
+        if len(t_air) != len(timeindex):
+            raise ValueError("Length mismatch between t_air and timeindex profiles.")
 
-        # Convert dates to Timestamp objects matching the time index
-        dates = list(pd.to_datetime(time_index))
+        # Convert dates to Timestamp objects matching the timeindex
+        dates = list(pd.to_datetime(timeindex))
         year = str(dates[0].year)
         timezone = dates[0].tz
         # Opt. 1: sowing_date and harvest date given, plant maturity (t_sum) will be updated (custom_harvest=True)
@@ -252,14 +252,14 @@ class SimpleCrop(Converter, Facade):
             f"sowing date: {sowing_date}\nharvest date: {harvest_date}\ncustom cultivation period: {custom_harvest}"
         )
 
-        def development_base_year(time_index, sowing_date, t_air, t_base):
+        def development_base_year(timeindex, sowing_date, t_air, t_base):
             """
             Cumulative temperature experienced by plant as measure for plant development
             from sowing_date until end of the same year (base year)
             """
 
             delta_tt_list = []  # creating a list
-            for temp, date in zip(t_air, time_index):
+            for temp, date in zip(t_air, timeindex):
                 if date < sowing_date:
                     delta_tt = 0
                 else:
@@ -273,14 +273,14 @@ class SimpleCrop(Converter, Facade):
             cumulative_temp = np.cumsum(delta_tt_list)
             return cumulative_temp
 
-        def development_extension(time_index, sowing_date, harvest_date, t_air, t_base):
+        def development_extension(timeindex, sowing_date, harvest_date, t_air, t_base):
             """
             Additional cumulative temperature experienced by plant as measure for plant development
             if growth extends to following year (until harvest_date if such is given).
             Note that harvest_date (MM-DD) has to be before sowing_date (MM-DD), growth cannot extend beyond one year in total.
             """
             delta_tt_list = []  # creating a list
-            for temp, date in zip(t_air, time_index):
+            for temp, date in zip(t_air, timeindex):
                 if date < harvest_date < sowing_date:
                     if temp > t_base:
                         delta_tt = (
@@ -295,7 +295,7 @@ class SimpleCrop(Converter, Facade):
             return cumulative_temp
 
         def development_cache(
-            time_index,
+            timeindex,
             sowing_date,
             harvest_date,
             cum_temp_base_cache,
@@ -307,7 +307,7 @@ class SimpleCrop(Converter, Facade):
             so it does not interfer with base year [K]
             """
             delta_tt_list = []  # creating a list
-            for date in time_index:
+            for date in timeindex:
                 if date <= harvest_date < sowing_date:
                     delta_tt = cum_temp_base_cache
                 else:
@@ -517,7 +517,7 @@ class SimpleCrop(Converter, Facade):
         fWATER = self.calc_Fwater(self.et_0, self.vwc, **crop_params)
         fHEAT = self.calc_Fheat(t_air=self.t_air, **crop_params)
         fSOLAR = self.calc_Fsolar(
-            time_index=self.time_index,
+            timeindex=self.timeindex,
             t_air=self.t_air,
             sowing_date=self.sowing_date,
             harvest_date=self.harvest_date,

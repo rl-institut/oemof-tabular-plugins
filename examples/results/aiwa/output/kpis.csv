@@ -1,9 +1,9 @@
 kpi,value
-annuity_total,0.0
-variable_costs_total,557.9999846220016
-system_cost_total,557.9999846220016
-total_upfront_investments,0.0
-specific_system_cost,4.649999871850014
-land_requirement_additional,0.0
-land_requirement_total,0.0
-total_water_footprint,30240.0
+annuity_total,312.04707055285996
+variable_costs_total,1164.0491205201774
+system_cost_total,1476.0961910730375
+total_upfront_investments,3216.04410598
+specific_system_cost,0.18103983015451514
+land_requirement_additional,25.622586329805635
+land_requirement_total,25.622586329805635
+total_water_footprint,136481.64480895054

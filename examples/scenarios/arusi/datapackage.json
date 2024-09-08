@@ -262,12 +262,12 @@
                         "format": "default"
                     },
                     {
-                        "name": "from_bus",
+                        "name": "solar_bus",
                         "type": "string",
                         "format": "default"
                     },
                     {
-                        "name": "to_bus",
+                        "name": "harvest_bus",
                         "type": "string",
                         "format": "default"
                     },
@@ -368,14 +368,14 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "from_bus",
+                        "fields": "solar_bus",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
                         }
                     },
                     {
-                        "fields": "to_bus",
+                        "fields": "harvest_bus",
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
@@ -1128,18 +1128,23 @@
                         "format": "default"
                     },
                     {
+                        "name": "cooking",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "drinking-water",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "electricity",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "service-water",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -1198,33 +1203,13 @@
                         "format": "default"
                     },
                     {
-                        "name": "pv-profile",
+                        "name": "ac-discharge",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "solar-irradiance",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "wind",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ac-discharge-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "precipitation-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "river-flow-profile",
-                        "type": "number",
+                        "name": "river-flow",
+                        "type": "integer",
                         "format": "default"
                     }
                 ],

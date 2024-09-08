@@ -1244,13 +1244,18 @@
                         "format": "default"
                     },
                     {
-                        "name": "permeate",
-                        "type": "integer",
+                        "name": "drinking-water",
+                        "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "elec",
-                        "type": "integer",
+                        "name": "electricity",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "service-water",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -1274,28 +1279,33 @@
                         "format": "default"
                     },
                     {
-                        "name": "pv-profile",
+                        "name": "ghi",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "solar-irradiance",
+                        "name": "t_air",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "wind",
+                        "name": "e",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "ac-discharge-profile",
+                        "name": "tp",
                         "type": "number",
                         "format": "default"
                     },
                     {
-                        "name": "precipitation-profile",
-                        "type": "integer",
+                        "name": "windspeed",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ac-discharge",
+                        "type": "number",
                         "format": "default"
                     }
                 ],

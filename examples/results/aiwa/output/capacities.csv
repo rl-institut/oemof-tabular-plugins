@@ -1,43 +1,43 @@
 bus,direction,asset,carrier,facade_type,Capacity,Storage Capacity,Expandable,Investments,Capacity Total
-ac-elec-bus,in,battery-storage,electricity,storage,0.0,0.0,1.0,-0.0,0.0
+ac-elec-bus,in,battery-storage,electricity,storage,0.0,0.0,1.0,0.0,0.0
 ac-elec-bus,in,elec-demand,electricity,load,,,,,
 ac-elec-bus,in,electricity-excess,electricity,excess,,,,,
 ac-elec-bus,in,sw-ro,electricity,ro,0.0,,1.0,,
 ac-elec-bus,in,water pump,electricity,water-pump,0.0,,1.0,,
 ac-elec-bus,in,water-filtration-system,electricity,water-filtration,0.0,,1.0,,
-ac-elec-bus,out,battery-storage,electricity,storage,0.0,0.0,1.0,-0.0,0.0
-ac-elec-bus,out,diesel-generator,electricity,conversion,0.0,,1.0,-0.0,0.0
-ac-elec-bus,out,electricity-grid,electricity,dispatchable,0.0,,1.0,300.0,300.0
-ac-elec-bus,out,inverter,electricity,conversion,0.0,,1.0,-0.0,0.0
+ac-elec-bus,out,battery-storage,electricity,storage,0.0,0.0,1.0,0.0,0.0
+ac-elec-bus,out,diesel-generator,electricity,conversion,0.0,,1.0,0.0,0.0
+ac-elec-bus,out,electricity-grid,electricity,dispatchable,0.0,,1.0,4.424997,4.424997
+ac-elec-bus,out,inverter,electricity,conversion,0.0,,1.0,3.2250058,3.2250058
 brine-bus,in,brine-excess,water,excess,,,,,
 brine-bus,out,sw-ro,water,ro,0.0,,1.0,,
 dc-elec-bus,in,inverter,electricity,conversion,0.0,,1.0,,
-dc-elec-bus,out,#pv,electricity,volatile,0.0,,1.0,-0.0,0.0
-dc-elec-bus,out,pv-panel,electricity,conversion,0.0,,1.0,-0.0,0.0
-dc-elec-bus,out,wind-turbine,electricity,conversion,0.0,,1.0,-0.0,0.0
+dc-elec-bus,out,#pv,electricity,volatile,0.0,,1.0,0.0,0.0
+dc-elec-bus,out,pv-panel,electricity,conversion,0.0,,1.0,3.5833398,3.5833398
+dc-elec-bus,out,wind-turbine,electricity,conversion,0.0,,1.0,0.0,0.0
 diesel-bus,in,diesel-generator,water,conversion,0.0,,1.0,,
-diesel-bus,out,diesel,water,dispatchable,0.0,,1.0,-0.0,0.0
+diesel-bus,out,diesel,water,dispatchable,0.0,,1.0,0.0,0.0
 drinking-water-bus,in,drinking-water-demand,water,load,,,,,
-drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
-drinking-water-bus,out,bottled-water,water,dispatchable,0.0,,1.0,-0.0,0.0
-drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
+drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,0.14447143,0.14447143
+drinking-water-bus,out,bottled-water,water,dispatchable,0.0,,1.0,0.0,0.0
+drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,0.14447143,0.14447143
 drinking-water-bus,out,sw-ro,water,ro,0.0,,1.0,,
-drinking-water-bus,out,water pump,water,water-pump,0.0,,1.0,-0.0,0.0
-drinking-water-bus,out,water-filtration-system,water,water-filtration,0.0,,1.0,-0.0,0.0
+drinking-water-bus,out,water pump,water,water-pump,0.0,,1.0,0.0,0.0
+drinking-water-bus,out,water-filtration-system,water,water-filtration,0.0,,1.0,0.0,0.0
 groundwater-bus,in,water pump,water,water-pump,0.0,,1.0,,
-groundwater-bus,out,groundwater,water,dispatchable,0.0,,1.0,-0.0,0.0
+groundwater-bus,out,groundwater,water,dispatchable,0.0,,1.0,0.0,0.0
 precipitation-bus,in,rainwater-harvesting,water,conversion,0.0,,1.0,,
 precipitation-bus,out,precipitation,water,dispatchable,0.0,,0.0,,
-seawater-bus,in,sw-ro,water,ro,0.0,,1.0,-0.0,0.0
-seawater-bus,out,seawater-source,water,dispatchable,0.0,,1.0,-0.0,0.0
+seawater-bus,in,sw-ro,water,ro,0.0,,1.0,0.0,0.0
+seawater-bus,out,seawater-source,water,dispatchable,0.0,,1.0,0.0,0.0
 service-water-bus,in,service-water-demand,water,load,,,,,
-service-water-bus,in,service-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
+service-water-bus,in,service-water-storage,water,storage,0.0,0.0,1.0,0.0,0.0
 service-water-bus,in,water-filtration-system,water,water-filtration,0.0,,1.0,,
 service-water-bus,out,condensed-water,water,dispatchable,0.0,,0.0,,
-service-water-bus,out,rainwater-harvesting,water,conversion,0.0,,1.0,-0.0,0.0
-service-water-bus,out,service-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
-service-water-bus,out,water-truck,water,dispatchable,0.0,,1.0,30.0,30.0
+service-water-bus,out,rainwater-harvesting,water,conversion,0.0,,1.0,0.0,0.0
+service-water-bus,out,service-water-storage,water,storage,0.0,0.0,1.0,0.0,0.0
+service-water-bus,out,water-truck,water,dispatchable,0.0,,1.0,0.200476,0.200476
 solar-bus,in,pv-panel,energy,conversion,0.0,,1.0,,
-solar-bus,out,solar-resource,energy,dispatchable,0.0,,1.0,-0.0,0.0
+solar-bus,out,solar-resource,energy,dispatchable,0.0,,1.0,516331390.0,516331390.0
 wind-bus,in,wind-turbine,energy,conversion,0.0,,1.0,,
-wind-bus,out,wind-resource,energy,dispatchable,0.0,,1.0,-0.0,0.0
+wind-bus,out,wind-resource,energy,dispatchable,0.0,,1.0,0.0,0.0
