@@ -1,42 +1,42 @@
 bus,direction,asset,carrier,facade_type,Capacity,Storage Capacity,Expandable,Investments,Capacity Total
-ac-elec-bus,in,battery-storage,electricity,storage,0.0,0.0,1.0,-0.0,0.0
+ac-elec-bus,in,battery-storage,electricity,storage,0.0,0.0,1.0,0.0,0.0
 ac-elec-bus,in,electricity-demand,electricity,load,,,,,
 ac-elec-bus,in,electricity-excess,electricity,excess,,,,,
 ac-elec-bus,in,water pump,electricity,water-pump,0.0,,1.0,,
 ac-elec-bus,in,water-filtration-system,electricity,water-filtration,0.0,,1.0,,
-ac-elec-bus,out,battery-storage,electricity,storage,0.0,0.0,1.0,-0.0,0.0
+ac-elec-bus,out,battery-storage,electricity,storage,0.0,0.0,1.0,0.0,0.0
 ac-elec-bus,out,diesel-generator,electricity,conversion,180.0,,1.0,0.0,180.0
-ac-elec-bus,out,inverter,electricity,conversion,10.0,,1.0,0.0,10.0
-ac-elec-bus,out,wind-turbine,electricity,conversion,0.0,,1.0,-0.0,0.0
+ac-elec-bus,out,inverter,electricity,conversion,10.0,,1.0,64.240908,74.240908
+ac-elec-bus,out,wind-turbine,electricity,conversion,0.0,,1.0,0.0,0.0
 banana-bus,in,banana-production,banana,excess,,,,,
 banana-bus,out,banana,banana,crop,0.0,,0.0,,
 brine-bus,in,brine-excess,water,excess,,,,,
 dc-elec-bus,in,inverter,electricity,conversion,10.0,,1.0,,
-dc-elec-bus,out,pv-panel,electricity,conversion,3.87,,1.0,0.0,3.869999885559082
+dc-elec-bus,out,pv-panel,electricity,conversion,3.87,,1.0,78.619898,82.48989788555909
 diesel-bus,in,diesel-generator,energy,conversion,180.0,,1.0,,
-diesel-bus,out,diesel,energy,dispatchable,0.0,,1.0,219.00737,219.00737
+diesel-bus,out,diesel,energy,dispatchable,0.0,,1.0,27.822326,27.822326
 drinking-water-bus,in,drinking-water-demand,water,load,,,,,
-drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,10.135579,10.135579
-drinking-water-bus,out,bottled-water,water,dispatchable,0.0,,1.0,-0.0,0.0
-drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,10.135579,10.135579
-drinking-water-bus,out,water-filtration-system,water,water-filtration,0.0,,1.0,20.135579,20.135579
+drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,16.322471,16.322471
+drinking-water-bus,out,bottled-water,water,dispatchable,0.0,,1.0,0.0,0.0
+drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,16.322471,16.322471
+drinking-water-bus,out,water-filtration-system,water,water-filtration,0.0,,1.0,1.5943652,1.5943652
 groundwater-bus,in,water pump,water,water-pump,0.0,,1.0,,
-groundwater-bus,out,groundwater,water,dispatchable,0.0,,1.0,-0.0,0.0
+groundwater-bus,out,groundwater,water,dispatchable,0.0,,1.0,3.405175,3.405175
 precipitation-bus,in,rainwater-harvesting,water,conversion,0.0,,1.0,,
-precipitation-bus,out,precipitation,water,dispatchable,0.0,,1.0,574.39779,574.39779
-river-flow-bus,out,river-flow,energy,dispatchable,0.0,,1.0,-0.0,0.0
+precipitation-bus,out,precipitation,water,dispatchable,0.0,,1.0,9725248.2,9725248.2
+river-flow-bus,out,river-flow,energy,dispatchable,0.0,,1.0,0.0,0.0
 river-water-bus,in,river-water-uptake,water,conversion,1.0,,1.0,,
-river-water-bus,out,river-water,water,dispatchable,0.0,,1.0,14.285714,14.285714
+river-water-bus,out,river-water,water,dispatchable,0.0,,1.0,0.003968254,0.003968254
 service-water-bus,in,service-water-demand,water,load,,,,,
-service-water-bus,in,service-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
+service-water-bus,in,service-water-storage,water,storage,0.0,0.0,1.0,19.365837,19.365837
 service-water-bus,in,water-filtration-system,water,water-filtration,0.0,,1.0,,
-service-water-bus,out,rainwater-harvesting,water,conversion,0.0,,1.0,109.13558,109.13558
+service-water-bus,out,rainwater-harvesting,water,conversion,0.0,,1.0,3.2352803,3.2352803
 service-water-bus,out,river-water-uptake,water,conversion,1.0,,1.0,0.0,1.0
-service-water-bus,out,service-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
-service-water-bus,out,water pump,water,water-pump,0.0,,1.0,-0.0,0.0
+service-water-bus,out,service-water-storage,water,storage,0.0,0.0,1.0,19.365837,19.365837
+service-water-bus,out,water pump,water,water-pump,0.0,,1.0,3.405175,3.405175
 solar-bus-crop,in,banana,energy,crop,0.0,,0.0,,
-solar-bus-crop,out,solar-resource-crop,energy,dispatchable,0.0,,1.0,-0.0,0.0
+solar-bus-crop,out,solar-resource-crop,energy,dispatchable,0.0,,1.0,0.0,0.0
 solar-bus-pv,in,pv-panel,energy,conversion,3.87,,1.0,,
-solar-bus-pv,out,solar-resource-pv,energy,dispatchable,0.0,,1.0,48.375,48.375
+solar-bus-pv,out,solar-resource-pv,energy,dispatchable,0.0,,1.0,10723799000.0,10723799000.0
 wind-bus,in,wind-turbine,energy,conversion,0.0,,1.0,,
-wind-bus,out,wind-resource,energy,dispatchable,0.0,,1.0,-0.0,0.0
+wind-bus,out,wind-resource,energy,dispatchable,0.0,,1.0,0.0,0.0
