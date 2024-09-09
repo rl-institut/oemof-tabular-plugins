@@ -298,12 +298,12 @@
                     },
                     {
                         "name": "sowing_date",
-                        "type": "date",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "harvest_date",
-                        "type": "date",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -357,6 +357,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "time_index",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
                         "name": "output_parameters",
                         "type": "object",
                         "format": "default"
@@ -401,6 +406,12 @@
                     },
                     {
                         "fields": "et_0",
+                        "reference": {
+                            "resource": "volatile_profile"
+                        }
+                    },
+                    {
+                        "fields": "time_index",
                         "reference": {
                             "resource": "volatile_profile"
                         }
@@ -1164,6 +1175,11 @@
                 "fields": [
                     {
                         "name": "timeindex",
+                        "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "time",
                         "type": "datetime",
                         "format": "default"
                     },

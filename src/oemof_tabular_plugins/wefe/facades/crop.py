@@ -61,48 +61,18 @@ class SimpleCrop(Converter, Facade):
     output_parameters: dict (optional)
         Set parameters on the output edge of the conversion unit
          (see oemof.solph for more information on possible parameters)
-
+    sowing_date: str
+        sowing date in MM-DD format
+    harvest_date: str
+        harvest date in MM-DD format
     ghi: time series
         Global horizontal irradiance
     et_0: time series
         potential evapotranspiration [m³]
-
     t_air: time series
         Ambient air temperature
-
     vwc: time series
-        the voluemtric water content (vwc) in the root zone depth in m³; metric to express soil moisture
-
-
-    SHOULD INCLUDE FUNCTIONS AND EXAMPLE HERE
-
-    # TODO these parameters below are most likely provided by crop_dict
-
-    light_saturation_point: numeric
-        [lux]
-    HI: numeric
-        Harvest Index; share of biomass which is harvested as actual fruit
-    I50A: numeric
-        Irradiation fitting parameter
-    I50B: numeric
-        Irradation fitting parameter
-    t_opt: numeric
-         optimal temperature for biomass growth
-    t_base: numeric
-        base temperature for phenological development and growth
-    rue: numeric
-        Radiation Use efficiency (above ground only and without respiration) (g/MJm²)
-    t_heat: numeric
-        t_heat is the threshold temperature when biomass growth rate starts to be reduced by heat stress
-    t_extreme: numeric
-        t_ext is the extreme temperature threshold when the biomass growth rate reaches 0 due to heat stress
-    t_sum: numeric
-        cumulative temperature until harvest
-    s_water: numeric
-        sensitivity of RUE to the ARID index for specific plant (simple crop model)
-    rzd: numeric
-        root zone depth [m]
-
+        the volumetric water content (vwc) in the root zone depth in m³; metric to express soil moisture
     """
 
     solar_bus: Bus
@@ -135,7 +105,7 @@ class SimpleCrop(Converter, Facade):
 
     crop_type: str = ""
 
-    timeindex: Union[float, Sequence[float]] = None
+    time_index: Union[float, Sequence[float]] = None
 
     t_air: Union[float, Sequence[float]] = None
 
@@ -145,9 +115,9 @@ class SimpleCrop(Converter, Facade):
 
     vwc: Union[float, Sequence[float]] = None
 
-    sowing_date: str = ""  # TODO: MM-DD format
+    sowing_date: str = ""
 
-    harvest_date: str = ""  # TODO: MM-DD format
+    harvest_date: str = ""
 
     @classmethod
     def validate_datapackage(self, resource):
@@ -216,6 +186,7 @@ class SimpleCrop(Converter, Facade):
         This resembles the plant growth curve displayed in Fig 1.(e) of https://doi.org/10.1016/j.eja.2019.01.009
 
         """
+
         # Check input time series compatibility
         if not isinstance(t_air, (list, pd.Series)):
             print("Argument 'temp' is not of type list or pd.Series!")
@@ -236,6 +207,12 @@ class SimpleCrop(Converter, Facade):
             # If harvest and sowing date are the same, move harvest date one time step back to avoid problems
             if sowing_date == harvest_date:
                 harvest_date = dates[dates.index(harvest_date) - 1]
+
+            if sowing_date > harvest_date:
+                raise ValueError(
+                    f"Sowing date ({sowing_date}) is after harvest date ({harvest_date}) for the resource of type crop named '{self.label}'. This is not possible within this model, please change your input csv file."
+                )
+
         # Opt. 2: only sowing date, harvest_date (end of cultivation period) is one day before (following year),
         # maturity according to SIMPLE
         elif sowing_date and not harvest_date:
@@ -517,7 +494,7 @@ class SimpleCrop(Converter, Facade):
         fWATER = self.calc_Fwater(self.et_0, self.vwc, **crop_params)
         fHEAT = self.calc_Fheat(t_air=self.t_air, **crop_params)
         fSOLAR = self.calc_Fsolar(
-            timeindex=self.timeindex,
+            timeindex=self.time_index,
             t_air=self.t_air,
             sowing_date=self.sowing_date,
             harvest_date=self.harvest_date,
