@@ -132,6 +132,10 @@ def post_processing(
     tables_to_save = {}
 
     results_by_flow = calculator.df_results
+
+    result_tables = {}
+    services_table = {}
+
     if results_by_flow is not None:
         results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
         # get sub-tables from results dataframe
@@ -141,6 +145,24 @@ def post_processing(
         capacities_table = extract_table_from_results(
             calculator.df_results, RESULT_TABLE_COLUMNS["capacities"]
         )
+        result_tables.update({"capacities": capacities_table})
+
+        # TODO add the tables here for each services only if they exist, make a check of what happen if there is no water-supply
+        # IDEA use the carriers of the bus to sort services apart
+        # IDEA define calculations for WEFE components in post_processing and make a merge within __init__ of WEFE
+        # TODO list components (facades) automatically (low prio)
+        df = results_by_flow.reset_index()
+        service_busses = df.loc[df.facade_type == "load"].bus.tolist()
+        service_busses += df.loc[
+            (df.direction == "out") & (df.facade_type == "crop")
+        ].bus.tolist()
+
+        for bus in service_busses:
+            df_bus = df.loc[df.bus == bus]
+
+            services_table[bus.replace("-bus", "")] = df_bus[
+                ["asset", "direction", "aggregated_flow", "carrier", "facade_type"]
+            ]
 
         # save tables to csv files
         tables_to_save.update(
@@ -161,6 +183,8 @@ def post_processing(
                 "ac-elec-bus", "in"
             ]["aggregated_flow"].sum()
 
+        result_tables.update({"kpis": kpis})
+
     for filename, table in tables_to_save.items():
         save_table_to_csv(table, results_path, filename)
 
@@ -174,7 +198,8 @@ def post_processing(
         demo_app = prepare_app(
             es,
             dp_path=dp_path,
-            tables={"capacities": capacities_table, "kpis": kpis},
+            tables=result_tables,
+            services=services_table,
             units=parameters_units,
         )
         demo_app.run_server(debug=True, port=8060)
