@@ -12,6 +12,31 @@ from oemof.tabular import datapackage  # noqa
 
 from oemof_tabular_plugins.wefe import WEFE_TYPEMAP as TYPEMAP
 
+parameters_units = {
+    "battery_storage": "[kWh]",
+    "inverter": "[kW]",
+    "pv-panel": "[kW]",
+    "diesel-generator": "[kW]",
+    "water-storage": "[m³]",
+    "mimo": "[m³/h]",
+    "annuity_total": "[$]",
+    "variable_costs_total": "[$]",
+    "system_cost_total": "[$]",
+    "specific_system_cost": "[$]",
+    "total_upfront_investments": "[$]",
+    "banana-plantation": "[m²]",
+    "land_requirement_total": "[m²]",
+    "ghg_emissions_total": "[?kg?]",
+    "land_requirement_additional": "[m²]",
+    "total_water_footprint": "[m³]",
+    "river-water-uptake": "[m³]",
+    "water-filtration-system": "[m³]",
+    "rainwater-harvesting": "[m³]",
+    "water": "[m³]",
+    "electricity": "[kWh]",
+    "crop": "[kg]",
+}
+
 # -------------- RELEVANT PATHS --------------
 # get the project directory by navigating up one level from the current script file
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))

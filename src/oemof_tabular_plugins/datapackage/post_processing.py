@@ -212,6 +212,12 @@ def compute_system_co2_emissions_total(results_df):
     return emissions_total
 
 
+def compute_system_opex_total(results_df):
+    """Calculates the total OPEX by summing up the opex from each component"""
+    opex_total = results_df["opex_fix_costs_total"].sum()
+    return opex_total
+
+
 def compute_system_land_requirement_additional(results_df):
     """Calculates the additional land requirement from optimized capacities by summing the additional
     land requirement for each component"""
@@ -262,6 +268,12 @@ def compute_water_footprint_total(results_df):
     # ToDo: so far these are simply summed for each flow, but should check this is correct in every case
     water_footprint_total = results_df["water_footprint"].sum()
     return water_footprint_total
+
+
+def compute_ghg_emissions_total(results_df):
+    """Calculates the total ghg emissions by summing the total ghg emissions for each component"""
+    ghg_emission_total = results_df["ghg_emissions"].sum()
+    return ghg_emission_total
 
 
 def compute_specific_system_cost(results_df):
@@ -458,6 +470,18 @@ CALCULATED_KPIS = [
         "description": "The renewable share is calculated by dividing the renewable generation by the total "
         "generation",
         "argument_names": ["renewable_factor", "aggregated_flow"],
+    },
+    {
+        "column_name": "ghg_emissions_total",
+        "operation": compute_ghg_emissions_total,
+        "description": "",
+        "argument_names": ["ghg_emissions"],
+    },
+    {
+        "column_name": "system_opex_total",
+        "operation": compute_system_opex_total,
+        "description": "",
+        "argument_names": ["opex_fix_costs_total"],
     },
 ]
 
