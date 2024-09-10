@@ -26,6 +26,7 @@ parameters_units = {
     "total_upfront_investments": "[$]",
     "banana-plantation": "[m²]",
     "land_requirement_total": "[m²]",
+    "ghg_emissions_total": "[?kg?]",
     "land_requirement_additional": "[m²]",
     "total_water_footprint": "[m³]",
     "river-water-uptake": "[m³]",
