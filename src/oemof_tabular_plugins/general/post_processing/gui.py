@@ -243,7 +243,7 @@ def prepare_app(energy_system, dp_path, tables, units=None):
     for table in tables:
         df = tables[table].reset_index()
         if "Investments" in df.columns:
-            df = df.loc[df.Investments > 0, ["asset", "Investments"]]
+            df = df.loc[(df["Capacity Total"] > 0) | (df.Investments > 0)]
             df.rename(
                 columns={"asset": "component name", "Investments": "optimized value"},
                 inplace=True,
