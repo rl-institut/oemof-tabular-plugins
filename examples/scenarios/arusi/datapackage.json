@@ -233,7 +233,7 @@
                     },
                     {
                         "name": "capacity_potential",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
