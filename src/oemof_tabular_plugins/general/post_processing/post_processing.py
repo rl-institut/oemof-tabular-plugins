@@ -38,6 +38,14 @@ RESULT_TABLE_COLUMNS = {
     ],
 }
 
+CAPACITIES_UNIT = {
+    "electricity": {"default": "[kW]", "storage": "[kWh]"},
+    "wind": {"default": "[m³/s]", "storage": "[m³/s]"},
+    "irradiation": {"default": "[m²]", "storage": "[m²]"},
+    "crop": {"default": "[m²]", "storage": "[m²]"},
+    "water": {"default": "[m³/s]", "storage": "[m³]"},
+}
+
 
 def extract_table_from_results(df_results, columns):
     """Extracts a set of columns from the df_results DataFrame. The lists of columns to generate these tables can be
@@ -139,13 +147,59 @@ def post_processing(
     if results_by_flow is not None:
         results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
         # get sub-tables from results dataframe
-        cost_table = extract_table_from_results(
-            calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
-        )
         capacities_table = extract_table_from_results(
             calculator.df_results, RESULT_TABLE_COLUMNS["capacities"]
         )
+
+        # ignore the dispatchable sources optimized capacities
+        capacities_table = capacities_table[
+            capacities_table.index.get_level_values("facade_type") != "dispatchable"
+        ]
+
+        # Assign units to the capacities:
+        def set_unit(carrier, facade_type):
+            unit_choice = CAPACITIES_UNIT.get(carrier, {"default": "", "storage": ""})
+
+            if facade_type in unit_choice:
+                unit = unit_choice[facade_type]
+            else:
+                unit = unit_choice["default"]
+            return unit
+
+        capacities_table.reset_index(inplace=True)
+        capacities_table["unit"] = capacities_table.apply(
+            lambda x: set_unit(x.carrier, x.facade_type), axis=1
+        )
+
+        capacities_table.rename(
+            columns={
+                "asset": "Component name",
+                "Investments": "Optimized Capacity",
+                "Capacity Potential": "Maximum Capacity",
+            },
+            inplace=True,
+        )
+
+        # eliminate double occurences of same asset
+        capacities_table = capacities_table.loc[
+            (capacities_table["Capacity Total"] > 0)
+            & (capacities_table.direction == "out"),
+            [
+                "Component name",
+                "Capacity",
+                "Optimized Capacity",
+                "Capacity Total",
+                "Maximum Capacity",
+                "unit",
+            ],
+        ]
         result_tables.update({"capacities": capacities_table})
+
+        cost_table = extract_table_from_results(
+            calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
+        )
+
+        # result_tables.update({"costs": cost_table})
 
         # TODO add the tables here for each services only if they exist, make a check of what happen if there is no water-supply
         # IDEA use the carriers of the bus to sort services apart
@@ -189,12 +243,7 @@ def post_processing(
         save_table_to_csv(table, results_path, filename)
 
     if dash_app is True:
-        # ignore the dispachable sources optimized capacities
-        capacities_table = capacities_table[
-            capacities_table.index.get_level_values("facade_type") != "dispatchable"
-        ]
-        # eliminate double occurence of same asset
-        capacities_table = capacities_table.groupby("asset").mean()
+
         demo_app = prepare_app(
             es,
             dp_path=dp_path,
