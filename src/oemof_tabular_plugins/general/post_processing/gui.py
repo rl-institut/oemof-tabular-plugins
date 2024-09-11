@@ -47,6 +47,32 @@ service__item_style = {
     "border-radius": "5px",
 }
 
+table__item_style = {
+    "kpis": {
+        "width": "500px",
+        "border-style": "solid",
+        "border-width": "3px",
+        "padding": "1rem",
+        "margin": "1rem",
+        "border-radius": "5px",
+    },
+    "capacities": {
+        "width": "800px",
+        "border-style": "solid",
+        "border-width": "3px",
+        "padding": "1rem",
+        "margin": "1rem",
+        "border-radius": "5px",
+    },
+}
+
+container_style = {
+    "display": "flex",
+    "flex-direction": "row",
+    "flex-wrap": "wrap",
+    "justify-content": "flex-start",
+}
+
 
 ##########################################################################
 # Initialize the energy system and calculate necessary parameters
@@ -213,7 +239,6 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
     bus_data = pd.DataFrame.from_records(p0.get_resource("bus").read(keyed=True))
     busses = bus_data.name.tolist()
 
-    print("busses", busses)
     date_time_index = energy_system.timeindex
 
     for bus in busses:
@@ -249,23 +274,33 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
     tables_figure = []
 
     for table in tables:
-        df = tables[table].reset_index()
-        if "Investments" in df.columns:
-            df = df.loc[(df["Capacity Total"] > 0) | (df.Investments > 0)]
-            df.rename(
-                columns={"asset": "component name", "Investments": "optimized value"},
-                inplace=True,
-            )
+        df = tables[table]
 
-        def set_value(row_number, assigned_value):
-            return assigned_value.get(row_number, None)
+        if "unit" not in df.columns:
+            df.reset_index(inplace=True)
 
-        df["unit"] = df[df.columns[0]].apply(set_value, args=(units,))
+            def set_value(row_number, assigned_value):
+                return assigned_value.get(row_number, None)
 
-        tables_figure.append(html.H4(table))
+            df["unit"] = df[df.columns[0]].apply(set_value, args=(units,))
+
         tables_figure.append(
-            dash_table.DataTable(
-                df.to_dict("records"), [{"name": i, "id": i} for i in df.columns]
+            html.Div(
+                style=table__item_style[table],
+                children=[
+                    html.H4(table),
+                    dash_table.DataTable(
+                        data=df.round(2).to_dict("records"),
+                        columns=[{"name": i, "id": i} for i in df.columns],
+                        style_cell_conditional=[
+                            {"if": {"column_id": "kpi"}, "textAlign": "center"},
+                            {
+                                "if": {"column_id": "Component name"},
+                                "textAlign": "center",
+                            },
+                        ],
+                    ),
+                ],
             )
         )
 
@@ -364,59 +399,30 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
     demo_app.layout = html.Div(
         children=[
             html.H2("Scalar results"),
+            html.H3("KPIS"),
+            html.Div(
+                className="table--container",
+                style=container_style,
+                children=tables_figure,
+            ),
+            html.H3("Services"),
             # dcc.Dropdown(
             #     options=[s for s in services],
             #     value=[s for s in services],
             #     id="service_select",
             #     multi=True
             # ),
-            html.H3("Services overview"),
             dcc.Checklist(
                 id="service_select",
                 options=[s for s in services],
-                value=[s for s in services],
+                value=[],  # s for s in services],
                 inline=True,
             ),
             html.Div(
                 services_figure,
                 className="service--container",
-                style={
-                    "display": "flex",
-                    "flex-direction": "row",
-                    "flex-wrap": "wrap",
-                    "justify-content": "flex-start",
-                },
+                style=container_style,
             ),
-            html.Div(tables_figure),
-            # html.Div(
-            #     children=[
-            #         html.P(f"{param.title()}: {settings[param]}")
-            #         for param in settings.index
-            #         if param != "port"
-            #     ],
-            #     style={"display": "flex", "justify-content": "space-evenly"},
-            # ),
-            # html.Div(
-            #     children=dash_table.DataTable(
-            #         df_costs.reset_index().to_dict("records"),
-            #         [{"name": i, "id": i} for i in df_costs.reset_index().columns],
-            #     )
-            # ),
-            # html.Div(children=[html.H3("Results in numbers"), result_div]),
-            # html.Div(
-            #     children=[
-            #         html.H3("Non critical demand reduction overview"),
-            #         dcc.Graph(
-            #             id="nc_demand_supply", figure=reduced_demand_fig(results)
-            #         ),
-            #     ]
-            # ),
-            # html.Div(
-            #     children=dash_table.DataTable(
-            #         asset_results.reset_index().to_dict("records"),
-            #         [{"name": i, "id": i} for i in asset_results.reset_index().columns],
-            #     )
-            # ),
             html.H2("Dynamic results"),
             html.P(
                 children=[
