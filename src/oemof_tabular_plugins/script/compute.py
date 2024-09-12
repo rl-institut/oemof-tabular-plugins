@@ -1,4 +1,6 @@
 import os
+
+import pandas as pd
 from oemof.solph import EnergySystem, Model
 from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
@@ -32,6 +34,7 @@ def compute_scenario(
     infer_bus_carrier=True,
     skip_preprocessing=False,
     skip_infer_datapackage_metadata=False,
+    save_raw_results=True,
 ):
     """
 
@@ -108,6 +111,8 @@ def compute_scenario(
     # extract parameters and results
     params = parameter_as_dict(es)
     es.results = processing.results(m)
+    if save_raw_results is True:
+        es.dump(dpath=results_path, filename="oemof_raw")
 
     return post_processing(
         params,
@@ -118,3 +123,48 @@ def compute_scenario(
         parameters_units=parameters_units,
         infer_bus_carrier=infer_bus_carrier,
     )
+
+
+def display_scenario_results(
+    scenario_dir,
+    results_path,
+    dash_app=True,
+    parameters_units=None,
+):
+    """
+
+    Parameters
+    ----------
+    scenario_dir
+    results_path
+    Returns
+    -------
+
+    """
+
+    # create results directory if it doesn't already exist
+    if not os.path.exists(results_path):
+        os.makedirs(results_path)
+
+    oemof_dump_file = os.path.join(results_path, "oemof_raw")
+
+    if os.path.exists(oemof_dump_file):
+        es = EnergySystem()
+        es.restore(dpath=results_path, filename="oemof_raw")
+
+        params = None
+
+        calculator = post_processing(
+            params,
+            es,
+            results_path,
+            dp_path=os.path.join(scenario_dir, "datapackage.json"),
+            dash_app=dash_app,
+            parameters_units=parameters_units,
+            infer_bus_carrier=True,
+        )
+        return calculator
+    else:
+        raise FileNotFoundError(
+            f"The file {oemof_dump_file} could not be found, you need to set the argument 'save_raw_results' to True when using the function 'compute_scenario'"
+        )
