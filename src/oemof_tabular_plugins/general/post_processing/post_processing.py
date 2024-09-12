@@ -104,7 +104,12 @@ class OTPCalculator(Calculator):
         self.df_results = process_raw_inputs(self.df_results, dp_path)
         self.kpis = None
 
-        super().__init__(input_parameters, energy_system.results)
+        try:
+            super().__init__(input_parameters, energy_system.results)
+        except Exception as e:
+            logging.error(
+                f"Initialisation of Calculator did not succeed: {str(e)}. This should not impact oemof-tabular-plugins results."
+            )
 
     def apply_calculations(self, calculations):
         apply_calculations(self.df_results, calculations=calculations)
@@ -250,8 +255,6 @@ def post_processing(
 
         # result_tables.update({"costs": cost_table})
 
-        # TODO add the tables here for each services only if they exist, make a check of what happen if there is no water-supply
-        # IDEA use the carriers of the bus to sort services apart
         # IDEA define calculations for WEFE components in post_processing and make a merge within __init__ of WEFE
         # TODO list components (facades) automatically (low prio)
         df = results_by_flow.reset_index()
@@ -303,55 +306,55 @@ def post_processing(
         demo_app.run_server(debug=False, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
-    results = es.results
-    # calculate scalars using functions from clc module
-    aggregated_flows = clc.AggregatedFlows(calculator).result
-    storage_losses = clc.StorageLosses(calculator).result
-    transmission_losses = clc.TransmissionLosses(calculator).result
-    invested_capacity = clc.InvestedCapacity(calculator).result
-    invested_storage_capacity = clc.InvestedStorageCapacity(calculator).result
-    invested_capacity_costs = clc.InvestedCapacityCosts(calculator).result
-    invested_storage_capacity_costs = clc.InvestedStorageCapacityCosts(
-        calculator
-    ).result
-    summed_carrier_costs = clc.SummedCarrierCosts(calculator).result
-    summed_marginal_costs = clc.SummedMarginalCosts(calculator).result
-    total_system_costs = clc.TotalSystemCosts(calculator).result
+    if hasattr(calculator, "scalar_params"):
+        # calculate scalars using functions from clc module
+        aggregated_flows = clc.AggregatedFlows(calculator).result
+        storage_losses = clc.StorageLosses(calculator).result
+        transmission_losses = clc.TransmissionLosses(calculator).result
+        invested_capacity = clc.InvestedCapacity(calculator).result
+        invested_storage_capacity = clc.InvestedStorageCapacity(calculator).result
+        invested_capacity_costs = clc.InvestedCapacityCosts(calculator).result
+        invested_storage_capacity_costs = clc.InvestedStorageCapacityCosts(
+            calculator
+        ).result
+        summed_carrier_costs = clc.SummedCarrierCosts(calculator).result
+        summed_marginal_costs = clc.SummedMarginalCosts(calculator).result
+        total_system_costs = clc.TotalSystemCosts(calculator).result
 
-    # combine all results into a single dataframe
-    all_scalars = [
-        aggregated_flows,
-        storage_losses,
-        transmission_losses,
-        invested_capacity,
-        invested_storage_capacity,
-        invested_capacity_costs,
-        invested_storage_capacity_costs,
-        summed_carrier_costs,
-        summed_marginal_costs,
-    ]
-    # map variable names and add component information
-    all_scalars = pd.concat(all_scalars, axis=0)
-    all_scalars = naming.map_var_names(
-        all_scalars,
-        calculator.scalar_params,
-        calculator.busses,
-        calculator.links,
-    )
-    all_scalars = naming.add_component_info(all_scalars, calculator.scalar_params)
-    print("Total System Cost", total_system_costs)
-    total_system_costs.index.names = ("name", "var_name")
-    all_scalars = pd.concat([all_scalars, total_system_costs], axis=0)
-    all_scalars = all_scalars.sort_values(by=["carrier", "tech", "var_name"])
-    # save all scalar results to a csv file
-    filepath_name_all_scalars = os.path.join(results_path, "all_scalars.csv")
-    all_scalars.to_csv(filepath_name_all_scalars)
+        # combine all results into a single dataframe
+        all_scalars = [
+            aggregated_flows,
+            storage_losses,
+            transmission_losses,
+            invested_capacity,
+            invested_storage_capacity,
+            invested_capacity_costs,
+            invested_storage_capacity_costs,
+            summed_carrier_costs,
+            summed_marginal_costs,
+        ]
+        # map variable names and add component information
+        all_scalars = pd.concat(all_scalars, axis=0)
+        all_scalars = naming.map_var_names(
+            all_scalars,
+            calculator.scalar_params,
+            calculator.busses,
+            calculator.links,
+        )
+        all_scalars = naming.add_component_info(all_scalars, calculator.scalar_params)
+        print("Total System Cost", total_system_costs)
+        total_system_costs.index.names = ("name", "var_name")
+        all_scalars = pd.concat([all_scalars, total_system_costs], axis=0)
+        all_scalars = all_scalars.sort_values(by=["carrier", "tech", "var_name"])
+        # save all scalar results to a csv file
+        filepath_name_all_scalars = os.path.join(results_path, "all_scalars.csv")
+        all_scalars.to_csv(filepath_name_all_scalars)
 
-    # saves all hourly timeseries as a dataframe (see test_postprocessing.py in oemof-tabular/tests
-    # for example if wanting to filter particular nodes)
-    all_sequences = clc.AggregatedFlows(calculator, resample_mode="H")
-    # save all timeseries (sequence) results to a csv file
-    filepath_name_all_sequences = os.path.join(results_path, "all_sequences.csv")
-    all_sequences.sequences.to_csv(filepath_name_all_sequences)
+        # saves all hourly timeseries as a dataframe (see test_postprocessing.py in oemof-tabular/tests
+        # for example if wanting to filter particular nodes)
+        all_sequences = clc.AggregatedFlows(calculator, resample_mode="H")
+        # save all timeseries (sequence) results to a csv file
+        filepath_name_all_sequences = os.path.join(results_path, "all_sequences.csv")
+        all_sequences.sequences.to_csv(filepath_name_all_sequences)
 
     return calculator
