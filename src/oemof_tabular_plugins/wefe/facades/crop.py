@@ -9,14 +9,8 @@ from oemof.solph.buses import Bus
 from oemof.solph.components import Converter
 from oemof.solph.flows import Flow
 
-import dataclasses
 from oemof.tabular._facade import dataclass_facade, Facade
-from oemof.tabular.facades import Conversion
 from oemof_tabular_plugins.wefe.global_specs.crops import crop_dict
-
-
-# SOME PLOTS AND PRINTS FOR DEBUGGING PURPOSES
-import matplotlib.pyplot as plt
 
 
 @dataclass_facade

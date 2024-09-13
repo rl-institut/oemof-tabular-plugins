@@ -13,4 +13,4 @@ WEFE_TYPEMAP = {
     "inverter": Inverter,
 }
 
-WEFE_TYPEMAP = TYPEMAP.update(WEFE_TYPEMAP)
+WEFE_TYPEMAP.update(TYPEMAP)
