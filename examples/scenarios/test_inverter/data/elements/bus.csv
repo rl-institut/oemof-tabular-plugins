@@ -1,0 +1,3 @@
+name;type;balanced;carrier
+dc-elec-bus;bus;True;electricity
+ac-elec-bus;bus;True;electricity
