@@ -115,9 +115,9 @@ class SimpleCrop(Converter, Facade):
 
     vwc: Union[float, Sequence[float]] = None
 
-    sowing_date: str = ""
+    sowing_date: str = ""   # MM-DD
 
-    harvest_date: str = ""
+    harvest_date: str = ""  # MM-DD
 
     @classmethod
     def validate_datapackage(self, resource):
@@ -208,10 +208,10 @@ class SimpleCrop(Converter, Facade):
             if sowing_date == harvest_date:
                 harvest_date = dates[dates.index(harvest_date) - 1]
 
-            if sowing_date > harvest_date:
-                raise ValueError(
-                    f"Sowing date ({sowing_date}) is after harvest date ({harvest_date}) for the resource of type crop named '{self.label}'. This is not possible within this model, please change your input csv file."
-                )
+            # if sowing_date > harvest_date:
+            #     raise ValueError(
+            #         f"Sowing date ({sowing_date}) is after harvest date ({harvest_date}) for the resource of type crop named '{self.label}'. This is not possible within this model, please change your input csv file."
+            #     )
 
         # Opt. 2: only sowing date, harvest_date (end of cultivation period) is one day before (following year),
         # maturity according to SIMPLE
@@ -488,7 +488,7 @@ class SimpleCrop(Converter, Facade):
 
         # Conversion factor Watt Hours (WH) to Mega Joules (MJ)
         c_wh_to_mj = 3.6e-3
-        c_kg_to_g = 1e-3
+        c_g_to_kg = 1e-3
         crop_params = crop_dict[self.crop_type]
         fTEMP = self.calc_Ftemp(self.t_air, **crop_params)
         fWATER = self.calc_Fwater(self.et_0, self.vwc, **crop_params)
@@ -503,7 +503,7 @@ class SimpleCrop(Converter, Facade):
 
         rue = self.get_crop_param("rue")
 
-        return rue * fSOLAR * fTEMP * np.minimum(fWATER, fHEAT) * c_wh_to_mj * c_kg_to_g
+        return rue * fSOLAR * fTEMP * np.minimum(fWATER, fHEAT) * c_wh_to_mj * c_g_to_kg
 
     def build_solph_components(self):
         """ """
