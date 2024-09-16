@@ -199,6 +199,7 @@ class SimpleCrop(Converter, Facade):
         dates = list(pd.to_datetime(timeindex))
         year = str(dates[0].year)
         timezone = dates[0].tz
+
         # Opt. 1: sowing_date and harvest date given, plant maturity (t_sum) will be updated (custom_harvest=True)
         if sowing_date and harvest_date:
             sowing_date = pd.Timestamp(year + "-" + sowing_date).tz_localize(timezone)
@@ -208,17 +209,13 @@ class SimpleCrop(Converter, Facade):
             if sowing_date == harvest_date:
                 harvest_date = dates[dates.index(harvest_date) - 1]
 
-            # if sowing_date > harvest_date:
-            #     raise ValueError(
-            #         f"Sowing date ({sowing_date}) is after harvest date ({harvest_date}) for the resource of type crop named '{self.label}'. This is not possible within this model, please change your input csv file."
-            #     )
-
         # Opt. 2: only sowing date, harvest_date (end of cultivation period) is one day before (following year),
         # maturity according to SIMPLE
         elif sowing_date and not harvest_date:
             sowing_date = pd.Timestamp(year + "-" + sowing_date).tz_localize(timezone)
             harvest_date = dates[dates.index(sowing_date) - 1]
             custom_harvest = False
+
         # Opt. 3: no dates, growth from start of the year till maturity (from SIMPLE)
         else:
             sowing_date = dates[0]
