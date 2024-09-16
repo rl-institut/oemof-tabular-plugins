@@ -11,8 +11,7 @@ from oemof.tabular import datapackage  # noqa
 from oemof.tabular.facades import TYPEMAP
 
 
-from oemof_tabular_plugins.wefe.facades import PVPanel, MIMO
-
+from oemof_tabular_plugins.wefe import TYPEMAP as WEFE_TYPEMAP
 
 # -------------- RELEVANT PATHS --------------
 # get the project directory by navigating up one level from the current script file
@@ -47,8 +46,7 @@ custom_attributes = [
 # set whether the multi-objective optimization should be performed
 moo = False
 # add PV Panel (from oemof-tabular-plugins) to facades type map (from oemof-tabular) - might move later
-TYPEMAP["pv-panel"] = PVPanel
-TYPEMAP["mimo"] = MIMO
+TYPEMAP.update(WEFE_TYPEMAP)
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
