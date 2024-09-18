@@ -202,7 +202,7 @@ def post_processing(
         results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
         # get sub-tables from results dataframe
         capacities_table = extract_table_from_results(
-            calculator.df_results, RESULT_TABLE_COLUMNS["capacities"]
+            results_by_flow, RESULT_TABLE_COLUMNS["capacities"]
         )
 
         # ignore the dispatchable sources optimized capacities
@@ -221,6 +221,12 @@ def post_processing(
             return unit
 
         capacities_table.reset_index(inplace=True)
+        if "Capacity Potential" not in capacities_table.columns:
+            capacities_table["Capacity Potential"] = None
+
+        if "carrier" not in capacities_table.columns:
+            capacities_table["carrier"] = None
+
         capacities_table["unit"] = capacities_table.apply(
             lambda x: set_unit(x.carrier, x.facade_type), axis=1
         )
@@ -258,6 +264,8 @@ def post_processing(
         # IDEA define calculations for WEFE components in post_processing and make a merge within __init__ of WEFE
         # TODO list components (facades) automatically (low prio)
         df = results_by_flow.reset_index()
+        if "carrier" not in df.columns:
+            df["carrier"] = None
         service_busses = df.loc[df.facade_type == "load"].bus.tolist()
         service_busses += df.loc[
             (df.direction == "out") & (df.facade_type == "crop")
