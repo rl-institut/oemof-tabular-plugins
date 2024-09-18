@@ -39,6 +39,40 @@ RESULTS_COLUMN_NAMES = [
     "first_investment",
 ]
 
+service__item_style = {
+    "border-style": "solid",
+    "border-width": "3px",
+    "padding": "1rem",
+    "margin": "1rem",
+    "border-radius": "5px",
+}
+
+table__item_style = {
+    "kpis": {
+        "width": "500px",
+        "border-style": "solid",
+        "border-width": "3px",
+        "padding": "1rem",
+        "margin": "1rem",
+        "border-radius": "5px",
+    },
+    "capacities": {
+        "width": "800px",
+        "border-style": "solid",
+        "border-width": "3px",
+        "padding": "1rem",
+        "margin": "1rem",
+        "border-radius": "5px",
+    },
+}
+
+container_style = {
+    "display": "flex",
+    "flex-direction": "row",
+    "flex-wrap": "wrap",
+    "justify-content": "flex-start",
+}
+
 
 ##########################################################################
 # Initialize the energy system and calculate necessary parameters
@@ -186,7 +220,7 @@ def sankey(energy_system, ts=None):
     return fig.to_dict()
 
 
-def prepare_app(energy_system, dp_path, tables, units=None):
+def prepare_app(energy_system, dp_path, tables, services, units=None):
 
     # TODO to display energy system
     energy_system_graph = f"energy_system.png"
@@ -205,7 +239,6 @@ def prepare_app(energy_system, dp_path, tables, units=None):
     bus_data = pd.DataFrame.from_records(p0.get_resource("bus").read(keyed=True))
     busses = bus_data.name.tolist()
 
-    print("busses", busses)
     date_time_index = energy_system.timeindex
 
     for bus in busses:
@@ -241,23 +274,117 @@ def prepare_app(energy_system, dp_path, tables, units=None):
     tables_figure = []
 
     for table in tables:
-        df = tables[table].reset_index()
-        if "Investments" in df.columns:
-            df = df.loc[df.Investments > 0, ["asset", "Investments"]]
-            df.rename(
-                columns={"asset": "component name", "Investments": "optimized value"},
-                inplace=True,
-            )
+        df = tables[table]
 
-        def set_value(row_number, assigned_value):
-            return assigned_value.get(row_number, None)
+        if "unit" not in df.columns:
+            df.reset_index(inplace=True)
 
-        df["unit"] = df[df.columns[0]].apply(set_value, args=(units,))
+            def set_value(row_number, assigned_value):
+                return assigned_value.get(row_number, None)
 
-        tables_figure.append(html.H4(table))
+            df["unit"] = df[df.columns[0]].apply(set_value, args=(units,))
+
         tables_figure.append(
-            dash_table.DataTable(
-                df.to_dict("records"), [{"name": i, "id": i} for i in df.columns]
+            html.Div(
+                style=table__item_style[table],
+                children=[
+                    html.H4(table),
+                    dash_table.DataTable(
+                        data=df.round(2).to_dict("records"),
+                        columns=[{"name": i, "id": i} for i in df.columns],
+                        style_cell_conditional=[
+                            {"if": {"column_id": "kpi"}, "textAlign": "center"},
+                            {
+                                "if": {"column_id": "Component name"},
+                                "textAlign": "center",
+                            },
+                        ],
+                    ),
+                ],
+            )
+        )
+
+    services_figure = []
+    for service in services:
+        df = services[service]
+        carrier = df.carrier.unique()[0]
+        unit = units.get(carrier, "UNIT NOT FOUND")
+
+        is_crop = False
+
+        if "crop" in df.facade_type.values:
+            is_crop = True
+
+        df = df.rename(
+            columns={"asset": "Component name", "aggregated_flow": unit},
+        )
+
+        # Populate the subtables of the service
+        production = df.loc[df.direction == "out"].copy()
+
+        if is_crop is False:
+            usage = df.loc[(df.direction == "in") & (df.facade_type != "excess")].copy()
+            excess = df.loc[df.facade_type == "excess"].copy()
+            tables = [production, usage, excess]
+        else:
+            usage = df.loc[df.direction == "in"].copy()
+            tables = [production, usage]
+
+        for table in tables:
+            if table.empty is False:
+                table.drop(
+                    columns=["carrier", "direction", "facade_type"], inplace=True
+                )
+                table.loc[:, "Percentage"] = 100 * table[unit] / table[unit].sum()
+                # Add a line with "total" if there is more than one component
+                if len(table) > 1:
+                    summary_line = table.iloc[:, 1:].sum()
+                    summary_line["Component name"] = "Total"
+                    table.loc[-1] = summary_line
+
+        table_headers = ["Production", "Usage"]
+        if is_crop is False:
+            if excess.empty is False:
+                if excess[unit].sum() > 0:
+                    table_headers.append("Excess")
+
+        services_figure.append(
+            html.Div(
+                id=f"{service}-service-div",
+                className="service--item",
+                style=service__item_style,
+                children=[
+                    html.H4(service.replace("-", " ").capitalize()),
+                    html.Div(
+                        children=[
+                            html.Div(
+                                [
+                                    html.H5(table_hdr),
+                                    dash_table.DataTable(
+                                        data=table.round(2).to_dict("records"),
+                                        columns=[
+                                            {"name": i, "id": i} for i in table.columns
+                                        ],
+                                        style_cell_conditional=[
+                                            {
+                                                "if": {"column_id": i},
+                                                "width": f"{100/len(table.columns)}%",
+                                            }
+                                            for i in table.columns
+                                        ]
+                                        + [
+                                            {
+                                                "if": {"column_id": "Component name"},
+                                                "textAlign": "center",
+                                            }
+                                        ],
+                                    ),
+                                ]
+                            )
+                            for table_hdr, table in zip(table_headers, tables)
+                        ],
+                    ),
+                ],
             )
         )
 
@@ -271,38 +398,32 @@ def prepare_app(energy_system, dp_path, tables, units=None):
 
     demo_app.layout = html.Div(
         children=[
-            html.H3("Scalar results"),
-            html.Div(tables_figure),
-            # html.Div(
-            #     children=[
-            #         html.P(f"{param.title()}: {settings[param]}")
-            #         for param in settings.index
-            #         if param != "port"
-            #     ],
-            #     style={"display": "flex", "justify-content": "space-evenly"},
+            html.H2("Scalar results"),
+            html.H3("KPIS"),
+            html.Div(
+                className="table--container",
+                style=container_style,
+                children=tables_figure,
+            ),
+            html.H3("Services"),
+            # dcc.Dropdown(
+            #     options=[s for s in services],
+            #     value=[s for s in services],
+            #     id="service_select",
+            #     multi=True
             # ),
-            # html.Div(
-            #     children=dash_table.DataTable(
-            #         df_costs.reset_index().to_dict("records"),
-            #         [{"name": i, "id": i} for i in df_costs.reset_index().columns],
-            #     )
-            # ),
-            # html.Div(children=[html.H3("Results in numbers"), result_div]),
-            # html.Div(
-            #     children=[
-            #         html.H3("Non critical demand reduction overview"),
-            #         dcc.Graph(
-            #             id="nc_demand_supply", figure=reduced_demand_fig(results)
-            #         ),
-            #     ]
-            # ),
-            # html.Div(
-            #     children=dash_table.DataTable(
-            #         asset_results.reset_index().to_dict("records"),
-            #         [{"name": i, "id": i} for i in asset_results.reset_index().columns],
-            #     )
-            # ),
-            html.H3("Dynamic results"),
+            dcc.Checklist(
+                id="service_select",
+                options=[s for s in services],
+                value=[],  # s for s in services],
+                inline=True,
+            ),
+            html.Div(
+                services_figure,
+                className="service--container",
+                style=container_style,
+            ),
+            html.H2("Dynamic results"),
             html.P(
                 children=[
                     "You can adjust the slider to get the energy flow at a single timestep, "
@@ -452,6 +573,26 @@ def prepare_app(energy_system, dp_path, tables, units=None):
     )
     def change_ts_value(val):
         return val
+
+    @demo_app.callback(
+        # The value of these components of the layout will be changed by this callback
+        [
+            Output(component_id=f"{s}-service-div", component_property="style")
+            for s in services
+        ],
+        # Triggers the callback when the value of one of these components of the layout is changed
+        Input(component_id="service_select", component_property="value"),
+    )
+    def change_visibility_value(val):
+        answer = [
+            (
+                service__item_style | {"display": "block"}
+                if s in val
+                else service__item_style | {"display": "none"}
+            )
+            for s in services
+        ]
+        return answer
 
     return demo_app
 

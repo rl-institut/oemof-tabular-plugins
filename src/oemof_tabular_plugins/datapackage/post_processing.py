@@ -28,6 +28,7 @@ RAW_INPUTS = [
     "lifetime",
     "renewable_factor",
     "emission_factor",
+    "ghg_emission_factor",
     "land_requirement_factor",
     "water_footprint_factor",
 ]
@@ -103,6 +104,14 @@ def compute_co2_emissions(results_df):
         return results_df.aggregated_flow * results_df.emission_factor
 
 
+def compute_ghg_emissions(results_df):
+    """Calculates ghg emissions by multiplying aggregated flow by emission factor"""
+    if "ghg_emission_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.aggregated_flow * results_df.ghg_emission_factor
+
+
 def compute_land_requirement_additional(results_df):
     """Calculates land requirement needed for optimized capacities"""
     if "land_requirement_factor" not in results_df.index:
@@ -135,18 +144,17 @@ def compute_system_annuity_total(results_df):
     #  This is a quick fix and I didn't have time to figure out how this should be done in the cleanest way
     seen_components = set()
     annuity_total = 0
+    # get the position of the component label in the MultiIndex
+    idx_component = results_df.index.names.index("asset")
     for index, row in results_df.iterrows():
-        component_name = index[2]
+        component_name = index[idx_component]
         # check if the component has been included before
         if component_name not in seen_components:
             annuity_value = row["annuity_total"]
             if pd.isna(annuity_value):
                 annuity_value = 0
             annuity_total += annuity_value
-            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
-            # this should definitely be changed once implemented properly
-            if not pd.isna(index[4]):
-                seen_components.add(component_name)
+            seen_components.add(component_name)
     return annuity_total
 
 
@@ -166,18 +174,17 @@ def compute_system_cost_total(results_df):
     #  directly. To do this though, the apply_kpi_calculations function has to be adapted
     seen_components = set()
     annuity_total = 0
+    # get the position of the component label in the MultiIndex
+    idx_component = results_df.index.names.index("asset")
     for index, row in results_df.iterrows():
-        component_name = index[2]
+        component_name = index[idx_component]
         # check if the component has been included before
         if component_name not in seen_components:
             annuity_value = row["annuity_total"]
             if pd.isna(annuity_value):
                 annuity_value = 0
             annuity_total += annuity_value
-            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
-            # this should definitely be changed once implemented properly
-            if not pd.isna(index[4]):
-                seen_components.add(component_name)
+            seen_components.add(component_name)
     variable_costs_total = results_df["variable_costs_total"].sum()
     system_cost_total = annuity_total + variable_costs_total
     return system_cost_total
@@ -190,18 +197,17 @@ def compute_system_upfront_investments_total(results_df):
     #  This is a quick fix and I didn't have time to figure out how this should be done in the cleanest way
     seen_components = set()
     upfront_investments_total = 0
+    # get the position of the component label in the MultiIndex
+    idx_component = results_df.index.names.index("asset")
     for index, row in results_df.iterrows():
-        component_name = index[2]
+        component_name = index[idx_component]
         # check if the component has been included before
         if component_name not in seen_components:
             upfront_investment = row["upfront_investment_costs"]
             if pd.isna(upfront_investment):
                 upfront_investment = 0
             upfront_investments_total += upfront_investment
-            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
-            # this should definitely be changed once implemented properly
-            if not pd.isna(index[4]):
-                seen_components.add(component_name)
+            seen_components.add(component_name)
     return upfront_investments_total
 
 
@@ -212,6 +218,12 @@ def compute_system_co2_emissions_total(results_df):
     return emissions_total
 
 
+def compute_system_opex_total(results_df):
+    """Calculates the total OPEX by summing up the opex from each component"""
+    opex_total = results_df["opex_fix_costs_total"].sum()
+    return opex_total
+
+
 def compute_system_land_requirement_additional(results_df):
     """Calculates the additional land requirement from optimized capacities by summing the additional
     land requirement for each component"""
@@ -220,18 +232,17 @@ def compute_system_land_requirement_additional(results_df):
     #  This is a quick fix and I didn't have time to figure out how this should be done in the cleanest way
     seen_components = set()
     add_land_requirement_total = 0
+    # get the position of the component label in the MultiIndex
+    idx_component = results_df.index.names.index("asset")
     for index, row in results_df.iterrows():
-        component_name = index[2]
+        component_name = index[idx_component]
         # check if the component has been included before
         if component_name not in seen_components:
             add_land_requirement = row["land_requirement_additional"]
             if pd.isna(add_land_requirement):
                 add_land_requirement = 0
             add_land_requirement_total += add_land_requirement
-            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
-            # this should definitely be changed once implemented properly
-            if not pd.isna(index[4]):
-                seen_components.add(component_name)
+            seen_components.add(component_name)
     return add_land_requirement_total
 
 
@@ -242,18 +253,17 @@ def compute_system_land_requirement_total(results_df):
     #  This is a quick fix and I didn't have time to figure out how this should be done in the cleanest way
     seen_components = set()
     land_requirement_total = 0
+    # get the position of the component label in the MultiIndex
+    idx_component = results_df.index.names.index("asset")
     for index, row in results_df.iterrows():
-        component_name = index[2]
+        component_name = index[idx_component]
         # check if the component has been included before
         if component_name not in seen_components:
             land_requirement = row["land_requirement_total"]
             if pd.isna(land_requirement):
                 land_requirement = 0
             land_requirement_total += land_requirement
-            # this is a quick fix to not include the MIMO converter because the asset type is 'nan'
-            # this should definitely be changed once implemented properly
-            if not pd.isna(index[4]):
-                seen_components.add(component_name)
+            seen_components.add(component_name)
     return land_requirement_total
 
 
@@ -264,6 +274,12 @@ def compute_water_footprint_total(results_df):
     return water_footprint_total
 
 
+def compute_ghg_emissions_total(results_df):
+    """Calculates the total ghg emissions by summing the total ghg emissions for each component"""
+    ghg_emission_total = results_df["ghg_emissions"].sum()
+    return ghg_emission_total
+
+
 def compute_specific_system_cost(results_df):
     """Calculates the total upfront investments by summing the upfront investments for each component"""
     # ToDo: will need to be adapted when non-energetic loads are included - for now only electricity is
@@ -272,13 +288,24 @@ def compute_specific_system_cost(results_df):
     #  (both energetic and non-energetic)
     total_load = 0
     total_system_cost = (
-        results_df["total_annuity"].sum() + results_df["total_variable_costs"].sum()
+        results_df["annuity_total"].sum() + results_df["variable_costs_total"].sum()
     )
+    # get the position of the facade label in the MultiIndex
+    idx_facade = results_df.index.names.index("facade_type")
+    # get the position of the carrier label in the MultiIndex, if it exists
+    if "carrier" in results_df.index.names:
+        idx_carrier = results_df.index.names.index("carrier")
+    else:
+        idx_carrier = None
     for index, row in results_df.iterrows():
         # This is a quick fix to not include water - need to talk to Julian about how other demands should
         # be considered
-        if index[4] == "load" and index[3] == "electricity":
-            total_load += row.get("aggregated_flow", 0)
+        if idx_carrier is None:
+            if index[idx_facade] == "load":
+                total_load += row.get("aggregated_flow", 0)
+        else:
+            if index[idx_facade] == "load" and index[idx_carrier] == "electricity":
+                total_load += row.get("aggregated_flow", 0)
     specific_system_cost = total_system_cost / total_load
     return specific_system_cost
 
@@ -368,6 +395,13 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["aggregated_flow", "emission_factor"],
     },
     {
+        "column_name": "ghg_emissions",
+        "operation": compute_ghg_emissions,
+        "description": "GHG emissions are calculated from the flow and the emission factor",
+        "argument_names": ["aggregated_flow", "ghg_emission_factor"],
+    },
+    # TODO this is specific to APV, should not be added here but rather in wefe/post_processing
+    {
         "column_name": "land_requirement_additional",
         "operation": compute_land_requirement_additional,
         "description": "The additional land requirement calculates the land required for the optimized capacities",
@@ -422,7 +456,7 @@ CALCULATED_KPIS = [
         "column_name": "specific_system_cost",
         "operation": compute_specific_system_cost,
         "description": "T",
-        "argument_names": ["aggregated_flow", "total_annuity", "total_variable_costs"],
+        "argument_names": ["aggregated_flow", "annuity_total", "variable_costs_total"],
     },
     {
         "column_name": "co2_emissions_total",
@@ -458,6 +492,18 @@ CALCULATED_KPIS = [
         "description": "The renewable share is calculated by dividing the renewable generation by the total "
         "generation",
         "argument_names": ["renewable_factor", "aggregated_flow"],
+    },
+    {
+        "column_name": "ghg_emissions_total",
+        "operation": compute_ghg_emissions_total,
+        "description": "",
+        "argument_names": ["ghg_emissions"],
+    },
+    {
+        "column_name": "system_opex_total",
+        "operation": compute_system_opex_total,
+        "description": "",
+        "argument_names": ["opex_fix_costs_total"],
     },
 ]
 
