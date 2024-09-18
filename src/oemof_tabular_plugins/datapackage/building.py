@@ -118,8 +118,9 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
                     possible_field_values = [
                         f"'{seq}'" for seq in sequences_profiles_to_resource
                     ]
-                    logging.warning(
+                    logging.error(
                         f"The value '{potential_fk}' of the field '{field.name}' of the resource '{r.name}' does not match the headers of any sequences. "
+                        "If this field is not meant to be a foreign key, you can safely ignore this error :) "
                         f"If this field is meant to be a foreign key to a sequence, then possible values are: {','.join(possible_field_values)}"
                     )
 
