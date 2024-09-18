@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - simple usecases testing with datapackages as inputs
 - Facade SimpleCrop in wefe subpackage to simulate a crop growth without accounting for water in (following this reference https://doi.org/10.1016/j.eja.2019.01.009), a test model is provided in `examples/scenarios/test_crop`.
 - Possibility to vizualize results in dash app without having to rerun the simulation, thanks to `script/compute.py::display_scenario_results`. To use this feature, one needs to have previously saved the simulation results as raw oemof file. This is automatically done when running `script/compute.py::compute_scenario`. To disable this feature, set the `save_raw_results` argument to `False` in the latter function. A convenience script is available under `examples/scripts/results.py`
+- Check that values of foreign keys to resources in data/sequences have a match in target sequence headers and inform the user if it not the case with a comprehensive error message.
+- Raises a comprehensive error when inferring foreign keys of a resource, if this resource raises a `CastError` (for example values separated with "," instead of ";")
 
 ### Changed
 - structure of the general package and the wefe package

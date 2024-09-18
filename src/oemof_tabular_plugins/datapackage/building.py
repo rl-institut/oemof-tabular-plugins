@@ -2,12 +2,17 @@ import os
 import warnings
 import logging
 import pandas as pd
+from tableschema.exceptions import CastError
 from oemof.tabular.datapackage import building
 from datapackage import Package
 
 # TODO when oemof.tabular is updated with inferred metadata PR, use
 # from oemof.tabular.config import config
 import oemof_tabular_plugins.datapackage.config as config
+
+PROFILE_FIELDS = ["profile"]
+
+STR_FIELDS = ["name", "carrier", "tech", "type", "region", "crop_type"]
 
 
 def map_sequence_profiles_to_resource_name(p, excluded_profiles=("timeindex",)):
@@ -75,16 +80,20 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
 
     """
     r = resource
-    data = pd.DataFrame.from_records(r.read(keyed=True))
+    try:
+        data = pd.DataFrame.from_records(r.read(keyed=True))
+    except CastError:
+        raise ValueError(
+            f"Error while parsing the resource '{r.descriptor.get('path', r.name)}'. Check that all lines in the file have same number of records. Sometimes it might also a ',' instead of ';' as separator or vice versa."
+        )
     # TODO not sure this should be set here
     r.descriptor["schema"]["primaryKey"] = "name"
     if "foreignKeys" not in r.descriptor["schema"]:
         r.descriptor["schema"]["foreignKeys"] = []
 
     for field in r.schema.fields:
-        if field.type == "string":
+        if field.type == "string" and field.name not in STR_FIELDS:
             for potential_fk in data[field.name].dropna().unique():
-
                 if potential_fk in sequences_profiles_to_resource:
                     # this is actually a wrong format and should be with a "fields" field under the "reference" fields
 
@@ -97,16 +106,58 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
 
                     if fk not in r.descriptor["schema"]["foreignKeys"]:
                         r.descriptor["schema"]["foreignKeys"].append(fk)
-                if potential_fk in busses:
+                elif potential_fk in busses:
                     fk = {
                         "fields": field.name,
                         "reference": {"resource": "bus", "fields": "name"},
                     }
                     if fk not in r.descriptor["schema"]["foreignKeys"]:
                         r.descriptor["schema"]["foreignKeys"].append(fk)
+                else:
+                    # check for specific fields which are meant to link to profile
+                    possible_field_values = [
+                        f"'{seq}'" for seq in sequences_profiles_to_resource
+                    ]
+                    logging.error(
+                        f"The value '{potential_fk}' of the field '{field.name}' of the resource '{r.name}' does not match the headers of any sequences. "
+                        "If this field is not meant to be a foreign key, you can safely ignore this error :) "
+                        f"If this field is meant to be a foreign key to a sequence, then possible values are: {','.join(possible_field_values)}"
+                    )
 
     r.commit()
     return r
+
+
+def check_profiles(package):
+    """Check that values of foreign keys to resources in data/sequences have a match in target sequence headers
+    Parameters
+    ----------
+    package: datapackage instance
+    Returns
+    -------
+    None, raises an error if a value assigned under the foreign key field does not match target sequence headers
+
+    """
+    for r in package.resources:
+        fkeys = r.descriptor["schema"].get("foreignKeys", [])
+        if fkeys:
+
+            data = pd.DataFrame.from_records(r.read(keyed=True))
+            for foreign_key in fkeys:
+                fk_field = foreign_key["fields"]
+                fk_target = foreign_key["reference"]["resource"]
+                if fk_target != "bus":
+                    for fk_value in data[fk_field].dropna().unique():
+                        sequence_descriptor = package.get_resource(fk_target).descriptor
+                        sequence_headers = [
+                            f"{f['name']}"
+                            for f in sequence_descriptor["schema"].get("fields", [])
+                        ]
+                        if fk_value not in sequence_headers:
+                            raise ValueError(
+                                f"The value {fk_value} of the field {fk_field} within the resource {r.name} does not match the headers of its resource within '{sequence_descriptor['path']}'\n"
+                                f"possible values for the field {fk_field} are: {', '.join(sequence_headers)}"
+                            )
 
 
 def infer_package_foreign_keys(package, typemap=None):
@@ -259,3 +310,4 @@ def infer_metadata_from_data(
     p.commit()
     p.save(os.path.join(path, metadata_filename))
     infer_busses_carrier(p)
+    check_profiles(p)
