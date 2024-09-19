@@ -263,7 +263,7 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
     for bus in busses:
         if bus != "battery":
             fig = go.Figure(layout=dict(title=f"{bus} bus node"))
-            if "sequence" in solph.views.node(results, node=bus):
+            if "sequences" in solph.views.node(results, node=bus):
                 for t, g in solph.views.node(results, node=bus)["sequences"].items():
                     idx_asset = abs(t[0].index(bus) - 1)
 
