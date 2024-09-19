@@ -145,7 +145,12 @@ def sankey(energy_system, ts=None):
                         )
                     ].sum()
                 except Exception as e:
-                    val = flows[((component.label, bus_label), "flow")].sum()
+                    try:
+                        val = flows[((component.label, bus_label), "flow")].sum()
+                    except KeyError:
+                        val = 0
+                    else:
+                        raise (e)
 
                 if ts is not None:
                     try:
@@ -177,7 +182,13 @@ def sankey(energy_system, ts=None):
                         )
                     ].sum()
                 except Exception as e:
-                    val = flows[((bus_label, component.label), "flow")].sum()
+                    try:
+                        val = flows[((bus_label, component.label), "flow")].sum()
+                    except KeyError:
+                        val = 0
+                    else:
+                        raise (e)
+
                 if ts is not None:
                     try:
                         val = flows[
@@ -186,14 +197,20 @@ def sankey(energy_system, ts=None):
                                 (bus_label, component.label, "flow"),
                             )
                         ][ts]
-                    except:
-                        val = flows[
-                            (
-                                (bus_label, component.label),
-                                "flow",
-                            )
-                        ][ts]
-                values.append(val)
+                    except Exception as e:
+                        try:
+                            val = flows[
+                                (
+                                    (bus_label, component.label),
+                                    "flow",
+                                )
+                            ][ts]
+                        except KeyError:
+                            val = 0
+                        else:
+                            raise (e)
+
+            values.append(val)
 
     fig = go.Figure(
         data=[
