@@ -1,6 +1,6 @@
 # Right now this is a problem as oemof.tabular is not installable from releases because of requirements conflictspytho
 numpy==1.26.0
 oemof.tabular @ git+https://github.com/oemof/oemof-tabular.git@dev
-oemof-industry @ git+https://github.com/sedos-project/oemof.industry.git@saltwater
+oemof-industry==0.1.1rc2
 dash
 Werkzeug==2.2.2

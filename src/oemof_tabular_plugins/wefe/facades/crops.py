@@ -664,35 +664,35 @@ class MimoCrop(MIMO):
     Please remove them and try again.
     """
 
-    type: str
+    type: str = "mimo-crop"
 
-    name: str
+    name: str = ""
 
-    tech: str
+    tech: str = "mimo"
 
-    carrier: str
+    carrier: str = ""
 
-    primary: str
+    primary: str = ""
 
-    expandable: bool
+    expandable: bool = False
 
-    capacity: float
+    capacity: float = 0
 
-    capacity_minimum: float
+    capacity_minimum: float = None
 
-    capacity_potential: float
+    capacity_potential: float = None
 
-    capacity_cost: float
+    capacity_cost: float = 0
 
-    solar_energy_bus: Bus
+    solar_energy_bus: Bus = None
 
-    precipitation_bus: Bus
+    precipitation_bus: Bus = None
 
-    irrigation_bus: Bus
+    irrigation_bus: Bus = None
 
-    crop_bus: Bus
+    crop_bus: Bus = None
 
-    biomass_bus: Bus
+    biomass_bus: Bus = None
 
     time_profile: Union[float, Sequence[float]] = None
 
