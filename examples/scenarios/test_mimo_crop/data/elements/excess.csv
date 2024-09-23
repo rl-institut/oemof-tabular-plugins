@@ -1,0 +1,3 @@
+name;type;bus;marginal_cost;carrier
+biomass-excess;excess;biomass-bus;-1;biomass
+crop-excess;excess;crop-bus;-1;crop

@@ -4,5 +4,5 @@ e.g. different PV panel global_specs or different crop global_specs (energy cont
 ToDo: decide if these global_specs actually belong in oemof-tabular-plugins or if they should be stored somewhere else
 """
 
-from .crops import crop_dict
-from .soil import soil_dict
+from .crop_specs import crop_dict
+from .soil_specs import soil_dict
