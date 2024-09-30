@@ -118,11 +118,18 @@ def infer_resource_foreign_keys(resource, sequences_profiles_to_resource, busses
                     possible_field_values = [
                         f"'{seq}'" for seq in sequences_profiles_to_resource
                     ]
-                    logging.error(
-                        f"The value '{potential_fk}' of the field '{field.name}' of the resource '{r.name}' does not match the headers of any sequences. "
-                        "If this field is not meant to be a foreign key, you can safely ignore this error :) "
-                        f"If this field is meant to be a foreign key to a sequence, then possible values are: {','.join(possible_field_values)}"
-                    )
+                    try:
+                        float(potential_fk)
+                        logging.info(
+                            f"The value '{potential_fk}' of the field '{field.name}' of the resource '{r.name}' does not match the headers of any sequences. "
+                            "However it is a number, indicating the profile shall be a constant value. If it is not the case, then double check your inputs."
+                        )
+                    except ValueError:
+                        logging.error(
+                            f"The value '{potential_fk}' of the field '{field.name}' of the resource '{r.name}' does not match the headers of any sequences. "
+                            "If this field is not meant to be a foreign key, you can safely ignore this error :) "
+                            f"If this field is meant to be a foreign key to a sequence, then possible values are: {','.join(possible_field_values)}"
+                        )
 
     r.commit()
     return r
@@ -154,10 +161,13 @@ def check_profiles(package):
                             for f in sequence_descriptor["schema"].get("fields", [])
                         ]
                         if fk_value not in sequence_headers:
-                            raise ValueError(
-                                f"The value {fk_value} of the field {fk_field} within the resource {r.name} does not match the headers of its resource within '{sequence_descriptor['path']}'\n"
-                                f"possible values for the field {fk_field} are: {', '.join(sequence_headers)}"
-                            )
+                            try:
+                                float(fk_value)
+                            except ValueError:
+                                raise ValueError(
+                                    f"The value {fk_value} of the field {fk_field} within the resource {r.name} does not match the headers of its resource within '{sequence_descriptor['path']}'\n"
+                                    f"possible values for the field {fk_field} are: {', '.join(sequence_headers)}"
+                                )
 
 
 def infer_package_foreign_keys(package, typemap=None):
