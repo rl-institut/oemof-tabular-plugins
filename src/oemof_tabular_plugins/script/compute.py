@@ -20,6 +20,10 @@ from oemof_tabular_plugins.general import (
     logger,
 )
 
+from oemof_tabular_plugins.wefe import CONSTRAINT_TYPE_MAP as WEFE_CONSTRAINT_TYPE_MAP
+
+CONSTRAINT_TYPE_MAP.update(WEFE_CONSTRAINT_TYPE_MAP)
+
 
 def compute_scenario(
     scenario_dir,
