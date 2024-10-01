@@ -148,7 +148,6 @@ def check_profiles(package):
     for r in package.resources:
         fkeys = r.descriptor["schema"].get("foreignKeys", [])
         if fkeys:
-
             data = pd.DataFrame.from_records(r.read(keyed=True))
             for foreign_key in fkeys:
                 fk_field = foreign_key["fields"]
@@ -295,17 +294,6 @@ def infer_metadata_from_data(
     p0.commit()
     p0.save(os.path.join(path, metadata_filename))
 
-    foreign_keys = {}
-
-    def infer_resource_basic_foreign_keys(resource):
-        """insert resource foreign_key into a dict formatted for building.infer_metadata
-
-        Compare the fields of a resource to a list of field names known to be foreign keys. If the field name is within the list, it is used to populate the dict 'foreign_keys'
-        """
-
-    for r in p0.resources:
-        if os.sep + "elements" + os.sep in r.descriptor["path"]:
-            infer_resource_basic_foreign_keys(r)
     # this function saves the metadata of the package in json format
     building.infer_metadata(
         package_name=package_name,
