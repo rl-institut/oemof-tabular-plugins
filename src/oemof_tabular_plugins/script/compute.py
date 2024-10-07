@@ -113,7 +113,10 @@ def compute_scenario(
     m.solve("cbc")
 
     # extract parameters and results
-    params = parameter_as_dict(es)
+    try:
+        params = parameter_as_dict(m.es)
+    except ValueError:
+        params = None
     es.results = processing.results(m)
     if save_raw_results is True:
         es.dump(dpath=results_path, filename="oemof_raw")
