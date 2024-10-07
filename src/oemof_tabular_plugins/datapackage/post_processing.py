@@ -40,10 +40,14 @@ def compute_capacity_total(results_df):
     #  Check how the storage capacities should be displayed in the results to make it not confusing for the user. Maybe
     #  the storage components need two total capacity results (one for power and one for energy)?
     """Calculates total capacity by adding existing capacity (capacity) to optimized capacity (investments)"""
+    investments = results_df.investments
+    if investments is None:
+        investments = 0
+
     if "storage" in results_df.name:
-        return results_df.storage_capacity + results_df.investments
+        return results_df.storage_capacity + investments
     else:
-        return results_df.capacity + results_df.investments
+        return results_df.capacity + investments
 
 
 def compute_annuity_total(results_df):
@@ -51,10 +55,15 @@ def compute_annuity_total(results_df):
     # ToDo: now storage_capacity_cost is used for the annuity if the component is storage.
     #  Check that this is correctly applied for storage components or if two different costs should
     #  be calculated (one for power and one for energy)
+
+    investments = results_df.investments
+    if investments is None:
+        investments = 0
+
     if "storage" in results_df.name:
-        return results_df.storage_capacity_cost * results_df.investments
+        return results_df.storage_capacity_cost * investments
     else:
-        return results_df.capacity_cost * results_df.investments
+        return results_df.capacity_cost * investments
 
 
 def compute_upfront_investment_costs(results_df):
@@ -63,7 +72,11 @@ def compute_upfront_investment_costs(results_df):
     if "capex" not in results_df.index:
         return None
     else:
-        return results_df.capex * results_df.investments
+        investments = results_df.investments
+        if investments is None:
+            investments = 0
+
+        return results_df.capex * investments
 
 
 def compute_opex_fix_costs(results_df):
@@ -71,7 +84,10 @@ def compute_opex_fix_costs(results_df):
     if "opex_fix" not in results_df.index:
         return None
     else:
-        return results_df.opex_fix * results_df.investments
+        investments = results_df.investments
+        if investments is None:
+            investments = 0
+        return results_df.opex_fix * investments
 
 
 def compute_variable_costs(results_df):
@@ -117,7 +133,10 @@ def compute_land_requirement_additional(results_df):
     if "land_requirement_factor" not in results_df.index:
         return None
     else:
-        return results_df.investments * results_df.land_requirement_factor
+        investments = results_df.investments
+        if investments is None:
+            investments = 0
+        return investments * results_df.land_requirement_factor
 
 
 def compute_land_requirement_total(results_df):
@@ -547,7 +566,10 @@ def infer_asset_types(energy_system):
     asset_types = {}
     for node in energy_system.nodes:
         if isinstance(node, solph.Bus) is False:
-            asset_type = node.type
+            if hasattr(node, "type"):
+                asset_type = node.type
+            else:
+                asset_type = type(node)
             if asset_type is None:
                 asset_type = node.tech
             asset_types[node.label] = asset_type
