@@ -95,9 +95,29 @@ def compute_scenario(
 
     logger.info("Energy system created from datapackage")
 
+    from oemof_visio import ESGraphRenderer
+
+    gr = ESGraphRenderer(
+        energy_system=es, filepath=os.path.join(results_path, scenario_name)
+    )
+    gr.render()
+
     # create model from energy system (this is just oemof.solph)
     m = Model(es)
     logger.info("Model created from energy system")
+    # mimo = [n for n in es.nodes if "mimo" in n.label]
+    # print([l.label for l in mimo])
+    #
+    # crop = mimo[0]
+    # print("Investments on inputs")
+    # print([f"{i.label}({str(f.investment)})" for i,f in crop.inputs.items()])
+    # print("Nominal values on inputs")
+    # print([f"{i.label}({str(f.nominal_value)})" for i,f in crop.inputs.items()])
+    #
+    # print("Investments on outputs")
+    # print([f"{i.label}({str(f.investment)})" for i,f in crop.outputs.items()])
+    # print("Nominal values on outputs")
+    # print([f"{i.label}({str(f.nominal_value)})" for i,f in crop.outputs.items()])
 
     # add constraints from datapackage to the model
     m.add_constraints_from_datapackage(

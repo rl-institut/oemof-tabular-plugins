@@ -67,7 +67,7 @@ custom_attributes = [
     "water_footprint_factor",
 ]
 # set whether the multi-objective optimization should be performed
-moo = True
+moo = False
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
@@ -86,6 +86,7 @@ for scenario in scenarios:
         moo=moo,
         dash_app=True,
         parameters_units=parameters_units,
+        infer_bus_carrier=False,
     )
     df = calculator.df_results
     print(df)
