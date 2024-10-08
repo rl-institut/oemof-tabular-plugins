@@ -149,4 +149,4 @@ cython_debug/
 #   remove it from .gitignore and push this change
 #   make changes to your scenario then push them
 #   re-add the scenario to .gitignore and push
-examples/scenarios
+#examples/scenarios

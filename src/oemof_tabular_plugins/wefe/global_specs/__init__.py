@@ -4,5 +4,14 @@ e.g. different PV panel global_specs or different crop global_specs (energy cont
 ToDo: decide if these global_specs actually belong in oemof-tabular-plugins or if they should be stored somewhere else
 """
 
-from .crop_specs import crop_dict
-from .soil_specs import soil_dict
+import json
+import os
+
+from .soil import soil_dict
+from .crops import crop_dict
+from .pv_modules import pv_dict
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+geometry_path = os.path.join(current_dir, "geometry.json")
+with open(geometry_path, "r") as f:
+    geo_dict = json.load(f)
