@@ -7,8 +7,8 @@ ToDo: decide if these global_specs actually belong in oemof-tabular-plugins or i
 import json
 import os
 
-from .soil import soil_dict
-from .crops import crop_dict
+from .soil_specs import soil_dict
+from .crop_specs import crop_dict
 from .pv_modules import pv_dict
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
