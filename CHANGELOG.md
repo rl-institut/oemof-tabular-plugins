@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - layout for multi-objective optimization (MOO)
 - a new workflow for automated tests
 - new function for adding additional foreign keys to datapackage.json in src/oemof_tabular_plugins/datapackage/building.py
+- new Facade for APV (Agriphotovolatic) based on oemof.industry MIMO class
 
 ### Changed
 - structure of the general package and the wefe package
 - pre-processing.py to include the option for adding custom attributes e.g. renewable factor, emission factor, land requirement
 - scripts/infer.py files and included foreign keys function where necessary
+- grouped common fonctions for different wefe facade in one module
 
 ### Removed
 - the hydrogen package
