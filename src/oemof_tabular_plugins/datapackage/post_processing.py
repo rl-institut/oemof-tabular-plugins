@@ -657,7 +657,8 @@ def construct_dataframe_from_results(
     ]
     # lookup bus-carrier mapping in the dp_path, if existing
     p = Package(dp_path)
-    bus_carrier = infer_busses_carrier(p, infer_from_component=False)
+    # bus_carrier = infer_busses_carrier(p, infer_from_component=False)
+    bus_carrier = None
 
     if bus_carrier is None:
         if infer_bus_carrier is True:

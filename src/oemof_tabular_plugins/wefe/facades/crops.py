@@ -6,7 +6,7 @@ import pandas as pd
 
 from oemof.solph._plumbing import sequence
 from oemof.solph.buses import Bus
-from oemof.solph.components import Converter
+from oemof.solph.components import Converter, Source
 from oemof.solph.flows import Flow
 
 import dataclasses
@@ -724,6 +724,8 @@ class MimoCrop(MIMO):
         self.crop_bus = attributes.pop("crop_bus")
         self.biomass_bus = attributes.pop("biomass_bus")
 
+        self.capacity = kwargs.pop("capacity", None)
+
         # Initializes MIMO with the crop-specific buses and conversion_factors
         super().__init__(
             from_bus_0=self.solar_energy_bus,
@@ -734,14 +736,33 @@ class MimoCrop(MIMO):
             **attributes,
         )
 
+        self.outputs[self.crop_bus].fix = profiles_df["crop_harvest"]
+
         # Other mandatory arguments
-        self.type = attributes.pop("type", None)
-        self.name = attributes.pop("name", None)
-        self.carrier = attributes.pop("carrier", None)
-        self.tech = attributes.pop("tech", None)
-        self.primary = attributes.pop("primary", None)
-        self.expandable = attributes.pop("expandable", None)
-        self.capacity = attributes.pop("capacity", None)
-        self.capacity_minimum = attributes.pop("capacity_minimum", None)
-        self.capacity_potential = attributes.pop("capacity_potential", None)
-        self.capacity_cost = attributes.pop("capacity_cost", None)
+        self.capacity_minimum = kwargs.pop("capacity_minimum", None)
+        self.capacity_potential = kwargs.pop("capacity_potential", None)
+        self.capacity_cost = kwargs.pop("capacity_cost", None)
+        self.expandable = kwargs.pop("expandable", None)
+        self.type = kwargs.pop("type", None)
+        self.name = kwargs.pop("name", None)
+        self.carrier = kwargs.pop("carrier", None)
+        self.tech = kwargs.pop("tech", None)
+        self.primary = kwargs.pop("primary", None)
+        self.build_solph_components()
+
+    def build_solph_components(self):
+        """ """
+        sun = Source(
+            label=self.label + "-sun_source",
+            outputs={self.solar_energy_bus: Flow()},
+        )
+        rain = Source(
+            label=self.label + "-rain_source",
+            outputs={self.precipitation_bus: Flow()},
+        )
+
+        self.subnodes = (
+            sun,
+            irrigation,
+            rain,
+        )

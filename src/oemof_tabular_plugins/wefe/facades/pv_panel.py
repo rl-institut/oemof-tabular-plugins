@@ -120,7 +120,7 @@ class PVPanel(Converter, Facade):
 
         self.conversion_factors.update(
             {
-                self.from_bus: sequence(1),
+                self.from_bus: sequence(ghi_values),
                 self.to_bus: sequence(pv_efficiency_list),
             }
         )
@@ -136,6 +136,7 @@ class PVPanel(Converter, Facade):
         self.outputs.update(
             {
                 self.to_bus: Flow(
+                    fix=pv_tf_values,
                     nominal_value=self._nominal_value(),
                     variable_costs=self.marginal_cost,
                     investment=self._investment(),
@@ -144,12 +145,12 @@ class PVPanel(Converter, Facade):
             }
         )
 
-        def processing_raw_inputs(self, resource, results_df):
-            # function to apply on df from above
+    def processing_raw_inputs(self, resource, results_df):
+        # function to apply on df from above
 
-            return results_df
+        return results_df
 
-        def validate_datapackage(self, resource):
-            # modify the resource (datapackage.resource)
-            # should it return the resource?
-            pass
+    def validate_datapackage(self, resource):
+        # modify the resource (datapackage.resource)
+        # should it return the resource?
+        pass

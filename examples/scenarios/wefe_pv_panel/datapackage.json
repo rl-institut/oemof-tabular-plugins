@@ -1,8 +1,33 @@
 {
     "profile": "tabular-data-package",
     "name": "wefe_pv_panel",
-    "oemof_tabular_version": "0.0.5",
+    "oemof_tabular_version": "0.0.6dev",
     "resources": [
+        {
+            "path": "data/constraints/solar_constraints.csv",
+            "profile": "tabular-data-resource",
+            "name": "solar_constraints",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        },
         {
             "path": "data/elements/bus.csv",
             "profile": "tabular-data-resource",
@@ -86,7 +111,7 @@
                     },
                     {
                         "name": "carrier_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -120,7 +145,7 @@
                     {
                         "fields": "profile",
                         "reference": {
-                            "resource": "dispatchable_profile"
+                            "resource": "pv_panel_profile"
                         }
                     }
                 ]
@@ -277,6 +302,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "capacity_potential",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
                         "name": "from_bus",
                         "type": "string",
                         "format": "default"
@@ -297,8 +327,28 @@
                         "format": "default"
                     },
                     {
-                        "name": "pv_type",
-                        "type": "string",
+                        "name": "p_rpv",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "r_ref",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "n_t",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "t_c_ref",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "noct",
+                        "type": "integer",
                         "format": "default"
                     },
                     {

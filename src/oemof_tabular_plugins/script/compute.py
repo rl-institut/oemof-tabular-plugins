@@ -20,6 +20,10 @@ from oemof_tabular_plugins.general import (
     logger,
 )
 
+from oemof_tabular_plugins.wefe import CONSTRAINT_TYPE_MAP as WEFE_CONSTRAINT_TYPE_MAP
+
+CONSTRAINT_TYPE_MAP.update(WEFE_CONSTRAINT_TYPE_MAP)
+
 
 def compute_scenario(
     scenario_dir,
@@ -91,9 +95,29 @@ def compute_scenario(
 
     logger.info("Energy system created from datapackage")
 
+    from oemof_visio import ESGraphRenderer
+
+    gr = ESGraphRenderer(
+        energy_system=es, filepath=os.path.join(results_path, scenario_name)
+    )
+    gr.render()
+
     # create model from energy system (this is just oemof.solph)
     m = Model(es)
     logger.info("Model created from energy system")
+    # mimo = [n for n in es.nodes if "mimo" in n.label]
+    # print([l.label for l in mimo])
+    #
+    # crop = mimo[0]
+    # print("Investments on inputs")
+    # print([f"{i.label}({str(f.investment)})" for i,f in crop.inputs.items()])
+    # print("Nominal values on inputs")
+    # print([f"{i.label}({str(f.nominal_value)})" for i,f in crop.inputs.items()])
+    #
+    # print("Investments on outputs")
+    # print([f"{i.label}({str(f.investment)})" for i,f in crop.outputs.items()])
+    # print("Nominal values on outputs")
+    # print([f"{i.label}({str(f.nominal_value)})" for i,f in crop.outputs.items()])
 
     # add constraints from datapackage to the model
     m.add_constraints_from_datapackage(
@@ -109,7 +133,10 @@ def compute_scenario(
     m.solve("cbc")
 
     # extract parameters and results
-    params = parameter_as_dict(es)
+    try:
+        params = parameter_as_dict(m.es)
+    except ValueError:
+        params = None
     es.results = processing.results(m)
     if save_raw_results is True:
         es.dump(dpath=results_path, filename="oemof_raw")
