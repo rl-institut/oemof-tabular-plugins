@@ -14,21 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - layout for multi-objective optimization (MOO)
 - a new workflow for automated tests
 - new function for adding additional foreign keys to datapackage.json in src/oemof_tabular_plugins/datapackage/building.py
-- function `infer_busses_carrier` to get the carriers assigned to each bus either explicitly (ie directly defined in `bus.csv` resource) or implicitly (ie via the carriers assigned to components connected to busses). The explicit method can lead to logical errors such as two carriers assigned to a single bus which is then raised as an error.
-- simple usecases testing with datapackages as inputs
-- Facade SimpleCrop in wefe subpackage to simulate a crop growth without accounting for water in (following this reference https://doi.org/10.1016/j.eja.2019.01.009), a test model is provided in `examples/scenarios/test_crop`.
-- Possibility to vizualize results in dash app without having to rerun the simulation, thanks to `script/compute.py::display_scenario_results`. To use this feature, one needs to have previously saved the simulation results as raw oemof file. This is automatically done when running `script/compute.py::compute_scenario`. To disable this feature, set the `save_raw_results` argument to `False` in the latter function. A convenience script is available under `examples/scripts/results.py`
-- Check that values of foreign keys to resources in data/sequences have a match in target sequence headers and inform the user if it not the case with a comprehensive error message.
-- Raises a comprehensive error when inferring foreign keys of a resource, if this resource raises a `CastError` (for example values separated with "," instead of ";")
+- new Facade for APV (Agriphotovolatic) based on oemof.industry MIMO class
 
 ### Changed
 - structure of the general package and the wefe package
 - pre-processing.py to include the option for adding custom attributes e.g. renewable factor, emission factor, land requirement
 - scripts/infer.py files and included foreign keys function where necessary
-- moved the core of `examples/scripts/compute.py` module into `src/oemof_tabular_plugins/scripts/compute.py::compute_scenario`
-- Now `validate_datapackage` of facades must return the resource (modified or not)
-- Improve the layout of results table in the dash app
-- Apply calculations and kpis calculations by default in `general/post_processing/post_processing.py`
+- grouped common fonctions for different wefe facade in one module
 
 ### Removed
 - the hydrogen package

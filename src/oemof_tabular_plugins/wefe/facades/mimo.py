@@ -1,14 +1,4 @@
-import logging
-
-try:
-    from oemof_industry.mimo_converter import MIMO
-except ModuleNotFoundError:
-    logging.error(
-        "oemof industry is not installed, install it with 'pip install git+https://github.com/sedos-project/oemof.industry.git@saltwater'"
-    )
-    from oemof.tabular.facades import Conversion
-
-    MIMO = Conversion
+from oemof_industry.mimo_converter import MIMO
 
 
 def validate_mimo_datapackage(cls, resource):

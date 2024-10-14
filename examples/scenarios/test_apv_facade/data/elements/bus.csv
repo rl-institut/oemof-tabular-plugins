@@ -1,0 +1,8 @@
+name;type;balanced;carrier
+solar-energy-bus;bus;True;solar
+irrigation-bus;bus;True;water
+precipitation-bus;bus;True;water
+biomass-bus;bus;True;biomass
+crop-bus;bus;True;crop
+water-harvest-bus;bus;True;water
+dc-electricity-bus;bus;True;electricity

@@ -44,7 +44,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "test_mimo_crop"
+    "test_apv_facade"
     # "general_add_cost_inputs",
     # "general_basic",
     # "general_constraints",

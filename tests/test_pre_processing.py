@@ -3,6 +3,7 @@ import shutil
 import pandas as pd
 import pytest
 from oemof_tabular_plugins.general import pre_processing, calculate_annuity
+from unittest.mock import patch
 import json
 
 

@@ -8,6 +8,9 @@ from oemof.solph.flows import Flow
 
 from oemof.tabular._facade import Facade, dataclass_facade
 
+from oemof_tabular_plugins.wefe.facades import functions as f
+from oemof_tabular_plugins.wefe.global_specs import pv_dict
+
 
 @dataclass_facade
 class PVPanel(Converter, Facade):
@@ -93,15 +96,7 @@ class PVPanel(Converter, Facade):
 
     output_parameters: dict = field(default_factory=dict)
 
-    p_rpv: float = 270
-
-    r_ref: float = 1000
-
-    n_t: float = -0.0037
-
-    t_c_ref: float = 25
-
-    noct: float = 48
+    pv_type: str = ""
 
     def build_solph_components(self):
         """ """
@@ -112,22 +107,21 @@ class PVPanel(Converter, Facade):
         # assign the air temperature and solar irradiance
         t_air_values = self.t_air
         ghi_values = self.ghi
+        pv_params = pv_dict[self.pv_type]
         # raise error if air temperature list and solar irradiance list are different lengths
         if len(t_air_values) != len(ghi_values):
             raise ValueError("Length mismatch between t_air and ghi profiles.")
         # calculates the temperature factor values
-        pv_tf_values = []
+        pv_efficiency_list = []
         for t_air, ghi in zip(t_air_values, ghi_values):
-            t_c = t_air + ((self.noct - 20) / 800) * ghi
-            pv_tf = (
-                self.p_rpv * (1 / self.r_ref) * (1 + self.n_t * (t_c - self.t_c_ref))
-            )
-            pv_tf_values.append(pv_tf)
+            pv_power = f.power(rad=ghi, t_air=t_air, **pv_params)
+            pv_efficiency = pv_power / ghi
+            pv_efficiency_list.append(pv_efficiency)
 
         self.conversion_factors.update(
             {
                 self.from_bus: sequence(1),
-                self.to_bus: sequence(pv_tf_values),
+                self.to_bus: sequence(pv_efficiency_list),
             }
         )
 
