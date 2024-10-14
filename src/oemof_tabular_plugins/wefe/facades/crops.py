@@ -58,48 +58,18 @@ class SimpleCrop(Converter, Facade):
     output_parameters: dict (optional)
         Set parameters on the output edge of the conversion unit
          (see oemof.solph for more information on possible parameters)
-
+    sowing_date: str
+        sowing date in MM-DD format
+    harvest_date: str
+        harvest date in MM-DD format
     ghi: time series
         Global horizontal irradiance
     et_0: time series
         potential evapotranspiration [m³]
-
     t_air: time series
         Ambient air temperature
-
     vwc: time series
-        the voluemtric water content (vwc) in the root zone depth in m³; metric to express soil moisture
-
-
-    SHOULD INCLUDE FUNCTIONS AND EXAMPLE HERE
-
-    # TODO these parameters below are most likely provided by crop_dict
-
-    light_saturation_point: numeric
-        [lux]
-    HI: numeric
-        Harvest Index; share of biomass which is harvested as actual fruit
-    I50A: numeric
-        Irradiation fitting parameter
-    I50B: numeric
-        Irradation fitting parameter
-    t_opt: numeric
-         optimal temperature for biomass growth
-    t_base: numeric
-        base temperature for phenological development and growth
-    rue: numeric
-        Radiation Use efficiency (above ground only and without respiration) (g/MJm²)
-    t_heat: numeric
-        t_heat is the threshold temperature when biomass growth rate starts to be reduced by heat stress
-    t_extreme: numeric
-        t_ext is the extreme temperature threshold when the biomass growth rate reaches 0 due to heat stress
-    t_sum: numeric
-        cumulative temperature until harvest
-    s_water: numeric
-        sensitivity of RUE to the ARID index for specific plant (simple crop model)
-    rzd: numeric
-        root zone depth [m]
-
+        the volumetric water content (vwc) in the root zone depth in m³; metric to express soil moisture
     """
 
     solar_bus: Bus
@@ -142,9 +112,9 @@ class SimpleCrop(Converter, Facade):
 
     vwc: Union[float, Sequence[float]] = None
 
-    sowing_date: str = ""  # TODO: MM-DD format
+    sowing_date: str = ""  # MM-DD
 
-    harvest_date: str = ""  # TODO: MM-DD format
+    harvest_date: str = ""  # MM-DD
 
     @classmethod
     def validate_datapackage(self, resource):
@@ -177,7 +147,7 @@ class SimpleCrop(Converter, Facade):
 
     def calc_Fsolar(
         self,
-        time_index,
+        timeindex,
         sowing_date,
         harvest_date,
         t_air,
@@ -193,7 +163,7 @@ class SimpleCrop(Converter, Facade):
             ----
         Parameters
         ----------
-        time_index: time as pd.series or list
+        timeindex: time as pd.series or list
         sowing_date: time of sowing/start of cultivation period as str in "MM-DD" format
         harvest_date: time of harvest/end of cultivation period as str in "MM-DD" format
         t_air: ambient temperature as pd.series or list
@@ -213,13 +183,14 @@ class SimpleCrop(Converter, Facade):
         This resembles the plant growth curve displayed in Fig 1.(e) of https://doi.org/10.1016/j.eja.2019.01.009
 
         """
+
         # Check input time series compatibility
         if not isinstance(t_air, (list, pd.Series)):
             print("Argument 'temp' is not of type list or pd.Series!")
-        if not isinstance(time_index, (list, pd.Series)):
-            print("Argument 'time index' is not of type list or pd.Series!")
-        if len(t_air) != len(time_index):
-            raise ValueError("Length mismatch between t_air and time_index profiles.")
+        if not isinstance(timeindex, (list, pd.Series)):
+            print("Argument 'timeindex' is not of type list or pd.Series!")
+        if len(t_air) != len(timeindex):
+            raise ValueError("Length mismatch between t_air and timeindex profiles.")
 
         # Convert dates to Timestamp objects matching the time index
         dates = list(pd.to_datetime(time_index))
@@ -433,7 +404,7 @@ class SimpleCrop(Converter, Facade):
         fWATER = self.calc_Fwater(self.et_0, self.vwc, **crop_params)
         fHEAT = self.calc_Fheat(t_air=self.t_air, **crop_params)
         fSOLAR = self.calc_Fsolar(
-            time_index=self.time_index,
+            timeindex=self.time_index,
             t_air=self.t_air,
             sowing_date=self.sowing_date,
             harvest_date=self.harvest_date,

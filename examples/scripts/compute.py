@@ -61,13 +61,17 @@ wacc = 0.06
 # include the custom attribute parameters to be included in the model
 # this can be moved somewhere and included in a dict or something similar with all possible additional attributes
 custom_attributes = [
-    "emission_factor",
+    "ghg_emission_factor",
     "renewable_factor",
     "land_requirement_factor",
     "water_footprint_factor",
+    "land_requirement",
+    "water_footprint",
+    "ghg_emissions",
+    "resource_cost",
 ]
 # set whether the multi-objective optimization should be performed
-moo = True
+moo = False
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:

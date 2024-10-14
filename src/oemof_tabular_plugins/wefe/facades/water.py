@@ -1,6 +1,7 @@
 from dataclasses import field
 from typing import Sequence, Union
 
+import numpy as np
 from oemof.solph._plumbing import sequence
 from oemof.solph.buses import Bus
 from oemof.solph.components import Converter
@@ -133,11 +134,15 @@ class WaterPump(Converter, Facade):
     water_out_bus: oemof.solph.Bus
         An oemof bus instance where the unit is connected to with
         its water output.
-    capacity: numeric
+    pump_height: numeric
+        The height in meters the pump must overcome.
+    efficiency: numeric (iterable or scalar) (optional)
+        The efficiency of the pump
+    capacity: numeric (optional)
         The thermal capacity (high temperature output side) of the unit.
-    carrier_cost: numeric
+    carrier_cost: numeric (optional)
         Carrier cost for one unit of used input. Default: 0
-    capacity_cost: numeric
+    capacity_cost: numeric (optional)
         Investment costs per unit of output capacity.
         If capacity is not set, this value will be used for optimizing the
         conversion output capacity.
@@ -173,7 +178,11 @@ class WaterPump(Converter, Facade):
 
     tech: str
 
+    pump_height: float
+
     carrier: str = ""
+
+    efficiency: Union[float, Sequence[float]] = 1
 
     capacity: float = None
 
@@ -197,13 +206,39 @@ class WaterPump(Converter, Facade):
 
     output_parameters: dict = field(default_factory=dict)
 
+    @property
+    def g(self):
+        """Gravitational acceleration"""
+        return 9.81  # m²/s
+
+    @property
+    def rho_w(self):
+        """Water density"""
+        return 1000  # kg/m³
+
     def build_solph_components(self):
         """TODO change efficiencies here"""
+        # TODO ask vivek for references for water pumps
+        conversion_W_to_kW = 1e-3
+        conversion_m3_per_hour_to_m3_per_s = 1.0 / 3600
+
+        if isinstance(self.efficiency, list):
+            eta = np.array(self.efficiency)
+        else:
+            eta = self.efficiency
+
         self.conversion_factors.update(
             {
-                self.electricity_bus: sequence(1),
-                self.water_in_bus: sequence(1),
-                self.water_out_bus: sequence(1),
+                self.electricity_bus: sequence(
+                    self.g
+                    * self.rho_w
+                    * conversion_W_to_kW
+                    * self.pump_height
+                    * conversion_m3_per_hour_to_m3_per_s
+                    / eta
+                ),  # in kWh
+                self.water_in_bus: sequence(1),  # in m³/h
+                self.water_out_bus: sequence(1),  # in m³/h
             }
         )
 
