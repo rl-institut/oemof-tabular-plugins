@@ -1,7 +1,7 @@
 from oemof_tabular_plugins.wefe.constraints.constraint_facades import (
     CONSTRAINT_TYPE_MAP,
 )
-from oemof.tabular.facades import TYPEMAP
+from oemof_tabular_plugins.general import OTP_TYPEMAP
 from .facades import (
     PVPanel,
     MIMO,
@@ -22,4 +22,4 @@ WEFE_TYPEMAP = {
     "apv": APV,
 }
 
-WEFE_TYPEMAP.update(TYPEMAP)
+WEFE_TYPEMAP.update(OTP_TYPEMAP)
