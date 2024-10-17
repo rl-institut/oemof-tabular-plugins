@@ -1,0 +1,2 @@
+name;carrier;tech;storage_capacity;storage_capacity_potential;capacity;efficiency;capacity_cost;storage_capacity_cost;marginal_cost;type;bus;invest_relation_output_capacity;expandable;capex;opex_fix;lifetime;resource_cost;land_requirement_factor;ghg_emission_factor;water_footprint_factor;land_requirement;ghg_emissions;water_footprint
+battery-storage;energy;battery;0;;0;0.92;0;106.91;;storage;dc-elec-bus;1.0;True;647;19.0;10;0;3.0;;0;0;0;0

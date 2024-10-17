@@ -1,0 +1,11 @@
+bus,direction,asset,carrier,facade_type,Annuity Total,Variable Costs Total
+biomass-bus,in,biomass-excess,biomass,excess,,
+biomass-bus,out,mimo-crop,biomass,mimo-crop,,
+crop-bus,in,crop-excess,crop,excess,,
+crop-bus,out,mimo-crop,crop,mimo-crop,,
+irrigation-bus,in,mimo-crop,water,mimo-crop,,
+irrigation-bus,out,water-source,water,dispatchable,0.0,0.0
+precipitation-bus,in,mimo-crop,water,mimo-crop,,
+precipitation-bus,out,atmosphere,water,dispatchable,0.0,0.0
+solar-energy-bus,in,mimo-crop,solar,mimo-crop,,
+solar-energy-bus,out,sun,solar,volatile,,0.0

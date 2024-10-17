@@ -1,0 +1,2 @@
+type;profile;name;region;year;bus;amount
+load;electricity;elec-demand;DE;2021;ac-elec-bus;1

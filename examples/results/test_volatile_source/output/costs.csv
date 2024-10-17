@@ -1,0 +1,10 @@
+bus,direction,asset,carrier,facade_type,Upfront Investment Costs,Annuity Total,Variable Costs Total
+ac-elec-bus,in,elec-demand,energy,load,,,
+ac-elec-bus,in,electricity-excess,energy,excess,,,
+ac-elec-bus,out,inverter,energy,conversion,580.40732,56.41559305385476,0.0
+dc-elec-bus,in,battery-storage,energy,storage,9765.609019,1613.665063344696,
+dc-elec-bus,in,inverter,energy,conversion,,,0.0
+dc-elec-bus,out,battery-storage,energy,storage,9765.609019,1613.665063344696,
+dc-elec-bus,out,pv-panel,energy,conversion,5191.41496,503.4374776282059,0.0
+solar-bus,in,pv-panel,energy,conversion,,,0.0
+solar-bus,out,solar-resource,energy,volatile,0.0,0.0,0.0
