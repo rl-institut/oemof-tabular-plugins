@@ -4,3 +4,12 @@ from .pre_processing.pre_processing import pre_processing
 from .pre_processing.pre_processing import calculate_annuity
 from .pre_processing.pre_processing import logger
 from .post_processing.gui import prepare_app
+
+from oemof.tabular.facades import TYPEMAP
+from .facades import SimpleSource
+
+OTP_TYPEMAP = {
+    "source": SimpleSource,
+}
+
+OTP_TYPEMAP.update(TYPEMAP)

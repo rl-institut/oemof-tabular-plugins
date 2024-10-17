@@ -1,0 +1,4 @@
+name;type;balanced;carrier
+solar-bus;bus;True;energy
+dc-elec-bus;bus;True;energy
+ac-elec-bus;bus;True;energy
