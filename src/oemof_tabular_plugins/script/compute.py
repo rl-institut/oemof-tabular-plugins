@@ -12,6 +12,9 @@ from oemof_tabular_plugins.datapackage import building as otp_building
 from oemof.tabular import datapackage  # noqa
 from oemof.tabular.facades import TYPEMAP
 
+
+from oemof.solph.constraints import equate_variables
+
 # ---- imports from oemof-tabular-plugins package ----
 from oemof_tabular_plugins.general import (
     post_processing,
@@ -101,7 +104,20 @@ def compute_scenario(
         constraint_type_map=CONSTRAINT_TYPE_MAP,
     )
     logger.info("Constraints added to model")
-
+    # import pdb;pdb.set_trace()
+    # IMPORTANT, THE NAME HERE MUST MATCH THE NAME OF COMPONENT IN CSV FILES
+    pv_component = m.es.groups["pv-panel"]
+    el_bus = m.es.groups["dc-elec-bus"]
+    solar_radiation = m.es.groups["solar-resource"]
+    solar_bus = m.es.groups["solar-bus"]
+    equate_variables(
+        m,
+        m.InvestmentFlowBlock.invest[
+            pv_component, el_bus, 0
+        ],  # ORDER FROM COMPONENT TO BUS OR FROM BUS TO COMPONENT MATTERS!
+        m.InvestmentFlowBlock.invest[solar_radiation, solar_bus, 0],
+        factor1=5,  # HERE YOU CAN SET ANY OTHER FACTOR BETWEEN THE TWO OPTIMIZED CAP
+    )
     # if you want dual variables / shadow prices uncomment line below
     # m.receive_duals()
 

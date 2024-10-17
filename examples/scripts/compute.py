@@ -52,6 +52,9 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
+    #  "test_volatile_source",
+    "aiwa",
+    # "douar_lamrabet"
 ]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
