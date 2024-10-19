@@ -173,6 +173,9 @@ class SimpleCrop(Converter, Facade):
     def get_crop_param(self, param_name):
         return crop_dict[self.crop_type][param_name]
 
+    def get_soil_param(self, param_name):
+        return soil_dict[self.crop_type][param_name]
+
     # efficiency equals biomass production factor calculate in the facade crop_specs.py; caapcity equals area [m²]
 
     def calc_Fsolar(
@@ -350,7 +353,9 @@ class SimpleCrop(Converter, Facade):
             vwc = np.array(vwc)
 
             # Calculate arid
-            wi = 1 - np.minimum(abs(et_o), 0.096 * vwc) / abs(et_o)
+            wuc = 0.096                         # water uptake constant [1/day]
+            rzd = self.get_soil_param("rzd")    # root zone depth [mm]
+            wi = 1 - np.minimum(abs(et_o), wuc * rzd * vwc / f.C_D_TO_H) / abs(et_o)
             return wi
 
         f_water_list = 1 - s_water * arid(et_o, vwc)
