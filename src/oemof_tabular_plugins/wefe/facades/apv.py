@@ -31,8 +31,6 @@ from oemof_tabular_plugins.wefe.global_specs import (
     pv_dict,
 )
 
-import matplotlib.pyplot as plt
-
 
 @dataclasses.dataclass(unsafe_hash=False, frozen=False, eq=False)
 class APV(MIMO):
@@ -463,14 +461,14 @@ class APV(MIMO):
             ler = opti_model.elec_rel.value + opti_model.bio_rel.value
 
             return {
-                'xgap': round(xgap_opti, 2),
-                'frb': round(frb_opti, 2),
-                'frt': round(frt_opti, 2),
-                'area_apv': round(area_apv, 2),
-                'numpanels': round(numpanels, 0),
-                'kwp': round(kwp, 2),
-                'gcr': round(gcr, 2),
-                'ler': round(ler, 2),
+                "xgap": round(xgap_opti, 2),
+                "frb": round(frb_opti, 2),
+                "frt": round(frt_opti, 2),
+                "area_apv": round(area_apv, 2),
+                "numpanels": round(numpanels, 0),
+                "kwp": round(kwp, 2),
+                "gcr": round(gcr, 2),
+                "ler": round(ler, 2),
             }
 
         def calc_electricity(df, area_apv, frb, has_bifaciality, **kwargs):
