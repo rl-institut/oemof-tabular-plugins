@@ -250,7 +250,9 @@ class APV(MIMO):
             tilt = max(round(abs(latitude)), min_tilt)
             # minimum solar noon altitude (solar angle at solstice when sun is straight south (lat>0) or north (lat<0)
             # source: https://doi.org/10.1016/B978-0-12-397270-5.00002-9
-            min_solar_angle = 90 - round(abs(latitude)) - 23.5
+            angle1 = 90
+            angle2 = 23.5
+            min_solar_angle = angle1 - round(abs(latitude)) - angle2
             # minimum distance between the PV arrays to prevent the panels from shading each other
             min_arraygap = (
                 y * np.sin(np.radians(tilt)) / np.tan(np.radians(min_solar_angle))
@@ -393,6 +395,7 @@ class APV(MIMO):
                 df, frt=1, gcr=0, **attributes, **soil_params, **crop_params
             )
             df = f.calc_f_solar(df, **crop_params)
+            df = f.adapt_irrigation(df)
             biomass_open = f.calc_biomass(df, frt=1, **crop_params).sum()
 
             # Relative biomass for every xgap compared to the open field
@@ -458,14 +461,14 @@ class APV(MIMO):
             ler = opti_model.elec_rel.value + opti_model.bio_rel.value
 
             return {
-                "xgap": xgap_opti,
-                "frb": frb_opti,
-                "frt": frt_opti,
-                "area_apv": area_apv,
-                "numpanels": numpanels,
-                "kwp": kwp,
-                "gcr": gcr,
-                "ler": ler,
+                "xgap": round(xgap_opti, 2),
+                "frb": round(frb_opti, 2),
+                "frt": round(frt_opti, 2),
+                "area_apv": round(area_apv, 2),
+                "numpanels": round(numpanels, 0),
+                "kwp": round(kwp, 2),
+                "gcr": round(gcr, 2),
+                "ler": round(ler, 2),
             }
 
         def calc_electricity(df, area_apv, frb, has_bifaciality, **kwargs):

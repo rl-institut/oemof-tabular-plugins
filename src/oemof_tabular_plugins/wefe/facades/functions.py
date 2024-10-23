@@ -285,9 +285,10 @@ def soil_heat_flux(ghi, r_n):
     """
     ghi_at_night = 1
     if ghi > ghi_at_night:
-        g = 0.1 * r_n
+        share = 0.1
     else:
-        g = 0.5 * r_n
+        share = 0.5
+    g = share * r_n
     return g
 
 
@@ -307,7 +308,10 @@ def vap_pressure(t):
     e: numeric
         saturation vapour pressure [kPa]
     """
-    e = 0.6108 * np.exp(17.27 * t / (t + 237.3))
+    c1 = 0.6108  # [kPa]
+    c2 = 17.27  # [-]
+    c3 = 237.3  # [K]
+    e = c1 * np.exp(c2 * t / (t + c3))
     return e
 
 
@@ -350,24 +354,37 @@ def potential_evapotranspiration(z, t_air, t_dp, w10, r_n, g, **kwargs):
     r_n *= C_WH_TO_J * C_J_TO_MJ / C_H_TO_D  # W/m² over an hour to MJ/(m²*day)
     g *= C_WH_TO_J * C_J_TO_MJ / C_H_TO_D  # W/m² over an hour to MJ/(m²*day)
     # wind speed at 2m above ground [m/s] (Eq. 47)
-    w2 = w10 * 4.87 / np.log(672.58)
+    c1 = 4.87  # [-]
+    c2 = 672.58  # [-]
+    w2 = w10 * c1 / np.log(c2)
     # atmospheric pressure at elevation z [kPa] (Eq. 7)
-    p = 101.3 * ((293 - 0.0065 * z) / 293) ** 5.26
+    c1 = 101.3  # [kPa]
+    c2 = 293  # [-]
+    c3 = 0.0065  # [1/m]
+    c4 = 5.26  # [-]
+    p = c1 * ((c2 - c3 * z) / c2) ** c4
     # psychrometric constant (Eq. 8)
     gamma = cp_air * p / (h_vap * epsilon)
-    # slope of saturation vapour pressure curve (Eq. (13)
-    delta = (
-        4098 * (0.6108 * np.exp(17.27 * t_air / (t_air + 237.3))) / (t_air + 237.3) ** 2
-    )
+    # slope of saturation vapour pressure curve [kPa/°C] (Eq. (13)
+    c1 = 4098  # [kPa]
+    c2 = 0.6108  # [°C]
+    c3 = 17.27  # [-]
+    c4 = 237.3  # [K]
+    c5 = 2  # [-]
+    delta = c1 * (c2 * np.exp(c3 * t_air / (t_air + c4))) / (t_air + c4) ** c5
     # saturation vapour pressure [kPa]
     e_s = vap_pressure(t_air)
     # actual vapour pressure (sat vap press at dewpoint temp) [kPa]
     e_a = vap_pressure(t_dp)
-    # reference evapotranspiration [mm/m²*day] (Eq. 6)
-    et_0 = (
-        0.408 * delta * (r_n - g) + gamma * 900 / (t_air + 273) * w2 * (e_s - e_a)
-    ) / (delta + gamma * 1.34 * w2)
-    et_p = et_0 / C_D_TO_H  # [mm/m²*h]
+    # reference evapotranspiration [mm/day] (Eq. 6)
+    c1 = 0.408  # [mm*m²/MJ]
+    c2 = 900  # [mm*s*°C/(m*kPa*day)]
+    c3 = 273  # [K]
+    c4 = 0.34  # [s/m]
+    et_0 = (c1 * delta * (r_n - g) + gamma * c2 / (t_air + c3) * w2 * (e_s - e_a)) / (
+        delta + gamma * (1 + c4 * w2)
+    )
+    et_p = et_0 / C_D_TO_H  # [mm/h]
     return et_p
 
 
@@ -389,12 +406,16 @@ def runoff(p, rcn, **kwargs):
     r: numeric
         surface runoff water [mm]
     """
-    s = 25400 / rcn - 254  # potential maximum retention
-    i_a = 0.2 * s  # initial abstraction
+    c1 = 25400  # [mm/day]
+    c2 = 254  # [mm/day]
+    c3 = 2  # [-]
+    s = c1 / rcn - c2  # potential maximum retention
+    share = 0.2
+    i_a = share * s  # initial abstraction
     if p > i_a:
-        r = (p - i_a) ** 2 / (p + i_a - s) / C_D_TO_H
+        r = (p - i_a) ** c3 / (p + i_a - s) / C_D_TO_H
     else:
-        r = 0.0
+        r = 0
     return r
 
 
@@ -514,7 +535,11 @@ def power(rad, t_air, p_rated, rad_ref, t_ref, noct, **kwargs):
     p: numeric
         power output [W]
     """
-    f_temp = 1 - 3.7e-3 * (t_air + ((noct - 20) / 800) * rad - t_ref)
+    n_t = -3.7e-3  # temp coefficient [1/°C]
+    c1 = 20  # [°C]
+    c2 = 800  # [1/W]
+    t_c = t_air + ((noct - c1) / c2) * rad
+    f_temp = 1 + n_t * (t_c - t_ref)
     p = p_rated * rad / rad_ref * f_temp
     return p
 
@@ -663,27 +688,29 @@ def specify_cultivation_parameters(dates, sowing_date, harvest_date, **kwargs):
     timezone = dates[0].tz
     # Opt. 1: sowing_date and harvest date given, plant maturity (t_sum) will be updated (custom_harvest=True)
     if sowing_date and harvest_date:
-        sowing_date = pd.Timestamp(year + "-" + sowing_date).tz_localize(timezone)
-        harvest_date = pd.Timestamp(year + "-" + harvest_date).tz_localize(timezone)
+        new_sowing_date = pd.Timestamp(f"{year}-{sowing_date}").tz_localize(timezone)
+        new_harvest_date = pd.Timestamp(f"{year}-{harvest_date}").tz_localize(timezone)
         has_custom_harvest = True
         # If harvest and sowing date are the same, move harvest date one time step back to avoid problems
         if sowing_date == harvest_date:
-            harvest_date = dates[dates.index(harvest_date) - 1]
+            harvest_date_index = dates.get_loc(new_harvest_date)
+            new_harvest_date = dates[harvest_date_index - 1]
     # Opt. 2: only sowing date, harvest_date (end of cultivation period) is one day before (following year),
     # maturity according to SIMPLE
     elif sowing_date and not harvest_date:
-        sowing_date = pd.Timestamp(year + "-" + sowing_date).tz_localize(timezone)
-        harvest_date = dates[dates.index(sowing_date) - 1]
+        new_sowing_date = pd.Timestamp(f"{year}-{sowing_date}").tz_localize(timezone)
+        sowing_date_index = dates.get_loc(new_sowing_date)
+        new_harvest_date = dates[sowing_date_index - 1]
         has_custom_harvest = False
     # Opt. 3: no dates, growth from start of the year till maturity (from SIMPLE)
     else:
-        sowing_date = dates[0]
-        harvest_date = dates[-1]
+        new_sowing_date = dates[0]
+        new_harvest_date = dates[-1]
         has_custom_harvest = False
 
     return {
-        "sowing_date": sowing_date,
-        "harvest_date": harvest_date,
+        "sowing_date": new_sowing_date,
+        "harvest_date": new_harvest_date,
         "has_custom_harvest": has_custom_harvest,
     }
 
@@ -891,7 +918,7 @@ def calc_f_water(
     df = soil_water_balance(
         df=df, has_irrigation=has_irrigation, awc=awc, ddc=ddc, rzd=rzd
     )
-    df.drop(columns=["tp_ground", "runoff"])
+    df.drop(columns=["tp_ground", "runoff", "deep_drain", "swc"])
 
     df["f_water"] = df.apply(
         lambda row: f_water(et_p=row["et_p"], et_a=row["et_a"], s_water=s_water), axis=1
