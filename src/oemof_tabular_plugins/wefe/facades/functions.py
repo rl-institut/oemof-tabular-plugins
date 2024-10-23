@@ -308,7 +308,7 @@ def vap_pressure(t):
     e: numeric
         saturation vapour pressure [kPa]
     """
-    c1 = 0.6108 # [kPa]
+    c1 = 0.6108  # [kPa]
     c2 = 17.27  # [-]
     c3 = 237.3  # [K]
     e = c1 * np.exp(c2 * t / (t + c3))
@@ -354,38 +354,36 @@ def potential_evapotranspiration(z, t_air, t_dp, w10, r_n, g, **kwargs):
     r_n *= C_WH_TO_J * C_J_TO_MJ / C_H_TO_D  # W/m² over an hour to MJ/(m²*day)
     g *= C_WH_TO_J * C_J_TO_MJ / C_H_TO_D  # W/m² over an hour to MJ/(m²*day)
     # wind speed at 2m above ground [m/s] (Eq. 47)
-    c1 = 4.87       # [-]
-    c2 = 672.58     # [-]
+    c1 = 4.87  # [-]
+    c2 = 672.58  # [-]
     w2 = w10 * c1 / np.log(c2)
     # atmospheric pressure at elevation z [kPa] (Eq. 7)
-    c1 = 101.3      # [kPa]
-    c2 = 293        # [-]
-    c3 = 0.0065     # [1/m]
-    c4 = 5.26       # [-]
+    c1 = 101.3  # [kPa]
+    c2 = 293  # [-]
+    c3 = 0.0065  # [1/m]
+    c4 = 5.26  # [-]
     p = c1 * ((c2 - c3 * z) / c2) ** c4
     # psychrometric constant (Eq. 8)
     gamma = cp_air * p / (h_vap * epsilon)
     # slope of saturation vapour pressure curve [kPa/°C] (Eq. (13)
-    c1 = 4098       # [kPa]
-    c2 = 0.6108     # [°C]
-    c3 = 17.27      # [-]
-    c4 = 237.3      # [K]
-    c5 = 2          # [-]
-    delta = (
-        c1 * (c2 * np.exp(c3 * t_air / (t_air + c4))) / (t_air + c4) ** c5
-    )
+    c1 = 4098  # [kPa]
+    c2 = 0.6108  # [°C]
+    c3 = 17.27  # [-]
+    c4 = 237.3  # [K]
+    c5 = 2  # [-]
+    delta = c1 * (c2 * np.exp(c3 * t_air / (t_air + c4))) / (t_air + c4) ** c5
     # saturation vapour pressure [kPa]
     e_s = vap_pressure(t_air)
     # actual vapour pressure (sat vap press at dewpoint temp) [kPa]
     e_a = vap_pressure(t_dp)
     # reference evapotranspiration [mm/day] (Eq. 6)
-    c1 = 0.408      # [mm*m²/MJ]
-    c2 = 900        # [mm*s*°C/(m*kPa*day)]
-    c3 = 273        # [K]
-    c4 = 0.34       # [s/m]
-    et_0 = (
-        c1 * delta * (r_n - g) + gamma * c2 / (t_air + c3) * w2 * (e_s - e_a)
-    ) / (delta + gamma * (1 + c4 * w2))
+    c1 = 0.408  # [mm*m²/MJ]
+    c2 = 900  # [mm*s*°C/(m*kPa*day)]
+    c3 = 273  # [K]
+    c4 = 0.34  # [s/m]
+    et_0 = (c1 * delta * (r_n - g) + gamma * c2 / (t_air + c3) * w2 * (e_s - e_a)) / (
+        delta + gamma * (1 + c4 * w2)
+    )
     et_p = et_0 / C_D_TO_H  # [mm/h]
     return et_p
 
@@ -409,8 +407,8 @@ def runoff(p, rcn, **kwargs):
         surface runoff water [mm]
     """
     c1 = 25400  # [mm/day]
-    c2 = 254    # [mm/day]
-    c3 = 2      # [-]
+    c2 = 254  # [mm/day]
+    c3 = 2  # [-]
     s = c1 / rcn - c2  # potential maximum retention
     share = 0.2
     i_a = share * s  # initial abstraction
@@ -537,9 +535,9 @@ def power(rad, t_air, p_rated, rad_ref, t_ref, noct, **kwargs):
     p: numeric
         power output [W]
     """
-    n_t = -3.7e-3   # temp coefficient [1/°C]
-    c1 = 20         # [°C]
-    c2 = 800        # [1/W]
+    n_t = -3.7e-3  # temp coefficient [1/°C]
+    c1 = 20  # [°C]
+    c2 = 800  # [1/W]
     t_c = t_air + ((noct - c1) / c2) * rad
     f_temp = 1 + n_t * (t_c - t_ref)
     p = p_rated * rad / rad_ref * f_temp

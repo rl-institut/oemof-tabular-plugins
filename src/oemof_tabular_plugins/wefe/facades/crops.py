@@ -353,8 +353,8 @@ class SimpleCrop(Converter, Facade):
             vwc = np.array(vwc)
 
             # Calculate arid
-            wuc = 0.096                         # water uptake constant [1/day]
-            rzd = self.get_soil_param("rzd")    # root zone depth [mm]
+            wuc = 0.096  # water uptake constant [1/day]
+            rzd = self.get_soil_param("rzd")  # root zone depth [mm]
             wi = 1 - np.minimum(abs(et_o), wuc * rzd * vwc / f.C_D_TO_H) / abs(et_o)
             return wi
 
