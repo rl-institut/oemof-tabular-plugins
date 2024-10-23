@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import os
 from datapackage import Package
@@ -125,7 +127,7 @@ def sankey(energy_system, ts=None):
 
             labels.append(nd.label)
 
-            flows = solph.views.node(results, bus_label)["sequences"]
+            flows = solph.views.node(results, bus_label).get("sequences", {})
 
             # draw an arrow from the component to the bus
             for component in bus.inputs:
@@ -143,7 +145,12 @@ def sankey(energy_system, ts=None):
                         )
                     ].sum()
                 except Exception as e:
-                    val = flows[((component.label, bus_label), "flow")].sum()
+                    try:
+                        val = flows[((component.label, bus_label), "flow")].sum()
+                    except KeyError:
+                        val = 0
+                    else:
+                        raise (e)
 
                 if ts is not None:
                     try:
@@ -175,7 +182,13 @@ def sankey(energy_system, ts=None):
                         )
                     ].sum()
                 except Exception as e:
-                    val = flows[((bus_label, component.label), "flow")].sum()
+                    try:
+                        val = flows[((bus_label, component.label), "flow")].sum()
+                    except KeyError:
+                        val = 0
+                    else:
+                        raise (e)
+
                 if ts is not None:
                     try:
                         val = flows[
@@ -184,14 +197,20 @@ def sankey(energy_system, ts=None):
                                 (bus_label, component.label, "flow"),
                             )
                         ][ts]
-                    except:
-                        val = flows[
-                            (
-                                (bus_label, component.label),
-                                "flow",
-                            )
-                        ][ts]
-                values.append(val)
+                    except Exception as e:
+                        try:
+                            val = flows[
+                                (
+                                    (bus_label, component.label),
+                                    "flow",
+                                )
+                            ][ts]
+                        except KeyError:
+                            val = 0
+                        else:
+                            raise (e)
+
+            values.append(val)
 
     fig = go.Figure(
         data=[
@@ -244,13 +263,20 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
     for bus in busses:
         if bus != "battery":
             fig = go.Figure(layout=dict(title=f"{bus} bus node"))
-            for t, g in solph.views.node(results, node=bus)["sequences"].items():
-                idx_asset = abs(t[0].index(bus) - 1)
+            if "sequences" in solph.views.node(results, node=bus):
+                for t, g in solph.views.node(results, node=bus)["sequences"].items():
+                    idx_asset = abs(t[0].index(bus) - 1)
 
-                fig.add_trace(
-                    go.Scatter(
-                        x=g.index, y=g.values * pow(-1, idx_asset), name=t[0][idx_asset]
+                    fig.add_trace(
+                        go.Scatter(
+                            x=g.index,
+                            y=g.values * pow(-1, idx_asset),
+                            name=t[0][idx_asset],
+                        )
                     )
+            else:
+                logging.error(
+                    f"No flow was recorded through the bus '{bus}'. This is likely due to an error in the input files."
                 )
         # else:
         #     capacity_battery = asset_results.capacity.battery
