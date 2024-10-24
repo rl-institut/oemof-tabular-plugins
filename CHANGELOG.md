@@ -10,17 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - pre-commit configuration (lint files with black)
 - general_custom_attributes example
-- tests for pre-rpocessing of custom attributes
+- tests for pre-processing of custom attributes
 - layout for multi-objective optimization (MOO)
 - a new workflow for automated tests
 - new function for adding additional foreign keys to datapackage.json in src/oemof_tabular_plugins/datapackage/building.py
 - new Facade for APV (Agriphotovolatic) based on oemof.industry MIMO class
+- function `infer_busses_carrier` to get the carriers assigned to each bus either explicitly (ie directly defined in `bus.csv` resource) or implicitly (ie via the carriers assigned to components connected to busses). The explicit method can lead to logical errors such as two carriers assigned to a single bus which is then raised as an error.
+- Facade SimpleCrop in wefe subpackage to simulate a crop growth without accounting for water in (following this reference https://doi.org/10.1016/j.eja.2019.01.009), a test model is provided in `examples/scenarios/test_crop`.
+- new Facade for Water Pump
 
 ### Changed
 - structure of the general package and the wefe package
 - pre-processing.py to include the option for adding custom attributes e.g. renewable factor, emission factor, land requirement
 - scripts/infer.py files and included foreign keys function where necessary
 - grouped common fonctions for different wefe facade in one module
+- Now `validate_datapackage` of facades must return the resource (modified or not)
 
 ### Removed
 - the hydrogen package
