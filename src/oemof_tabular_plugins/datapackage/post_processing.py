@@ -50,6 +50,14 @@ def compute_capacity_total(results_df):
         return results_df.capacity + investments
 
 
+def compute_capacity_added(results_df):
+    """Calculates duplicate optimized capacity (investments) into a column with a better name"""
+    investments = results_df.investments
+    if investments is None:
+        investments = 0
+    return investments
+
+
 def compute_annuity_total(results_df):
     """Calculates total annuity by multiplying the annuity by the optimized capacity"""
     # ToDo: now storage_capacity_cost is used for the annuity if the component is storage.
@@ -368,6 +376,12 @@ CALCULATED_OUTPUTS = [
         "description": "The total capacity is calculated by adding the optimized capacity (investments) "
         "to the existing capacity (capacity)",
         "argument_names": ["investments", "capacity"],
+    },
+    {
+        "column_name": "capacity_added",
+        "operation": compute_capacity_added,
+        "description": "The optimized capacity column is duplicated with a better name than 'investments'",
+        "argument_names": ["investments"],
     },
     {
         "column_name": "annuity_total",

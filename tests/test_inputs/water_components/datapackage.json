@@ -256,6 +256,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "pump_height",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "capacity",
                         "type": "integer",
                         "format": "default"

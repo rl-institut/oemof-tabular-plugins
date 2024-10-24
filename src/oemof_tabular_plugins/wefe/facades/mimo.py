@@ -1,4 +1,14 @@
-from oemof_industry.mimo_converter import MIMO
+import logging
+
+try:
+    from oemof_industry.mimo_converter import MIMO
+except ModuleNotFoundError:
+    logging.error(
+        "oemof industry is not installed, install it with 'pip install oemof.industry'"
+    )
+    from oemof.tabular.facades import Conversion
+
+    MIMO = Conversion
 
 
 def validate_mimo_datapackage(cls, resource):
