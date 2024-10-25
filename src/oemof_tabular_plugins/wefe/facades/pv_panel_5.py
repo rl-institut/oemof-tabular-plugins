@@ -13,7 +13,7 @@ from oemof_tabular_plugins.wefe.global_specs import pv_dict
 
 
 @dataclass_facade
-class PVPanel1(Converter, Facade):
+class PVPanel5(Converter, Facade):
     r"""PV panel unit with one input and one output. The temperature factor
     is calculated and considered within the electricity generation.
 
@@ -125,7 +125,7 @@ class PVPanel1(Converter, Facade):
         self.conversion_factors.update(
             {
                 self.from_bus: sequence(1),
-                self.to_bus: sequence(0.5),
+                self.to_bus: sequence(pv_values),
             }
         )
 
