@@ -3,6 +3,9 @@ from .pv_panel_2 import PVPanel2
 from .pv_panel_3 import PVPanel3
 from .pv_panel_4 import PVPanel4
 from .pv_panel_5 import PVPanel5
+from .pv_panel_6 import PVPanel6
+from .pv_panel_7 import PVPanel7
+from .pv_panel_8 import PVPanel8
 from .mimo import MIMO
 from .water import WaterFiltration, WaterPump
 from .crops import MimoCrop, SimpleCrop

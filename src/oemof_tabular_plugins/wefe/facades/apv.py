@@ -214,26 +214,19 @@ class APV(MIMO):
         other attributes to MIMO parent class
         """
 
-        def apv_geometry(latitude, y, **kwargs):
+        def radiance_results(latitude, **kwargs):
             """
-            Calculate tilt and pitch based on latitude and module length (y).
-            Obtain bifacial_radiance simulation results from geometry.json (xgaps, frts, frbs),
+            Obtain bifacial_radiance simulation results from json file (xgaps, frts, frbs),
             interpolate for given latitude.
 
             Parameters
             ----------
             latitude: numeric
                 latitude of the location where APV is modelled
-            y: numeric
-                module length [m] in North-South orientation (portrait mode required)
 
             Returns
             -------
             Dict(
-                tilt: numeric
-                    PV panel tilt angle in degrees
-                pitch: numeric
-                    distance between two PV panel arrays in N-S orientation [m]
                 xgaps: list(numeric)
                     pre-defined xgap values (E-W spacing between panels on one array) [m]
                 frbs: list(numeric)
@@ -242,24 +235,6 @@ class APV(MIMO):
                     radiation transmission factors in [0,1] for every xgap for the given latitude
                 )
             """
-            # IBC minimum slope (by means of PV: tilt) for proper rainwater runoff
-            # Source: https://iibec.org/asce-7-standard-low-slope-roof/
-            min_slope = 0.25 / 12
-            min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
-            # tilt should ideally be close to latitude, but allow for rainwater runoff
-            tilt = max(round(abs(latitude)), min_tilt)
-            # minimum solar noon altitude (solar angle at solstice when sun is straight south (lat>0) or north (lat<0)
-            # source: https://doi.org/10.1016/B978-0-12-397270-5.00002-9
-            angle1 = 90
-            angle2 = 23.5
-            min_solar_angle = angle1 - round(abs(latitude)) - angle2
-            # minimum distance between the PV arrays to prevent the panels from shading each other
-            min_arraygap = (
-                y * np.sin(np.radians(tilt)) / np.tan(np.radians(min_solar_angle))
-            )
-            # define pitch as distance from edge of one module across row up to the edge of the next module
-            pitch = round(y * np.cos(np.radians(tilt)) + min_arraygap, 2)
-
             # get lats
             lats = list(geo_dict.keys())
             xgaps = geo_dict[lats[0]]["xgaps"]
@@ -273,8 +248,6 @@ class APV(MIMO):
                 frts_for_given_lat.append(np.interp(latitude, lats, frts))
 
             return {
-                "tilt": tilt,
-                "pitch": pitch,
                 "xgaps": xgaps,
                 "frbs": frbs_for_given_lat,
                 "frts": frts_for_given_lat,
@@ -579,8 +552,11 @@ class APV(MIMO):
             )
         )
 
-        # Calculate geometry parameters for current location incl. frts and frbs
-        geo_params = apv_geometry(**attributes, **pv_params)
+        # Calculate tilt and pitch for current location
+        geo_params = f.pv_geometry(**attributes, **pv_params)
+
+        # Get radiation transmission and bifaciality factors for current location
+        geo_params.update(radiance_results(**attributes))
 
         # Optimize xgap to maximize LER under min_bio_rel constraint; returns final frt, frb, xgap among others
         geo_params.update(

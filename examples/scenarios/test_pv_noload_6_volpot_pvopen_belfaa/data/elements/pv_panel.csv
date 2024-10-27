@@ -1,0 +1,2 @@
+name;type;carrier;tech;capacity;capacity_potential;capacity_cost;marginal_cost;carrier_cost;from_bus;to_bus;t_air;ghi;pv_type;latitude;expandable
+pv-panel-6;pv-panel-6;solar-energy;pv;0;;0;0;0;solar-energy-bus;elec-bus;t_air;ghi;boviet_450;30;True

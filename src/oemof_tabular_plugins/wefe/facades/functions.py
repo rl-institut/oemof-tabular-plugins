@@ -1021,3 +1021,47 @@ def adapt_irrigation(df):
     # Set irrigation to 0 outside the cultivation period (f_solar == 0)
     df.loc[df["f_solar"] == 0, "irrigation"] = 0
     return df
+
+
+def pv_geometry(latitude, y, **kwargs):
+    """
+    Calculate tilt and pitch based on latitude and module length (y).
+
+    Parameters
+    ----------
+    latitude: numeric
+        latitude of the location where PV is modelled
+    y: numeric
+        module length [m] in North-South orientation (portrait mode required)
+
+    Returns
+    -------
+    Dict(
+        tilt: numeric
+            PV panel tilt angle in degrees
+        pitch: numeric
+            distance between two PV panel arrays in N-S orientation [m]
+        )
+    """
+    # IBC minimum slope (by means of PV: tilt) for proper rainwater runoff
+    # Source: https://iibec.org/asce-7-standard-low-slope-roof/
+    min_slope = 0.25 / 12
+    min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
+    # tilt should ideally be close to latitude, but allow for rainwater runoff
+    tilt = max(round(abs(latitude)), min_tilt)
+    # minimum solar noon altitude (solar angle at solstice when sun is straight south (lat>0) or north (lat<0)
+    # source: https://doi.org/10.1016/B978-0-12-397270-5.00002-9
+    angle1 = 90
+    angle2 = 23.5
+    min_solar_angle = angle1 - round(abs(latitude)) - angle2
+    # minimum distance between the PV arrays to prevent the panels from shading each other
+    min_arraygap = (
+            y * np.sin(np.radians(tilt)) / np.tan(np.radians(min_solar_angle))
+    )
+    # define pitch as distance from edge of one module across row up to the edge of the next module
+    pitch = round(y * np.cos(np.radians(tilt)) + min_arraygap, 2)
+
+    return {
+        "tilt": tilt,
+        "pitch": pitch
+    }
