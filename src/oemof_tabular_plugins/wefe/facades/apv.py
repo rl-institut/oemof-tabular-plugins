@@ -27,7 +27,6 @@ from oemof_tabular_plugins.wefe.facades import functions as f
 from oemof_tabular_plugins.wefe.global_specs import (
     crop_dict,
     soil_dict,
-    geo_dict,
     pv_dict,
 )
 
@@ -213,72 +212,6 @@ class APV(MIMO):
         and assign these together with the correct busses and
         other attributes to MIMO parent class
         """
-
-        def apv_geometry(latitude, y, **kwargs):
-            """
-            Calculate tilt and pitch based on latitude and module length (y).
-            Obtain bifacial_radiance simulation results from geometry.json (xgaps, frts, frbs),
-            interpolate for given latitude.
-
-            Parameters
-            ----------
-            latitude: numeric
-                latitude of the location where APV is modelled
-            y: numeric
-                module length [m] in North-South orientation (portrait mode required)
-
-            Returns
-            -------
-            Dict(
-                tilt: numeric
-                    PV panel tilt angle in degrees
-                pitch: numeric
-                    distance between two PV panel arrays in N-S orientation [m]
-                xgaps: list(numeric)
-                    pre-defined xgap values (E-W spacing between panels on one array) [m]
-                frbs: list(numeric)
-                    radiation bifaciality factors in [0,1] for every xgap for the given latitude
-                frts: list(numeric)
-                    radiation transmission factors in [0,1] for every xgap for the given latitude
-                )
-            """
-            # IBC minimum slope (by means of PV: tilt) for proper rainwater runoff
-            # Source: https://iibec.org/asce-7-standard-low-slope-roof/
-            min_slope = 0.25 / 12
-            min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
-            # tilt should ideally be close to latitude, but allow for rainwater runoff
-            tilt = max(round(abs(latitude)), min_tilt)
-            # minimum solar noon altitude (solar angle at solstice when sun is straight south (lat>0) or north (lat<0)
-            # source: https://doi.org/10.1016/B978-0-12-397270-5.00002-9
-            angle1 = 90
-            angle2 = 23.5
-            min_solar_angle = angle1 - round(abs(latitude)) - angle2
-            # minimum distance between the PV arrays to prevent the panels from shading each other
-            min_arraygap = (
-                y * np.sin(np.radians(tilt)) / np.tan(np.radians(min_solar_angle))
-            )
-            # define pitch as distance from edge of one module across row up to the edge of the next module
-            pitch = round(y * np.cos(np.radians(tilt)) + min_arraygap, 2)
-
-            # get lats
-            lats = list(geo_dict.keys())
-            xgaps = geo_dict[lats[0]]["xgaps"]
-
-            frbs_for_given_lat = []
-            frts_for_given_lat = []
-            for xgap in xgaps:
-                frbs = [geo_dict[lat]["fbifacials"][xgap] for lat in lats]
-                frts = [geo_dict[lat]["fshadings"][xgap] for lat in lats]
-                frbs_for_given_lat.append(np.interp(latitude, lats, frbs))
-                frts_for_given_lat.append(np.interp(latitude, lats, frts))
-
-            return {
-                "tilt": tilt,
-                "pitch": pitch,
-                "xgaps": xgaps,
-                "frbs": frbs_for_given_lat,
-                "frts": frts_for_given_lat,
-            }
 
         def electricity_relative_output(frb0, frb, xgap, x, has_bifaciality, **kwargs):
             """
@@ -471,7 +404,7 @@ class APV(MIMO):
                 "ler": round(ler, 2),
             }
 
-        def calc_electricity(df, area_apv, frb, has_bifaciality, **kwargs):
+        def calc_electricity(df, tilt, area_apv, frb, has_bifaciality, **kwargs):
             """
             Electricity generation including the radiation bifaciality factor (frb)
 
@@ -479,6 +412,8 @@ class APV(MIMO):
             ----------
             df: DataFrame object
                 required columns are ['ghi', 't_air']
+            tilt: numeric
+                pv panel tilting angle in [deg]
             area_apv: numeric
                 area of one PV panel in the APV system incl. spacing to other panels [m²]
             frb: numeric in [0,1]
@@ -491,13 +426,17 @@ class APV(MIMO):
             df: DataFrame object
                 additional columns are ['electricity']
             """
+            # irradiation perpendicular to PV panel (global normal irradiance)
+            df["gni"] = df["ghi"] * np.cos(np.radians(tilt))
             df["pv_power"] = df.apply(
-                lambda row: f.power(row["ghi"], row["t_air"], **pv_params), axis=1
+                lambda row: f.power(row["gni"], row["t_air"], **pv_params), axis=1
             )
             frb = 0 if not has_bifaciality else frb
-            panels_per_m2 = 1 / area_apv
-            df["electricity"] = panels_per_m2 * (1 + frb) * df["pv_power"] * f.C_W_TO_KW
-            df.drop(columns=["pv_power"])
+            modules_per_m2 = 1 / area_apv
+            df["electricity"] = f.capacity_power(
+                pv_power=df["pv_power"], modules_per_area=modules_per_m2, frb=frb
+            )
+            df.drop(columns=["pv_power", "gni"])
             return df
 
         def calc_rainwater_harvest(df, gcr, has_rainwater_harvesting, **kwargs):
@@ -579,13 +518,19 @@ class APV(MIMO):
             )
         )
 
-        # Calculate geometry parameters for current location incl. frts and frbs
-        geo_params = apv_geometry(**attributes, **pv_params)
+        # Calculate tilt and pitch for current location
+        geo_params = f.pv_geometry(**attributes, **pv_params)
+
+        # Get radiation transmission and bifaciality factors for current location
+        geo_params.update(f.radiance_results(**attributes))
 
         # Optimize xgap to maximize LER under min_bio_rel constraint; returns final frt, frb, xgap among others
         geo_params.update(
             geometry_optimization(profiles_df, **attributes, **geo_params, **pv_params)
         )
+
+        # TODO: geo_params or some of them could be exported (csv or other result files)
+        # print(geo_params)
 
         # Calculate irrigation and total biomass yield
         f.calc_f_water(

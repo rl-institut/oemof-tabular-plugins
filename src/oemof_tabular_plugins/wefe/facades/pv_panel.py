@@ -11,6 +11,8 @@ from oemof.tabular._facade import Facade, dataclass_facade
 from oemof_tabular_plugins.wefe.facades import functions as f
 from oemof_tabular_plugins.wefe.global_specs import pv_dict
 
+import numpy as np
+
 
 @dataclass_facade
 class PVPanel(Converter, Facade):
@@ -98,6 +100,8 @@ class PVPanel(Converter, Facade):
 
     pv_type: str = ""
 
+    latitude: float = 0
+
     def build_solph_components(self):
         """ """
         if self.t_air is None or self.ghi is None:
@@ -106,22 +110,44 @@ class PVPanel(Converter, Facade):
             return
         # assign the air temperature and solar irradiance
         t_air_values = self.t_air
-        ghi_values = self.ghi
-        pv_params = pv_dict[self.pv_type]
+        ghi_values = np.array(self.ghi)
         # raise error if air temperature list and solar irradiance list are different lengths
         if len(t_air_values) != len(ghi_values):
             raise ValueError("Length mismatch between t_air and ghi profiles.")
-        # calculates the temperature factor values
-        pv_efficiency_list = []
-        for t_air, ghi in zip(t_air_values, ghi_values):
-            pv_power = f.power(rad=ghi, t_air=t_air, **pv_params)
-            pv_efficiency = pv_power / ghi
-            pv_efficiency_list.append(pv_efficiency)
+
+        # get pv params from database
+        pv_params = pv_dict[self.pv_type]
+        # tilt and pitch based on latitude
+        geo_params = f.pv_geometry(latitude=self.latitude, **pv_params)
+
+        # irradiation perpendicular to PV panel (global normal irradiance)
+        ghi_to_gni = np.cos(np.radians(geo_params["tilt"]))
+        gni_values = np.array(ghi_values) * ghi_to_gni
+
+        # pv modules per square metre
+        area_pv = pv_params["x"] * geo_params["pitch"]
+        modules_per_m2 = 1 / area_pv
+
+        # pv power (per module in W)
+        pv_power = np.array(
+            [
+                f.power(rad=gni, t_air=t_air, **pv_params)
+                for t_air, gni in zip(t_air_values, gni_values)
+            ]
+        )
+
+        # capacity power (per square meter of irradiated land, in kW)
+        capacity_power = f.capacity_power(
+            pv_power=pv_power, modules_per_area=modules_per_m2, frb=0
+        )
+
+        # efficiency in relation to incoming irradiation (GHI)
+        capacity_efficiency = capacity_power / ghi_values
 
         self.conversion_factors.update(
             {
                 self.from_bus: sequence(1),
-                self.to_bus: sequence(pv_efficiency_list),
+                self.to_bus: sequence(capacity_efficiency),
             }
         )
 
