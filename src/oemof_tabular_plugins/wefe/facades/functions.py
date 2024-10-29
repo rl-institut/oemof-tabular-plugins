@@ -14,6 +14,8 @@ PV power output incl. temperature           PV          https://doi.org/10.1016/
 import numpy as np
 import pandas as pd
 
+from oemof_tabular_plugins.wefe.global_specs import geo_dict
+
 """
 Conversion factors as global variables
 --------------------------------------
@@ -533,7 +535,7 @@ def power(rad, t_air, p_rated, rad_ref, t_ref, noct, **kwargs):
     Returns
     -------
     p: numeric
-        power output [W]
+        power output [W] per module
     """
     n_t = -3.7e-3  # temp coefficient [1/°C]
     c1 = 20  # [°C]
@@ -1021,3 +1023,105 @@ def adapt_irrigation(df):
     # Set irrigation to 0 outside the cultivation period (f_solar == 0)
     df.loc[df["f_solar"] == 0, "irrigation"] = 0
     return df
+
+
+def pv_geometry(latitude, y, **kwargs):
+    """
+    Calculate tilt and pitch based on latitude and module length (y).
+
+    Parameters
+    ----------
+    latitude: numeric
+        latitude of the location where PV is modelled
+    y: numeric
+        module length [m] in North-South orientation (portrait mode required)
+
+    Returns
+    -------
+    Dict(
+        tilt: numeric
+            PV panel tilt angle in degrees
+        pitch: numeric
+            distance between two PV panel arrays in N-S orientation [m]
+        )
+    """
+    # IBC minimum slope (by means of PV: tilt) for proper rainwater runoff
+    # Source: https://iibec.org/asce-7-standard-low-slope-roof/
+    min_slope = 0.25 / 12
+    min_tilt = np.ceil(np.degrees(np.arctan(min_slope)))
+    # tilt should ideally be close to latitude, but allow for rainwater runoff
+    tilt = max(round(abs(latitude)), min_tilt)
+    # minimum solar noon altitude (solar angle at solstice when sun is straight south (lat>0) or north (lat<0)
+    # source: https://doi.org/10.1016/B978-0-12-397270-5.00002-9
+    angle1 = 90
+    angle2 = 23.5
+    min_solar_angle = angle1 - round(abs(latitude)) - angle2
+    # minimum distance between the PV arrays to prevent the panels from shading each other
+    min_arraygap = y * np.sin(np.radians(tilt)) / np.tan(np.radians(min_solar_angle))
+    # define pitch as distance from edge of one module across row up to the edge of the next module
+    pitch = round(y * np.cos(np.radians(tilt)) + min_arraygap, 2)
+
+    return {"tilt": tilt, "pitch": pitch}
+
+
+def radiance_results(latitude, **kwargs):
+    """
+    Obtain bifacial_radiance simulation results from json file (xgaps, frts, frbs),
+    interpolate for given latitude.
+
+    Parameters
+    ----------
+    latitude: numeric
+        latitude of the location where APV is modelled
+
+    Returns
+    -------
+    Dict(
+        xgaps: list(numeric)
+            pre-defined xgap values (E-W spacing between panels on one array) [m]
+        frbs: list(numeric)
+            radiation bifaciality factors in [0,1] for every xgap for the given latitude
+        frts: list(numeric)
+            radiation transmission factors in [0,1] for every xgap for the given latitude
+        )
+    """
+    # get lats
+    lats = list(geo_dict.keys())
+    xgaps = geo_dict[lats[0]]["xgaps"]
+
+    frbs_for_given_lat = []
+    frts_for_given_lat = []
+    for xgap in xgaps:
+        frbs = [geo_dict[lat]["fbifacials"][xgap] for lat in lats]
+        frts = [geo_dict[lat]["fshadings"][xgap] for lat in lats]
+        frbs_for_given_lat.append(np.interp(latitude, lats, frbs))
+        frts_for_given_lat.append(np.interp(latitude, lats, frts))
+
+    return {
+        "xgaps": xgaps,
+        "frbs": frbs_for_given_lat,
+        "frts": frts_for_given_lat,
+    }
+
+
+def capacity_power(pv_power, modules_per_area, frb):
+    """
+    Power output of a capacity (area), where PV panels are installed
+
+    Parameters
+    ----------
+    pv_power: numeric, np.array, pd.Series
+        output of one module [W]
+    modules_per_area: numeric
+        number of modules per capacity (area)
+    frb: numeric
+        radiation bifaciality factor
+        in case of bifacial PV modules, extra generation from the backside as fraction of frontside generation
+
+    Returns
+    -------
+    capacity_p: numeric
+        output of one capacity (area), where PV panels are installed [kW]
+    """
+    capacity_p = pv_power * modules_per_area * (1 + frb) * C_W_TO_KW
+    return np.array(capacity_p)
