@@ -1239,8 +1239,8 @@
             "schema": {
                 "fields": [
                     {
-                        "name": "datetime",
-                        "type": "string",
+                        "name": "timeindex",
+                        "type": "datetime",
                         "format": "default"
                     },
                     {
