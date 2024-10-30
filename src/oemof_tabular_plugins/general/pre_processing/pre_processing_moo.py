@@ -75,7 +75,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     )  # normalization factor for climate change total, Unit: [kgCO2eq] Source: JRC: Sala (2017)
     # S. Sala, Global normalisation factors for the environmental footprint and Life Cycle Assessment. Luxembourg: Publications Office, 2017.
     # https://doi.org/10.2760/88930
-    norm_land_use = 9.64 * 10**15  # normalization factor for land use; Unit: pt, Source JRC: Sala (2017)
+    norm_land_use = 1.4894 * 10**14  # global land surface area
     #TODO find out what is unit pt and adapt input description accordingly
 
     norm_water_use = 7.91 * 10**13  # Unit: [m³ water of eq of deprived water] Source: JRC: Sala (2017)
@@ -84,7 +84,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     wf_cost = 0.2
     wf_ghg = 0.2
     wf_lr = 0.3
-    wf_wf = 0.3
+    wf_wu = 0.3
     # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------

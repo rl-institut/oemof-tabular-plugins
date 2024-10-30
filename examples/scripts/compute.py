@@ -44,7 +44,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "test_apv_facade"
+    # "test_apv_facade"
     # "general_add_cost_inputs",
     # "general_basic",
     # "general_constraints",
@@ -52,6 +52,7 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
+    "aiwa"
 ]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included

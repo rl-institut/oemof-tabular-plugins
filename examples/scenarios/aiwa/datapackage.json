@@ -1230,6 +1230,46 @@
             }
         },
         {
+            "path": "data/sequences/agg_demand_Aiwa.csv",
+            "profile": "tabular-data-resource",
+            "name": "agg_demand_Aiwa",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "datetime",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cooking",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "drinking_water",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "electrical_appliances",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "service_water",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        },
+        {
             "path": "data/sequences/load_profile.csv",
             "profile": "tabular-data-resource",
             "name": "load_profile",
@@ -1241,6 +1281,11 @@
                     {
                         "name": "timeindex",
                         "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cooking",
+                        "type": "number",
                         "format": "default"
                     },
                     {
