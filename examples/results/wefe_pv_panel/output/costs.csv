@@ -1,0 +1,7 @@
+bus,direction,asset,carrier,facade_type,Annuity Total,Variable Costs Total
+elec-bus,in,demand,electricity,load,,
+elec-bus,in,electricity-excess,electricity,excess,,
+elec-bus,out,back-up-elec,electricity,dispatchable,0.0,0.0014401549999999998
+elec-bus,out,pv-panel,electricity,pv-panel,,0.0
+solar-energy-bus,in,pv-panel,solar-energy,pv-panel,,0.0
+solar-energy-bus,out,solar-radiation,solar-energy,dispatchable,0.0,0.0

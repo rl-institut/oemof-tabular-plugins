@@ -1,0 +1,3 @@
+name,var_name,var_value,region,type,carrier,tech
+sun,flow_out_energy,2135672.065550401,,volatile,solar,sun
+system,total_system_cost,0.0,,,,

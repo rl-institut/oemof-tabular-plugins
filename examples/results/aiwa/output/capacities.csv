@@ -1,0 +1,5 @@
+,Component name,Capacity,Optimized Capacity,Capacity Total,Maximum Capacity,unit
+8,inverter,0.0,70.942422,70.942422,,[kW]
+13,pv-panel,0.0,78.824913,78.824913,,[kW]
+18,drinking-water-storage,0.0,16.384062,16.384062,,[m³]
+29,service-water-storage,0.0,2.4940646e-06,2.4940646e-06,,[m³]
