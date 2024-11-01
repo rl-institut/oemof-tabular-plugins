@@ -47,7 +47,7 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    # "aiwa"
+    "aiwa"
     # "arusi"
 ]
 

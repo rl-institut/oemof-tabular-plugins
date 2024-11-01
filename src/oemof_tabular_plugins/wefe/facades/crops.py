@@ -196,7 +196,7 @@ class SimpleCrop(Converter, Facade):
             raise ValueError("Length mismatch between t_air and timeindex profiles.")
 
         # Convert dates to Timestamp objects matching the time index
-        dates = list(pd.to_datetime(time_index))
+        dates = list(pd.to_datetime(timeindex))
         # Adapt sowing and harvest date to time index, specify them if not provided
         cultivation_params = f.specify_cultivation_parameters(
             dates=dates, sowing_date=sowing_date, harvest_date=harvest_date
@@ -206,7 +206,7 @@ class SimpleCrop(Converter, Facade):
 
         # Create three seperate lists for cumulative temperature
         delta_tt_base_list = []  # creating a list
-        for temp, date in zip(t_air, time_index):
+        for temp, date in zip(t_air, timeindex):
             delta_tt_base = f.tt_base(
                 date=date, t_air=temp, sowing_date=sowing_date, t_base=t_base
             )
@@ -214,7 +214,7 @@ class SimpleCrop(Converter, Facade):
         tt_base_list = np.cumsum(delta_tt_base_list)
 
         delta_tt_ext_list = []  # creating a list
-        for temp, date in zip(t_air, time_index):
+        for temp, date in zip(t_air, timeindex):
             delta_tt_ext = f.tt_extension(
                 date=date,
                 t_air=temp,
@@ -229,7 +229,7 @@ class SimpleCrop(Converter, Facade):
         tt_ext_cache = tt_ext_list[-1]
 
         tt_cache_list = []  # creating a list
-        for date in time_index:
+        for date in timeindex:
             delta_tt_cache = f.tt_cache(
                 date=date,
                 cum_temp_base_cache=tt_base_cache,

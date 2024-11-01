@@ -278,56 +278,6 @@ def post_processing(
                 ["asset", "direction", "aggregated_flow", "carrier", "facade_type"]
             ]
 
-        # ignore the dispatchable sources optimized capacities
-        capacities_table = capacities_table[
-            capacities_table.index.get_level_values("facade_type") != "dispatchable"
-        ]
-
-        # Assign units to the capacities:
-        def set_unit(carrier, facade_type):
-            unit_choice = CAPACITIES_UNIT.get(carrier, {"default": "", "storage": ""})
-
-            if facade_type in unit_choice:
-                unit = unit_choice[facade_type]
-            else:
-                unit = unit_choice["default"]
-            return unit
-
-        capacities_table.reset_index(inplace=True)
-        capacities_table["unit"] = capacities_table.apply(
-            lambda x: set_unit(x.carrier, x.facade_type), axis=1
-        )
-
-        capacities_table.rename(
-            columns={
-                "asset": "Component name",
-                "Investments": "Optimized Capacity",
-                "Capacity Potential": "Maximum Capacity",
-            },
-            inplace=True,
-        )
-
-        # eliminate double occurences of same asset
-        capacities_table = capacities_table.loc[
-            (capacities_table["Capacity Total"] > 0)
-            & (capacities_table.direction == "out"),
-            [
-                "Component name",
-                "Capacity",
-                "Optimized Capacity",
-                "Capacity Total",
-                "Maximum Capacity",
-                "unit",
-            ],
-        ]
-        result_tables.update({"capacities": capacities_table})
-
-        cost_table = extract_table_from_results(
-            calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
-        )
-
-        # result_tables.update({"costs": cost_table})
-
         # IDEA define calculations for WEFE components in post_processing and make a merge within __init__ of WEFE
         # TODO list components (facades) automatically (low prio)
         df = results_by_flow.reset_index()

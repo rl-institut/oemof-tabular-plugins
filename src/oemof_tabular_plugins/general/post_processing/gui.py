@@ -144,13 +144,10 @@ def sankey(energy_system, ts=None):
                             (component.label, bus_label, "flow"),
                         )
                     ].sum()
-                except Exception as e:
-                    try:
-                        val = flows[((component.label, bus_label), "flow")].sum()
-                    except KeyError:
-                        val = 0
-                    else:
-                        raise (e)
+                except KeyError as e:
+                    val = flows[((component.label, bus_label), "flow")].sum()
+                else:
+                    raise (e)
 
                 if ts is not None:
                     try:
@@ -181,13 +178,10 @@ def sankey(energy_system, ts=None):
                             (bus_label, component.label, "flow"),
                         )
                     ].sum()
-                except Exception as e:
-                    try:
-                        val = flows[((bus_label, component.label), "flow")].sum()
-                    except KeyError:
-                        val = 0
-                    else:
-                        raise (e)
+                except KeyError as e:
+                    val = flows[((bus_label, component.label), "flow")].sum()
+                else:
+                    raise (e)
 
                 if ts is not None:
                     try:
@@ -197,18 +191,17 @@ def sankey(energy_system, ts=None):
                                 (bus_label, component.label, "flow"),
                             )
                         ][ts]
-                    except Exception as e:
-                        try:
-                            val = flows[
-                                (
-                                    (bus_label, component.label),
-                                    "flow",
-                                )
-                            ][ts]
-                        except KeyError:
-                            val = 0
-                        else:
-                            raise (e)
+                    except KeyError as e:
+
+                        val = flows[
+                            (
+                                (bus_label, component.label),
+                                "flow",
+                            )
+                        ][ts]
+
+                    else:
+                        raise (e)
 
             values.append(val)
 
