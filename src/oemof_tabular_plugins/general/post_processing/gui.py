@@ -147,7 +147,7 @@ def sankey(energy_system, ts=None):
                 except KeyError as e:
                     val = flows[((component.label, bus_label), "flow")].sum()
                 else:
-                    raise (e)
+                    raise Exception("A problem occured in sankey driagramm")
 
                 if ts is not None:
                     try:
@@ -181,7 +181,7 @@ def sankey(energy_system, ts=None):
                 except KeyError as e:
                     val = flows[((bus_label, component.label), "flow")].sum()
                 else:
-                    raise (e)
+                    raise Exception("A problem occured in sankey driagramm")
 
                 if ts is not None:
                     try:
@@ -201,7 +201,7 @@ def sankey(energy_system, ts=None):
                         ][ts]
 
                     else:
-                        raise (e)
+                        raise Exception("A problem occured in sankey driagramm")
 
             values.append(val)
 
