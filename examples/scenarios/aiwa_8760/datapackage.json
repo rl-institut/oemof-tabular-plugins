@@ -1,6 +1,6 @@
 {
     "profile": "tabular-data-package",
-    "name": "aiwa",
+    "name": "aiwa_8760",
     "oemof_tabular_version": "0.0.5",
     "resources": [
         {

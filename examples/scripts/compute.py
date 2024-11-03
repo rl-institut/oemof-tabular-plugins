@@ -27,7 +27,8 @@ scenarios = [
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
     # "aiwa"
-    "aiwa"
+     "aiwa_24"
+    # "aiwa_8760"
     #  "arusi"
 ]
 # weighted average cost of capital (WACC) - might move later
