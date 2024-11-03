@@ -6,22 +6,22 @@ ac-elec-bus,in,water pump,electricity,water-pump,0.0,,1.0,,
 ac-elec-bus,in,water-filtration-system,electricity,water-filtration,0.0,,1.0,,
 ac-elec-bus,out,diesel-generator,electricity,conversion,0.0,,0.0,,
 ac-elec-bus,out,electricity-grid,electricity,dispatchable,0.0,,1.0,-0.0,0.0
-ac-elec-bus,out,inverter,electricity,conversion,0.0,,1.0,76.621121,76.621121
+ac-elec-bus,out,inverter,electricity,conversion,0.0,,1.0,79.180459,79.180459
 brine-bus,in,brine-excess,water,excess,,,,,
 brine-bus,out,sw-ro,water,ro,0.0,,1.0,,
-dc-elec-bus,in,battery-storage,electricity,storage,0.0,0.0,1.0,731.64436,731.64436
+dc-elec-bus,in,battery-storage,electricity,storage,0.0,0.0,1.0,756.001,756.001
 dc-elec-bus,in,inverter,electricity,conversion,0.0,,1.0,,
-dc-elec-bus,out,battery-storage,electricity,storage,0.0,0.0,1.0,731.64436,731.64436
-dc-elec-bus,out,pv,electricity,volatile,1.0,,1.0,281.10433,282.10433
+dc-elec-bus,out,battery-storage,electricity,storage,0.0,0.0,1.0,756.001,756.001
+dc-elec-bus,out,photovoltaics,electricity,volatile,1.0,,1.0,299.01762,300.01762
 diesel-bus,in,diesel-generator,water,conversion,0.0,,0.0,,
 diesel-bus,out,diesel,water,dispatchable,0.0,,1.0,-0.0,0.0
 drinking-water-bus,in,drinking-water-demand,water,load,,,,,
-drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,9.1704047,9.1704047
-drinking-water-bus,out,bottled-water,water,dispatchable,0.0,,1.0,4.912495,4.912495
-drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,9.1704047,9.1704047
+drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,29.247967,29.247967
+drinking-water-bus,out,bottled-water,water,dispatchable,0.0,,1.0,-0.0,0.0
+drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,29.247967,29.247967
 drinking-water-bus,out,sw-ro,water,ro,0.0,,1.0,,
 drinking-water-bus,out,water pump,water,water-pump,0.0,,1.0,-0.0,0.0
-drinking-water-bus,out,water-filtration-system,water,water-filtration,0.0,,1.0,1.1822742,1.1822742
+drinking-water-bus,out,water-filtration-system,water,water-filtration,0.0,,1.0,3.7416128,3.7416128
 groundwater-bus,in,water pump,water,water-pump,0.0,,1.0,,
 groundwater-bus,out,groundwater,water,dispatchable,0.0,,1.0,-0.0,0.0
 precipitation-bus,out,precipitation,water,dispatchable,0.0,,1.0,-0.0,0.0

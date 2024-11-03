@@ -1329,6 +1329,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "pv_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "t_air",
                         "type": "number",
                         "format": "default"
@@ -1345,6 +1350,11 @@
                     },
                     {
                         "name": "windspeed",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "wind_turbine",
                         "type": "number",
                         "format": "default"
                     },
