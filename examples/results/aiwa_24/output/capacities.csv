@@ -6,13 +6,13 @@ ac-elec-bus,in,water pump,electricity,water-pump,0.0,,1.0,,
 ac-elec-bus,in,water-filtration-system,electricity,water-filtration,0.0,,1.0,,
 ac-elec-bus,out,diesel-generator,electricity,conversion,0.0,,1.0,-0.0,0.0
 ac-elec-bus,out,electricity-grid,electricity,dispatchable,0.0,,1.0,92.266031,92.266031
-ac-elec-bus,out,inverter,electricity,conversion,0.0,,1.0,0.66458,0.66458
+ac-elec-bus,out,inverter,electricity,conversion,0.0,,1.0,-0.0,0.0
 brine-bus,in,brine-excess,water,excess,,,,,
 brine-bus,out,sw-ro,water,ro,0.0,,1.0,,
 dc-elec-bus,in,battery-storage,electricity,storage,0.0,0.0,1.0,-0.0,0.0
 dc-elec-bus,in,inverter,electricity,conversion,0.0,,1.0,,
 dc-elec-bus,out,battery-storage,electricity,storage,0.0,0.0,1.0,-0.0,0.0
-dc-elec-bus,out,photovoltaics,electricity,volatile,1.0,,1.0,0.0,1.0
+dc-elec-bus,out,photovoltaics,electricity,volatile,0.0,,1.0,-0.0,0.0
 dc-elec-bus,out,wind-turbine,electricity,volatile,0.0,,1.0,-0.0,0.0
 diesel-bus,in,diesel-generator,energy,conversion,0.0,,1.0,,
 diesel-bus,out,diesel,energy,dispatchable,0.0,,1.0,-0.0,0.0
