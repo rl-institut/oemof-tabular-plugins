@@ -11,7 +11,7 @@ brine-bus,in,brine-excess,water,excess,,,
 brine-bus,out,sw-ro,water,ro,,,30.188596929043293
 dc-elec-bus,in,battery-storage,electricity,storage,-0.0,-0.0,
 dc-elec-bus,in,inverter,electricity,conversion,,,0.0
-dc-elec-bus,out,battery-storage,electricity,storage,-0.0,-0.0,
+dc-elec-bus,out,battery-storage,electricity,storage,-0.0,-0.0,0.0
 dc-elec-bus,out,photovoltaics,electricity,volatile,-0.0,-0.0,0.0
 dc-elec-bus,out,wind-turbine,electricity,volatile,-0.0,-0.0,0.0
 diesel-bus,in,diesel-generator,energy,conversion,,,0.0
@@ -19,7 +19,7 @@ diesel-bus,out,diesel,energy,dispatchable,,-0.0,0.0
 drinking-water-bus,in,drinking-water-demand,water,load,,,
 drinking-water-bus,in,drinking-water-storage,water,storage,-0.0,-0.0,
 drinking-water-bus,out,bottled-water,water,dispatchable,,-0.0,0.0
-drinking-water-bus,out,drinking-water-storage,water,storage,-0.0,-0.0,
+drinking-water-bus,out,drinking-water-storage,water,storage,-0.0,-0.0,0.0
 drinking-water-bus,out,sw-ro,water,ro,,,30.188596929043293
 drinking-water-bus,out,water pump,water,water-pump,-0.0,-0.0,
 drinking-water-bus,out,water-filtration-system,water,water-filtration,-0.0,-0.0,
@@ -33,7 +33,7 @@ service-water-bus,in,service-water-storage,water,storage,4.8784494,0.54736202019
 service-water-bus,in,water-filtration-system,water,water-filtration,,,0.0
 service-water-bus,out,condensed-water,water,volatile,,,0.07919999999999999
 service-water-bus,out,rainwater-harvesting,water,volatile,-0.0,-0.0,0.0
-service-water-bus,out,service-water-storage,water,storage,4.8784494,0.5473620201986923,
+service-water-bus,out,service-water-storage,water,storage,4.8784494,0.5473620201986923,0.010638253758522332
 service-water-bus,out,water-truck,water,dispatchable,,0.0,149.11640321844274
 solar-bus,out,solar-resource,energy,dispatchable,,-0.0,0.0
 wind-bus,out,wind-resource,energy,dispatchable,,-0.0,0.0

@@ -676,7 +676,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -711,7 +711,7 @@
                     },
                     {
                         "name": "lifetime",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
