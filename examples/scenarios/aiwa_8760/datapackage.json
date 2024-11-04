@@ -136,7 +136,7 @@
                     },
                     {
                         "name": "resource_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -156,17 +156,17 @@
                     },
                     {
                         "name": "land_requirement",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -525,17 +525,17 @@
                     },
                     {
                         "name": "capex",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "opex_fix",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "lifetime",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -550,7 +550,7 @@
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -560,22 +560,22 @@
                     },
                     {
                         "name": "water_footprint_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -676,7 +676,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -711,7 +711,7 @@
                     },
                     {
                         "name": "lifetime",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -801,7 +801,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -816,7 +816,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -831,22 +831,22 @@
                     },
                     {
                         "name": "capex",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "opex_fix",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "lifetime",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "resource_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -856,12 +856,12 @@
                     },
                     {
                         "name": "ghg_emission_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -977,7 +977,7 @@
                     },
                     {
                         "name": "opex_fix",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1017,17 +1017,17 @@
                     },
                     {
                         "name": "land_requirement",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -1166,12 +1166,12 @@
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emission_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -1329,6 +1329,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "pv_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "t_air",
                         "type": "number",
                         "format": "default"
@@ -1345,6 +1350,11 @@
                     },
                     {
                         "name": "windspeed",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "wind_turbine",
                         "type": "number",
                         "format": "default"
                     },
