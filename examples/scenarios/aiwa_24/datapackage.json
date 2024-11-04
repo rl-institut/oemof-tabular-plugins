@@ -861,7 +861,7 @@
                     },
                     {
                         "name": "water_footprint_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {

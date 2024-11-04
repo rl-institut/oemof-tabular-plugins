@@ -2,37 +2,38 @@ bus,direction,asset,carrier,facade_type,Upfront Investment Costs,Annuity Total,V
 ac-elec-bus,in,elec-demand,electricity,load,,,
 ac-elec-bus,in,electricity-excess,electricity,excess,,,
 ac-elec-bus,in,sw-ro,electricity,ro,,,0.0
-ac-elec-bus,in,water pump,electricity,water-pump,,,0.0
+ac-elec-bus,in,water pump,electricity,water-pump,,,-0.0
 ac-elec-bus,in,water-filtration-system,electricity,water-filtration,,,0.0
 ac-elec-bus,out,diesel-generator,electricity,conversion,,,0.0
 ac-elec-bus,out,electricity-grid,electricity,dispatchable,,-0.0,0.0
-ac-elec-bus,out,inverter,electricity,conversion,7918.0459,769.6340826234637,0.0
+ac-elec-bus,out,inverter,electricity,conversion,7543.884599999999,733.2656032643451,0.0
 brine-bus,in,brine-excess,water,excess,,,
-brine-bus,out,sw-ro,water,ro,,,0.0
-dc-elec-bus,in,battery-storage,electricity,storage,489132.647,80824.06967855834,
+brine-bus,out,sw-ro,water,ro,,,8.288352693100503
+dc-elec-bus,in,battery-storage,electricity,storage,59263.205946,9792.626838817932,
 dc-elec-bus,in,inverter,electricity,conversion,,,0.0
-dc-elec-bus,out,battery-storage,electricity,storage,489132.647,80824.06967855834,
-dc-elec-bus,out,photovoltaics,electricity,volatile,299017.62,41019.23492152955,0.0
+dc-elec-bus,out,battery-storage,electricity,storage,59263.205946,9792.626838817932,
+dc-elec-bus,out,photovoltaics,electricity,volatile,0.0,0.0,0.0
+dc-elec-bus,out,wind-turbine,electricity,volatile,206133.76,28278.45936234375,0.0
 diesel-bus,in,diesel-generator,water,conversion,,,0.0
 diesel-bus,out,diesel,water,dispatchable,,-0.0,0.0
 drinking-water-bus,in,drinking-water-demand,water,load,,,
-drinking-water-bus,in,drinking-water-storage,water,storage,5440.121862,547.5219221570148,
+drinking-water-bus,in,drinking-water-storage,water,storage,4257.4003139999995,428.48672556319997,
 drinking-water-bus,out,bottled-water,water,dispatchable,,-0.0,0.0
-drinking-water-bus,out,drinking-water-storage,water,storage,5440.121862,547.5219221570148,
-drinking-water-bus,out,sw-ro,water,ro,,,0.0
+drinking-water-bus,out,drinking-water-storage,water,storage,4257.4003139999995,428.48672556319997,
+drinking-water-bus,out,sw-ro,water,ro,,,8.288352693100503
 drinking-water-bus,out,water pump,water,water-pump,-0.0,-0.0,
-drinking-water-bus,out,water-filtration-system,water,water-filtration,4677.016,409.6317819043457,
-groundwater-bus,in,water pump,water,water-pump,,,0.0
-groundwater-bus,out,groundwater,water,dispatchable,,-0.0,0.0
+drinking-water-bus,out,water-filtration-system,water,water-filtration,1609.9844999999998,141.00888677168882,
+groundwater-bus,in,water pump,water,water-pump,,,-0.0
+groundwater-bus,out,groundwater,water,dispatchable,,-0.0,-0.0
 precipitation-bus,out,precipitation,water,dispatchable,,-0.0,0.0
 seawater-bus,in,sw-ro,water,ro,-0.0,-0.0,0.0
 seawater-bus,out,seawater-source,water,dispatchable,,-0.0,0.0
 service-water-bus,in,service-water-demand,water,load,,,
-service-water-bus,in,service-water-storage,water,storage,4.8784494,0.5473620201986923,
+service-water-bus,in,service-water-storage,water,storage,1.86933534,0.20973942419720687,
 service-water-bus,in,water-filtration-system,water,water-filtration,,,0.0
 service-water-bus,out,condensed-water,water,volatile,,,0.07919999999999999
 service-water-bus,out,rainwater-harvesting,water,volatile,-0.0,-0.0,0.0
-service-water-bus,out,service-water-storage,water,storage,4.8784494,0.5473620201986923,
-service-water-bus,out,water-truck,water,dispatchable,,0.0,304.7654513812695
+service-water-bus,out,service-water-storage,water,storage,1.86933534,0.20973942419720687,
+service-water-bus,out,water-truck,water,dispatchable,,0.0,262.663306085567
 solar-bus,out,solar-resource,energy,dispatchable,,-0.0,0.0
 wind-bus,out,wind-resource,energy,dispatchable,,-0.0,0.0
