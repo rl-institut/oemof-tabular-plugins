@@ -136,7 +136,7 @@
                     },
                     {
                         "name": "resource_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -156,17 +156,17 @@
                     },
                     {
                         "name": "land_requirement",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
