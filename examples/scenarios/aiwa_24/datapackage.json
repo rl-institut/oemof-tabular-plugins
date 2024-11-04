@@ -977,7 +977,7 @@
                     },
                     {
                         "name": "opex_fix",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1017,17 +1017,17 @@
                     },
                     {
                         "name": "land_requirement",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -1166,12 +1166,12 @@
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emission_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {

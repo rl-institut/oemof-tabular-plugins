@@ -17,23 +17,23 @@ dc-elec-bus,out,wind-turbine,electricity,volatile,0.0,,1.0,-0.0,0.0
 diesel-bus,in,diesel-generator,energy,conversion,0.0,,1.0,,
 diesel-bus,out,diesel,energy,dispatchable,0.0,,1.0,-0.0,0.0
 drinking-water-bus,in,drinking-water-demand,water,load,,,,,
-drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
+drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0,1.0,0.006559498,0.006559498
 drinking-water-bus,out,bottled-water,water,dispatchable,0.0,,1.0,-0.0,0.0
-drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,-0.0,0.0
+drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0,1.0,0.006559498,0.006559498
 drinking-water-bus,out,sw-ro,water,ro,0.0,,1.0,,
 drinking-water-bus,out,water pump,water,water-pump,0.0,,1.0,-0.0,0.0
-drinking-water-bus,out,water-filtration-system,water,water-filtration,0.0,,1.0,-0.0,0.0
+drinking-water-bus,out,water-filtration-system,water,water-filtration,0.0,,1.0,0.0013311408,0.0013311408
 groundwater-bus,in,water pump,water,water-pump,0.0,,1.0,,
 groundwater-bus,out,groundwater,water,dispatchable,0.0,,1.0,-0.0,0.0
 precipitation-bus,out,precipitation,water,dispatchable,0.0,,1.0,-0.0,0.0
 seawater-bus,in,sw-ro,water,ro,0.0,,1.0,-0.0,0.0
 seawater-bus,out,seawater-source,water,dispatchable,0.0,,1.0,-0.0,0.0
 service-water-bus,in,service-water-demand,water,load,,,,,
-service-water-bus,in,service-water-storage,water,storage,0.0,0.0,1.0,0.016261498,0.016261498
+service-water-bus,in,service-water-storage,water,storage,0.0,0.0,1.0,0.009702,0.009702
 service-water-bus,in,water-filtration-system,water,water-filtration,0.0,,1.0,,
 service-water-bus,out,condensed-water,water,volatile,1.0,,0.0,,
 service-water-bus,out,rainwater-harvesting,water,volatile,0.0,,1.0,-0.0,0.0
-service-water-bus,out,service-water-storage,water,storage,0.0,0.0,1.0,0.016261498,0.016261498
+service-water-bus,out,service-water-storage,water,storage,0.0,0.0,1.0,0.009702,0.009702
 service-water-bus,out,water-truck,water,dispatchable,0.0,,1.0,4.909195,4.909195
 solar-bus,out,solar-resource,energy,dispatchable,0.0,,1.0,-0.0,0.0
 wind-bus,out,wind-resource,energy,dispatchable,0.0,,1.0,-0.0,0.0
