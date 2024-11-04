@@ -12,6 +12,7 @@ battery-storage,invest_costs_out_elec,-0.0,,storage,energy,battery
 battery-storage,invest_in_elec,-0.0,,storage,energy,battery
 battery-storage,invest_out_elec,-0.0,,storage,energy,battery
 battery-storage,storage_losses,0.0,,storage,energy,battery
+battery-storage,summed_variable_costs_out_elec,0.0,,storage,energy,battery
 diesel-generator,flow_in_bus,0.0,,conversion,energy,diesel-generator
 diesel-generator,flow_out_elec,0.0,,conversion,energy,diesel-generator
 diesel-generator,invest_costs_out_elec,-0.0,,conversion,energy,diesel-generator
@@ -98,9 +99,11 @@ drinking-water-storage,invest_out_water,-0.0,,storage,water,storage
 service-water-storage,invest_out_water,0.016261498,,storage,water,storage
 drinking-water-storage,storage_losses,0.0,,storage,water,storage
 service-water-storage,storage_losses,0.004386451999999999,,storage,water,storage
+drinking-water-storage,summed_variable_costs_out_water,0.0,,storage,water,storage
+service-water-storage,summed_variable_costs_out_water,0.010638253600000001,,storage,water,storage
 brine-excess,flow_in_bus,28.751046,,excess,,
 elec-demand,flow_in_elec,1223.83005104,DE,load,,
 electricity-excess,flow_in_elec,0.0,,excess,,
 drinking-water-demand,flow_in_water,28.751046000000002,DE,load,,
 service-water-demand,flow_in_water,28.751046000000002,CO,load,,
-system,total_system_cost,295.12681278068,,,,
+system,total_system_cost,295.13745103428005,,,,

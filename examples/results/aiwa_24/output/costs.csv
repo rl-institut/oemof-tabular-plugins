@@ -8,7 +8,7 @@ ac-elec-bus,out,diesel-generator,electricity,conversion,-0.0,-0.0,0.0
 ac-elec-bus,out,electricity-grid,electricity,dispatchable,,0.0,145.38384423638806
 ac-elec-bus,out,inverter,electricity,conversion,-0.0,-0.0,0.0
 brine-bus,in,brine-excess,water,excess,,,
-brine-bus,out,sw-ro,water,ro,,,30.188596929043293
+brine-bus,out,sw-ro,water,ro,,,35.938807499999996
 dc-elec-bus,in,battery-storage,electricity,storage,-0.0,-0.0,
 dc-elec-bus,in,inverter,electricity,conversion,,,0.0
 dc-elec-bus,out,battery-storage,electricity,storage,-0.0,-0.0,0.0
@@ -20,7 +20,7 @@ drinking-water-bus,in,drinking-water-demand,water,load,,,
 drinking-water-bus,in,drinking-water-storage,water,storage,-0.0,-0.0,
 drinking-water-bus,out,bottled-water,water,dispatchable,,-0.0,0.0
 drinking-water-bus,out,drinking-water-storage,water,storage,-0.0,-0.0,0.0
-drinking-water-bus,out,sw-ro,water,ro,,,30.188596929043293
+drinking-water-bus,out,sw-ro,water,ro,,,35.938807499999996
 drinking-water-bus,out,water pump,water,water-pump,-0.0,-0.0,
 drinking-water-bus,out,water-filtration-system,water,water-filtration,-0.0,-0.0,
 groundwater-bus,in,water pump,water,water-pump,,,0.0

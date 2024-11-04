@@ -525,17 +525,17 @@
                     },
                     {
                         "name": "capex",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "opex_fix",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "lifetime",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -550,7 +550,7 @@
                     },
                     {
                         "name": "land_requirement_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -560,22 +560,22 @@
                     },
                     {
                         "name": "water_footprint_factor",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "land_requirement",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "ghg_emissions",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "water_footprint",
-                        "type": "integer",
+                        "type": "string",
                         "format": "default"
                     },
                     {
