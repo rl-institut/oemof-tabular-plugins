@@ -215,15 +215,25 @@ def post_processing(
 
     if dash_app is True:
         # ignore the dispachable sources optimized capacities
+
+        dispatable_table = capacities_table[
+            capacities_table.index.get_level_values("facade_type") == "dispatchable"
+        ]
+
         capacities_table = capacities_table[
             capacities_table.index.get_level_values("facade_type") != "dispatchable"
         ]
+
         # eliminate double occurence of same asset
         capacities_table = capacities_table.groupby("asset").mean()
         demo_app = prepare_app(
             es,
             dp_path=dp_path,
-            tables={"capacities": capacities_table, "kpis": kpis},
+            tables={
+                "capacities": capacities_table,
+                "dispatchables": dispatable_table,
+                "kpis": kpis,
+            },
             units=parameters_units,
         )
         demo_app.run_server(debug=False, port=8060)
