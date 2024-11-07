@@ -172,6 +172,12 @@ def compute_system_variable_costs_total(results_df):
     return variable_costs_total
 
 
+def compute_system_ghg_emissions_total(results_df):
+    """TBD"""
+    ghg_emissions = results_df["ghg_emissions"].sum()
+    return ghg_emissions
+
+
 def compute_system_cost_total(results_df):
     """Calculates the total system cost by summing the total annuity and total variable costs
     for each component"""
@@ -431,6 +437,12 @@ CALCULATED_KPIS = [
         "description": "The system total variable costs is calculated by summing up the total variable costs for "
         "each component flow",
         "argument_names": ["variable_costs_total"],
+    },
+    {
+        "column_name": "ghg_emission_total",
+        "operation": compute_system_ghg_emissions_total,
+        "description": "Total ghg emissions more info please",
+        "argument_names": ["ghg_emissions"],
     },
     {
         "column_name": "system_cost_total",
