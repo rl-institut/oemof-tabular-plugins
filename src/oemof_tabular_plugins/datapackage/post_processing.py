@@ -50,6 +50,9 @@ def compute_capacity_added(results_df):
     """Calculates duplicate optimized capacity (investments) into a column with a better name"""
     return results_df.investments
 
+def compute_existing_capacity(results_df):
+    """Returns existing capacity """
+
 
 def compute_annuity_total(results_df):
     """Calculates total annuity by multiplying the annuity by the optimized capacity"""

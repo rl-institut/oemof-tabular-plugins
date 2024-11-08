@@ -188,7 +188,7 @@ def post_processing(
             "variable_costs_total": "[USD/a]",
             "ghg_emission_total": "[kgCO2e/a]",
             "system_cost_total": "[USD/a]",
-            "land_requirement_additional": "[m²",
+            "land_requirement_additional": "[m²]",
             "total_upfront_investments": "[USD]",
             "land_requirement_total": "[m²]",
             "total_water_footprint": "[m³/a]",
@@ -241,9 +241,6 @@ def post_processing(
     if dash_app is True:
         # ignore the dispachable sources optimized capacities
 
-        dispatable_table = capacities_table[
-            capacities_table.index.get_level_values("facade_type") == "dispatchable"
-        ]
 
         capacities_table = capacities_table[
             capacities_table.index.get_level_values("facade_type") != "dispatchable"
@@ -255,9 +252,8 @@ def post_processing(
             es,
             dp_path=dp_path,
             tables={
-                "capacities": capacities_table,
-                "dispatchables": dispatable_table,
-                "kpis": kpis,
+                "Capacities": capacities_table,
+                "KPIs": kpis,
             },
             units=parameters_units,
         )
