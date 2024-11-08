@@ -116,7 +116,6 @@ def compute_ghg_emissions(results_df):
     else:
         return results_df.aggregated_flow * results_df.ghg_emission_factor
 
-
 def compute_land_requirement_additional(results_df):
     """Calculates land requirement needed for optimized capacities"""
     if "land_requirement_factor" not in results_df.index:
@@ -173,7 +172,7 @@ def compute_system_variable_costs_total(results_df):
 
 
 def compute_system_ghg_emissions_total(results_df):
-    """TBD"""
+    """calculate total annually system ghg emissions by adding up ghg emissions of each component"""
     ghg_emissions = results_df["ghg_emissions"].sum()
     return ghg_emissions
 
@@ -441,7 +440,7 @@ CALCULATED_KPIS = [
     {
         "column_name": "ghg_emission_total",
         "operation": compute_system_ghg_emissions_total,
-        "description": "Total ghg emissions more info please",
+        "description": "The total GHG emissions are calculated by summing up the GHG emissions of each component flow",
         "argument_names": ["ghg_emissions"],
     },
     {
@@ -458,15 +457,9 @@ CALCULATED_KPIS = [
         "argument_names": ["upfront_investment_costs"],
     },
     {
-        "column_name": "specific_system_cost",
-        "operation": compute_specific_system_cost,
-        "description": "T",
-        "argument_names": ["aggregated_flow", "annuity_total", "variable_costs_total"],
-    },
-    {
         "column_name": "co2_emissions_total",
         "operation": compute_system_co2_emissions_total,
-        "description": "The total emissions is calculated by summing the c02 emissions "
+        "description": "The total emissions is calculated by summing the C02 emissions "
         "for each component",
         "argument_names": ["co2_emissions"],
     },
