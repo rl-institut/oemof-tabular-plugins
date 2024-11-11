@@ -1,14 +1,14 @@
 bus,direction,asset,carrier,facade_type,Upfront Investment Costs,Annuity Total,Variable Costs Total
 ac-elec-bus,in,elec-demand,electricity,load,,,
 ac-elec-bus,in,electricity-excess,electricity,excess,,,
-ac-elec-bus,in,sw-ro,electricity,ro,,,0.0
+ac-elec-bus,in,seawater-reverse-osmosis,electricity,ro,,,0.0
 ac-elec-bus,in,water pump,electricity,water-pump,,,0.0
 ac-elec-bus,in,water-filtration-system,electricity,water-filtration,,,0.0
 ac-elec-bus,out,diesel-generator,electricity,conversion,-0.0,-0.0,0.0
 ac-elec-bus,out,electricity-grid,electricity,dispatchable,,0.0,297.92963957686567
 ac-elec-bus,out,inverter,electricity,conversion,-0.0,-0.0,0.0
 brine-bus,in,brine-excess,water,excess,,,
-brine-bus,out,sw-ro,water,ro,,,36.970218
+brine-bus,out,seawater-reverse-osmosis,water,ro,,,36.970218
 dc-elec-bus,in,battery-storage,electricity,storage,-0.0,-0.0,
 dc-elec-bus,in,inverter,electricity,conversion,,,0.0
 dc-elec-bus,out,battery-storage,electricity,storage,-0.0,-0.0,0.0
@@ -21,13 +21,13 @@ drinking-water-bus,in,drinking-water-demand,water,load,,,
 drinking-water-bus,in,drinking-water-storage,water,storage,3573.455622,359.6510042480793,
 drinking-water-bus,out,bottled-water,water,dispatchable,,,0.0
 drinking-water-bus,out,drinking-water-storage,water,storage,3573.455622,359.6510042480793,6.003427408554763
-drinking-water-bus,out,sw-ro,water,ro,,,36.970218
+drinking-water-bus,out,seawater-reverse-osmosis,water,ro,,,36.970218
 drinking-water-bus,out,water pump,water,water-pump,,,
 drinking-water-bus,out,water-filtration-system,water,water-filtration,-0.0,-0.0,
 groundwater-bus,in,water pump,water,water-pump,,,0.0
 groundwater-bus,out,groundwater,water,dispatchable,,-0.0,0.0
 precipitation-bus,out,precipitation,water,dispatchable,,-0.0,0.0
-seawater-bus,in,sw-ro,water,ro,1379.2354833871216,650.2814523980683,0.0
+seawater-bus,in,seawater-reverse-osmosis,water,ro,1379.2354833871216,650.2814523980683,0.0
 seawater-bus,out,seawater-source,water,dispatchable,,0.0,23.66093891257546
 service-water-bus,in,service-water-demand,water,load,,,
 service-water-bus,in,service-water-storage,water,storage,4870.464300000001,546.4660919827538,
