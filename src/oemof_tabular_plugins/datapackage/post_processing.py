@@ -58,6 +58,15 @@ def compute_capacity_added(results_df):
     return investments
 
 
+def compute_capacity_added(results_df):
+    """Calculates duplicate optimized capacity (investments) into a column with a better name"""
+    return results_df.investments
+
+
+def compute_existing_capacity(results_df):
+    """Returns existing capacity"""
+
+
 def compute_annuity_total(results_df):
     """Calculates total annuity by multiplying the annuity by the optimized capacity"""
     # ToDo: now storage_capacity_cost is used for the annuity if the component is storage.
@@ -191,6 +200,12 @@ def compute_system_variable_costs_total(results_df):
     # costs attached to each flow instead of each component
     variable_costs_total = results_df["variable_costs_total"].sum()
     return variable_costs_total
+
+
+def compute_system_ghg_emissions_total(results_df):
+    """calculate total annually system ghg emissions by adding up ghg emissions of each component"""
+    ghg_emissions = results_df["ghg_emissions"].sum()
+    return ghg_emissions
 
 
 def compute_system_cost_total(results_df):
@@ -473,6 +488,12 @@ CALCULATED_KPIS = [
         "argument_names": ["variable_costs_total"],
     },
     {
+        "column_name": "ghg_emission_total",
+        "operation": compute_system_ghg_emissions_total,
+        "description": "The total GHG emissions are calculated by summing up the GHG emissions of each component flow",
+        "argument_names": ["ghg_emissions"],
+    },
+    {
         "column_name": "system_cost_total",
         "operation": compute_system_cost_total,
         "description": "The total system cost is calculated by adding the total annuity to the total variable costs",
@@ -494,7 +515,7 @@ CALCULATED_KPIS = [
     {
         "column_name": "co2_emissions_total",
         "operation": compute_system_co2_emissions_total,
-        "description": "The total emissions is calculated by summing the c02 emissions "
+        "description": "The total emissions is calculated by summing the C02 emissions "
         "for each component",
         "argument_names": ["co2_emissions"],
     },

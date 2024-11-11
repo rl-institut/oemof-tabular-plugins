@@ -4,3 +4,4 @@ from .water import WaterFiltration, WaterPump
 from .crops import MimoCrop, SimpleCrop
 from .apv import APV
 from .functions import *
+from .inverter import Inverter

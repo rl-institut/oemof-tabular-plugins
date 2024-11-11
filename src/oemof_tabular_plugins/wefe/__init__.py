@@ -10,6 +10,7 @@ from .facades import (
     SimpleCrop,
     WaterPump,
     WaterFiltration,
+    Inverter,
 )
 
 WEFE_TYPEMAP = {
@@ -20,6 +21,7 @@ WEFE_TYPEMAP = {
     "pv-panel": PVPanel,
     "mimo": MIMO,
     "apv": APV,
+    "inverter": Inverter,
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
