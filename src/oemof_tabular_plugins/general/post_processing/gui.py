@@ -271,6 +271,18 @@ def prepare_app(energy_system, dp_path, tables, units=None):
 
     demo_app.layout = html.Div(
         children=[
+            html.Div(
+                children=[
+                    html.H3("Other section title"),
+                    html.P(
+                        "A paragraph, the first argument of thos html components is 'children', but can be omitted if you only provide text. 'children' can take text or html component or list of html components"
+                    ),
+                    html.Div(
+                        children="A div, you can recreate the structure of an html document here and fill with content, to make it look nice one uses css via 'style argument'",
+                        style={"color": "red"},
+                    ),
+                ]
+            ),
             html.H3("Scalar results"),
             html.Div(tables_figure),
             # html.Div(
