@@ -50,7 +50,7 @@ custom_attributes = [
     "resource_cost",
 ]
 # set whether the multi-objective optimization should be performed
-moo = False
+moo = True
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:

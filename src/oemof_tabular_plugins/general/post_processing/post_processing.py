@@ -170,6 +170,7 @@ def post_processing(
             "battery-storage": "[kWh]",
             "inverter": "[kW]",
             "water-filtration": "[m³/h]",
+            "water-filtration-system": "[m³/h]",
             "water-pump": "[m³/h]",
             "river-water-uptake": "[m³/h]",
             "crop": "[m²]",

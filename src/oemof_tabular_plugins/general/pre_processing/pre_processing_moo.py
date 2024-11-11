@@ -79,10 +79,10 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     # https://www.cia.gov/the-world-factbook/field/total-renewable-water-resources/
 
     # -------------- MOO Customizable Weights ------------------
-    wf_cost = 0.2
-    wf_ghg = 0.2
-    wf_lr = 0.3
-    wf_wf = 0.3
+    wf_cost = 0
+    wf_ghg = 0
+    wf_lr = 1
+    wf_wf = 0
     # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------
