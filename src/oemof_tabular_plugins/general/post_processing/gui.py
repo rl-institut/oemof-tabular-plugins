@@ -210,7 +210,7 @@ def sankey(energy_system, ts=None):
                         else:
                             raise (e)
 
-            values.append(val)
+                values.append(val)
 
     fig = go.Figure(
         data=[
