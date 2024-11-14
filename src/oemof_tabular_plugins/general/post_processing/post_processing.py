@@ -146,6 +146,41 @@ class OTPCalculator(Calculator):
     def calculated_outputs(self):
         return self.__scalars("outputs")
 
+    def apply_calculations(self, calculations):
+        apply_calculations(self.df_results, calculations=calculations)
+
+    def apply_kpi_calculations(self, calculations):
+        self.kpis = apply_kpi_calculations(self.df_results, calculations=calculations)
+
+    def __scalars(self, scalar_category):
+        """Ignore the flow data columns (by construction those are the first columns after the multi-index)"""
+        scalars = self.df_results.iloc[:, self.n_timesteps :]
+        answer = scalars
+        if scalar_category == "raw_inputs":
+            existing_cols = []
+            for c in scalars.columns:
+                if c in RAW_INPUTS:
+                    existing_cols.append(c)
+            answer = scalars[existing_cols]
+        elif scalar_category == "outputs":
+            answer = scalars[scalars.columns.difference(RAW_INPUTS)]
+        return answer
+
+    @property
+    def raw_outputs(self):
+        self.df_results.iloc[:, : self.n_timesteps]
+        cols = self.df_results.iloc[:, : self.n_timesteps].columns.tolist()
+        cols = cols + RAW_OUTPUTS + PROCESSED_RAW_OUTPUTS
+        return self.df_results[cols]
+
+    @property
+    def raw_inputs(self):
+        return self.__scalars("raw_inputs")
+
+    @property
+    def calculated_outputs(self):
+        return self.__scalars("outputs")
+
 
 def post_processing(
     params,
@@ -171,15 +206,41 @@ def post_processing(
     if parameters_units is None:
         #  Units of Capacities and Kpis in Results
         parameters_units = {
-            "battery_storage": "[kWh]",
+            "drinking-water-storage": "[m³]",
+            "rainwater-harvesting": "[m²]",
+            "service-water-storage": "[m³]",
+            "sw-ro": "[m³/h]",
+            "seawater-reverse-osmosis": "[m³/h]",
+            "electricity-grid": "[kWh]",
+            "seawater": "[m³]",
+            "seawater-source": "[m³]",
+            "water-truck": "[m³]",
+            "battery-storage": "[kWh]",
             "inverter": "[kW]",
+            "water-filtration": "[m³/h]",
+            "water-filtration-system": "[m³/h]",
+            "water-pump": "[m³/h]",
+            "river-water-uptake": "[m³/h]",
+            "crop": "[m²]",
+            "banana": "[m²]",
+            "banana-production": "[kg/a]",
+            "groundwater": "[m³]",
+            "bottled-water": "[m³]",
+            "diesel-generator": "[kW]",
+            "photovoltaics": "[kWp]",
+            "wind-turbine": "[kW]",
+            "hydropower": "[kW]",
             "pv-panel": "[kW]",
             "water-storage": "[m³]",
             "mimo": "[m³/h]",
-            "annuity_total": "[$]",
-            "total_upfront_investments": "[$]",
+            "annuity_total": "[USD/a]",
+            "variable_costs_total": "[USD/a]",
+            "ghg_emission_total": "[kgCO2e/a]",
+            "system_cost_total": "[USD/a]",
+            "land_requirement_additional": "[m²]",
+            "total_upfront_investments": "[USD]",
             "land_requirement_total": "[m²]",
-            "total_water_footprint": "[m³]",
+            "total_water_footprint": "[m³/a]",
         }
 
     if calculations is None:

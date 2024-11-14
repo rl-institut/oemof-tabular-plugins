@@ -44,7 +44,6 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "test_apv_facade"
     # "general_add_cost_inputs",
     # "general_basic",
     # "general_constraints",
@@ -52,6 +51,11 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
+    # "aiwa"
+    "aiwa_24"
+    # "aiwa_8760"
+    # "arusi_8760"
+    # "arusi_24"
 ]
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
@@ -61,10 +65,14 @@ wacc = 0.06
 # include the custom attribute parameters to be included in the model
 # this can be moved somewhere and included in a dict or something similar with all possible additional attributes
 custom_attributes = [
-    "emission_factor",
+    "ghg_emission_factor",
     "renewable_factor",
     "land_requirement_factor",
     "water_footprint_factor",
+    "land_requirement",
+    "water_footprint",
+    "ghg_emissions",
+    "resource_cost",
 ]
 # set whether the multi-objective optimization should be performed
 moo = True

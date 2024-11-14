@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - pre-commit configuration (lint files with black)
 - general_custom_attributes example
-- tests for pre-processing of custom attributes
+- tests for pre-rpocessing of custom attributes
 - layout for multi-objective optimization (MOO)
 - a new workflow for automated tests
 - new function for adding additional foreign keys to datapackage.json in src/oemof_tabular_plugins/datapackage/building.py
