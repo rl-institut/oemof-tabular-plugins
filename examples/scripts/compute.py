@@ -13,28 +13,43 @@ from oemof.tabular import datapackage  # noqa
 from oemof_tabular_plugins.wefe import WEFE_TYPEMAP as TYPEMAP
 
 parameters_units = {
-    "battery_storage": "[kWh]",
+    "drinking-water-storage": "[m³]",
+    "rainwater-harvesting": "[m²]",
+    "service-water-storage": "[m³]",
+    "sw-ro": "[m³/h]",
+    "seawater-reverse-osmosis": "[m³/h]",
+    "electricity-grid": "[kWh]",
+    "seawater": "[m³]",
+    "seawater-source": "[m³]",
+    "water-truck": "[m³]",
+    "battery-storage": "[kWh]",
     "inverter": "[kW]",
-    "pv-panel": "[kW]",
+    "water-filtration": "[m³/h]",
+    "water-filtration-system": "[m³/h]",
+    "water-pump": "[m³/h]",
+    "river-water-uptake": "[m³/h]",
+    "crop": "[m²]",
+    "banana": "[m²]",
+    "banana-production": "[kg/a]",
+    "groundwater": "[m³]",
+    "bottled-water": "[m³]",
     "diesel-generator": "[kW]",
+    "photovoltaics": "[kWp]",
+    "wind-turbine": "[kW]",
+    "hydropower": "[kW]",
+    "pv-panel": "[kW]",
     "water-storage": "[m³]",
     "mimo": "[m³/h]",
-    "annuity_total": "[$]",
-    "variable_costs_total": "[$]",
-    "system_cost_total": "[$]",
-    "specific_system_cost": "[$]",
-    "total_upfront_investments": "[$]",
-    "banana-plantation": "[m²]",
-    "land_requirement_total": "[m²]",
-    "ghg_emissions_total": "[?kg?]",
+    "annuity_total": "[USD/a]",
+    "variable_costs_total": "[USD/a]",
+    "ghg_emission_total": "[kgCO2e/a]",
+    "ghg_emissions_total": "[kgCO2e/a]",
+    "system_cost_total": "[USD/a]",
     "land_requirement_additional": "[m²]",
-    "total_water_footprint": "[m³]",
-    "river-water-uptake": "[m³]",
-    "water-filtration-system": "[m³]",
-    "rainwater-harvesting": "[m³]",
-    "water": "[m³]",
-    "electricity": "[kWh]",
-    "crop": "[kg]",
+    "total_upfront_investments": "[USD]",
+    "land_requirement_total": "[m²]",
+    "total_water_footprint": "[m³/a]",
+    "system_opex_total": "[USD]"
 }
 
 # -------------- RELEVANT PATHS --------------
@@ -75,7 +90,7 @@ custom_attributes = [
     "resource_cost",
 ]
 # set whether the multi-objective optimization should be performed
-moo = True
+moo = False
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:

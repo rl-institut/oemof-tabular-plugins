@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
     "name": "aiwa_24",
-    "oemof_tabular_version": "0.0.6dev",
+    "oemof_tabular_version": "0.0.5",
     "resources": [
         {
             "path": "data/elements/bus.csv",
