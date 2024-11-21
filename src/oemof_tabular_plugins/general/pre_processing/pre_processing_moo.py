@@ -67,16 +67,16 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     # ---------------- MOO Normalization PARAMS ----------------
     # Global Inputs (used for normalization)
     global_GDP = (
-        109.529 * 10**12
+        1.10 * 10**14
     )  # forecasted for 2024, Unit: [USD/a], Source: IMF (2024)
     # https://www.imf.org/en/Publications/WEO/weo-database/2024/April/weo-report?c=512,914,612,171,614,311,213,911,314,193,122,912,313,419,513,316,913,124,339,638,514,218,963,616,223,516,918,748,618,624,522,622,156,626,628,228,924,233,632,636,634,238,662,960,423,935,128,611,321,243,248,469,253,642,643,939,734,644,819,172,132,646,648,915,134,652,174,328,258,656,654,336,263,268,532,944,176,534,536,429,433,178,436,136,343,158,439,916,664,826,542,967,443,917,544,941,446,666,668,672,946,137,546,674,676,548,556,678,181,867,682,684,273,868,921,948,943,686,688,518,728,836,558,138,196,278,692,694,962,142,449,564,565,283,853,288,293,566,964,182,359,453,968,922,714,862,135,716,456,722,942,718,724,576,936,961,813,726,199,733,184,524,361,362,364,732,366,144,146,463,528,923,738,578,537,742,866,369,744,186,925,869,746,926,466,112,111,298,927,846,299,582,487,474,754,698,&s=NGDPD,&sy=2022&ey=2029&ssm=0&scsm=1&scc=0&ssd=1&ssc=0&sic=0&sort=country&ds=.&br=1
     global_GHG = (
-        37.4 * 10**9
-    )  # global CO2 emission in 2023; [tCO2/a], Source: iea (2024);
+        3.74 * 10**14
+    )  # global CO2 emission in 2023; [kgCO2/a], Source: iea (2024);
     # https://www.iea.org/reports/co2-emissions-in-2023/executive-summary
-    global_land_surface = 148.94 * 10**12  # Unit: m²
-    total_renewable_water_resources = 54 * 10**9  # Unit: [m³/a], Source: CIA (2011),
-    # https://www.cia.gov/the-world-factbook/field/total-renewable-water-resources/
+    global_land_surface = 1.49 * 10**14  # Unit: m²
+    global_annual_deprived_water = 7.91 * 10**13  # Unit: [m³/a], Source: EU JRC (2017)
+    # https://data.europa.eu/doi/10.2760/88930
 
     # -------------- MOO Customizable Weights ------------------
     wf_cost = 0
@@ -144,7 +144,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             )
             moo_variable_flow = (
                 ghg_emission_factor / global_GHG * wf_ghg
-                + water_footprint_factor / total_renewable_water_resources * wf_wf
+                + water_footprint_factor / global_annual_deprived_water * wf_wf
             )
 
             if not np.isnan(moo_variable_capacity):
@@ -179,7 +179,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
             moo_variable_flow = (
                 ghg_emission_factor / global_GHG * wf_ghg
-                + water_footprint_factor / total_renewable_water_resources * wf_wf
+                + water_footprint_factor / global_annual_deprived_water * wf_wf
             )
             element_df.at[index, moo_variable_var] = float(moo_variable_flow)
             logger.info(
