@@ -303,8 +303,7 @@ def post_processing(
 
         # eliminate double occurences of same asset
         capacities_table = capacities_table.loc[
-            (capacities_table["Capacity Total"] > 0)
-            & (capacities_table.direction == "out"),
+            (capacities_table["Capacity Total"] > 0),
             [
                 "Component name",
                 "Capacity",
@@ -314,6 +313,8 @@ def post_processing(
                 "unit",
             ],
         ]
+        capacities_table = capacities_table.drop_duplicates(subset=["Component name"])
+
         result_tables.update({"capacities": capacities_table})
 
         cost_table = extract_table_from_results(
