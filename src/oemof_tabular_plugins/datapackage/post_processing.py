@@ -123,6 +123,10 @@ def compute_variable_costs(results_df):
         return results_df.carrier_cost * results_df.aggregated_flow
 
 
+def compute_variable_cost_moo(results_df):
+    """Calculates variable costs by multiplying the resource cost by the aggregated flow."""
+    return results_df.resource_cost * results_df.aggregated_flow
+
 def compute_renewable_generation(results_df):
     """Calculates renewable generation by multiplying aggregated flow by renewable factor"""
     if "renewable_factor" not in results_df.index:
@@ -421,6 +425,13 @@ CALCULATED_OUTPUTS = [
         "description": "Variable costs are calculated by multiplying the total flow "
         "by the marginal/carrier costs",
         "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
+    },
+    {
+        "column_name": "variable_cost_moo",
+        "operation": compute_variable_cost_moo,
+        "description": "Variable costs are calculated by multiplying the total flow "
+                       "by the resource cost",
+        "argument_names": ["aggregated_flow", "resource_cost"],
     },
     {
         "column_name": "renewable_generation",
