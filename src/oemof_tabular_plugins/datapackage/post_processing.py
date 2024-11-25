@@ -88,8 +88,9 @@ def compute_upfront_investment_costs(results_df):
         return results_df.capex * investments
 
 
-def compute_total_annual_costs_moo(results_df):
-    """TBD TODO"""
+def compute_annualized_capex_moo(results_df):
+    """Computing annualized capex for each component by multiplying added capacities
+    (called investments) with component annuity. This function is used in the moo mode"""
 
     investments = results_df.investments
     if investments is None:
@@ -97,6 +98,12 @@ def compute_total_annual_costs_moo(results_df):
 
     return results_df.annuity * investments
 
+def compute_total_annual_cost_moo(results_df):
+    """Calculates total annual system cost (TAC) by summing up all component annuities and variable cost"""
+    total_system_annuity = results_df["annualized_capex"].sum()
+    total_system_variable_cost = results_df["variable_cost_moo"].sum
+    total_annual_cost = total_system_annuity + total_system_variable_cost
+    return total_annual_cost
 
 def compute_opex_fix_costs(results_df):
     """Calculates yearly opex costs by multiplying opex with optimized capacity (investments)"""
@@ -198,7 +205,6 @@ def compute_system_annuity_total(results_df):
             annuity_total += annuity_value
             seen_components.add(component_name)
     return annuity_total
-
 
 def compute_system_variable_costs_total(results_df):
     """Calculates the total variable costs by summing the variable costs for each component flow"""
@@ -406,6 +412,14 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["investments", "capacity_cost"],
     },
     {
+        "column_name": "annualized_capex",
+        "operation": compute_annualized_capex_moo,
+        "description": "Annualized capex in the moo mode is calculated by multiplying the optimized capacity "
+                       "by the component annuity (annuity considering CAPEX, OPEX and WACC)",
+        "argument_names": ["investments", "annuity"],
+    },
+
+    {
         "column_name": "upfront_investment_costs",
         "operation": compute_upfront_investment_costs,
         "description": "Upfront investment costs are calculated by multiplying the optimized capacity "
@@ -433,6 +447,7 @@ CALCULATED_OUTPUTS = [
                        "by the resource cost",
         "argument_names": ["aggregated_flow", "resource_cost"],
     },
+
     {
         "column_name": "renewable_generation",
         "operation": compute_renewable_generation,
@@ -495,10 +510,11 @@ CALCULATED_KPIS = [
         "argument_names": ["variable_costs_total"],
     },
     {
-        "column_name": "total_annual_cost_moo",  # TODO right naming?
-        "operation": compute_total_annual_costs_moo,
-        "description": "TBD",  # TODO add description
-        "argument_names": ["annuity"],
+        "column_name": "total_annual_cost_moo",
+        "operation": compute_total_annual_cost_moo,
+        "description": "The total annual system cost for moo mode is calculated "
+                       "by adding each component annuity and variable cost",
+        "argument_names": ["annualized_capex", "variable_cost_moo"],
     },
     {
         "column_name": "system_cost_total",
