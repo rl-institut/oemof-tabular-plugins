@@ -88,9 +88,10 @@ custom_attributes = [
     "water_footprint",
     "ghg_emissions",
     "resource_cost",
+    "annuity"
 ]
 # set whether the multi-objective optimization should be performed
-moo = False
+moo = True
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:

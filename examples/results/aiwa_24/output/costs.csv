@@ -17,23 +17,23 @@ dc-elec-bus,out,wind-turbine,electricity,volatile,-0.0,-0.0,0.0
 diesel-bus,in,diesel-generator,energy,conversion,,,0.0
 diesel-bus,out,diesel,energy,dispatchable,,-0.0,0.0
 drinking-water-bus,in,drinking-water-demand,water,load,,,
-drinking-water-bus,in,drinking-water-storage,water,storage,3573.455622,359.6510042480793,
+drinking-water-bus,in,drinking-water-storage,water,storage,-0.0,-0.0,
 drinking-water-bus,out,bottled-water,water,dispatchable,,,0.0
-drinking-water-bus,out,drinking-water-storage,water,storage,3573.455622,359.6510042480793,6.003427408554763
+drinking-water-bus,out,drinking-water-storage,water,storage,-0.0,-0.0,0.0
 drinking-water-bus,out,seawater-reverse-osmosis,water,ro,,,0.0
 drinking-water-bus,out,water pump,water,water-pump,,,0.0
-drinking-water-bus,out,water-filtration-system,water,water-filtration,-0.0,-0.0,0.0
+drinking-water-bus,out,water-filtration-system,water,water-filtration,2.5119,1.685838937644721e-17,0.0
 groundwater-bus,in,water pump,water,water-pump,,,0.0
 groundwater-bus,out,groundwater,water,dispatchable,,-0.0,0.0
 precipitation-bus,out,precipitation,water,dispatchable,,-0.0,0.0
-seawater-bus,in,seawater-reverse-osmosis,water,ro,1379.2354833871216,650.2814523980683,0.0
+seawater-bus,in,seawater-reverse-osmosis,water,ro,5498.06416413208,9.890929077367274e-15,0.0
 seawater-bus,out,seawater-source,water,dispatchable,,0.0,0.0
 service-water-bus,in,service-water-demand,water,load,,,
-service-water-bus,in,service-water-storage,water,storage,4870.464300000001,546.4660919827538,
+service-water-bus,in,service-water-storage,water,storage,4863.9069,1.8498079543758213e-13,
 service-water-bus,in,water-filtration-system,water,water-filtration,,,0.0
 service-water-bus,out,condensed-water,water,volatile,,,0.0
-service-water-bus,out,rainwater-harvesting,water,volatile,14406.379200000001,1976.0749036880495,0.0
-service-water-bus,out,service-water-storage,water,storage,4870.464300000001,546.4660919827538,1.8027686951133461
+service-water-bus,out,rainwater-harvesting,water,volatile,14430.6222,2.0984126639034206e-12,0.0
+service-water-bus,out,service-water-storage,water,storage,4863.9069,1.8498079543758213e-13,1.8009792869366823
 service-water-bus,out,water-truck,water,dispatchable,,,0.0
 solar-bus,out,solar-resource,energy,dispatchable,,-0.0,0.0
 wind-bus,out,wind-resource,energy,dispatchable,,-0.0,0.0

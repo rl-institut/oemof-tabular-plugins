@@ -5,7 +5,7 @@ import logging
 
 # from .pre_processing import calculate_annuity
 
-NO_MOO_VARIABLE_SCEN = "no moo variables"
+NO_MOO_VARIABLE_SCEN = "no moo variables"  # this scenario potentially can be skipped; as this would correspond with SOO
 MOO_VARIABLE_SCEN = "moo variable calculation"
 MOO_DISPATCHABLE_SCEN = "moo variable calculation with dispatchable"
 
@@ -21,8 +21,8 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     """
     annuity_capex = economics.annuity(capex, lifetime, wacc)
     annuity_opex_fix = opex_fix
-    annuity_total = round(annuity_capex + annuity_opex_fix, 2)
-    return annuity_total
+    annuity = round(annuity_capex + annuity_opex_fix, 2)
+    return annuity
 
 
 def pre_processing_moo(wacc, element, element_path, element_df):
@@ -87,8 +87,9 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
     # ---------------- Assigning MOO variables in csv ----------------
     moo_variable_var = "marginal_cost"
-    # for every element other than storage, the fixed moo variable is 'capacity_cost'
-    # for storage, the annuity cost parameter is 'storage_capacity_cost'
+    # annuity = "annuity"
+    # for every element other than storage, the fixed moo optimization variable is 'capacity_cost'
+    # for storage, the fixed moo optimization variable is 'storage_capacity_cost'
     if element != "storage.csv":
         moo_variable_fix = "capacity_cost"
     else:
@@ -172,6 +173,19 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                     f" '{row_name}' in '{element}'."
                 )
 
+            if not np.isnan(annuity):
+                element_df.at[index, annuity] = float(annuity)
+                # log info message
+                logger.info(
+                    f"'{annuity}' has been calculated and updated for"
+                    f" '{row_name}' in '{element}'."
+                )
+            else:
+                logging.warning(
+                    f"'{annuity}' could not be calculated and will not be updated for"
+                    f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
+                )
+
         elif scenario == MOO_DISPATCHABLE_SCEN:
             # store the parameters
             ghg_emission_factor = row["ghg_emission_factor"]
@@ -181,12 +195,24 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                 ghg_emission_factor / global_GHG * wf_ghg
                 + water_footprint_factor / global_annual_deprived_water * wf_wf
             )
+            annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
             element_df.at[index, moo_variable_var] = float(moo_variable_flow)
             logger.info(
-                f"'{element}' is a disptachable source.'{moo_variable_var}' has been calculated for"
+                f"'{element}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
                 f" '{row_name}' in '{element}'."
             )
-
+            if not np.isnan(annuity):
+                element_df.at[index, annuity] = float(annuity)
+                # log info message
+                logger.info(
+                    f"'{annuity}' has been calculated and updated for"
+                    f" '{row_name}' in '{element}'."
+                )
+            else:
+                logging.warning(
+                    f"'{annuity}' could not be calculated and will not be updated for"
+                    f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
+                )
         elif scenario == "no moo indicator":
             logger.info(
                 f"'{element}' does not contain '{moo_variable_fix}' parameter. Skipping..."

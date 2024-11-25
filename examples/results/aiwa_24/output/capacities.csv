@@ -1,4 +1,5 @@
 ,Component name,Capacity,Optimized Capacity,Capacity Total,Maximum Capacity,unit
-17,drinking-water-storage,0.0,19.212127,19.212127,,[m³]
-27,rainwater-harvesting,0.0,240.10632,240.10632,,[m³/s]
-28,service-water-storage,0.0,16.234881,16.234881,,[m³]
+20,water-filtration-system,0.0,0.025119,0.025119,,[m³/s]
+22,seawater-reverse-osmosis,0.0,9.82499,9.82499,,[m³/s]
+24,service-water-storage,0.0,16.213023,16.213023,,[m³]
+27,rainwater-harvesting,0.0,240.51037,240.51037,,[m³/s]
