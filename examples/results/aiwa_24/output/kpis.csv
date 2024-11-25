@@ -1,6 +1,46 @@
 kpi,value
 annuity_total,2.283393459341003e-12
 variable_costs_total,1.8009792869366823
+total_annual_cost_moo,"bus                 direction  asset                     carrier      facade_type     
+ac-elec-bus         in         elec-demand               electricity  load                        NaN
+                               electricity-excess        electricity  excess                      NaN
+                               seawater-reverse-osmosis  electricity  ro                          NaN
+                               water pump                electricity  water-pump                  NaN
+                               water-filtration-system   electricity  water-filtration            NaN
+                    out        diesel-generator          electricity  conversion            -0.000000
+                               electricity-grid          electricity  dispatchable                NaN
+                               inverter                  electricity  conversion            -0.000000
+brine-bus           in         brine-excess              water        excess                      NaN
+                    out        seawater-reverse-osmosis  water        ro                          NaN
+dc-elec-bus         in         battery-storage           electricity  storage               -0.000000
+                               inverter                  electricity  conversion                  NaN
+                    out        battery-storage           electricity  storage               -0.000000
+                               photovoltaics             electricity  volatile              -0.000000
+                               wind-turbine              electricity  volatile              -0.000000
+diesel-bus          in         diesel-generator          energy       conversion                  NaN
+                    out        diesel                    energy       dispatchable                NaN
+drinking-water-bus  in         drinking-water-demand     water        load                        NaN
+                               drinking-water-storage    water        storage               -0.000000
+                    out        bottled-water             water        dispatchable                NaN
+                               drinking-water-storage    water        storage               -0.000000
+                               seawater-reverse-osmosis  water        ro                          NaN
+                               water pump                water        water-pump                  NaN
+                               water-filtration-system   water        water-filtration       0.721418
+groundwater-bus     in         water pump                water        water-pump                  NaN
+                    out        groundwater               water        dispatchable                NaN
+precipitation-bus   out        precipitation             water        dispatchable                NaN
+seawater-bus        in         seawater-reverse-osmosis  water        ro                  2592.225326
+                    out        seawater-source           water        dispatchable                NaN
+service-water-bus   in         service-water-demand      water        load                        NaN
+                               service-water-storage     water        storage              545.730352
+                               water-filtration-system   water        water-filtration            NaN
+                    out        condensed-water           water        volatile                    NaN
+                               rainwater-harvesting      water        volatile            1979.400235
+                               service-water-storage     water        storage              545.730352
+                               water-truck               water        dispatchable                NaN
+solar-bus           out        solar-resource            energy       dispatchable                NaN
+wind-bus            out        wind-resource             energy       dispatchable                NaN
+dtype: float64"
 system_cost_total,1.8009792869389656
 total_upfront_investments,19294.5291
 specific_system_cost,0.0014715926328240628
