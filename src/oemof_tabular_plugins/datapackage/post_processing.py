@@ -31,6 +31,7 @@ RAW_INPUTS = [
     "ghg_emission_factor",
     "land_requirement_factor",
     "water_footprint_factor",
+    "annuity",
 ]
 
 
@@ -85,6 +86,16 @@ def compute_upfront_investment_costs(results_df):
             investments = 0
 
         return results_df.capex * investments
+
+
+def compute_total_annual_costs_moo(results_df):
+    """TBD TODO"""
+
+    investments = results_df.investments
+    if investments is None:
+        investments = 0
+
+    return results_df.annuity * investments
 
 
 def compute_opex_fix_costs(results_df):
@@ -471,6 +482,12 @@ CALCULATED_KPIS = [
         "description": "The system total variable costs is calculated by summing up the total variable costs for "
         "each component flow",
         "argument_names": ["variable_costs_total"],
+    },
+    {
+        "column_name": "total_annual_cost_moo",  # TODO right naming?
+        "operation": compute_total_annual_costs_moo,
+        "description": "TBD",  # TODO add description
+        "argument_names": ["annuity"],
     },
     {
         "column_name": "system_cost_total",
