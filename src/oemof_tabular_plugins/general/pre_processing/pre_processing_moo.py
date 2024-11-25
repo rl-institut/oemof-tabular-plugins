@@ -9,6 +9,8 @@ NO_MOO_VARIABLE_SCEN = "no moo variables"  # this scenario potentially can be sk
 MOO_VARIABLE_SCEN = "moo variable calculation"
 MOO_DISPATCHABLE_SCEN = "moo variable calculation with dispatchable"
 
+MOO_ANNUITY = "annuity"
+
 
 def calculate_annuity(capex, opex_fix, lifetime, wacc):
     """
@@ -66,9 +68,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     """
     # ---------------- MOO Normalization PARAMS ----------------
     # Global Inputs (used for normalization)
-    global_GDP = (
-        1.10 * 10**14
-    )  # forecasted for 2024, Unit: [USD/a], Source: IMF (2024)
+    global_GDP = 1.10 * 10**14  # forecasted for 2024, Unit: [USD/a], Source: IMF (2024)
     # https://www.imf.org/en/Publications/WEO/weo-database/2024/April/weo-report?c=512,914,612,171,614,311,213,911,314,193,122,912,313,419,513,316,913,124,339,638,514,218,963,616,223,516,918,748,618,624,522,622,156,626,628,228,924,233,632,636,634,238,662,960,423,935,128,611,321,243,248,469,253,642,643,939,734,644,819,172,132,646,648,915,134,652,174,328,258,656,654,336,263,268,532,944,176,534,536,429,433,178,436,136,343,158,439,916,664,826,542,967,443,917,544,941,446,666,668,672,946,137,546,674,676,548,556,678,181,867,682,684,273,868,921,948,943,686,688,518,728,836,558,138,196,278,692,694,962,142,449,564,565,283,853,288,293,566,964,182,359,453,968,922,714,862,135,716,456,722,942,718,724,576,936,961,813,726,199,733,184,524,361,362,364,732,366,144,146,463,528,923,738,578,537,742,866,369,744,186,925,869,746,926,466,112,111,298,927,846,299,582,487,474,754,698,&s=NGDPD,&sy=2022&ey=2029&ssm=0&scsm=1&scc=0&ssd=1&ssc=0&sic=0&sort=country&ds=.&br=1
     global_GHG = (
         3.74 * 10**14
@@ -122,6 +122,8 @@ def pre_processing_moo(wacc, element, element_path, element_df):
         # define the row name
         row_name = row["name"]
         if scenario == MOO_VARIABLE_SCEN:
+            if MOO_ANNUITY not in element_df.columns:
+                element_df[MOO_ANNUITY] = None
             # store the parameters
             capex = row["capex"]
             opex_fix = row["opex_fix"]
@@ -174,7 +176,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                 )
 
             if not np.isnan(annuity):
-                element_df.at[index, annuity] = float(annuity)
+                element_df.at[index, MOO_ANNUITY] = float(annuity)
                 # log info message
                 logger.info(
                     f"'{annuity}' has been calculated and updated for"
@@ -195,28 +197,19 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                 ghg_emission_factor / global_GHG * wf_ghg
                 + water_footprint_factor / global_annual_deprived_water * wf_wf
             )
-            annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
+
             element_df.at[index, moo_variable_var] = float(moo_variable_flow)
             logger.info(
                 f"'{element}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
                 f" '{row_name}' in '{element}'."
             )
-            if not np.isnan(annuity):
-                element_df.at[index, annuity] = float(annuity)
-                # log info message
-                logger.info(
-                    f"'{annuity}' has been calculated and updated for"
-                    f" '{row_name}' in '{element}'."
-                )
-            else:
-                logging.warning(
-                    f"'{annuity}' could not be calculated and will not be updated for"
-                    f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
-                )
+
         elif scenario == "no moo indicator":
             logger.info(
                 f"'{element}' does not contain '{moo_variable_fix}' parameter. Skipping..."
             )
+    print(element_path)
+
     # save the updated dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
     return
