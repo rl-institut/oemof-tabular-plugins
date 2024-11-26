@@ -32,6 +32,9 @@ RAW_INPUTS = [
     "land_requirement_factor",
     "water_footprint_factor",
     "annuity",
+    "resource_cost",
+    "renewable_factor",
+    "emission_factor",
 ]
 
 
@@ -90,7 +93,8 @@ def compute_upfront_investment_costs(results_df):
 
 def compute_annualized_capex_moo(results_df):
     """Computing annualized capex for each component by multiplying added capacities
-    (called investments) with component annuity. This function is used in the moo mode"""
+    (called investments) with component annuity. This function is used in the moo mode
+    """
 
     investments = results_df.investments
     if investments is None:
@@ -98,12 +102,14 @@ def compute_annualized_capex_moo(results_df):
 
     return results_df.annuity * investments
 
+
 def compute_total_annual_cost_moo(results_df):
     """Calculates total annual system cost (TAC) by summing up all component annuities and variable cost"""
     total_system_annuity = results_df["annualized_capex"].sum()
-    total_system_variable_cost = results_df["variable_cost_moo"].sum
+    total_system_variable_cost = results_df["variable_cost_moo"].sum()
     total_annual_cost = total_system_annuity + total_system_variable_cost
     return total_annual_cost
+
 
 def compute_opex_fix_costs(results_df):
     """Calculates yearly opex costs by multiplying opex with optimized capacity (investments)"""
@@ -133,6 +139,7 @@ def compute_variable_costs(results_df):
 def compute_variable_cost_moo(results_df):
     """Calculates variable costs by multiplying the resource cost by the aggregated flow."""
     return results_df.resource_cost * results_df.aggregated_flow
+
 
 def compute_renewable_generation(results_df):
     """Calculates renewable generation by multiplying aggregated flow by renewable factor"""
@@ -205,6 +212,7 @@ def compute_system_annuity_total(results_df):
             annuity_total += annuity_value
             seen_components.add(component_name)
     return annuity_total
+
 
 def compute_system_variable_costs_total(results_df):
     """Calculates the total variable costs by summing the variable costs for each component flow"""
@@ -415,10 +423,9 @@ CALCULATED_OUTPUTS = [
         "column_name": "annualized_capex",
         "operation": compute_annualized_capex_moo,
         "description": "Annualized capex in the moo mode is calculated by multiplying the optimized capacity "
-                       "by the component annuity (annuity considering CAPEX, OPEX and WACC)",
+        "by the component annuity (annuity considering CAPEX, OPEX and WACC)",
         "argument_names": ["investments", "annuity"],
     },
-
     {
         "column_name": "upfront_investment_costs",
         "operation": compute_upfront_investment_costs,
@@ -444,10 +451,9 @@ CALCULATED_OUTPUTS = [
         "column_name": "variable_cost_moo",
         "operation": compute_variable_cost_moo,
         "description": "Variable costs are calculated by multiplying the total flow "
-                       "by the resource cost",
+        "by the resource cost",
         "argument_names": ["aggregated_flow", "resource_cost"],
     },
-
     {
         "column_name": "renewable_generation",
         "operation": compute_renewable_generation,
@@ -513,7 +519,7 @@ CALCULATED_KPIS = [
         "column_name": "total_annual_cost_moo",
         "operation": compute_total_annual_cost_moo,
         "description": "The total annual system cost for moo mode is calculated "
-                       "by adding each component annuity and variable cost",
+        "by adding each component annuity and variable cost",
         "argument_names": ["annualized_capex", "variable_cost_moo"],
     },
     {
