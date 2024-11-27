@@ -14,6 +14,7 @@ from oemof_tabular_plugins.wefe import WEFE_TYPEMAP as TYPEMAP
 
 parameters_units = {
     "drinking-water-storage": "[m³]",
+    "total_annual_cost_moo": "[USD/a]",
     "rainwater-harvesting": "[m²]",
     "service-water-storage": "[m³]",
     "sw-ro": "[m³/h]",
@@ -49,7 +50,8 @@ parameters_units = {
     "total_upfront_investments": "[USD]",
     "land_requirement_total": "[m²]",
     "total_water_footprint": "[m³/a]",
-    "system_opex_total": "[USD]"
+    "system_opex_total": "[USD/a]",
+    "total_variable_cost_moo": "[USD/a]"
 }
 
 # -------------- RELEVANT PATHS --------------

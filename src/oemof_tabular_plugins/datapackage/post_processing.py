@@ -34,7 +34,7 @@ RAW_INPUTS = [
     "annuity",
     "resource_cost",
     "renewable_factor",
-    "emission_factor",
+    "emission_factor"
 ]
 
 
@@ -140,6 +140,9 @@ def compute_variable_cost_moo(results_df):
     """Calculates variable costs by multiplying the resource cost by the aggregated flow."""
     return results_df.resource_cost * results_df.aggregated_flow
 
+def compute_variable_cost_total_moo(results_df):
+    """Calculates total system variable costs by adding up variable costs of each component"""
+    return results_df["variable_cost_moo"].sum()
 
 def compute_renewable_generation(results_df):
     """Calculates renewable generation by multiplying aggregated flow by renewable factor"""
@@ -275,8 +278,8 @@ def compute_system_co2_emissions_total(results_df):
 
 
 def compute_system_opex_total(results_df):
-    """Calculates the total OPEX by summing up the opex from each component"""
-    opex_total = results_df["opex_fix_costs_total"].sum()
+    """Calculates the total OPEX by summing up the opex fix and variable cost from each component"""
+    opex_total = results_df["opex_fix_costs_total"].sum() + results_df["variable_cost_moo"].sum()
     return opex_total
 
 
@@ -451,7 +454,7 @@ CALCULATED_OUTPUTS = [
         "column_name": "variable_cost_moo",
         "operation": compute_variable_cost_moo,
         "description": "Variable costs are calculated by multiplying the total flow "
-        "by the resource cost",
+        "by the resource cost (in moo mode)",
         "argument_names": ["aggregated_flow", "resource_cost"],
     },
     {
@@ -521,6 +524,13 @@ CALCULATED_KPIS = [
         "description": "The total annual system cost for moo mode is calculated "
         "by adding each component annuity and variable cost",
         "argument_names": ["annualized_capex", "variable_cost_moo"],
+    },
+    {
+        "column_name": "total_variable_cost_moo",
+        "operation": compute_variable_cost_total_moo,
+        "description": "Total System variable costs are calculated by adding up the annual variable cost"
+                       " of each component ",
+        "argument_names": ["variable_cost_moo"],
     },
     {
         "column_name": "system_cost_total",
