@@ -505,19 +505,19 @@ CALCULATED_OUTPUTS = [
 #  per component (to be added to df_results) or a calculation for the whole system (e.g. LCOE, total emissions etc).
 #  Probably this should be included with the other CALCULATED_OUTPUTS eventually, but should ask PF
 CALCULATED_KPIS = [
-    {
-        "column_name": "annuity_total",
-        "operation": compute_system_annuity_total,
-        "description": "The system total annuity is calculated by summing up the total annuity for each component",
-        "argument_names": ["annuity_total"],
-    },
-    {
-        "column_name": "variable_costs_total",
-        "operation": compute_system_variable_costs_total,
-        "description": "The system total variable costs is calculated by summing up the total variable costs for "
-        "each component flow",
-        "argument_names": ["variable_costs_total"],
-    },
+#    {
+#        "column_name": "annuity_total",
+#        "operation": compute_system_annuity_total,
+#        "description": "The system total annuity is calculated by summing up the total annuity for each component",
+#        "argument_names": ["annuity_total"],
+#    },
+#    {
+#        "column_name": "variable_costs_total",
+#        "operation": compute_system_variable_costs_total,
+#        "description": "The system total variable costs is calculated by summing up the total variable costs for "
+#        "each component flow",
+#        "argument_names": ["variable_costs_total"],
+#    },
     {
         "column_name": "total_annual_cost_moo",
         "operation": compute_total_annual_cost_moo,
@@ -532,12 +532,12 @@ CALCULATED_KPIS = [
                        " of each component ",
         "argument_names": ["variable_cost_moo"],
     },
-    {
-        "column_name": "system_cost_total",
-        "operation": compute_system_cost_total,
-        "description": "The total system cost is calculated by adding the total annuity to the total variable costs",
-        "argument_names": ["annuity_total", "variable_costs_total"],
-    },
+#    {
+#        "column_name": "system_cost_total",
+#        "operation": compute_system_cost_total,
+#        "description": "The total system cost is calculated by adding the total annuity to the total variable costs",
+#        "argument_names": ["annuity_total", "variable_costs_total"],
+#    },
     {
         "column_name": "total_upfront_investments",
         "operation": compute_system_upfront_investments_total,
@@ -545,12 +545,12 @@ CALCULATED_KPIS = [
         "costs for each component",
         "argument_names": ["upfront_investment_costs"],
     },
-    {
-        "column_name": "specific_system_cost",
-        "operation": compute_specific_system_cost,
-        "description": "T",
-        "argument_names": ["aggregated_flow", "annuity_total", "variable_costs_total"],
-    },
+#   {
+#      "column_name": "specific_system_cost",
+#      "operation": compute_specific_system_cost,
+#        "description": "T",
+#        "argument_names": ["aggregated_flow", "annuity_total", "variable_costs_total"],
+#    },
     {
         "column_name": "co2_emissions_total",
         "operation": compute_system_co2_emissions_total,
