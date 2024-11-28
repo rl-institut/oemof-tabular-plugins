@@ -34,9 +34,12 @@ RAW_INPUTS = [
     "annuity",
     "resource_cost",
     "renewable_factor",
-    "emission_factor"
+    "emission_factor",
+    "cf_aware"
 ]
 
+ # cf_aware; make sure cf_aware gets fetched for specific location and transmitted to post_processing
+cf_aware=25 # for Aiwa
 
 # Functions for results per component
 def compute_capacity_total(results_df):
@@ -328,15 +331,19 @@ def compute_system_land_requirement_total(results_df):
 
 def compute_water_consumption_total(results_df):
     """Calculates the total water footprint by summing the total water footprint for each component"""
-    # ToDo: so far these are simply summed for each flow, but should check this is correct in every case
     water_consumption_total = results_df["water_consumption"].sum()
     return water_consumption_total
 
+def compute_water_scarcity_footprint(results_df):
+    """Calculates the overall water scarcity footprint by multypling the total water consumption of the system with
+    the available water remaining characterization factor: CFaware"""
+    water_scarcity_footprint = cf_aware*results_df["water_consumption"].sum()
+    return water_scarcity_footprint
 
 def compute_ghg_emissions_total(results_df):
     """Calculates the total ghg emissions by summing the total ghg emissions for each component"""
-    ghg_emission_total = results_df["ghg_emissions"].sum()
-    return ghg_emission_total
+    ghg_emissions_total = results_df["ghg_emissions"].sum()
+    return ghg_emissions_total
 
 
 def compute_specific_system_cost(results_df):
@@ -577,6 +584,13 @@ CALCULATED_KPIS = [
         "operation": compute_water_consumption_total,
         "description": "The total water footprint is calculated by summing the water consumption of "
         "each component",
+        "argument_names": ["water_consumption"],
+    },
+    {
+        "column_name": "water_scarcity_footprint",
+        "operation": compute_water_scarcity_footprint,
+        "description": "The total water footprint is calculated by summing the water consumption of "
+               "each component",
         "argument_names": ["water_consumption"],
     },
     {
