@@ -77,12 +77,16 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     global_land_surface = 1.49 * 10**14  # Unit: m²
     global_annual_deprived_water = 7.91 * 10**13  # Unit: [m³/a], Source: EU JRC (2017)
     # https://data.europa.eu/doi/10.2760/88930
+    cf_aware = 0.1  # Unit: dimensionless
+    # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
+    # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
+
 
     # -------------- MOO Customizable Weights ------------------
-    wf_cost = 0
-    wf_ghg = 0
-    wf_lr = 1
-    wf_wf = 0
+    wf_cost = 0.25
+    wf_ghg = 0.25
+    wf_lr = 0.25
+    wf_wf = 0.25
     # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------
@@ -132,24 +136,28 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                 carrier_cost = row["resource_cost"]
             else:
                 raise AttributeError(
-                    f"The column 'resource_cost' is missing from component {row_name} within resource '{element}' and is needed for multi-objective cost calculation. The resource_cost is the cost of one unit of flow (could be EUR/kWh or EUR/kg, EUR/m³ etc "
+                    f"The column 'resource_cost' is missing from component {row_name} within resource '{element}'"
+                    f" and is needed for multi-objective cost calculation. "
+                    f"The resource_cost is the cost of one unit of flow (could be EUR/kWh or EUR/kg, EUR/m³ etc "
                 )
 
             ghg_emission_factor = row["ghg_emission_factor"]
             land_requirement_factor = row["land_requirement_factor"]
-            water_footprint_factor = row["water_footprint_factor"]
+            water_consumption_factor = row["water_consumption_factor"]
+            resource_cost = row["resource_cost"]
+
+
             print(f"capex: {capex}, lifetime: {lifetime}, wacc: {wacc}")
             annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
             moo_variable_capacity = (
-                carrier_cost / global_GDP
-                + annuity / global_GDP * wf_cost
+                annuity / global_GDP * wf_cost
                 + land_requirement_factor / global_land_surface * wf_lr
             )
             moo_variable_flow = (
-                ghg_emission_factor / global_GHG * wf_ghg
-                + water_footprint_factor / global_annual_deprived_water * wf_wf
+               resource_cost / global_GDP * wf_cost +
+               ghg_emission_factor / global_GHG * wf_ghg
+               + cf_aware * water_consumption_factor / global_annual_deprived_water * wf_wf
             )
-
             if not np.isnan(moo_variable_capacity):
                 element_df.at[index, moo_variable_fix] = float(moo_variable_capacity)
                 # log info message
@@ -191,11 +199,13 @@ def pre_processing_moo(wacc, element, element_path, element_df):
         elif scenario == MOO_DISPATCHABLE_SCEN:
             # store the parameters
             ghg_emission_factor = row["ghg_emission_factor"]
-            water_footprint_factor = row["water_footprint_factor"]
+            water_consumption_factor = row["water_consumption_factor"]
+            resource_cost = row["resource_cost"]
 
             moo_variable_flow = (
-                ghg_emission_factor / global_GHG * wf_ghg
-                + water_footprint_factor / global_annual_deprived_water * wf_wf
+                    resource_cost / global_GDP * wf_cost +
+                    ghg_emission_factor / global_GHG * wf_ghg
+                    + cf_aware * water_consumption_factor / global_annual_deprived_water * wf_wf
             )
 
             element_df.at[index, moo_variable_var] = float(moo_variable_flow)

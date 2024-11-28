@@ -85,7 +85,7 @@ custom_attributes = [
     "ghg_emission_factor",
     "renewable_factor",
     "land_requirement_factor",
-    "water_footprint_factor",
+    "water_consumption_factor",
     "land_requirement",
     "water_footprint",
     "ghg_emissions",

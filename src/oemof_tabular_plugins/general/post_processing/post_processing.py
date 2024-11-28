@@ -45,10 +45,10 @@ RESULT_TABLE_COLUMNS = {
 
 CAPACITIES_UNIT = {
     "electricity": {"default": "[kW]", "storage": "[kWh]"},
-    "wind": {"default": "[m³/s]", "storage": "[m³/s]"},
-    "irradiation": {"default": "[m²]", "storage": "[m²]"},
-    "crop": {"default": "[m²]", "storage": "[m²]"},
-    "water": {"default": "[m³/s]", "storage": "[m³]"},
+    "wind": {"default": "[m/s]", "storage": "[kWh]"},
+    "irradiation": {"default": "[kWh/m²]", "storage": "[kWh]"},
+    "crop": {"default": "[m²]", "storage": "[kg]"},
+    "water": {"default": "[m³/h]", "storage": "[m³]"},
 }
 
 
