@@ -49,9 +49,11 @@ parameters_units = {
     "land_requirement_additional": "[m²]",
     "total_upfront_investments": "[USD]",
     "land_requirement_total": "[m²]",
-    "total_water_footprint": "[m³/a]",
+    "total_water_footprint": "[m³]",
     "system_opex_total": "[USD/a]",
-    "total_variable_cost_moo": "[USD/a]"
+    "total_variable_cost_moo": "[USD/a]",
+    "total_water_consumption": "[m³/a]",
+    "ac-elec": "[kWh]"
 }
 
 # -------------- RELEVANT PATHS --------------

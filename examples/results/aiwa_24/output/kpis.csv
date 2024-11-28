@@ -1,11 +1,9 @@
 kpi,value
-annuity_total,2.283393459341003e-12
-variable_costs_total,1.8009792869366823
-system_cost_total,1.8009792869389656
+total_annual_cost_moo,5954.50503696956
+total_variable_cost_moo,290.69735527172804
 total_upfront_investments,19294.5291
-specific_system_cost,0.0014715926328240628
 land_requirement_additional,340.31787544005147
 land_requirement_total,340.31787544005147
-total_water_footprint,881.2453140762352
+total_water_consumption,881.2453140762352
 ghg_emissions_total,654.075804418357
-system_opex_total,2919.714023739624
+system_opex_total,3210.411379011352

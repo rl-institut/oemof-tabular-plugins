@@ -150,7 +150,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -277,7 +277,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -564,7 +564,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -586,31 +586,6 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
-                        "format": "default"
-                    },
-                    {
-                        "name": "Unnamed: 29",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "Unnamed: 30",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "Unnamed: 31",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "Unnamed: 32",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "Unnamed: 33",
-                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -765,7 +740,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "integer",
                         "format": "default"
                     },
@@ -900,7 +875,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -922,86 +897,6 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
-                        "format": "default"
-                    },
-                    {
-                        "name": "59.11",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "8.23",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "0.0",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "284.89",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "59.11.1",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "8.23.1",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "0.0.1",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "284.89.1",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "59.11.2",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "8.23.2",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "0.0.2",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "284.89.2",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "59.11.3",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "8.23.3",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "0.0.3",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "284.89.3",
-                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -1136,7 +1031,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -1305,7 +1200,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "integer",
                         "format": "default"
                     },

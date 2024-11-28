@@ -5,10 +5,10 @@ ac-elec-bus,in,seawater-reverse-osmosis,electricity,ro,,,0.0
 ac-elec-bus,in,water pump,electricity,water-pump,,,0.0
 ac-elec-bus,in,water-filtration-system,electricity,water-filtration,,,0.0
 ac-elec-bus,out,diesel-generator,electricity,conversion,-0.0,-0.0,0.0
-ac-elec-bus,out,electricity-grid,electricity,dispatchable,,0.0,0.0
+ac-elec-bus,out,electricity-grid,electricity,dispatchable,,0.0,1.1711592507002247e-12
 ac-elec-bus,out,inverter,electricity,conversion,-0.0,-0.0,0.0
 brine-bus,in,brine-excess,water,excess,,,
-brine-bus,out,seawater-reverse-osmosis,water,ro,,,0.0
+brine-bus,out,seawater-reverse-osmosis,water,ro,,,1.6327893973528446e-14
 dc-elec-bus,in,battery-storage,electricity,storage,-0.0,-0.0,
 dc-elec-bus,in,inverter,electricity,conversion,,,0.0
 dc-elec-bus,out,battery-storage,electricity,storage,-0.0,-0.0,0.0
@@ -20,20 +20,20 @@ drinking-water-bus,in,drinking-water-demand,water,load,,,
 drinking-water-bus,in,drinking-water-storage,water,storage,-0.0,-0.0,
 drinking-water-bus,out,bottled-water,water,dispatchable,,,0.0
 drinking-water-bus,out,drinking-water-storage,water,storage,-0.0,-0.0,0.0
-drinking-water-bus,out,seawater-reverse-osmosis,water,ro,,,0.0
+drinking-water-bus,out,seawater-reverse-osmosis,water,ro,,,1.6327893973528446e-14
 drinking-water-bus,out,water pump,water,water-pump,,,0.0
-drinking-water-bus,out,water-filtration-system,water,water-filtration,2.5119,1.685838937644721e-17,0.0
+drinking-water-bus,out,water-filtration-system,water,water-filtration,2.5119,1.6438002183182692e-15,2.7814099981815876e-18
 groundwater-bus,in,water pump,water,water-pump,,,0.0
 groundwater-bus,out,groundwater,water,dispatchable,,-0.0,0.0
 precipitation-bus,out,precipitation,water,dispatchable,,-0.0,0.0
-seawater-bus,in,seawater-reverse-osmosis,water,ro,5498.06416413208,9.890929077367274e-15,0.0
+seawater-bus,in,seawater-reverse-osmosis,water,ro,5498.06416413208,5.893893915953608e-12,0.0
 seawater-bus,out,seawater-source,water,dispatchable,,0.0,0.0
 service-water-bus,in,service-water-demand,water,load,,,
-service-water-bus,in,service-water-storage,water,storage,4863.9069,1.8498079543758213e-13,
+service-water-bus,in,service-water-storage,water,storage,4863.9069,1.2865414825996992e-12,
 service-water-bus,in,water-filtration-system,water,water-filtration,,,0.0
 service-water-bus,out,condensed-water,water,volatile,,,0.0
-service-water-bus,out,rainwater-harvesting,water,volatile,14430.6222,2.0984126639034206e-12,0.0
-service-water-bus,out,service-water-storage,water,storage,4863.9069,1.8498079543758213e-13,1.8009792869366823
+service-water-bus,out,rainwater-harvesting,water,volatile,14430.6222,5.023240388702988e-12,9.312477612355154e-15
+service-water-bus,out,service-water-storage,water,storage,4863.9069,1.2865414825996992e-12,1.8009792869366823
 service-water-bus,out,water-truck,water,dispatchable,,,0.0
 solar-bus,out,solar-resource,energy,dispatchable,,-0.0,0.0
 wind-bus,out,wind-resource,energy,dispatchable,,-0.0,0.0

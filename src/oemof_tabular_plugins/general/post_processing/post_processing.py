@@ -240,7 +240,12 @@ def post_processing(
             "land_requirement_additional": "[m²]",
             "total_upfront_investments": "[USD]",
             "land_requirement_total": "[m²]",
-            "total_water_footprint": "[m³/a]",
+            "total_water_consumption": "[m³/a]",
+            "total_annual_cost_moo": "[USD/a]",
+            "ghg_emissions_total": "[kgCO2e/a]",
+            "total_water_footprint": "[m³]",
+            "system_opex_total": "[USD/a]",
+            "total_variable_cost_moo": "[USD/a]",
         }
 
     if calculations is None:

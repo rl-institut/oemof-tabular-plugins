@@ -30,7 +30,7 @@ RAW_INPUTS = [
     "emission_factor",
     "ghg_emission_factor",
     "land_requirement_factor",
-    "water_footprint_factor",
+    "water_consumption_factor",
     "annuity",
     "resource_cost",
     "renewable_factor",
@@ -187,12 +187,12 @@ def compute_land_requirement_total(results_df):
         return results_df.capacity_total * results_df.land_requirement_factor
 
 
-def compute_water_footprint(results_df):
+def compute_water_consumption(results_df):
     """Calculates water footprint by multiplying aggregated flow by water footprint factor"""
-    if "water_footprint_factor" not in results_df.index:
+    if "water_consumption_factor" not in results_df.index:
         return None
     else:
-        return results_df.aggregated_flow * results_df.water_footprint_factor
+        return results_df.aggregated_flow * results_df.water_consumption_factor
 
 
 # Functions for whole system results
@@ -326,11 +326,11 @@ def compute_system_land_requirement_total(results_df):
     return land_requirement_total
 
 
-def compute_water_footprint_total(results_df):
+def compute_water_consumption_total(results_df):
     """Calculates the total water footprint by summing the total water footprint for each component"""
     # ToDo: so far these are simply summed for each flow, but should check this is correct in every case
-    water_footprint_total = results_df["water_footprint"].sum()
-    return water_footprint_total
+    water_consumption_total = results_df["water_consumption"].sum()
+    return water_consumption_total
 
 
 def compute_ghg_emissions_total(results_df):
@@ -493,10 +493,10 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["capacity_total", "land_requirement_factor"],
     },
     {
-        "column_name": "water_footprint",
-        "operation": compute_water_footprint,
+        "column_name": "water_consumption",
+        "operation": compute_water_consumption,
         "description": "The water footprint calculates the water footprint for the aggregated flows of each component",
-        "argument_names": ["aggregated_flow", "water_footprint_factor"],
+        "argument_names": ["aggregated_flow", "water_consumption_factor"],
     },
 ]
 
@@ -573,11 +573,11 @@ CALCULATED_KPIS = [
         "argument_names": ["land_requirement_total"],
     },
     {
-        "column_name": "total_water_footprint",
-        "operation": compute_water_footprint_total,
-        "description": "The total water footprint is calculated by summing the water footprint required "
-        "for each component",
-        "argument_names": ["water_footprint"],
+        "column_name": "total_water_consumption",
+        "operation": compute_water_consumption_total,
+        "description": "The total water footprint is calculated by summing the water consumption of "
+        "each component",
+        "argument_names": ["water_consumption"],
     },
     {
         "column_name": "renewable_share",
