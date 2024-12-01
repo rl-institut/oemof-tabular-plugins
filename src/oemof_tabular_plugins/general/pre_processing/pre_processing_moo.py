@@ -83,10 +83,10 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
 
     # -------------- MOO Customizable Weights ------------------
-    wf_cost = 0.25
-    wf_ghg = 0.25
-    wf_lr = 0.25
-    wf_wf = 0.25
+    wf_cost = 0
+    wf_ghg = 0
+    wf_lr = 0
+    wf_wf = 1
     # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------
@@ -152,12 +152,13 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             moo_variable_capacity = (
                 annuity / global_GDP * wf_cost
                 + land_requirement_factor / global_land_surface * wf_lr
-            )
-            moo_variable_flow = (
+            )*10**15
+            moo_variable_flow = 10**15 * (
                resource_cost / global_GDP * wf_cost +
                ghg_emission_factor / global_GHG * wf_ghg
                + cf_aware * water_consumption_factor / global_annual_deprived_water * wf_wf
             )
+            # moo variables are expanded by 10e15 to have numbers in range which will not be reduced while optimization
             if not np.isnan(moo_variable_capacity):
                 element_df.at[index, moo_variable_fix] = float(moo_variable_capacity)
                 # log info message
@@ -202,7 +203,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             water_consumption_factor = row["water_consumption_factor"]
             resource_cost = row["resource_cost"]
 
-            moo_variable_flow = (
+            moo_variable_flow = 10**15 * (
                     resource_cost / global_GDP * wf_cost +
                     ghg_emission_factor / global_GHG * wf_ghg
                     + cf_aware * water_consumption_factor / global_annual_deprived_water * wf_wf
