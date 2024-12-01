@@ -31,6 +31,7 @@ RAW_INPUTS = [
     "ghg_emission_factor",
     "land_requirement_factor",
     "water_consumption_factor",
+    "indirect_water_consumption_factor",
     "annuity",
     "resource_cost",
     "renewable_factor",
@@ -191,11 +192,18 @@ def compute_land_requirement_total(results_df):
 
 
 def compute_water_consumption(results_df):
-    """Calculates water footprint by multiplying aggregated flow by water footprint factor"""
+    """Calculates water footprint by multiplying aggregated flow by  water_consumption_factor"""
     if "water_consumption_factor" not in results_df.index:
         return None
     else:
         return results_df.aggregated_flow * results_df.water_consumption_factor
+
+def compute_indirect_water_consumption(results_df):
+    """Calculates water footprint by multiplying aggregated flow by  water_consumption_factor"""
+    if "indirect_water_consumption_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.aggregated_flow * results_df.indirect_water_consumption_factor
 
 
 # Functions for whole system results
@@ -334,10 +342,19 @@ def compute_water_consumption_total(results_df):
     water_consumption_total = results_df["water_consumption"].sum()
     return water_consumption_total
 
+def compute_indirect_water_consumption_total(results_df):
+    """Calculates the total water footprint by summing the total water footprint for each component"""
+    indirect_water_consumption_total = results_df["indirect_water_consumption"].sum()
+    return indirect_water_consumption_total
+
 def compute_water_scarcity_footprint(results_df):
     """Calculates the overall water scarcity footprint by multypling the total water consumption of the system with
     the available water remaining characterization factor: CFaware"""
-    water_scarcity_footprint = cf_aware*results_df["water_consumption"].sum()
+    if "indirect_water_consumption" not in results_df.index:
+        water_scarcity_footprint = cf_aware * results_df["water_consumption"].sum()
+    else:
+        water_scarcity_footprint = cf_aware * (results_df["water_consumption"].sum() +
+                                               results_df["indirect_water_consumption"].sum())
     return water_scarcity_footprint
 
 def compute_ghg_emissions_total(results_df):
@@ -502,8 +519,15 @@ CALCULATED_OUTPUTS = [
     {
         "column_name": "water_consumption",
         "operation": compute_water_consumption,
-        "description": "The water footprint calculates the water footprint for the aggregated flows of each component",
+        "description": "The water footprint calculates the water consumption for the aggregated flows of each component",
         "argument_names": ["aggregated_flow", "water_consumption_factor"],
+    },
+    {
+        "column_name": "indirect_water_consumption",
+        "operation": compute_indirect_water_consumption,
+        "description": "The water footprint calculates the indirect water consumption "
+                       "for the aggregated flows of each component",
+        "argument_names": ["aggregated_flow", "indirect_water_consumption_factor"],
     },
 ]
 
@@ -587,11 +611,17 @@ CALCULATED_KPIS = [
         "argument_names": ["water_consumption"],
     },
     {
+        "column_name": "total_indirect_water_consumption",
+        "operation": compute_indirect_water_consumption_total,
+        "description": "The total indirect water consumption is calculated by summing up the indirect"
+                       " water consumption of each component",
+        "argument_names": ["indirect_water_consumption"],
+    },
+    {
         "column_name": "water_scarcity_footprint",
         "operation": compute_water_scarcity_footprint,
-        "description": "The total water footprint is calculated by summing the water consumption of "
-               "each component",
-        "argument_names": ["water_consumption"],
+        "description": "The total water footprint is calculated by summing the water consumption of each component",
+        "argument_names": ["indirect_water_consumption", "water_consumption"],
     },
     {
         "column_name": "renewable_share",

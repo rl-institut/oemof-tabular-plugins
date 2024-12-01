@@ -85,8 +85,8 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     # -------------- MOO Customizable Weights ------------------
     wf_cost = 0
     wf_ghg = 0
-    wf_lr = 0
-    wf_wf = 1
+    wf_lr = 1
+    wf_wf = 0
     # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------
@@ -201,12 +201,14 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             # store the parameters
             ghg_emission_factor = row["ghg_emission_factor"]
             water_consumption_factor = row["water_consumption_factor"]
+            indirect_water_consumption_factor = row["indirect_water_consumption_factor"]
             resource_cost = row["resource_cost"]
 
             moo_variable_flow = 10**15 * (
                     resource_cost / global_GDP * wf_cost +
                     ghg_emission_factor / global_GHG * wf_ghg
-                    + cf_aware * water_consumption_factor / global_annual_deprived_water * wf_wf
+                    + cf_aware * (water_consumption_factor + indirect_water_consumption_factor) /
+                    global_annual_deprived_water * wf_wf
             )
 
             element_df.at[index, moo_variable_var] = float(moo_variable_flow)

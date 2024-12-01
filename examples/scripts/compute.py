@@ -53,6 +53,7 @@ parameters_units = {
     "system_opex_total": "[USD/a]",
     "total_variable_cost_moo": "[USD/a]",
     "total_water_consumption": "[m³/a]",
+    "total_indirect_water_consumption": "[m³/a]",
     "ac-elec": "[kWh]",
     "water_scarcity_footprint": "[m³]"
 }
@@ -79,7 +80,7 @@ scenarios = [
 ]
 # Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;
 # this parameter is needed to calculate the regionalized water scarcity footprint in moo.
-cf_aware = 0.1 # 25: assumed cf_aware for Aiwa; 0.5: assumed cf_aware for Arusi; TODO include monthly cf_aware
+cf_aware = 5 # 25: assumed cf_aware for Aiwa; 0.5: assumed cf_aware for Arusi; TODO include monthly cf_aware
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
