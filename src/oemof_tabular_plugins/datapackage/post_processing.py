@@ -40,7 +40,7 @@ RAW_INPUTS = [
 ]
 
  # cf_aware; make sure cf_aware gets fetched for specific location and transmitted to post_processing
-cf_aware=25 # for Aiwa
+cf_aware = 25  # for Aiwa
 
 # Functions for results per component
 def compute_capacity_total(results_df):
@@ -205,7 +205,6 @@ def compute_indirect_water_consumption(results_df):
     else:
         return results_df.aggregated_flow * results_df.indirect_water_consumption_factor
 
-
 # Functions for whole system results
 def compute_system_annuity_total(results_df):
     """Calculates system total annuity by summing the total annuity for each component"""
@@ -348,9 +347,9 @@ def compute_indirect_water_consumption_total(results_df):
     return indirect_water_consumption_total
 
 def compute_water_scarcity_footprint(results_df):
-    """Calculates the overall water scarcity footprint by multypling the total water consumption of the system with
+    """Calculates the overall water scarcity footprint by multiplying the total water consumption of the system with
     the available water remaining characterization factor: CFaware"""
-    if "indirect_water_consumption" not in results_df.index:
+    if results_df.indirect_water_consumption is None:
         water_scarcity_footprint = cf_aware * results_df["water_consumption"].sum()
     else:
         water_scarcity_footprint = cf_aware * (results_df["water_consumption"].sum() +
