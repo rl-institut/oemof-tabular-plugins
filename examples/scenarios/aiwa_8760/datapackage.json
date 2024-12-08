@@ -150,7 +150,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -172,6 +172,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -272,7 +277,12 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "indirect_water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -559,8 +569,8 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
-                        "type": "number",
+                        "name": "water_consumption_factor",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -581,6 +591,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -730,7 +745,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "integer",
                         "format": "default"
                     },
@@ -752,6 +767,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -860,7 +880,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -882,6 +902,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -952,7 +977,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -1011,8 +1036,8 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
-                        "type": "number",
+                        "name": "water_consumption_factor",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1033,6 +1058,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -1111,7 +1141,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -1175,7 +1205,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "integer",
                         "format": "default"
                     },
@@ -1197,6 +1227,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -1360,6 +1395,11 @@
                     },
                     {
                         "name": "ac-discharge",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cf_aware",
                         "type": "number",
                         "format": "default"
                     }

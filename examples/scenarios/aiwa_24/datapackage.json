@@ -282,6 +282,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "indirect_water_consumption_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "land_requirement",
                         "type": "number",
                         "format": "default"
@@ -565,7 +570,7 @@
                     },
                     {
                         "name": "water_consumption_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1032,7 +1037,7 @@
                     },
                     {
                         "name": "water_consumption_factor",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1391,6 +1396,11 @@
                     {
                         "name": "ac-discharge",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cf_aware",
+                        "type": "integer",
                         "format": "default"
                     }
                 ],

@@ -350,10 +350,10 @@ def compute_water_scarcity_footprint(results_df):
     """Calculates the overall water scarcity footprint by multiplying the total water consumption of the system with
     the available water remaining characterization factor: CFaware"""
     if results_df.indirect_water_consumption is None:
-        water_scarcity_footprint = results_df["cf_aware"] * results_df["water_consumption"].sum()
+        water_scarcity_footprint = cf_aware * results_df["water_consumption"].sum()
     else:
-        water_scarcity_footprint = results_df["cf_aware"] * (results_df["water_consumption"].sum() +
-                                                             results_df["indirect_water_consumption"].sum())
+        water_scarcity_footprint = cf_aware * (results_df["water_consumption"].sum() +
+                                               results_df["indirect_water_consumption"].sum())
     return water_scarcity_footprint
 
 def compute_ghg_emissions_total(results_df):

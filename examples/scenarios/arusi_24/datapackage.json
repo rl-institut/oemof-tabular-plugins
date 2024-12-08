@@ -150,7 +150,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -172,6 +172,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -474,7 +479,12 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "indirect_water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -761,8 +771,8 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
-                        "type": "number",
+                        "name": "water_consumption_factor",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -783,6 +793,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -932,7 +947,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "integer",
                         "format": "default"
                     },
@@ -954,6 +969,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -1062,7 +1082,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "number",
                         "format": "default"
                     },
@@ -1084,6 +1104,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -1154,7 +1179,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -1213,8 +1238,8 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
-                        "type": "number",
+                        "name": "water_consumption_factor",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1235,6 +1260,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -1313,7 +1343,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -1329,6 +1359,11 @@
                     {
                         "name": "water_out_bus",
                         "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "efficiency",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -1377,7 +1412,7 @@
                         "format": "default"
                     },
                     {
-                        "name": "water_footprint_factor",
+                        "name": "water_consumption_factor",
                         "type": "integer",
                         "format": "default"
                     },
@@ -1399,6 +1434,11 @@
                     {
                         "name": "output_parameters",
                         "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -1496,6 +1536,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "pv_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
                         "name": "ghi",
                         "type": "number",
                         "format": "default"
@@ -1517,6 +1562,11 @@
                     },
                     {
                         "name": "windspeed",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "wind_turbine",
                         "type": "number",
                         "format": "default"
                     },

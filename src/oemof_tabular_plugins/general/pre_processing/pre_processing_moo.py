@@ -83,9 +83,9 @@ def pre_processing_moo(wacc, element, element_path, element_df):
 
 
     # -------------- MOO Customizable Weights ------------------
-    wf_cost = 0
+    wf_cost = 1
     wf_ghg = 0
-    wf_lr = 1
+    wf_lr = 0
     wf_wf = 0
     # TODO Create GUI interface so web app can directly provide customizable weights
 
