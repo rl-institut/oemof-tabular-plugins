@@ -4,6 +4,7 @@ ac-elec-bus;bus;True;electricity
 dc-elec-bus;bus;True;electricity
 brine-bus;bus;True;water
 solar-bus;bus;True;energy
+banana-bus;bus;True;biomass
 wind-bus;bus;True;energy
 drinking-water-bus;bus;True;water
 service-water-bus;bus;True;water

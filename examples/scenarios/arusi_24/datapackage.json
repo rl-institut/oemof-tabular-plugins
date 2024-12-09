@@ -378,6 +378,20 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
+                        "fields": "solar_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "harvest_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
                         "fields": "vwc",
                         "reference": {
                             "resource": "volatile_profile"
@@ -397,6 +411,12 @@
                     },
                     {
                         "fields": "et_0",
+                        "reference": {
+                            "resource": "volatile_profile"
+                        }
+                    },
+                    {
+                        "fields": "time_index",
                         "reference": {
                             "resource": "volatile_profile"
                         }
@@ -1573,6 +1593,11 @@
                     {
                         "name": "river-flow",
                         "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "time",
+                        "type": "datetime",
                         "format": "default"
                     }
                 ],
