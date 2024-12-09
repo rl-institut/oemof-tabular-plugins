@@ -1,3 +1,4 @@
+import logging
 from dataclasses import field
 from typing import Sequence, Union
 
@@ -106,7 +107,7 @@ class PVPanel(Converter, Facade):
         """ """
         if self.t_air is None or self.ghi is None:
             # handle the case when t_air or ghi is None
-            print("Error: t_air or ghi is None. Cannot perform calculations.")
+            logging.error("Error: t_air or ghi is None. Cannot perform calculations.")
             return
         # assign the air temperature and solar irradiance
         t_air_values = self.t_air

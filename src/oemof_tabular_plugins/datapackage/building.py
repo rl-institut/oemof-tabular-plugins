@@ -44,6 +44,12 @@ def map_sequence_profiles_to_resource_name(p, excluded_profiles=("timeindex",)):
     duplicated_labels = []
     for r in p.resources:
         if "/sequences/" in r.descriptor["path"]:
+            if "~lock." in r.name:
+                raise ValueError(
+                    f"The resource {r.name} of package {p.descriptor['name']} is probably opened by another program, please close it and try again."
+                )
+            logging.debug(f"Searching for potential foreign keys in resource {r.name}")
+            print(f"Searching for potential foreign keys in resource {r.name}")
             field_labels = [
                 f.name for f in r.schema.fields if f.name not in excluded_profiles
             ]
@@ -192,6 +198,7 @@ def infer_package_foreign_keys(package, typemap=None):
             "/elements/" in r.descriptor["path"]
             or os.sep + "elements" + os.sep in r.descriptor["path"]
         ) and r.name != "bus":
+            logging.debug(f"Infer foreign keys for resource {r.name}")
             r = infer_resource_foreign_keys(
                 r, sequences_profiles_to_resource, busses=bus_data.name.to_list()
             )

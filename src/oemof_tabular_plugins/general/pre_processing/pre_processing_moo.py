@@ -81,7 +81,6 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
 
-
     # -------------- MOO Customizable Weights ------------------
     wf_cost = 1
     wf_ghg = 0
@@ -146,17 +145,19 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             water_consumption_factor = row["water_consumption_factor"]
             resource_cost = row["resource_cost"]
 
-
-            print(f"capex: {capex}, lifetime: {lifetime}, wacc: {wacc}")
+            logging.debug(f"capex: {capex}, lifetime: {lifetime}, wacc: {wacc}")
             annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
             moo_variable_capacity = (
                 annuity / global_GDP * wf_cost
                 + land_requirement_factor / global_land_surface * wf_lr
-            )*10**15
+            ) * 10**15
             moo_variable_flow = 10**15 * (
-               resource_cost / global_GDP * wf_cost +
-               ghg_emission_factor / global_GHG * wf_ghg
-               + cf_aware * water_consumption_factor / global_annual_deprived_water * wf_wf
+                resource_cost / global_GDP * wf_cost
+                + ghg_emission_factor / global_GHG * wf_ghg
+                + cf_aware
+                * water_consumption_factor
+                / global_annual_deprived_water
+                * wf_wf
             )
             # moo variables are expanded by 10e15 to have numbers in range which will not be reduced while optimization
             if not np.isnan(moo_variable_capacity):
@@ -205,10 +206,12 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             resource_cost = row["resource_cost"]
 
             moo_variable_flow = 10**15 * (
-                    resource_cost / global_GDP * wf_cost +
-                    ghg_emission_factor / global_GHG * wf_ghg
-                    + cf_aware * (water_consumption_factor + indirect_water_consumption_factor) /
-                    global_annual_deprived_water * wf_wf
+                resource_cost / global_GDP * wf_cost
+                + ghg_emission_factor / global_GHG * wf_ghg
+                + cf_aware
+                * (water_consumption_factor + indirect_water_consumption_factor)
+                / global_annual_deprived_water
+                * wf_wf
             )
 
             element_df.at[index, moo_variable_var] = float(moo_variable_flow)
@@ -221,7 +224,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
             logger.info(
                 f"'{element}' does not contain '{moo_variable_fix}' parameter. Skipping..."
             )
-    print(element_path)
+    logging.debug(element_path)
 
     # save the updated dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
