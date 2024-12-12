@@ -11,3 +11,4 @@ service-water-bus;bus;True;water
 precipitation-bus;bus;True;water
 diesel-bus;bus;True;energy
 groundwater-bus;bus;True;water
+river-flow-bus;bus;True;water
