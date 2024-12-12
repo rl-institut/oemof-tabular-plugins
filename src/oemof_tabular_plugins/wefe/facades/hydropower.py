@@ -18,7 +18,7 @@ class RRHydropower(Converter, Facade):
     ----------
     electricity_bus: oemof.solph.Bus
         An oemof bus instance where component is connected to its electricity output.
-    river_flow: sequence expressing the hourly river flow in m³/h
+    river_flow_bus: sequence expressing the hourly river flow in m³/h
     capacity: numeric
         The power capacity (peak power) of the unit.
     capacity_cost: numeric
@@ -56,7 +56,7 @@ class RRHydropower(Converter, Facade):
 
     electricity_bus: Bus
 
-    river_flow: Bus
+    river_flow_bus: Bus
 
     head: float = 0
 
