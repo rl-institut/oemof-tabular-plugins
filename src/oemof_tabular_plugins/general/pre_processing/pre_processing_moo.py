@@ -111,6 +111,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
         "volatile.csv",
         "water_filtration.csv",
         "water_pumps.csv",
+        "hydropower.csv"
     ]:
         scenario = MOO_VARIABLE_SCEN
     elif element == "dispatchable.csv":

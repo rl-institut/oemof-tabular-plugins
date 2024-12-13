@@ -209,6 +209,7 @@ def post_processing(
             "drinking-water-storage": "[m³]",
             "rainwater-harvesting": "[m²]",
             "service-water-storage": "[m³]",
+            "run-of-river-hydropower": "[kW]",
             "sw-ro": "[m³/h]",
             "seawater-reverse-osmosis": "[m³/h]",
             "electricity-grid": "[kWh]",

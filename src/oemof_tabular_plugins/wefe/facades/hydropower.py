@@ -18,7 +18,7 @@ class RRHydropower(Converter, Facade):
     ----------
     electricity_bus: oemof.solph.Bus
         An oemof bus instance where component is connected to its electricity output.
-    river_flow_bus: sequence expressing the hourly river flow in m³/h
+    profile: sequence expressing the hourly river flow in m³/h; typically provided as sequence in volatile_profile.csv
     capacity: numeric
         The power capacity (peak power) of the unit.
     capacity_cost: numeric
@@ -56,21 +56,22 @@ class RRHydropower(Converter, Facade):
 
     electricity_bus: Bus
 
-    river_flow_bus: Bus
+    profile: Union[float, Sequence[float]]
+    tech: str
 
     head: float = 0
 
     efficiency: float = 0.8
 
-    tech: str
-
     carrier: str = ""
 
     capacity: float = None
 
-    marginal_cost: float = 0
+    marginal_cost: Union[float, Sequence[float]] = 0
 
     carrier_cost: float = 0
+
+    resource_cost: float = 0
 
     capacity_cost: float = None
 
@@ -102,23 +103,16 @@ class RRHydropower(Converter, Facade):
         """Build solph components for RRHydropower"""
         conversion_factor = self.g * self.rho_w * self.head * self.efficiency
 
-
         self.conversion_factors.update(
-        {
-        self.electricity_bus: sequence(conversion_factor),
-        self.river_flow: sequence(1),
-        }
+            {
+                self.electricity_bus: sequence(1),
+            }
         )
-        self.inputs.update(
-        {
-        self.river_flow: Flow(**self.input_parameters),
-        }
-        )
+
         self.outputs.update(
         {self.electricity_bus: Flow(
             nominal_value=self.capacity,
             variable_costs=self.marginal_cost,
-            investment=self._investment(),
                 )
             }
     )
