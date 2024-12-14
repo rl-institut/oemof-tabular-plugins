@@ -620,7 +620,7 @@ CALCULATED_KPIS = [
         "column_name": "water_scarcity_footprint",
         "operation": compute_water_scarcity_footprint,
         "description": "The total water footprint is calculated by summing the water consumption of each component",
-        "argument_names": ["indirect_water_consumption", "water_consumption"],
+        "argument_names": ["indirect_water_consumption", "water_consumption", "cf_aware"],
     },
     {
         "column_name": "renewable_share",
@@ -902,6 +902,7 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
     inputs_df = inputs_df.dropna(how="all")
     # append the inputs of the datapackage to the results DataFrame
     inputs_df.T.index.name = "asset"
+    # TODO does not work for inputs which are timeseries (ie for moo)
     return df_results.join(inputs_df.T.apply(pd.to_numeric, downcast="float"))
 
 

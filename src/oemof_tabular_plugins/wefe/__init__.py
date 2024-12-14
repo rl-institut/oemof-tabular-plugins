@@ -11,6 +11,7 @@ from .facades import (
     WaterPump,
     WaterFiltration,
     Inverter,
+    RRHydropower
 )
 
 WEFE_TYPEMAP = {
@@ -22,6 +23,7 @@ WEFE_TYPEMAP = {
     "mimo": MIMO,
     "apv": APV,
     "inverter": Inverter,
+    "hydropower": RRHydropower,
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)

@@ -270,6 +270,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
         logger.info(f"Optimization activated for only costs")
     elif moo is True:
         logger.info(f"Multi-objective optimization activated")
+
     logger.info("Pre-processing activated")
     # locate the elements directory
     elements_dir = os.path.join(scenario_dir, "data", "elements")
@@ -294,7 +295,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
                         element_path, element_df, custom_attributes
                     )
                 elif moo is True:
-                    pre_processing_moo(wacc, element, element_path, element_df)
+                    pre_processing_moo(wacc, element, element_path, element_df, scenario_dir)
             except Exception as e:
                 logging.error(
                     f"Error occured while preprocessing resource {element} in scenario {scenario_dir}"

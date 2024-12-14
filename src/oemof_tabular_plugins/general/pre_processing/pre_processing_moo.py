@@ -1,6 +1,9 @@
 # from .pre_processing import calculate_annuity
 from oemof.tools import logger, economics
+import os
 import numpy as np
+from datapackage import Package
+import pandas as pd
 import logging
 
 # from .pre_processing import calculate_annuity
@@ -27,7 +30,32 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     return annuity
 
 
-def pre_processing_moo(wacc, element, element_path, element_df):
+def add_moo_timeseries(ts_values, ts_header, scenario_dir, sequence_resource="volatile_profile"):
+    sequences_path = os.path.join(scenario_dir, "data", "sequences", sequence_resource + ".csv")
+    df = pd.read_csv(sequences_path)
+    df[ts_header] = ts_values
+    df.to_csv(sequences_path, index=False)
+
+def get_moo_timeseries(scenario_dir, ts_name="cf_aware", resource_name="volatile_profile"):
+    # datapackage_path = os.path.join(scenario_dir, "datapackage.json")
+    # # if doesn't exists then look the path and open with pd.read_csv
+    # pkg = Package(datapackage_path)
+    # res = pkg.get_resource(resource_name)
+    # if res is None:
+    #     raise FileNotFoundError(f"'The resource '{resource_name}.csv', where {ts_name} column should be provided, is missing from datapackage '{pkg.descriptor['name']}' sequences. If it is there, then 'datapackage.json' file must be updated accordingly, to to so, run the script with 'moo' set to 'False', this will update the datapackage automatically.")
+    # df = pd.DataFrame.from_records(res.read(keyed=True))
+
+    sequences_path = os.path.join(scenario_dir, "data", "sequences", resource_name + ".csv")
+    df = pd.read_csv(sequences_path)
+
+    answer = None
+    if ts_name in df.columns:
+        answer = df[ts_name].values
+    else:
+        raise ValueError(f"'{ts_name} column is missing from sequence resource '{resource_name}' of datapackage '{pkg.descriptor['name']}' ")
+    return answer
+
+def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -65,6 +93,7 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     :param element: csv filename
     :param element_path: path of the csv file
     :param element_df: dataframe containing data from the csv file
+    :param scenario_dir: scenario directory path
     """
     # ---------------- MOO Normalization PARAMS ----------------
     # Global Inputs (used for normalization)
@@ -77,7 +106,8 @@ def pre_processing_moo(wacc, element, element_path, element_df):
     global_land_surface = 1.49 * 10**14  # Unit: m²
     global_annual_deprived_water = 7.91 * 10**13  # Unit: [m³/a], Source: EU JRC (2017)
     # https://data.europa.eu/doi/10.2760/88930
-    cf_aware = 0.1  # Unit: dimensionless
+    moo_profiles = "moo_profile"
+    cf_aware = get_moo_timeseries(scenario_dir,ts_name="cf_aware",resource_name="moo_profile")  # Unit: dimensionless
     # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
 
@@ -160,6 +190,9 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                 / global_annual_deprived_water
                 * wf_wf
             )
+
+
+
             # moo variables are expanded by 10e15 to have numbers in range which will not be reduced while optimization
             if not np.isnan(moo_variable_capacity):
                 element_df.at[index, moo_variable_fix] = float(moo_variable_capacity)
@@ -174,8 +207,20 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                     f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
                 )
 
-            if not np.isnan(moo_variable_flow):
-                element_df.at[index, moo_variable_var] = float(moo_variable_flow)
+            # if isinstance(moo_variable_flow, np.ndarray):
+            #     element_df.at[index, moo_variable_var] = "cf_aware"
+
+            # TODO change this to insert it into sequences
+
+            if not np.isnan(moo_variable_flow).any():
+                # TODO should save the moo_variable_flow as a sequence and write the sequence header here instead of a float
+                # save this into "moo_profile.csv" or "moo_variable_flow.csv", cf_aware should stay in volatile profile
+                ts_header = f"{row_name}_moo_profile"
+                add_moo_timeseries(ts_values=moo_variable_flow, ts_header=ts_header, scenario_dir=scenario_dir,
+                                   sequence_resource="moo_profile")
+                # import pdb;
+                # pdb.set_trace()
+                element_df.at[index, moo_variable_var] = ts_header
                 logger.info(
                     f"'{moo_variable_var}' has been calculated and updated for"
                     f" '{row_name}' in '{element}'."
@@ -215,7 +260,11 @@ def pre_processing_moo(wacc, element, element_path, element_df):
                 * wf_wf
             )
 
-            element_df.at[index, moo_variable_var] = float(moo_variable_flow)
+            # TODO change this to insert it into sequences
+            ts_header = f"{row_name}_moo_profile"
+            add_moo_timeseries(ts_values=moo_variable_flow, ts_header=ts_header, scenario_dir=scenario_dir,
+                               sequence_resource="moo_profile")
+            element_df.at[index, moo_variable_var] = ts_header
             logger.info(
                 f"'{element}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
                 f" '{row_name}' in '{element}'."
