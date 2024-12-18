@@ -11,8 +11,12 @@ from oemof_tabular_plugins.datapackage.building import infer_busses_carrier
 # ToDo: is another raw output from the results is investment costs? or does this have to be calculated?
 RAW_OUTPUTS = ["investments"]
 PROCESSED_RAW_OUTPUTS = ["flow_min", "flow_max", "aggregated_flow"]
+
+moo = True  # TODO write code which passes moo condition from compute.py to here
+
 RAW_INPUTS = [
-    "marginal_cost",
+    #"marginal_cost",
+    # TODO add code which excludes marginal cost when monthly cf_aware is used
     "carrier_cost",
     "capacity_cost",
     "storage_capacity_cost",
@@ -38,9 +42,10 @@ RAW_INPUTS = [
     "emission_factor",
     "cf_aware"
 ]
-
- # cf_aware; make sure cf_aware gets fetched for specific location and transmitted to post_processing
-cf_aware = 25  # for Aiwa
+# Conditionally add "marginal_cost" if MOO is not true
+if not moo:
+    RAW_INPUTS.insert(0, "marginal cost")  # Add "marginal_cost" at the beginning
+print(RAW_INPUTS)
 
 # Functions for results per component
 def compute_capacity_total(results_df):
