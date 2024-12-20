@@ -5,6 +5,7 @@ from datapackage import Package
 import oemof.solph as solph
 import numpy as np
 from oemof_tabular_plugins.datapackage.building import infer_busses_carrier
+#  from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
 
 # ToDo: check to see if the storage optimized input/output (invest_out) and
 #  optimized capacity (invest) are saved correctly
@@ -13,10 +14,10 @@ RAW_OUTPUTS = ["investments"]
 PROCESSED_RAW_OUTPUTS = ["flow_min", "flow_max", "aggregated_flow"]
 
 moo = True  # TODO write code which passes moo condition from compute.py to here
-
+cf_aware = 0.1  # TODO obtain cf_aware from sequences/volatile_profile.csv
+#  cf_aware = get_moo_timeseries(scenario_dir, ts_name="cf_aware", resource_name="volatile_profile")
 RAW_INPUTS = [
-    #"marginal_cost",
-    # TODO add code which excludes marginal cost when monthly cf_aware is used
+    #  "marginal_cost",
     "carrier_cost",
     "capacity_cost",
     "storage_capacity_cost",
@@ -625,7 +626,7 @@ CALCULATED_KPIS = [
         "column_name": "water_scarcity_footprint",
         "operation": compute_water_scarcity_footprint,
         "description": "The total water footprint is calculated by summing the water consumption of each component",
-        "argument_names": ["indirect_water_consumption", "water_consumption", "cf_aware"],
+        "argument_names": ["indirect_water_consumption", "water_consumption"],
     },
     {
         "column_name": "renewable_share",
