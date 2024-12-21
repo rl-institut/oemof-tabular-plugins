@@ -16,7 +16,9 @@ class RRHydropower(Converter, Facade):
 
     Parameters
     ----------
-    electricity_bus: oemof.solph.Bus
+
+    water_in_bus: oemof.solph.Bus
+    electricity_out_bus: oemof.solph.Bus
         An oemof bus instance where component is connected to its electricity output.
     profile: sequence expressing the hourly river flow in m³/h; typically provided as sequence in volatile_profile.csv
     capacity: numeric
@@ -54,7 +56,9 @@ class RRHydropower(Converter, Facade):
          (see oemof.solph for more information on possible parameters)
     """
 
-    electricity_bus: Bus
+    water_in_bus: Bus
+
+    electricity_out_bus: Bus
 
     profile: Union[float, Sequence[float]]
     tech: str
@@ -88,6 +92,17 @@ class RRHydropower(Converter, Facade):
     input_parameters: dict = field(default_factory=dict)
 
     output_parameters: dict = field(default_factory=dict)
+    # PYCHARM itself suggested and created this init function; Maybe I will omitt again later
+   # def __init__(
+   #         self,
+   #         label=None,
+   #         inputs=None,
+   #         outputs=None,
+   #         conversion_factors=None,
+   #         custom_attributes=None,
+   # ):
+   #     super().__init__(label, inputs, outputs, conversion_factors, custom_attributes)
+   #     self.conversion_factor = None
 
     @property
     def g(self):
@@ -101,18 +116,19 @@ class RRHydropower(Converter, Facade):
 
     def build_solph_components(self):
         """Build solph components for RRHydropower"""
-        conversion_factor = self.g * self.rho_w * self.head * self.efficiency
+        self.conversion_factor = self.g * self.rho_w * self.head * self.efficiency
 
         self.conversion_factors.update(
             {
-                self.electricity_bus: sequence(1),
+                self.electricity_out_bus: sequence(self.conversion_factor),
             }
         )
 
         self.outputs.update(
-        {self.electricity_bus: Flow(
-            nominal_value=self.capacity,
-            variable_costs=self.marginal_cost,
+            {
+                self.electricity_out_bus: Flow(
+                    nominal_value=self.capacity,
+                    variable_costs=self.marginal_cost,
                 )
             }
-    )
+        )
