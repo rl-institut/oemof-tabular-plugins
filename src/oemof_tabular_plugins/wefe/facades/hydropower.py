@@ -71,6 +71,8 @@ class RRHydropower(Converter, Facade):
 
     capacity: float = None
 
+#  conversion_factor: float = None
+
     marginal_cost: Union[float, Sequence[float]] = 0
 
     carrier_cost: float = 0
@@ -92,17 +94,18 @@ class RRHydropower(Converter, Facade):
     input_parameters: dict = field(default_factory=dict)
 
     output_parameters: dict = field(default_factory=dict)
+
     # PYCHARM itself suggested and created this init function; Maybe I will omitt again later
-   # def __init__(
-   #         self,
-   #         label=None,
-   #         inputs=None,
-   #         outputs=None,
-   #         conversion_factors=None,
-   #         custom_attributes=None,
-   # ):
-   #     super().__init__(label, inputs, outputs, conversion_factors, custom_attributes)
-   #     self.conversion_factor = None
+    # def __init__(
+    #         self,
+    #         label=None,
+    #         inputs=None,
+    #         outputs=None,
+    #         conversion_factors=None,
+    #         custom_attributes=None,
+    # ):
+    #     super().__init__(label, inputs, outputs, conversion_factors, custom_attributes)
+    #     self.conversion_factor = None
 
     @property
     def g(self):
@@ -124,11 +127,20 @@ class RRHydropower(Converter, Facade):
             }
         )
 
+        self.inputs.update(
+            {
+                self.water_in_bus: Flow(
+                    variable_costs=self.carrier_cost, **self.input_parameters
+                )
+            }
+        )
+
         self.outputs.update(
             {
                 self.electricity_out_bus: Flow(
-                    nominal_value=self.capacity,
+                    nominal_value=self._nominal_value(),
                     variable_costs=self.marginal_cost,
+                    investment=self._investment(),
                 )
             }
         )
