@@ -12,18 +12,23 @@ from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade
 class RRHydropower(Converter, Facade):
-    r"""Run-of-River (RR) Hydropower Plant unit with one input and one output.
+    r"""WaterPump unit with two inputs and one output.
 
     Parameters
     ----------
-
-    water_in_bus: oemof.solph.Bus
     electricity_out_bus: oemof.solph.Bus
-        An oemof bus instance where component is connected to its electricity output.
-    profile: sequence expressing the hourly river flow in m³/h; typically provided as sequence in volatile_profile.csv
-    capacity: numeric
-        The power capacity (peak power) of the unit.
-    capacity_cost: numeric
+        An oemof bus instance where unit is connected to the electricity output.
+    water_in_bus: oemof.solph.Bus
+        An oemof bus instance where unit is connected to with
+        its water input.
+    head: numeric
+        The height difference between upper reservoir and lower reservoir level
+         determines the potential energy available for generating electricity.
+    efficiency: numeric (iterable or scalar) (optional)
+        The efficiency of the hydropower turbine
+    capacity: numeric (optional)
+        The nominal power of the hydropower plant
+    capacity_cost: numeric (optional)
         Investment costs per unit of output capacity.
         If capacity is not set, this value will be used for optimizing the
         conversion output capacity.
@@ -33,11 +38,6 @@ class RRHydropower(Converter, Facade):
         Lifetime of the component in years. Necessary for multi-period
         investment optimization.
         Note: Only applicable for a multi-period model. Default: None.
-    head: float
-        height difference between the water source and the water's outflow point.
-        This height difference determines the potential energy available for generating electricity.
-    efficiency: numeric (iterable or scalar) (optional)
-        The efficiency of the hydropower turbine
     age : int (optional)
         The initial age of a flow (usually given in years);
         once it reaches its lifetime (considering also
@@ -56,28 +56,23 @@ class RRHydropower(Converter, Facade):
          (see oemof.solph for more information on possible parameters)
     """
 
-    water_in_bus: Bus
-
     electricity_out_bus: Bus
 
-    profile: Union[float, Sequence[float]]
+    water_in_bus: Bus
+
     tech: str
 
-    head: float = 0
-
-    efficiency: float = 0.8
+    head: float
 
     carrier: str = ""
 
+    efficiency: Union[float, Sequence[float]] = 1
+
     capacity: float = None
 
-#  conversion_factor: float = None
-
-    marginal_cost: Union[float, Sequence[float]] = 0
+    marginal_cost: float = 0
 
     carrier_cost: float = 0
-
-    resource_cost: float = 0
 
     capacity_cost: float = None
 
@@ -95,43 +90,44 @@ class RRHydropower(Converter, Facade):
 
     output_parameters: dict = field(default_factory=dict)
 
-    # PYCHARM itself suggested and created this init function; Maybe I will omitt again later
-    # def __init__(
-    #         self,
-    #         label=None,
-    #         inputs=None,
-    #         outputs=None,
-    #         conversion_factors=None,
-    #         custom_attributes=None,
-    # ):
-    #     super().__init__(label, inputs, outputs, conversion_factors, custom_attributes)
-    #     self.conversion_factor = None
-
     @property
     def g(self):
-        """Gravitational Acceleration"""
-        return 9.81  # m/s²
+        """Gravitational acceleration"""
+        return 9.81  # m²/s
 
     @property
     def rho_w(self):
-        """Water Density"""
+        """Water density"""
         return 1000  # kg/m³
 
     def build_solph_components(self):
-        """Build solph components for RRHydropower"""
-        self.conversion_factor = self.g * self.rho_w * self.head * self.efficiency
+        """TODO change efficiencies here"""
+        # TODO ask vivek for references for water pumps
+        conversion_W_to_kW = 1e-3
+        conversion_m3_per_hour_to_m3_per_s = 1.0 / 3600
+
+        if isinstance(self.efficiency, list):
+            eta = np.array(self.efficiency)
+        else:
+            eta = self.efficiency
 
         self.conversion_factors.update(
             {
-                self.electricity_out_bus: sequence(self.conversion_factor),
+                self.electricity_out_bus: sequence(
+                    self.g
+                    * self.rho_w
+                    * conversion_W_to_kW
+                    * self.head
+                    * conversion_m3_per_hour_to_m3_per_s
+                    * eta
+                ),  # in kWh
+                self.water_in_bus: sequence(1),  # in m³/h
             }
         )
 
         self.inputs.update(
             {
-                self.water_in_bus: Flow(
-                    variable_costs=self.carrier_cost, **self.input_parameters
-                )
+                self.water_in_bus: Flow(**self.input_parameters),
             }
         )
 
