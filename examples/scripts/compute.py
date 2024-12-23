@@ -75,8 +75,8 @@ scenarios = [
     # "aiwa"
     # "aiwa_24"
     # "aiwa_8760"
-    # "arusi_8760"
-    "arusi_24"
+      "arusi_8760"
+    # "arusi_24"
 ]
 # Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;
 # this parameter is needed to calculate the regionalized water scarcity footprint in moo.

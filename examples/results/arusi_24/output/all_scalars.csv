@@ -9,10 +9,10 @@ battery-storage,invest_in_elec,-0.0,,storage,energy,battery
 battery-storage,invest_out_elec,-0.0,,storage,energy,battery
 battery-storage,storage_losses,0.0,,storage,energy,battery
 battery-storage,summed_variable_costs_out_elec,0.0,,storage,energy,battery
-diesel-generator,flow_in_bus,4098.244257,,conversion,energy,diesel-generator
-diesel-generator,flow_out_elec,1434.385488,,conversion,energy,diesel-generator
-diesel-generator,invest_costs_out_elec,107075.64371090908,,conversion,energy,diesel-generator
-diesel-generator,invest_out_elec,70.902485,,conversion,energy,diesel-generator
+diesel-generator,flow_in_bus,2887.4099746,,conversion,energy,diesel-generator
+diesel-generator,flow_out_elec,1010.5934881999999,,conversion,energy,diesel-generator
+diesel-generator,invest_costs_out_elec,80408.85316545454,,conversion,energy,diesel-generator
+diesel-generator,invest_out_elec,53.244485,,conversion,energy,diesel-generator
 inverter,flow_in_elec,0.0,,conversion,energy,inverter
 inverter,flow_out_elec,0.0,,conversion,energy,inverter
 inverter,invest_costs_out_elec,-0.0,,conversion,energy,inverter
@@ -20,16 +20,15 @@ inverter,invest_out_elec,-0.0,,conversion,energy,inverter
 photovoltaics,flow_out_elec,0.0,,volatile,energy,pv
 photovoltaics,invest_costs_out_elec,-0.0,,volatile,energy,pv
 photovoltaics,invest_out_elec,-0.0,,volatile,energy,pv
-diesel,flow_out_bus,4098.244257,,dispatchable,energy,source
+diesel,flow_out_bus,2887.4099746,,dispatchable,energy,source
 solar-resource,flow_out_bus,0.0,,dispatchable,energy,source
 wind-resource,flow_out_bus,0.0,,dispatchable,energy,source
 diesel,invest_costs_out_bus,0.0,,dispatchable,energy,source
 solar-resource,invest_costs_out_bus,-0.0,,dispatchable,energy,source
 wind-resource,invest_costs_out_bus,-0.0,,dispatchable,energy,source
-diesel,invest_out_bus,202.57853,,dispatchable,energy,source
+diesel,invest_out_bus,152.1271,,dispatchable,energy,source
 solar-resource,invest_out_bus,-0.0,,dispatchable,energy,source
 wind-resource,invest_out_bus,-0.0,,dispatchable,energy,source
-diesel,summed_variable_costs_out_bus,7451.353194545454,,dispatchable,energy,source
 wind-turbine,flow_out_elec,0.0,,volatile,energy,wind-turbine
 wind-turbine,invest_costs_out_elec,-0.0,,volatile,energy,wind-turbine
 wind-turbine,invest_out_elec,-0.0,,volatile,energy,wind-turbine
@@ -38,12 +37,17 @@ water-filtration-system,flow_in_water,0.0,,water-filtration,water,filtration
 water-filtration-system,flow_out_water,0.0,,water-filtration,water,filtration
 water-filtration-system,invest_costs_out_water,-0.0,,water-filtration,water,filtration
 water-filtration-system,invest_out_water,-0.0,,water-filtration,water,filtration
+run-of-river-hydropower,flow_in_flow,86400.0,,hydropower,water,hydropower
+run-of-river-hydropower,flow_out_elec,423.79200000000003,,hydropower,water,hydropower
+run-of-river-hydropower,invest_costs_out_elec,94650.09054545453,,hydropower,water,hydropower
+run-of-river-hydropower,invest_out_elec,17.658,,hydropower,water,hydropower
 water pump,flow_in_bus,0.0,,water-pump,water,pumping
 water pump,flow_in_elec,0.0,,water-pump,water,pumping
 water pump,flow_out_water,0.0,,water-pump,water,pumping
 rainwater-harvesting,flow_out_water,29.548300500000003,,volatile,water,rainwater-harvesting
 rainwater-harvesting,invest_costs_out_water,282420.5378454545,,volatile,water,rainwater-harvesting
 rainwater-harvesting,invest_out_water,3774.7581,,volatile,water,rainwater-harvesting
+river-flow,flow_out_flow,86400.0,,volatile,water,river
 seawater-reverse-osmosis,flow_in_bus,59.046250189999995,,,water,ro
 seawater-reverse-osmosis,flow_in_elec,236.1850011,,,water,ro
 seawater-reverse-osmosis,flow_out_bus,29.52312413,,,water,ro
@@ -60,7 +64,6 @@ seawater-source,invest_costs_out_bus,0.0,,dispatchable,water,source
 groundwater,invest_out_bus,-0.0,,dispatchable,water,source
 precipitation,invest_out_bus,-0.0,,dispatchable,water,source
 seawater-source,invest_out_bus,2.8358705,,dispatchable,water,source
-bottled-water,summed_variable_costs_out_water,0.0,,dispatchable,water,source
 drinking-water-storage,flow_in_water,19.49693973,,storage,water,storage
 service-water-storage,flow_in_water,20.13268836,,storage,water,storage
 drinking-water-storage,flow_out_water,18.724861399999998,,storage,water,storage
@@ -86,4 +89,4 @@ elec-demand,flow_in_elec,1198.2004890130002,DE,load,,
 electricity-excess,flow_in_elec,0.0,,excess,,
 drinking-water-demand,flow_in_water,28.751046000000002,DE,load,,
 service-water-demand,flow_in_water,28.751046000000002,CO,load,,
-system,total_system_cost,412599.47536652023,,,,
+system,total_system_cost,473131.4221719748,,,,

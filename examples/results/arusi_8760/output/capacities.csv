@@ -1,0 +1,11 @@
+,Component name,Capacity,Optimized Capacity,Capacity Total,Maximum Capacity,unit
+5,diesel-generator,0.0,19.847564,19.847564,,[kW]
+6,inverter,0.0,129.87645,129.87645,,[kW]
+7,run-of-river-hydropower,0.0,273.699,273.699,,[kW]
+10,battery-storage,0.0,394.52399,394.52399,,[kWh]
+13,photovoltaics,0.0,379.09255,379.09255,,[kW]
+17,drinking-water-storage,0.0,64.155985,64.155985,,[m³]
+21,water-filtration-system,0.0,4.4949693,4.4949693,,[m³/h]
+25,seawater-reverse-osmosis,0.0,5.4690551,5.4690551,,[m³/h]
+27,service-water-storage,0.0,589.11287,589.11287,,[m³]
+29,rainwater-harvesting,0.0,3229.8762,3229.8762,,[m³/h]
