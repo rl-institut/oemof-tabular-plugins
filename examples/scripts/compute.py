@@ -80,7 +80,6 @@ scenarios = [
 ]
 # Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;
 # this parameter is needed to calculate the regionalized water scarcity footprint in moo.
-cf_aware = 5 # 25: assumed cf_aware for Aiwa; 0.5: assumed cf_aware for Arusi; TODO include monthly cf_aware
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06

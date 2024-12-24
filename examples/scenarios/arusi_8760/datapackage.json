@@ -71,7 +71,7 @@
                     },
                     {
                         "name": "capacity",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {

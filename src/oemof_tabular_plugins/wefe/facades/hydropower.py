@@ -101,10 +101,8 @@ class RRHydropower(Converter, Facade):
         return 1000  # kg/m³
 
     def build_solph_components(self):
-        """TODO change efficiencies here"""
-        # TODO ask vivek for references for water pumps
         conversion_W_to_kW = 1e-3
-        conversion_m3_per_hour_to_m3_per_s = 1.0 / 3600
+        #conversion_m3_per_hour_to_m3_per_s = 1.0 / 3600
 
         if isinstance(self.efficiency, list):
             eta = np.array(self.efficiency)
@@ -118,7 +116,6 @@ class RRHydropower(Converter, Facade):
                     * self.rho_w
                     * conversion_W_to_kW
                     * self.head
-                    * conversion_m3_per_hour_to_m3_per_s
                     * eta
                 ),  # in kWh
                 self.water_in_bus: sequence(1),  # in m³/h

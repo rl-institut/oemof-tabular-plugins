@@ -645,7 +645,7 @@ CALCULATED_KPIS = [
         "column_name": "system_opex_total",
         "operation": compute_system_opex_total,
         "description": "",
-        "argument_names": ["opex_fix_costs_total"],
+        "argument_names": ["opex_fix_costs_total", "variable_cost_moo"],
     },
 ]
 
@@ -865,7 +865,6 @@ def process_raw_results(df_results):
     df_results["flow_max"] = temp.max(axis=1)
     df_results["aggregated_flow"] = temp.sum(axis=1)
     return df_results
-
 
 def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None):
     """Find the input parameters from the datapackage.json file
