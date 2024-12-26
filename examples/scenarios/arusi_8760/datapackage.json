@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
     "name": "arusi_8760",
-    "oemof_tabular_version": "0.0.6dev",
+    "oemof_tabular_version": "0.0.5",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -1360,11 +1360,6 @@
                     {
                         "name": "water_out_bus",
                         "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "efficiency",
-                        "type": "number",
                         "format": "default"
                     },
                     {

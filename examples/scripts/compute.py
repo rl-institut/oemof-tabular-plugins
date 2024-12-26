@@ -74,8 +74,8 @@ scenarios = [
     # "wefe_reverse_osmosis",
     # "aiwa"
     # "aiwa_24"
-    # "aiwa_8760"
-      "arusi_8760"
+     "aiwa_8760"
+    # "arusi_8760"
     # "arusi_24"
 ]
 # Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;

@@ -248,7 +248,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -317,6 +317,12 @@
                         "reference": {
                             "resource": "bus",
                             "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "marginal_cost",
+                        "reference": {
+                            "resource": "moo_profile"
                         }
                     },
                     {
@@ -490,7 +496,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -604,6 +610,12 @@
                 ],
                 "primaryKey": "name",
                 "foreignKeys": [
+                    {
+                        "fields": "marginal_cost",
+                        "reference": {
+                            "resource": "moo_profile"
+                        }
+                    },
                     {
                         "fields": "from_bus_0",
                         "reference": {
@@ -836,7 +848,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -927,6 +939,12 @@
                         "reference": {
                             "resource": "volatile_profile"
                         }
+                    },
+                    {
+                        "fields": "marginal_cost",
+                        "reference": {
+                            "resource": "moo_profile"
+                        }
                     }
                 ]
             }
@@ -977,7 +995,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -1072,6 +1090,12 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
+                        "fields": "marginal_cost",
+                        "reference": {
+                            "resource": "moo_profile"
+                        }
+                    },
+                    {
                         "fields": "electricity_bus",
                         "reference": {
                             "resource": "bus",
@@ -1141,7 +1165,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -1241,6 +1265,12 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
+                        "fields": "marginal_cost",
+                        "reference": {
+                            "resource": "moo_profile"
+                        }
+                    },
+                    {
                         "fields": "electricity_bus",
                         "reference": {
                             "resource": "bus",
@@ -1335,6 +1365,126 @@
                     },
                     {
                         "name": "service-water",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        },
+        {
+            "path": "data/sequences/moo_profile.csv",
+            "profile": "tabular-data-resource",
+            "name": "moo_profile",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "timeindex",
+                        "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "time",
+                        "type": "datetime",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cf_aware",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "seawater-source_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "solar-resource_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "wind-resource_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "precipitation_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "diesel_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "groundwater_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bottled-water_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "run-of-river-hydropower_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "seawater-reverse-osmosis_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "photovoltaics_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "rainwater-harvesting_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "wind-turbine_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "river-flow_moo_profile",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water-filtration-system_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water pump_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water-truck_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "electricity-grid_moo_profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "condensed-water_moo_profile",
                         "type": "number",
                         "format": "default"
                     }
