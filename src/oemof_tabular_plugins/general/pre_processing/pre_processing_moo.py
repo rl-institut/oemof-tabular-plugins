@@ -112,10 +112,10 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir):
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
 
     # -------------- MOO Customizable Weights ------------------
-    wf_cost = 0
+    wf_cost = 1
     wf_ghg = 0
     wf_lr = 0
-    wf_wf = 1
+    wf_wf = 0
     # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------
