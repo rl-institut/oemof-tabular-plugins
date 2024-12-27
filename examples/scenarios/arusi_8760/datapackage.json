@@ -1599,7 +1599,7 @@
                     },
                     {
                         "name": "river-flow_moo_profile",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -1610,6 +1610,11 @@
                     {
                         "name": "water pump_moo_profile",
                         "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "river-water-source_moo_profile",
+                        "type": "string",
                         "format": "default"
                     }
                 ],
