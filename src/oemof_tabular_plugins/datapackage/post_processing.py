@@ -14,7 +14,7 @@ RAW_OUTPUTS = ["investments"]
 PROCESSED_RAW_OUTPUTS = ["flow_min", "flow_max", "aggregated_flow"]
 
 moo = True  # TODO write code which passes moo condition from compute.py to here
-cf_aware = 0.1  # TODO obtain cf_aware from sequences/volatile_profile.csv
+cf_aware = 4.5  # TODO obtain cf_aware from sequences/volatile_profile.csv
 #  cf_aware = get_moo_timeseries(scenario_dir, ts_name="cf_aware", resource_name="volatile_profile")
 RAW_INPUTS = [
     #  "marginal_cost",
