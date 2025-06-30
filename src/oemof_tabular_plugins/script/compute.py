@@ -5,6 +5,14 @@ from oemof.solph import EnergySystem, Model
 from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
 
+
+try:
+    from oemof_visio import ESGraphRenderer
+
+    ES_GRAPH = True
+except ModuleNotFoundError:
+    ES_GRAPH = False
+
 # TODO this should be with from oemof.tabular.datapackage import building when https://github.com/oemof/oemof-tabular/pull/173 is merged
 from oemof_tabular_plugins.datapackage import building as otp_building
 
@@ -88,6 +96,15 @@ def compute_scenario(
         attributemap={},
         typemap=typemap,
     )
+
+    if ES_GRAPH is True:
+        energy_system_graph = os.path.join(
+            results_path, f"{scenario_name}_energy_system.png"
+        )
+        es_graph = ESGraphRenderer(
+            es, legend=True, filepath=energy_system_graph, img_format="png"
+        )
+        es_graph.render()
 
     logger.info("Energy system created from datapackage")
 
