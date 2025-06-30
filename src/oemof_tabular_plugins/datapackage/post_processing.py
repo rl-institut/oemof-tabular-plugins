@@ -6,13 +6,19 @@ import oemof.solph as solph
 import numpy as np
 from oemof_tabular_plugins.datapackage.building import infer_busses_carrier
 
+#  from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
+
 # ToDo: check to see if the storage optimized input/output (invest_out) and
 #  optimized capacity (invest) are saved correctly
 # ToDo: is another raw output from the results is investment costs? or does this have to be calculated?
 RAW_OUTPUTS = ["investments"]
 PROCESSED_RAW_OUTPUTS = ["flow_min", "flow_max", "aggregated_flow"]
+
+moo = True  # TODO write code which passes moo condition from compute.py to here
+cf_aware = 4.5  # TODO obtain cf_aware from sequences/volatile_profile.csv
+#  cf_aware = get_moo_timeseries(scenario_dir, ts_name="cf_aware", resource_name="volatile_profile")
 RAW_INPUTS = [
-    "marginal_cost",
+    #  "marginal_cost",
     "carrier_cost",
     "capacity_cost",
     "storage_capacity_cost",
@@ -30,8 +36,18 @@ RAW_INPUTS = [
     "emission_factor",
     "ghg_emission_factor",
     "land_requirement_factor",
-    "water_footprint_factor",
+    "water_consumption_factor",
+    "indirect_water_consumption_factor",
+    "annuity",
+    "resource_cost",
+    "renewable_factor",
+    "emission_factor",
+    "cf_aware",
 ]
+# Conditionally add "marginal_cost" if MOO is not true
+if not moo:
+    RAW_INPUTS.insert(0, "marginal cost")  # Add "marginal_cost" at the beginning
+print(RAW_INPUTS)
 
 
 # Functions for results per component
@@ -87,6 +103,26 @@ def compute_upfront_investment_costs(results_df):
         return results_df.capex * investments
 
 
+def compute_annualized_capex_moo(results_df):
+    """Computing annualized capex for each component by multiplying added capacities
+    (called investments) with component annuity. This function is used in the moo mode
+    """
+
+    investments = results_df.investments
+    if investments is None:
+        investments = 0
+
+    return results_df.annuity * investments
+
+
+def compute_total_annual_cost_moo(results_df):
+    """Calculates total annual system cost (TAC) by summing up all component annuities and variable cost"""
+    total_system_annuity = results_df["annualized_capex"].sum()
+    total_system_variable_cost = results_df["variable_cost_moo"].sum()
+    total_annual_cost = total_system_annuity + total_system_variable_cost
+    return total_annual_cost
+
+
 def compute_opex_fix_costs(results_df):
     """Calculates yearly opex costs by multiplying opex with optimized capacity (investments)"""
     if "opex_fix" not in results_df.index:
@@ -110,6 +146,16 @@ def compute_variable_costs(results_df):
         if "carrier_cost" not in results_df.index:
             return None
         return results_df.carrier_cost * results_df.aggregated_flow
+
+
+def compute_variable_cost_moo(results_df):
+    """Calculates variable costs by multiplying the resource cost by the aggregated flow."""
+    return results_df.resource_cost * results_df.aggregated_flow
+
+
+def compute_variable_cost_total_moo(results_df):
+    """Calculates total system variable costs by adding up variable costs of each component"""
+    return results_df["variable_cost_moo"].sum()
 
 
 def compute_renewable_generation(results_df):
@@ -155,12 +201,20 @@ def compute_land_requirement_total(results_df):
         return results_df.capacity_total * results_df.land_requirement_factor
 
 
-def compute_water_footprint(results_df):
-    """Calculates water footprint by multiplying aggregated flow by water footprint factor"""
-    if "water_footprint_factor" not in results_df.index:
+def compute_water_consumption(results_df):
+    """Calculates water footprint by multiplying aggregated flow by water_consumption_factor"""
+    if "water_consumption_factor" not in results_df.index:
         return None
     else:
-        return results_df.aggregated_flow * results_df.water_footprint_factor
+        return results_df.aggregated_flow * results_df.water_consumption_factor
+
+
+def compute_indirect_water_consumption(results_df):
+    """Calculates water footprint by multiplying aggregated flow by water_consumption_factor"""
+    if "indirect_water_consumption_factor" not in results_df.index:
+        return None
+    else:
+        return results_df.aggregated_flow * results_df.indirect_water_consumption_factor
 
 
 # Functions for whole system results
@@ -246,8 +300,10 @@ def compute_system_co2_emissions_total(results_df):
 
 
 def compute_system_opex_total(results_df):
-    """Calculates the total OPEX by summing up the opex from each component"""
-    opex_total = results_df["opex_fix_costs_total"].sum()
+    """Calculates the total OPEX by summing up the opex fix and variable cost from each component"""
+    opex_total = (
+        results_df["opex_fix_costs_total"].sum() + results_df["variable_cost_moo"].sum()
+    )
     return opex_total
 
 
@@ -294,17 +350,35 @@ def compute_system_land_requirement_total(results_df):
     return land_requirement_total
 
 
-def compute_water_footprint_total(results_df):
+def compute_water_consumption_total(results_df):
     """Calculates the total water footprint by summing the total water footprint for each component"""
-    # ToDo: so far these are simply summed for each flow, but should check this is correct in every case
-    water_footprint_total = results_df["water_footprint"].sum()
-    return water_footprint_total
+    water_consumption_total = results_df["water_consumption"].sum()
+    return water_consumption_total
+
+
+def compute_indirect_water_consumption_total(results_df):
+    """Calculates the total water footprint by summing the total water footprint for each component"""
+    indirect_water_consumption_total = results_df["indirect_water_consumption"].sum()
+    return indirect_water_consumption_total
+
+
+def compute_water_scarcity_footprint(results_df):
+    """Calculates the overall water scarcity footprint by multiplying the total water consumption of the system with
+    the available water remaining characterization factor: CFaware"""
+    if results_df.indirect_water_consumption is None:
+        water_scarcity_footprint = cf_aware * results_df["water_consumption"].sum()
+    else:
+        water_scarcity_footprint = cf_aware * (
+            results_df["water_consumption"].sum()
+            + results_df["indirect_water_consumption"].sum()
+        )
+    return water_scarcity_footprint
 
 
 def compute_ghg_emissions_total(results_df):
     """Calculates the total ghg emissions by summing the total ghg emissions for each component"""
-    ghg_emission_total = results_df["ghg_emissions"].sum()
-    return ghg_emission_total
+    ghg_emissions_total = results_df["ghg_emissions"].sum()
+    return ghg_emissions_total
 
 
 def compute_specific_system_cost(results_df):
@@ -391,6 +465,13 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["investments", "capacity_cost"],
     },
     {
+        "column_name": "annualized_capex",
+        "operation": compute_annualized_capex_moo,
+        "description": "Annualized capex in the moo mode is calculated by multiplying the optimized capacity "
+        "by the component annuity (annuity considering CAPEX, OPEX and WACC)",
+        "argument_names": ["investments", "annuity"],
+    },
+    {
         "column_name": "upfront_investment_costs",
         "operation": compute_upfront_investment_costs,
         "description": "Upfront investment costs are calculated by multiplying the optimized capacity "
@@ -410,6 +491,13 @@ CALCULATED_OUTPUTS = [
         "description": "Variable costs are calculated by multiplying the total flow "
         "by the marginal/carrier costs",
         "argument_names": ["aggregated_flow", "marginal_cost", "carrier_cost"],
+    },
+    {
+        "column_name": "variable_cost_moo",
+        "operation": compute_variable_cost_moo,
+        "description": "Variable costs are calculated by multiplying the total flow "
+        "by the resource cost (in moo mode)",
+        "argument_names": ["aggregated_flow", "resource_cost"],
     },
     {
         "column_name": "renewable_generation",
@@ -447,10 +535,17 @@ CALCULATED_OUTPUTS = [
         "argument_names": ["capacity_total", "land_requirement_factor"],
     },
     {
-        "column_name": "water_footprint",
-        "operation": compute_water_footprint,
-        "description": "The water footprint calculates the water footprint for the aggregated flows of each component",
-        "argument_names": ["aggregated_flow", "water_footprint_factor"],
+        "column_name": "water_consumption",
+        "operation": compute_water_consumption,
+        "description": "The water footprint calculates the water consumption for the aggregated flows of each component",
+        "argument_names": ["aggregated_flow", "water_consumption_factor"],
+    },
+    {
+        "column_name": "indirect_water_consumption",
+        "operation": compute_indirect_water_consumption,
+        "description": "The water footprint calculates the indirect water consumption "
+        "for the aggregated flows of each component",
+        "argument_names": ["aggregated_flow", "indirect_water_consumption_factor"],
     },
 ]
 
@@ -459,25 +554,39 @@ CALCULATED_OUTPUTS = [
 #  per component (to be added to df_results) or a calculation for the whole system (e.g. LCOE, total emissions etc).
 #  Probably this should be included with the other CALCULATED_OUTPUTS eventually, but should ask PF
 CALCULATED_KPIS = [
+    #    {
+    #        "column_name": "annuity_total",
+    #        "operation": compute_system_annuity_total,
+    #        "description": "The system total annuity is calculated by summing up the total annuity for each component",
+    #        "argument_names": ["annuity_total"],
+    #    },
+    #    {
+    #        "column_name": "variable_costs_total",
+    #        "operation": compute_system_variable_costs_total,
+    #        "description": "The system total variable costs is calculated by summing up the total variable costs for "
+    #        "each component flow",
+    #        "argument_names": ["variable_costs_total"],
+    #    },
     {
-        "column_name": "annuity_total",
-        "operation": compute_system_annuity_total,
-        "description": "The system total annuity is calculated by summing up the total annuity for each component",
-        "argument_names": ["annuity_total"],
+        "column_name": "total_annual_cost_moo",
+        "operation": compute_total_annual_cost_moo,
+        "description": "The total annual system cost for moo mode is calculated "
+        "by adding each component annuity and variable cost",
+        "argument_names": ["annualized_capex", "variable_cost_moo"],
     },
     {
-        "column_name": "variable_costs_total",
-        "operation": compute_system_variable_costs_total,
-        "description": "The system total variable costs is calculated by summing up the total variable costs for "
-        "each component flow",
-        "argument_names": ["variable_costs_total"],
+        "column_name": "total_variable_cost_moo",
+        "operation": compute_variable_cost_total_moo,
+        "description": "Total System variable costs are calculated by adding up the annual variable cost"
+        " of each component ",
+        "argument_names": ["variable_cost_moo"],
     },
-    {
-        "column_name": "system_cost_total",
-        "operation": compute_system_cost_total,
-        "description": "The total system cost is calculated by adding the total annuity to the total variable costs",
-        "argument_names": ["annuity_total", "variable_costs_total"],
-    },
+    #    {
+    #        "column_name": "system_cost_total",
+    #        "operation": compute_system_cost_total,
+    #        "description": "The total system cost is calculated by adding the total annuity to the total variable costs",
+    #        "argument_names": ["annuity_total", "variable_costs_total"],
+    #    },
     {
         "column_name": "total_upfront_investments",
         "operation": compute_system_upfront_investments_total,
@@ -485,12 +594,12 @@ CALCULATED_KPIS = [
         "costs for each component",
         "argument_names": ["upfront_investment_costs"],
     },
-    {
-        "column_name": "specific_system_cost",
-        "operation": compute_specific_system_cost,
-        "description": "T",
-        "argument_names": ["aggregated_flow", "annuity_total", "variable_costs_total"],
-    },
+    #   {
+    #      "column_name": "specific_system_cost",
+    #      "operation": compute_specific_system_cost,
+    #        "description": "T",
+    #        "argument_names": ["aggregated_flow", "annuity_total", "variable_costs_total"],
+    #    },
     {
         "column_name": "co2_emissions_total",
         "operation": compute_system_co2_emissions_total,
@@ -513,11 +622,24 @@ CALCULATED_KPIS = [
         "argument_names": ["land_requirement_total"],
     },
     {
-        "column_name": "total_water_footprint",
-        "operation": compute_water_footprint_total,
-        "description": "The total water footprint is calculated by summing the water footprint required "
-        "for each component",
-        "argument_names": ["water_footprint"],
+        "column_name": "total_water_consumption",
+        "operation": compute_water_consumption_total,
+        "description": "The total water footprint is calculated by summing the water consumption of "
+        "each component",
+        "argument_names": ["water_consumption"],
+    },
+    {
+        "column_name": "total_indirect_water_consumption",
+        "operation": compute_indirect_water_consumption_total,
+        "description": "The total indirect water consumption is calculated by summing up the indirect"
+        " water consumption of each component",
+        "argument_names": ["indirect_water_consumption"],
+    },
+    {
+        "column_name": "water_scarcity_footprint",
+        "operation": compute_water_scarcity_footprint,
+        "description": "The total water footprint is calculated by summing the water consumption of each component",
+        "argument_names": ["indirect_water_consumption", "water_consumption"],
     },
     {
         "column_name": "renewable_share",
@@ -536,7 +658,7 @@ CALCULATED_KPIS = [
         "column_name": "system_opex_total",
         "operation": compute_system_opex_total,
         "description": "",
-        "argument_names": ["opex_fix_costs_total"],
+        "argument_names": ["opex_fix_costs_total", "variable_cost_moo"],
     },
 ]
 
@@ -799,6 +921,7 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
     inputs_df = inputs_df.dropna(how="all")
     # append the inputs of the datapackage to the results DataFrame
     inputs_df.T.index.name = "asset"
+    # TODO does not work for inputs which are timeseries (ie for moo)
     return df_results.join(inputs_df.T.apply(pd.to_numeric, downcast="float"))
 
 
