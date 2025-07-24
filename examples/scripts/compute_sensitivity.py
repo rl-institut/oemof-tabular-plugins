@@ -60,7 +60,7 @@ parameters_units = {
     "total_water_consumption": "[m³/a]",
     "total_indirect_water_consumption": "[m³/a]",
     "ac-elec": "[kWh]",
-    "water_scarcity_footprint": "[m³]"
+    "water_scarcity_footprint": "[m³]",
 }
 
 # -------------- RELEVANT PATHS --------------
@@ -68,7 +68,7 @@ parameters_units = {
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 # -------------- USER INPUTS --------------
-base_scenario = "aiwa_8760"
+base_scenario = "arusi_8760"
 element = "volatile"
 component = "photovoltaics"
 attribute = "capex"
@@ -82,7 +82,9 @@ steps = 10
 wacc = 0.06
 
 # -------------- SET UP SCENARIOS FOR SENSITIVITY ANALYSIS --------------
-print("Set up sensitivity analysis: create multiple, alternated copies of base scenario")
+print(
+    "Set up sensitivity analysis: create multiple, alternated copies of base scenario"
+)
 
 # Lists for the new scenarios created to vary an attribute and the respective values of the varied attribute
 scenarios = []
@@ -131,12 +133,12 @@ custom_attributes = [
     "renewable_factor",
     "land_requirement_factor",
     "water_consumption_factor",
-    "indirect_water_consumption_factor"
+    "indirect_water_consumption_factor",
     "land_requirement",
     "water_footprint",
     "ghg_emissions",
     "resource_cost",
-    "annuity"
+    "annuity",
 ]
 # set whether the multi-objective optimization should be performed
 moo = True
@@ -156,7 +158,7 @@ for scenario in scenarios:
         custom_attributes=custom_attributes,
         typemap=TYPEMAP,
         moo=moo,
-        dash_app=False,     # dash has to be deactivated if multiple scenarios are computed!
+        dash_app=False,  # dash has to be deactivated if multiple scenarios are computed!
         parameters_units=parameters_units,
     )
     df = calculator.df_results
@@ -168,19 +170,24 @@ for scenario in scenarios:
 print("All scenarios computed")
 
 # -------------- POST_PROCESSING: SENSITIVITY ANALYSIS --------------
-results_path = Path(__file__).parent / f'{base_scenario}_{component}_sensitivity.csv'
+results_path = (
+    Path(__file__).parent / f"{base_scenario}_{component}_{attribute}_sensitivity.csv"
+)
 print(f"Obtain scenario results, combine and export to {results_path}")
 
 # Set up DataFrame for sensitivity analysis with columns: base scenario, new scenario, varied attribute
-sensitivity_df = pd.DataFrame(columns=["base_scenario", "new_scenario", attribute])
+sensitivity_df = pd.DataFrame(
+    columns=["base_scenario", "component", "variation", attribute]
+)
 
 # Access results of every scenario and create one row in the DataFrame for each scenario
 for i in range(len(scenarios)):
     # Set up new row for the data of this scenario with basic information
     new_row = {
         "base_scenario": base_scenario,
-        "new_scenario": scenarios[i],
-        attribute: attributes[i]
+        "component": component,
+        "variation": step_list[i],
+        attribute: attributes[i],
     }
 
     # Append the new row to the sensitivity DataFrame
@@ -232,11 +239,14 @@ for i in range(len(scenarios)):
 
 
 # Convert all numeric objects to float-type (ignore non-numeric objects), then round all float-type objects
-sensitivity_df = sensitivity_df.apply(pd.to_numeric, errors='ignore')
+try:
+    sensitivity_df = sensitivity_df.apply(pd.to_numeric)
+except ValueError or TypeError:
+    pass
 sensitivity_df = sensitivity_df.round(2)
 
 # Save sensitivity analysis DataFrame as csv-file
-sensitivity_df.to_csv(f"{base_scenario}_{component}_sensitivity.csv")
+sensitivity_df.to_csv(results_path)
 
 
 print("done")
