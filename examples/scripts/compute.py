@@ -55,7 +55,7 @@ parameters_units = {
     "total_water_consumption": "[m³/a]",
     "total_indirect_water_consumption": "[m³/a]",
     "ac-elec": "[kWh]",
-    "water_scarcity_footprint": "[m³]",
+    "water_scarcity_footprint": "[m³]"
 }
 
 # -------------- RELEVANT PATHS --------------
@@ -92,11 +92,12 @@ custom_attributes = [
     "renewable_factor",
     "land_requirement_factor",
     "water_consumption_factor",
-    "indirect_water_consumption_factor" "land_requirement",
+    "indirect_water_consumption_factor"
+    "land_requirement",
     "water_footprint",
     "ghg_emissions",
     "resource_cost",
-    "annuity",
+    "annuity"
 ]
 # set whether the multi-objective optimization should be performed
 moo = True
