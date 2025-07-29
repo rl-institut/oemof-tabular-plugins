@@ -81,6 +81,7 @@ def extract_table_from_results(df_results, columns):
 
 
 def save_table_to_csv(table, results_path, filename):
+    # TODO: set index=False or do we need the additional index column in the csv files?
     """Saves a DataFrame to a .csv file"""
     filepath = os.path.join(results_path, filename)
     table.to_csv(filepath)
@@ -263,7 +264,7 @@ def post_processing(
     results_by_flow = calculator.df_results
 
     result_tables = {}
-    services_table = {}
+    service_tables = {}
 
     if results_by_flow is not None:
         results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
@@ -342,14 +343,33 @@ def post_processing(
         for bus in service_busses:
             df_bus = df.loc[df.bus == bus]
 
-            services_table[bus.replace("-bus", "")] = df_bus[
+            service_tables[bus.replace("-bus", "")] = df_bus[
                 ["asset", "direction", "aggregated_flow", "carrier", "facade_type"]
             ]
+
+        # TODO: eventually add units (but kpis.csv also does not have units)
+        service_flows = []
+        service_flow_values = []
+        for service, table in service_tables.items():
+            table = table.loc[table["direction"] == "out", ["asset", "aggregated_flow", "carrier", "facade_type"]]
+            for row in table.itertuples(index=False):
+                service_flows.append(f"{row.asset}_to_{service}")
+                service_flow_values.append(row.aggregated_flow)
+
+
+        service_flows_table = pd.DataFrame({
+            "flow": service_flows,
+             "value": service_flow_values
+             })
+        # TODO: Move this to tables_to_save BUT to do so, we have to get rid of extra index col
+        if service_flows_table is not None:
+            service_flows_table.to_csv(results_path + "/service_flows.csv", index=False)
 
         # save tables to csv files
         tables_to_save.update(
             {"costs.csv": cost_table, "capacities.csv": capacities_table}
         )
+
     kpis = calculator.kpis
     if kpis is not None:
         kpis.to_csv(results_path + "/kpis.csv", index=True)
@@ -376,7 +396,7 @@ def post_processing(
             es,
             dp_path=dp_path,
             tables=result_tables,
-            services=services_table,
+            services=service_tables,
             units=parameters_units,
         )
         demo_app.run(debug=False, port=8060)

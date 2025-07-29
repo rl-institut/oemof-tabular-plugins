@@ -68,12 +68,17 @@ parameters_units = {
 project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 # -------------- USER INPUTS --------------
-base_scenario = "arusi_8760"
+base_scenario = "aiwa_8760"
 element = "volatile"
 component = "photovoltaics"
 attribute = "capex"
 increment = 0.2
 steps = 10
+# Provide names or parts of names of service_flows that shall be included
+flows_to_include = [
+    "ac-elec"   # all flows contributing to ac-elec bus
+    # "diesel"  # would only include flows from diesel-gen
+]
 
 # Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;
 # this parameter is needed to calculate the regionalized water scarcity footprint in moo.
@@ -206,6 +211,21 @@ for i in range(len(scenarios)):
         if col not in sensitivity_df.columns:
             sensitivity_df[col] = pd.NA
         sensitivity_df.loc[i, col] = kpis_df.loc[i, col]
+
+    # Access service flows of the scenario
+    service_flows_path = result_dir / scenarios[i] / "output" / "service_flows.csv"
+    service_flows_df = pd.read_csv(service_flows_path, sep=",")
+
+    # Transpose service flows to have only one row with all values, align row index with sensitivity DataFrame index
+    service_flows_df = service_flows_df.set_index("flow").T
+    service_flows_df.index = [i]
+
+    # Add flows (if in flows_to_include list) to the new row of the sensitivity DataFrame, make sure columns exist and fill with nan if necessary
+    for col in service_flows_df.columns:
+        if any(flow in col for flow in flows_to_include):
+            if col not in sensitivity_df.columns:
+                sensitivity_df[col] = pd.NA
+            sensitivity_df.loc[i, col] = service_flows_df.loc[i, col]
 
     # Access component capacities of the scenario
     capacities_path = result_dir / scenarios[i] / "output" / "capacities.csv"
