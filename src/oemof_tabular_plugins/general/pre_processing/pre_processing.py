@@ -258,7 +258,7 @@ def pre_processing_custom_attributes(element_path, element_df, custom_attributes
     return
 
 
-def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
+def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf=None):
     """Performs pre-processing of input scenario data before running the model.
 
     :param scenario_dir: scenario directory path
@@ -268,6 +268,9 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
     """
     if moo is False:
         logger.info(f"Optimization activated for only costs")
+    elif moo_wf is None:
+        logger.info("No weight factors for multi-objective optimization provided, "
+                    "optimization activated for only costs")
     elif moo is True:
         logger.info(f"Multi-objective optimization activated")
 
@@ -286,7 +289,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
                 element_path = os.path.join(elements_dir, element)
                 # read the csv file and save it as a pandas dataframe
                 element_df = pd.read_csv(element_path, sep=";")
-                if moo is False:
+                if moo is False or moo_wf is None:
                     # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
                     pre_processing_costs(wacc, element, element_path, element_df)
                     # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
@@ -294,9 +297,9 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False):
                     pre_processing_custom_attributes(
                         element_path, element_df, custom_attributes
                     )
-                elif moo is True:
+                elif moo is True and moo_wf is not None:
                     pre_processing_moo(
-                        wacc, element, element_path, element_df, scenario_dir
+                        wacc, element, element_path, element_df, scenario_dir, moo_wf
                     )
             except Exception as e:
                 logging.error(

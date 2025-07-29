@@ -73,8 +73,8 @@ scenarios = [
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
     # "aiwa"
-    # "aiwa_24"
-    "aiwa_8760"
+    "aiwa_24"
+    # "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
 ]
@@ -101,6 +101,14 @@ custom_attributes = [
 # set whether the multi-objective optimization should be performed
 moo = True
 
+# MOO weight factors
+moo_wf = {
+    "wf_cost": 15,
+    "wf_ghg": 1,
+    "wf_lr": 343434,
+    "wf_wf": 0,
+}
+
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
     print("Running scenario with datapackage {}".format(scenario))
@@ -116,6 +124,7 @@ for scenario in scenarios:
         custom_attributes=custom_attributes,
         typemap=TYPEMAP,
         moo=moo,
+        moo_wf=moo_wf,
         dash_app=True,
         parameters_units=parameters_units,
     )

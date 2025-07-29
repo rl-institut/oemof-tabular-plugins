@@ -67,7 +67,7 @@ def get_moo_timeseries(
     return answer
 
 
-def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir):
+def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, moo_wf):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -126,10 +126,10 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir):
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
 
     # -------------- MOO Customizable Weights ------------------
-    wf_cost = 1
-    wf_ghg = 0
-    wf_lr = 0
-    wf_wf = 0
+    wf_cost = moo_wf["wf_cost"]
+    wf_ghg = moo_wf["wf_ghg"]
+    wf_lr = moo_wf["wf_lr"]
+    wf_wf = moo_wf["wf_wf"]
     # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------
