@@ -1,3 +1,4 @@
+import logging
 from dataclasses import field
 from typing import Sequence, Union
 
@@ -218,9 +219,9 @@ class SimpleCrop(Converter, Facade):
         """
         # Check input time series compatibility
         if not isinstance(t_air, (list, pd.Series)):
-            print("Argument 'temp' is not of type list or pd.Series!")
+            logging.warning("Argument 'temp' is not of type list or pd.Series!")
         if not isinstance(time_index, (list, pd.Series)):
-            print("Argument 'time index' is not of type list or pd.Series!")
+            logging.warning("Argument 'time index' is not of type list or pd.Series!")
         if len(t_air) != len(time_index):
             raise ValueError("Length mismatch between t_air and time_index profiles.")
 
@@ -275,9 +276,16 @@ class SimpleCrop(Converter, Facade):
 
         # Update t_sum if custom_harvest = True (custom harvest date provided instead of maturity according to SIMPLE)
         has_custom_harvest = cultivation_params.pop("has_custom_harvest")
-        t_sum = (
-            cumulative_temp[dates.index(harvest_date)] if has_custom_harvest else t_sum
-        )
+        if harvest_date in dates:
+            t_sum = (
+                cumulative_temp[dates.index(harvest_date)]
+                if has_custom_harvest
+                else t_sum
+            )
+        else:
+            raise ValueError(
+                f"The harvest date for the crop '{self.crop_type}' ({harvest_date}) does not lie within your simulation dates (from {dates[0]} to {dates[-1]}). Please either extend the range of simulation dates, choose another harvest date or remove the crop from your model"
+            )
 
         # f_solar(cum_temp) according to SIMPLE
         f_solar_list = []
@@ -317,7 +325,7 @@ class SimpleCrop(Converter, Facade):
         """
         # Check if input arguments have proper type and length
         if not isinstance(t_air, (list, pd.Series)):
-            print("Argument 'temp' is not of type list or pd.Series!")
+            logging.warning("Argument 'temp' is not of type list or pd.Series!")
         f_temp_list = []  # creating a list
         # Calculate te
         for t in t_air:

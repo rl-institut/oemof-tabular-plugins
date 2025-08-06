@@ -5,6 +5,14 @@ from oemof.solph import EnergySystem, Model
 from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
 
+
+try:
+    from oemof_visio import ESGraphRenderer
+
+    ES_GRAPH = True
+except ModuleNotFoundError:
+    ES_GRAPH = False
+
 # TODO this should be with from oemof.tabular.datapackage import building when https://github.com/oemof/oemof-tabular/pull/173 is merged
 from oemof_tabular_plugins.datapackage import building as otp_building
 
@@ -29,6 +37,7 @@ def compute_scenario(
     custom_attributes=None,
     typemap=None,
     moo=False,
+    moo_wf=None,
     dash_app=False,
     parameters_units=None,
     infer_bus_carrier=True,
@@ -47,6 +56,8 @@ def compute_scenario(
     custom_attributes
     typemap: default to oemof.tabular.facades.TYPEMAP
     moo
+    moo_wf: Dict
+        MOO customizable weight factors
     skip_preprocessing: bool (opt)
         If True, the pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC will not take place
         Default: False
@@ -73,7 +84,7 @@ def compute_scenario(
 
     if skip_preprocessing is False:
         # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-        pre_processing(scenario_dir, wacc, custom_attributes, moo)
+        pre_processing(scenario_dir, wacc, custom_attributes, moo, moo_wf)
 
     if skip_infer_datapackage_metadata is False:
         otp_building.infer_metadata_from_data(
@@ -88,6 +99,15 @@ def compute_scenario(
         attributemap={},
         typemap=typemap,
     )
+
+    if ES_GRAPH is True:
+        energy_system_graph = os.path.join(
+            results_path, f"{scenario_name}_energy_system.png"
+        )
+        es_graph = ESGraphRenderer(
+            es, legend=True, filepath=energy_system_graph, img_format="png"
+        )
+        es_graph.render()
 
     logger.info("Energy system created from datapackage")
 

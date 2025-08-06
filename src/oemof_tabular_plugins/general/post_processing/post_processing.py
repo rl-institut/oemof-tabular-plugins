@@ -28,7 +28,7 @@ from .gui import prepare_app
 
 
 # TODO add a column for planned capacity (not optimizable but including costs) in capacities if it gets properly
-#  implemented (planned capacity can be set by setting capacity_minimum == capacity_potential and dispatchable = True
+#  implemented (planned capacity can be set by setting capacity_minimum == capacity_potential and dispatchable = True)
 RESULT_TABLE_COLUMNS = {
     "costs": ["upfront_investment_costs", "annuity_total", "variable_costs_total"],
     "capacities": [
@@ -45,10 +45,10 @@ RESULT_TABLE_COLUMNS = {
 
 CAPACITIES_UNIT = {
     "electricity": {"default": "[kW]", "storage": "[kWh]"},
-    "wind": {"default": "[m³/s]", "storage": "[m³/s]"},
-    "irradiation": {"default": "[m²]", "storage": "[m²]"},
-    "crop": {"default": "[m²]", "storage": "[m²]"},
-    "water": {"default": "[m³/s]", "storage": "[m³]"},
+    "wind": {"default": "[m/s]", "storage": "[kWh]"},
+    "irradiation": {"default": "[kWh/m²]", "storage": "[kWh]"},
+    "crop": {"default": "[m²]", "storage": "[kg]"},
+    "water": {"default": "[m³/h]", "storage": "[m³]"},
 }
 
 
@@ -81,6 +81,7 @@ def extract_table_from_results(df_results, columns):
 
 
 def save_table_to_csv(table, results_path, filename):
+    # TODO: set index=False or do we need the additional index column in the csv files?
     """Saves a DataFrame to a .csv file"""
     filepath = os.path.join(results_path, filename)
     table.to_csv(filepath)
@@ -146,6 +147,41 @@ class OTPCalculator(Calculator):
     def calculated_outputs(self):
         return self.__scalars("outputs")
 
+    def apply_calculations(self, calculations):
+        apply_calculations(self.df_results, calculations=calculations)
+
+    def apply_kpi_calculations(self, calculations):
+        self.kpis = apply_kpi_calculations(self.df_results, calculations=calculations)
+
+    def __scalars(self, scalar_category):
+        """Ignore the flow data columns (by construction those are the first columns after the multi-index)"""
+        scalars = self.df_results.iloc[:, self.n_timesteps :]
+        answer = scalars
+        if scalar_category == "raw_inputs":
+            existing_cols = []
+            for c in scalars.columns:
+                if c in RAW_INPUTS:
+                    existing_cols.append(c)
+            answer = scalars[existing_cols]
+        elif scalar_category == "outputs":
+            answer = scalars[scalars.columns.difference(RAW_INPUTS)]
+        return answer
+
+    @property
+    def raw_outputs(self):
+        self.df_results.iloc[:, : self.n_timesteps]
+        cols = self.df_results.iloc[:, : self.n_timesteps].columns.tolist()
+        cols = cols + RAW_OUTPUTS + PROCESSED_RAW_OUTPUTS
+        return self.df_results[cols]
+
+    @property
+    def raw_inputs(self):
+        return self.__scalars("raw_inputs")
+
+    @property
+    def calculated_outputs(self):
+        return self.__scalars("outputs")
+
 
 def post_processing(
     params,
@@ -171,15 +207,47 @@ def post_processing(
     if parameters_units is None:
         #  Units of Capacities and Kpis in Results
         parameters_units = {
-            "battery_storage": "[kWh]",
+            "drinking-water-storage": "[m³]",
+            "rainwater-harvesting": "[m²]",
+            "service-water-storage": "[m³]",
+            "run-of-river-hydropower": "[kW]",
+            "sw-ro": "[m³/h]",
+            "seawater-reverse-osmosis": "[m³/h]",
+            "electricity-grid": "[kWh]",
+            "seawater": "[m³]",
+            "seawater-source": "[m³]",
+            "water-truck": "[m³]",
+            "battery-storage": "[kWh]",
             "inverter": "[kW]",
+            "water-filtration": "[m³/h]",
+            "water-filtration-system": "[m³/h]",
+            "water-pump": "[m³/h]",
+            "river-water-uptake": "[m³/h]",
+            "crop": "[m²]",
+            "banana": "[m²]",
+            "banana-production": "[kg/a]",
+            "groundwater": "[m³]",
+            "bottled-water": "[m³]",
+            "diesel-generator": "[kW]",
+            "photovoltaics": "[kWp]",
+            "wind-turbine": "[kW]",
+            "hydropower": "[kW]",
             "pv-panel": "[kW]",
             "water-storage": "[m³]",
             "mimo": "[m³/h]",
-            "annuity_total": "[$]",
-            "total_upfront_investments": "[$]",
+            "annuity_total": "[USD/a]",
+            "variable_costs_total": "[USD/a]",
+            "ghg_emission_total": "[kgCO2e/a]",
+            "system_cost_total": "[USD/a]",
+            "land_requirement_additional": "[m²]",
+            "total_upfront_investments": "[USD]",
             "land_requirement_total": "[m²]",
+            "total_water_consumption": "[m³/a]",
+            "total_annual_cost_moo": "[USD/a]",
+            "ghg_emissions_total": "[kgCO2e/a]",
             "total_water_footprint": "[m³]",
+            "system_opex_total": "[USD/a]",
+            "total_variable_cost_moo": "[USD/a]",
         }
 
     if calculations is None:
@@ -196,7 +264,7 @@ def post_processing(
     results_by_flow = calculator.df_results
 
     result_tables = {}
-    services_table = {}
+    service_tables = {}
 
     if results_by_flow is not None:
         results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
@@ -242,8 +310,7 @@ def post_processing(
 
         # eliminate double occurences of same asset
         capacities_table = capacities_table.loc[
-            (capacities_table["Capacity Total"] > 0)
-            & (capacities_table.direction == "out"),
+            (capacities_table["Capacity Total"] > 0),
             [
                 "Component name",
                 "Capacity",
@@ -253,6 +320,8 @@ def post_processing(
                 "unit",
             ],
         ]
+        capacities_table = capacities_table.drop_duplicates(subset=["Component name"])
+
         result_tables.update({"capacities": capacities_table})
 
         cost_table = extract_table_from_results(
@@ -274,14 +343,33 @@ def post_processing(
         for bus in service_busses:
             df_bus = df.loc[df.bus == bus]
 
-            services_table[bus.replace("-bus", "")] = df_bus[
+            service_tables[bus.replace("-bus", "")] = df_bus[
                 ["asset", "direction", "aggregated_flow", "carrier", "facade_type"]
             ]
+
+        # TODO: eventually add units (but kpis.csv also does not have units)
+        service_flows = []
+        service_flow_values = []
+        for service, table in service_tables.items():
+            table = table.loc[table["direction"] == "out", ["asset", "aggregated_flow", "carrier", "facade_type"]]
+            for row in table.itertuples(index=False):
+                service_flows.append(f"{row.asset}_to_{service}")
+                service_flow_values.append(row.aggregated_flow)
+
+
+        service_flows_table = pd.DataFrame({
+            "flow": service_flows,
+             "value": service_flow_values
+             })
+        # TODO: Move this to tables_to_save BUT to do so, we have to get rid of extra index col
+        if service_flows_table is not None:
+            service_flows_table.to_csv(results_path + "/service_flows.csv", index=False)
 
         # save tables to csv files
         tables_to_save.update(
             {"costs.csv": cost_table, "capacities.csv": capacities_table}
         )
+
     kpis = calculator.kpis
     if kpis is not None:
         kpis.to_csv(results_path + "/kpis.csv", index=True)
@@ -308,10 +396,10 @@ def post_processing(
             es,
             dp_path=dp_path,
             tables=result_tables,
-            services=services_table,
+            services=service_tables,
             units=parameters_units,
         )
-        demo_app.run_server(debug=False, port=8060)
+        demo_app.run(debug=False, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
     if hasattr(calculator, "scalar_params"):

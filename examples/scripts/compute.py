@@ -13,28 +13,49 @@ from oemof.tabular import datapackage  # noqa
 from oemof_tabular_plugins.wefe import WEFE_TYPEMAP as TYPEMAP
 
 parameters_units = {
-    "battery_storage": "[kWh]",
+    "drinking-water-storage": "[m³]",
+    "total_annual_cost_moo": "[USD/a]",
+    "rainwater-harvesting": "[m²]",
+    "service-water-storage": "[m³]",
+    "sw-ro": "[m³/h]",
+    "seawater-reverse-osmosis": "[m³/h]",
+    "electricity-grid": "[kWh]",
+    "seawater": "[m³]",
+    "seawater-source": "[m³]",
+    "water-truck": "[m³]",
+    "battery-storage": "[kWh]",
     "inverter": "[kW]",
-    "pv-panel": "[kW]",
+    "water-filtration": "[m³/h]",
+    "water-filtration-system": "[m³/h]",
+    "water-pump": "[m³/h]",
+    "river-water-uptake": "[m³/h]",
+    "crop": "[m²]",
+    "banana": "[m²]",
+    "banana-production": "[kg/a]",
+    "groundwater": "[m³]",
+    "bottled-water": "[m³]",
     "diesel-generator": "[kW]",
+    "photovoltaics": "[kWp]",
+    "wind-turbine": "[kW]",
+    "hydropower": "[kW]",
+    "pv-panel": "[kW]",
     "water-storage": "[m³]",
     "mimo": "[m³/h]",
-    "annuity_total": "[$]",
-    "variable_costs_total": "[$]",
-    "system_cost_total": "[$]",
-    "specific_system_cost": "[$]",
-    "total_upfront_investments": "[$]",
-    "banana-plantation": "[m²]",
-    "land_requirement_total": "[m²]",
-    "ghg_emissions_total": "[?kg?]",
+    "annuity_total": "[USD/a]",
+    "variable_costs_total": "[USD/a]",
+    "ghg_emission_total": "[kgCO2e/a]",
+    "ghg_emissions_total": "[kgCO2e/a]",
+    "system_cost_total": "[USD/a]",
     "land_requirement_additional": "[m²]",
+    "total_upfront_investments": "[USD]",
+    "land_requirement_total": "[m²]",
     "total_water_footprint": "[m³]",
-    "river-water-uptake": "[m³]",
-    "water-filtration-system": "[m³]",
-    "rainwater-harvesting": "[m³]",
-    "water": "[m³]",
-    "electricity": "[kWh]",
-    "crop": "[kg]",
+    "system_opex_total": "[USD/a]",
+    "total_variable_cost_moo": "[USD/a]",
+    "total_water_consumption": "[m³/a]",
+    "total_indirect_water_consumption": "[m³/a]",
+    "ac-elec": "[kWh]",
+    "water_scarcity_footprint": "[m³]"
 }
 
 # -------------- RELEVANT PATHS --------------
@@ -44,7 +65,6 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "test_apv_facade"
     # "general_add_cost_inputs",
     # "general_basic",
     # "general_constraints",
@@ -52,7 +72,14 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
+    # "aiwa"
+    "aiwa_24"
+    # "aiwa_8760"
+    # "arusi_8760"
+    # "arusi_24"
 ]
+# Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;
+# this parameter is needed to calculate the regionalized water scarcity footprint in moo.
 # weighted average cost of capital (WACC) - might move later
 # this parameter is needed if CAPEX, OPEX fix and lifetime are included
 wacc = 0.06
@@ -61,13 +88,27 @@ wacc = 0.06
 # include the custom attribute parameters to be included in the model
 # this can be moved somewhere and included in a dict or something similar with all possible additional attributes
 custom_attributes = [
-    "emission_factor",
+    "ghg_emission_factor",
     "renewable_factor",
     "land_requirement_factor",
-    "water_footprint_factor",
+    "water_consumption_factor",
+    "indirect_water_consumption_factor"
+    "land_requirement",
+    "water_footprint",
+    "ghg_emissions",
+    "resource_cost",
+    "annuity"
 ]
 # set whether the multi-objective optimization should be performed
 moo = True
+
+# MOO weight factors
+moo_wf = {
+    "wf_cost": 15,
+    "wf_ghg": 1,
+    "wf_lr": 343434,
+    "wf_wf": 0,
+}
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
@@ -84,6 +125,7 @@ for scenario in scenarios:
         custom_attributes=custom_attributes,
         typemap=TYPEMAP,
         moo=moo,
+        moo_wf=moo_wf,
         dash_app=True,
         parameters_units=parameters_units,
     )

@@ -2,6 +2,8 @@ from oemof_tabular_plugins.wefe.constraints.constraint_facades import (
     CONSTRAINT_TYPE_MAP,
 )
 from oemof.tabular.facades import TYPEMAP
+
+from oemof.tabular.facades import Volatile
 from .facades import (
     PVPanel,
     MIMO,
@@ -10,6 +12,8 @@ from .facades import (
     SimpleCrop,
     WaterPump,
     WaterFiltration,
+    Inverter,
+    RRHydropower,
 )
 
 WEFE_TYPEMAP = {
@@ -20,6 +24,9 @@ WEFE_TYPEMAP = {
     "pv-panel": PVPanel,
     "mimo": MIMO,
     "apv": APV,
+    "inverter": Inverter,
+    "hydropower": RRHydropower,
+    "river-flow": Volatile,
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
