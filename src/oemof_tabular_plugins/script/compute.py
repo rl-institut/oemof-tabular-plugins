@@ -37,6 +37,7 @@ def compute_scenario(
     custom_attributes=None,
     typemap=None,
     moo=False,
+    moo_wf=None,
     dash_app=False,
     parameters_units=None,
     infer_bus_carrier=True,
@@ -55,6 +56,8 @@ def compute_scenario(
     custom_attributes
     typemap: default to oemof.tabular.facades.TYPEMAP
     moo
+    moo_wf: Dict
+        MOO customizable weight factors
     skip_preprocessing: bool (opt)
         If True, the pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC will not take place
         Default: False
@@ -81,7 +84,7 @@ def compute_scenario(
 
     if skip_preprocessing is False:
         # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-        pre_processing(scenario_dir, wacc, custom_attributes, moo)
+        pre_processing(scenario_dir, wacc, custom_attributes, moo, moo_wf)
 
     if skip_infer_datapackage_metadata is False:
         otp_building.infer_metadata_from_data(
