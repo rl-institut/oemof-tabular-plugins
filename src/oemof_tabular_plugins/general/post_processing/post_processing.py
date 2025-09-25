@@ -311,7 +311,7 @@ def post_processing(
             services=services_table,
             units=parameters_units,
         )
-        demo_app.run_server(debug=False, port=8060)
+        demo_app.run(debug=False, port=8060)
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
     if hasattr(calculator, "scalar_params"):

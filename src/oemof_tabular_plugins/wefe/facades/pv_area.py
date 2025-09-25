@@ -15,10 +15,10 @@ import numpy as np
 
 
 @dataclass_facade
-class PVPanel(Converter, Facade):
-    r"""PV panel unit with one input and one output. The temperature factor
+class PVArea(Converter, Facade):
+    r"""PV area unit (an area with PV installed on it) with one input and one output. The temperature factor
     is calculated and considered within the electricity generation.
-    Note: This facade has the PV power [kW] as its capacity and can be used to model PV in general.
+    NOTE: This facade has the area [m2] as its capacity and can be used to model open field PV including bifacial PV.
 
     Parameters
     ----------
@@ -105,7 +105,6 @@ class PVPanel(Converter, Facade):
 
     def build_solph_components(self):
         """ """
-        print("NEW PVPanel in use!!!")
         if self.t_air is None or self.ghi is None:
             # handle the case when t_air or ghi is None
             print("Error: t_air or ghi is None. Cannot perform calculations.")
@@ -126,6 +125,10 @@ class PVPanel(Converter, Facade):
         ghi_to_gni = np.cos(np.radians(geo_params["tilt"]))
         gni_values = np.array(ghi_values) * ghi_to_gni
 
+        # pv modules per square metre
+        area_pv = pv_params["x"] * geo_params["pitch"]
+        modules_per_m2 = 1 / area_pv
+
         # pv power (per module in W)
         pv_power = np.array(
             [
@@ -134,16 +137,18 @@ class PVPanel(Converter, Facade):
             ]
         )
 
-        # capacity power (in <unit> per <unit> of installed PV capacity, for example kW)
-        capacity_power = pv_power / pv_params["p_rated"]
+        # capacity power (per square meter of irradiated land, in kW)
+        capacity_power = f.capacity_power(
+            pv_power=pv_power, modules_per_area=modules_per_m2, frb=0
+        )
 
         # efficiency in relation to incoming irradiation (GHI)
-        pv_efficiency =  capacity_power / ghi_values
+        capacity_efficiency = capacity_power / ghi_values
 
         self.conversion_factors.update(
             {
                 self.from_bus: sequence(1),
-                self.to_bus: sequence(pv_efficiency),
+                self.to_bus: sequence(capacity_efficiency),
             }
         )
 

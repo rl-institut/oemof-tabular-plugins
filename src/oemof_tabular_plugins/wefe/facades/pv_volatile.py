@@ -1,21 +1,20 @@
-from dataclasses import field
+import numpy as np
+
+from dataclasses import field, dataclass
 from typing import Sequence, Union
 
 from oemof.solph._plumbing import sequence
 from oemof.solph.buses import Bus
-from oemof.solph.components import Converter
 from oemof.solph.flows import Flow
 
-from oemof.tabular._facade import Facade, dataclass_facade
+from oemof.tabular.facades import Volatile
 
 from oemof_tabular_plugins.wefe.facades import functions as f
 from oemof_tabular_plugins.wefe.global_specs import pv_dict
 
-import numpy as np
 
-
-@dataclass_facade
-class PVPanel(Converter, Facade):
+@dataclass(unsafe_hash=False, frozen=False, eq=False)
+class PVPanel(Volatile):
     r"""PV panel unit with one input and one output. The temperature factor
     is calculated and considered within the electricity generation.
     Note: This facade has the PV power [kW] as its capacity and can be used to model PV in general.
@@ -69,17 +68,15 @@ class PVPanel(Converter, Facade):
 
     """
 
-    from_bus: Bus
-
-    to_bus: Bus
+    bus: Bus
 
     carrier: str
 
     tech: str
 
-    t_air: Union[float, Sequence[float]]
+    t_air: Union[float, Sequence[float]] = None
 
-    ghi: Union[float, Sequence[float]]
+    ghi: Union[float, Sequence[float]] = None
 
     capacity: float = None
 
@@ -95,83 +92,48 @@ class PVPanel(Converter, Facade):
 
     capacity_minimum: float = None
 
-    input_parameters: dict = field(default_factory=dict)
-
     output_parameters: dict = field(default_factory=dict)
 
     pv_type: str = ""
 
     latitude: float = 0
 
-    def build_solph_components(self):
+
+    def __init__(self, **attributes):
         """ """
-        print("NEW PVPanel in use!!!")
-        if self.t_air is None or self.ghi is None:
+        t_air = attributes.pop("t_air")
+        ghi = attributes.pop("ghi")
+        # TODO: these checks about t_air and ghi should be obsolete as the profiles will be checked somewhere else...
+        if t_air is None or ghi is None:
             # handle the case when t_air or ghi is None
-            print("Error: t_air or ghi is None. Cannot perform calculations.")
+            print("Error: t_air or ghi of pv-panel component is None. Cannot perform calculations.")
             return
-        # assign the air temperature and solar irradiance
-        t_air_values = self.t_air
-        ghi_values = np.array(self.ghi)
         # raise error if air temperature list and solar irradiance list are different lengths
-        if len(t_air_values) != len(ghi_values):
-            raise ValueError("Length mismatch between t_air and ghi profiles.")
+        if len(ghi) != len(t_air):
+            raise ValueError("Length mismatch between t_air and ghi profiles of pv-panel component.")
 
         # get pv params from database
-        pv_params = pv_dict[self.pv_type]
+        pv_params = pv_dict[attributes.pop("pv_type")]
         # tilt and pitch based on latitude
-        geo_params = f.pv_geometry(latitude=self.latitude, **pv_params)
+        geo_params = f.pv_geometry(latitude=attributes.pop("latitude"), **pv_params)
 
         # irradiation perpendicular to PV panel (global normal irradiance)
         ghi_to_gni = np.cos(np.radians(geo_params["tilt"]))
-        gni_values = np.array(ghi_values) * ghi_to_gni
+        gni = np.array(ghi) * ghi_to_gni
 
         # pv power (per module in W)
         pv_power = np.array(
             [
                 f.power(rad=gni, t_air=t_air, **pv_params)
-                for t_air, gni in zip(t_air_values, gni_values)
+                for t_air, gni in zip(t_air, gni)
             ]
         )
 
         # capacity power (in <unit> per <unit> of installed PV capacity, for example kW)
         capacity_power = pv_power / pv_params["p_rated"]
 
-        # efficiency in relation to incoming irradiation (GHI)
-        pv_efficiency =  capacity_power / ghi_values
-
-        self.conversion_factors.update(
-            {
-                self.from_bus: sequence(1),
-                self.to_bus: sequence(pv_efficiency),
-            }
+        super().__init__(
+            profile=capacity_power,
+            **attributes
         )
 
-        self.inputs.update(
-            {
-                self.from_bus: Flow(
-                    variable_costs=self.carrier_cost, **self.input_parameters
-                )
-            }
-        )
-
-        self.outputs.update(
-            {
-                self.to_bus: Flow(
-                    nominal_value=self._nominal_value(),
-                    variable_costs=self.marginal_cost,
-                    investment=self._investment(),
-                    **self.output_parameters,
-                )
-            }
-        )
-
-        def processing_raw_inputs(self, resource, results_df):
-            # function to apply on df from above
-
-            return results_df
-
-        def validate_datapackage(self, resource):
-            # modify the resource (datapackage.resource)
-            # should it return the resource?
-            pass
