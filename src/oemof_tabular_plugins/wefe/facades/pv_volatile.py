@@ -62,11 +62,11 @@ class PVPanel(Volatile):
 
     """
 
-    bus: Bus = None
+    bus: Bus
 
-    carrier: str = "electricity"
+    carrier: str
 
-    tech: str = "pv"
+    tech: str
 
     capacity: float = None
 
