@@ -1,0 +1,4 @@
+name;type;carrier;tech;capacity;capacity_cost;capacity_minimum;capacity_potential;bus;marginal_cost;carrier_cost;profile;output_parameters;expandable
+sun;volatile;solar;source;50;0;50;100.0;solar-energy-bus;0.0;0;ghi;{};True
+water-source;dispatchable;water;source;0;0;;;irrigation-bus;0.0;0;;{};True
+atmosphere;dispatchable;water;source;0;0;;;precipitation-bus;0.0;0;;{};True

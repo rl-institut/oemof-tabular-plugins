@@ -15,24 +15,28 @@ from oemof_tabular_plugins.wefe.global_specs import pv_dict
 
 @dataclass(unsafe_hash=False, frozen=False, eq=False)
 class PVPanel(Volatile):
-    r"""PV panel unit with one input and one output. The temperature factor
+    r"""PV panel unit with one output. The temperature factor
     is calculated and considered within the electricity generation.
-    Note: This facade has the PV power [kW] as its capacity and can be used to model PV in general.
+    This facade initializes a facade of type "Volatile" with the PV electricity generation as it's profile.
 
     Parameters
     ----------
-    from_bus: oemof.solph.Bus
-        An oemof bus instance where the PV panel unit is connected to with
-        its input.
-    to_bus: oemof.solph.Bus
+    bus: oemof.solph.Bus
         An oemof bus instance where the PV panel unit is connected to with
         its output.
+    carrier: string
+        Energy carrier of the output, should be 'electricity'.
+        Check-out https://oemof-tabular.readthedocs.io/en/stable/usage.html for
+        oemof carriers or define your own.
+    tech: string
+        Technology of the component, should be pv.
+        Check-out https://oemof-tabular.readthedocs.io/en/stable/usage.html for
+        oemof tech types or define your own.
     capacity: numeric
-        The conversion capacity (output side) of the unit.
+        The capacity (output side) of the unit, for example in kW.
+        Output flow then will also be in kW.
     marginal_cost: numeric
         Marginal cost for one unit of produced output. Default: 0
-    carrier_cost: numeric
-        Carrier cost for one unit of used input. Default: 0
     capacity_cost: numeric
         Investment costs per unit of output capacity.
         If capacity is not set, this value will be used for optimizing the
@@ -43,9 +47,6 @@ class PVPanel(Volatile):
         Maximum invest capacity in unit of output capacity.
     capacity_minimum: numeric
         Minimum invest capacity in unit of output capacity.
-    input_parameters: dict (optional)
-        Set parameters on the input edge of the conversion unit
-        (see oemof.solph for more information on possible parameters)
     output_parameters: dict (optional)
         Set parameters on the output edge of the conversion unit
          (see oemof.solph for more information on possible parameters)
@@ -53,30 +54,19 @@ class PVPanel(Volatile):
         Ambient air temperature
     ghi: array-like
         Global horizontal irradiance
-    p_rpv: numeric
-        Rated power of photovoltaic panel. Default: 270
-    r_ref: numeric
-        Solar radiation at reference conditions. Default: 1000
-    n_t: numeric
-        Temperature coefficient of PV panel. Default: -0.0037
-    t_c_ref: numeric
-        Cell temperature at reference conditions. Default: 25
-    noct: numeric
-        Normal operating cell temperature. Default: 48
-
-    SHOULD INCLUDE FUNCTIONS AND EXAMPLE HERE
+    pv_type: string
+        Name of the pv module used to get module parameters.
+        Has to match key of 'pv_dict'.
+    latitude: float
+        Latitude of the location where the PV panel is located. Used for calculating panel tilt.
 
     """
 
-    bus: Bus
+    bus: Bus = None
 
-    carrier: str
+    carrier: str = "electricity"
 
-    tech: str
-
-    t_air: Union[float, Sequence[float]] = None
-
-    ghi: Union[float, Sequence[float]] = None
+    tech: str = "pv"
 
     capacity: float = None
 
@@ -94,7 +84,11 @@ class PVPanel(Volatile):
 
     output_parameters: dict = field(default_factory=dict)
 
-    pv_type: str = ""
+    t_air: Union[float, Sequence[float]] = None
+
+    ghi: Union[float, Sequence[float]] = None
+
+    pv_type: str = "boviet_450"
 
     latitude: float = 0
 
@@ -103,7 +97,6 @@ class PVPanel(Volatile):
         """ """
         t_air = attributes.pop("t_air")
         ghi = attributes.pop("ghi")
-        # TODO: these checks about t_air and ghi should be obsolete as the profiles will be checked somewhere else...
         if t_air is None or ghi is None:
             # handle the case when t_air or ghi is None
             print("Error: t_air or ghi of pv-panel component is None. Cannot perform calculations.")
@@ -114,6 +107,7 @@ class PVPanel(Volatile):
 
         # get pv params from database
         pv_params = pv_dict[attributes.pop("pv_type")]
+
         # tilt and pitch based on latitude
         geo_params = f.pv_geometry(latitude=attributes.pop("latitude"), **pv_params)
 
