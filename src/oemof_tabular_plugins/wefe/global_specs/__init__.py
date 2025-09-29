@@ -10,6 +10,7 @@ import os
 from .soil_specs import soil_dict
 from .crop_specs import crop_dict
 from .pv_modules import pv_dict
+from .wind_turbines import wind_turbine_dict
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 geometry_path = os.path.join(current_dir, "geometry.json")
