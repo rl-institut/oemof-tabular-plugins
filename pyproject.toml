@@ -23,7 +23,8 @@ version = {attr = "oemof_tabular_plugins.version"}
 dependencies = {file = ["requirements/build_requirements.txt"]}
 
 [project.scripts]
-cli-name = "mypkg.mymodule:some_func"
+dp_to_json = "oemof_tabular_plugins.datapackage.dp_to_json:main"
+json_to_dp = "oemof_tabular_plugins.datapackage.json_to_dp:main"
 
 [project.urls]
 Homepage = "https://github.com/rl-institut/oemof-tabular-plugins"
