@@ -132,7 +132,7 @@ class PVArea(Converter, Facade):
         # pv power (per module in W)
         pv_power = np.array(
             [
-                f.power(rad=gni, t_air=t_air, **pv_params)
+                f.pv_power(rad=gni, t_air=t_air, **pv_params)
                 for t_air, gni in zip(t_air_values, gni_values)
             ]
         )

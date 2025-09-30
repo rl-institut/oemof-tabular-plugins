@@ -429,7 +429,7 @@ class APV(MIMO):
             # irradiation perpendicular to PV panel (global normal irradiance)
             df["gni"] = df["ghi"] * np.cos(np.radians(tilt))
             df["pv_power"] = df.apply(
-                lambda row: f.power(row["gni"], row["t_air"], **pv_params), axis=1
+                lambda row: f.pv_power(row["gni"], row["t_air"], **pv_params), axis=1
             )
             frb = 0 if not has_bifaciality else frb
             modules_per_m2 = 1 / area_apv

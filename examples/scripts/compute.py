@@ -44,7 +44,22 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "test_apv_facade"
+    "test_wind_volatile"
+    # "test_pv_noload"
+    # "test_crop_volopen_cropfix"
+    # "test_crop_volpot_croppot"
+    # "test_crop_volfix_cropfix_2"
+    # "test_pv_load_volopen_pvpot"
+    # "test_pv_load_volpot_pvfix_2"
+    # "test_pv_load_volcombi_pvcombi"
+    # "test_crop_volpot_croppot"
+    # "test_pv_load_volpot_pvpot"
+    # "test_pv_noload_volfix_pvfix"
+    # "test_crop_volmin_cropmin"
+    # "test_crop_volpot_croppot_2"
+    # "test_crop_volcombi_cropcombi_mins"
+    # "test_crop_volcombi_cropcombi"
+    # "test_mimo_crop"
     # "general_add_cost_inputs",
     # "general_basic",
     # "general_constraints",
@@ -86,6 +101,7 @@ for scenario in scenarios:
         moo=moo,
         dash_app=True,
         parameters_units=parameters_units,
+        skip_infer_datapackage_metadata=False
     )
     df = calculator.df_results
     print(df)

@@ -11,7 +11,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular.facades import Volatile
 
 from oemof_tabular_plugins.wefe.facades import functions as f
-import oemof_tabular_plugins.wefe.global_specs.pv_modules as pv_modules_file
+import oemof_tabular_plugins.wefe.global_specs.pv_modules as pv_specs
 
 
 @dataclass(unsafe_hash=False, frozen=False, eq=False)
@@ -108,11 +108,11 @@ class PVPanel(Volatile):
 
         # Get PV params from database
         pv_module = attributes.pop("pv_type")
-        pv_modules = pv_modules_file.pv_dict
+        pv_modules = pv_specs.pv_dict
         if pv_module in pv_modules.keys():
             pv_params = pv_modules[pv_module]
         else:
-            ofname = os.path.abspath(pv_modules.__file__)
+            ofname = os.path.abspath(pv_specs.__file__)
             print(f"Error: PV module '{pv_module}' not available in {ofname}. Using default PV module instead.")
             pv_params = pv_modules["boviet_450"]
 
