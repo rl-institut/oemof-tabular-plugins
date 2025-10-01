@@ -6,6 +6,7 @@ from oemof.tabular.facades import TYPEMAP
 from oemof.tabular.facades import Volatile
 from .facades import (
     PVPanel,
+    WindTurbine,
     MIMO,
     APV,
     MimoCrop,
@@ -27,6 +28,7 @@ WEFE_TYPEMAP = {
     "inverter": Inverter,
     "hydropower": RRHydropower,
     "river-flow": Volatile,
+    "wind-turbine": WindTurbine
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)

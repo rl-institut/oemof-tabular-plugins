@@ -65,6 +65,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
+    # "test_wind_volatile"
     # "general_add_cost_inputs",
     # "general_basic",
     # "general_constraints",
@@ -128,6 +129,7 @@ for scenario in scenarios:
         moo_wf=moo_wf,
         dash_app=True,
         parameters_units=parameters_units,
+        skip_infer_datapackage_metadata=False
     )
     df = calculator.df_results
     print(df)

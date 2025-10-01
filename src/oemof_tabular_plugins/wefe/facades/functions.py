@@ -9,6 +9,7 @@ A SIMPLE crop model                         SIMPLE      https://doi.org/10.1016/
 Crop evapotranspiration                     FAO56       ISBN: 978-92-5-104219-9
 Agricultural Reference Index for Drought    ARID        https://doi.org/10.2134/agronj2011.0286
 PV power output incl. temperature           PV          https://doi.org/10.1016/j.solener.2015.03.004
+Windspeed incl. surface roughness
 """
 
 import numpy as np
@@ -511,7 +512,7 @@ def soil_water_balance(df, has_irrigation, ddc, rzd, awc, **kwargs):
     return df
 
 
-def power(rad, t_air, p_rated, rad_ref, t_ref, noct, **kwargs):
+def pv_power(rad, t_air, p_rated, rad_ref, t_ref, noct, **kwargs):
     """
     PV:
     Hourly PV power output in relation to incoming radiation
