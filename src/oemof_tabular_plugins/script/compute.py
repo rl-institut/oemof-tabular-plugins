@@ -7,7 +7,7 @@ from oemof.solph.processing import parameter_as_dict
 
 
 try:
-    from oemof_visio import ESGraphRenderer
+    from oemof.visio import ESGraphRenderer
 
     ES_GRAPH = True
 except ModuleNotFoundError:
