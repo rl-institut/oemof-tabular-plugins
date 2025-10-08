@@ -15,6 +15,7 @@ from .facades import (
     WaterFiltration,
     Inverter,
     RRHydropower,
+    ReverseOsmosis
 )
 
 WEFE_TYPEMAP = {
@@ -28,7 +29,8 @@ WEFE_TYPEMAP = {
     "inverter": Inverter,
     "hydropower": RRHydropower,
     "river-flow": Volatile,
-    "wind-turbine": WindTurbine
+    "wind-turbine": WindTurbine,
+    "reverse_osmosis": ReverseOsmosis
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
