@@ -8,7 +8,7 @@
 oemof-tabular-plugins
 =====================
 
-**A dummy repo to pitch an idea to oemof community**
+**oemof-tabular-plugins (otp) adds on specific characterisitcs to oemof-tabular. Among others, it is used for modeling and optimizing water, energy, food, and environment (WEFE) components serving as base for the repository WEFEConfigurator.**
 
 .. list-table::
    :widths: auto
@@ -29,9 +29,56 @@ oemof-tabular-plugins
     :local:
     :backlinks: top
 
+Installation
+============
+For using oemof-tabular-plugins, install it using pip. For allowing the use of the most recent features, we recommend to directly install otp from the production branch. Therefore, use anaconda prompt and move to the local repository of oemof-tabular-plugins. Then install otp uisng
+
+.. code::
+
+    pip install -e .
+
+
+OTP requires specific versions oemof-tabular (commit fa1e669c7fee932401895ea34fd2202cab27fcd0 on branch fix/datapackage) and oemof-industry (pip install oemof-industry==0.1.1rc2)
+For installing a suitable version of oemof-tabular, clone oemof-tabular to your local machine. Open the repository using e.g. "Git Bash" and switch to the branch "fix/datapackage" then checkout out to the specific commit needed
+
+.. code::
+
+    git checkout fix/datapackage
+    git checkout fa1e669c7fee932401895ea34fd2202cab27fcd0
+
+Then use an anaconda prompt and move to the local repository of oemof-tabular. Install the required oemof-tabular version by 
+
+.. code::
+
+    pip install .
+
+The suitable oemof.industry version can be installed by specifiying the required version
+
+.. code::
+
+    pip install oemof-industry==0.1.1rc2
+
+In case you would like to visualize the topology of the WEFE system you are modeling and optimizing, oemof.visio and graphviz are required.
+
+.. code::
+
+    pip install oemof.visio[network]
+    pip install graphviz
+
+On Windows machines, you additionally have to download Graphviz (https://graphviz.org/download/) and install it on your system. During installation, make sure to activate "add PATH" variables to ensure that the executable can found. Afterwards, restart your environment.
+
+
 Introduction
 ============
-This is to showcase how this repository could be used to complement `oemof-tabular <https://github.com/oemof/oemof-tabular>`_ to add constraints specific to certain uses of it
+Among others, in otp you can model optimize integrated WEFE systems. To start you can specify the scenario which you would like to model. Therefore open in examples/scripts/compute.py" and type or uncomment a scenario which you would like to run e.g. "Arusi8760". Moreover you can define whether you would like to run multi-objective-optimization or not (MOO=True or MOO=False). Run the scenario by executing compute.py
+
+.. code::
+
+    python compute.py
+
+This builds a the scenario described in csv files in the scenario folder and optimizes it using time-series based optimization. The results are presented in a dash app hosted on a local server.
+
+In general showcases different features to complement `oemof-tabular <https://github.com/oemof/oemof-tabular>`_ to add constraints specific to certain uses of it
 
 .. code::
 
