@@ -7,7 +7,7 @@ from oemof.solph.processing import parameter_as_dict
 
 
 try:
-    from oemof_visio import ESGraphRenderer
+    from oemof.visio import ESGraphRenderer
 
     ES_GRAPH = True
 except ModuleNotFoundError:
@@ -102,7 +102,7 @@ def compute_scenario(
 
     if ES_GRAPH is True:
         energy_system_graph = os.path.join(
-            results_path, f"{scenario_name}_energy_system.png"
+            results_path, f"{scenario_name}_wef_system.png"
         )
         es_graph = ESGraphRenderer(
             es, legend=True, filepath=energy_system_graph, img_format="png"
