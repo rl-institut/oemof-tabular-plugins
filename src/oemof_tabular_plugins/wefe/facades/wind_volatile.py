@@ -66,15 +66,16 @@ class WindTurbine(Volatile):
     output_parameters: dict (optional)
         Set parameters on the output edge of the conversion unit
          (see oemof.solph for more information on possible parameters)
-    t_air: array-like
-        Ambient air temperature
-    ghi: array-like
-        Global horizontal irradiance
-    pv_type: string
-        Name of the pv module used to get module parameters.
-        Has to match key of 'pv_dict'.
-    latitude: float
-        Latitude of the location where the PV panel is located. Used for calculating panel tilt.
+    windspeed: array-like
+        windspeed profile in [m/s]
+    surface_roughness: array-like
+        surface roughness profile in [m]
+    ref_height: numeric
+        reference height of the windspeed profile in [m],
+        e.g. windspeed profile at 100m
+    turbine_type: str
+        Name of the wind turbine used to get turbine parameters.
+        Has to match key of 'wind_turbine_dict'.
 
     """
 
@@ -117,11 +118,11 @@ class WindTurbine(Volatile):
 
         if windspeed is None or surface_roughness is None:
             # handle the case when t_air or ghi is None
-            print("Error: t_air or ghi of pv-panel component is None. Cannot perform calculations.")
+            print("Error: windspeed or surface roughness of wind turbine component is None. Cannot perform calculations.")
             return
         # raise error if air temperature list and solar irradiance list are different lengths
         if len(windspeed) != len(surface_roughness):
-            raise ValueError("Length mismatch between windspeed and surface roughness profiles of pv-panel component.")
+            raise ValueError("Length mismatch between windspeed and surface roughness profiles of wind turbine component.")
 
         # Get wind turbine params from database
         turbine = attributes.pop("turbine_type")

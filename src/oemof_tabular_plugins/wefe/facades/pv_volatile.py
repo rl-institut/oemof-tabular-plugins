@@ -52,9 +52,9 @@ class PVPanel(Volatile):
         Set parameters on the output edge of the conversion unit
          (see oemof.solph for more information on possible parameters)
     t_air: array-like
-        Ambient air temperature
+        Ambient air temperature [K]
     ghi: array-like
-        Global horizontal irradiance
+        Global horizontal irradiance [W/m²]
     pv_type: string
         Name of the pv module used to get module parameters.
         Has to match key of 'pv_dict'.
