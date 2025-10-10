@@ -38,21 +38,22 @@ For using oemof-tabular-plugins, install it using pip. For allowing the use of t
     pip install -e .
 
 
-OTP requires specific versions oemof-tabular (commit fa1e669c7fee932401895ea34fd2202cab27fcd0 on branch fix/datapackage) and oemof-industry (pip install oemof-industry==0.1.1rc2)
-For installing a suitable version of oemof-tabular, clone oemof-tabular to your local machine. Open the repository using e.g. "Git Bash" and switch to the branch "fix/datapackage" then checkout out to the specific commit needed
+OTP requires specific versions oemof-tabular (e.g. commit 09346649f75389d9fdafa62c24ae5e95cc0cf291 on dev) and oemof-industry (pip install oemof-industry==0.1.1rc2)
+For installing a suitable version of oemof-tabular, clone oemof-tabular to your local machine. Open the repository using e.g. "Git Bash". On the dev branch checkout out to the specific commit needed
 
 .. code::
 
-    git checkout fix/datapackage
-    git checkout fa1e669c7fee932401895ea34fd2202cab27fcd0
+    git checkout 09346649f75389d9fdafa62c24ae5e95cc0cf291
 
-Then use an anaconda prompt and move to the local repository of oemof-tabular. Install the required oemof-tabular version by 
+Then use an anaconda prompt and move to the local repository of oemof-tabular. Install the oemof-tabular version you are on locally by 
 
 .. code::
 
     pip install .
 
-The suitable oemof.industry version can be installed by specifiying the required version
+Currently (as of Oct10 2025) commit 09346649f75389d9fdafa62c24ae5e95cc0cf291 is the latest oemof-tabular commit on dev. Therefore you do not have to checkout on it to install oemof-tabular.
+
+The suitable oemof.industry version can be installed by specifiying the required version.
 
 .. code::
 
