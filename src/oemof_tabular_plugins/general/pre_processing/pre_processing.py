@@ -265,6 +265,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
     :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
     :param custom_attributes: list of custom attributes included in the model (defined in compute.py), default is None
     :param moo: whether the multi-objective optimization is activated, default is False
+    :param moo_wf: dictionary of moo weight factors
     """
     if moo is False:
         logger.info(f"Optimization activated for only costs")

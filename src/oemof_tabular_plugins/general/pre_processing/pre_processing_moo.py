@@ -130,6 +130,7 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
     wf_ghg = moo_wf["wf_ghg"]
     wf_lr = moo_wf["wf_lr"]
     wf_wf = moo_wf["wf_wf"]
+
     # TODO Create GUI interface so web app can directly provide customizable weights
 
     # ---------------- Assigning MOO variables in csv ----------------
