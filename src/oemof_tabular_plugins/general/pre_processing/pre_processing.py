@@ -39,6 +39,7 @@ def pre_processing_costs(wacc, element, element_path, element_df):
         annuity_cost = "capacity_cost"
     else:
         annuity_cost = "storage_capacity_cost"
+
     # check if any of the required columns are missing
     cost_columns = {"capex", "opex_fix", "lifetime"}
     missing_columns = cost_columns - set(element_df.columns)
@@ -212,6 +213,14 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             logger.info(
                 f"'{element}' does not contain '{annuity_cost}' parameter. Skipping..."
             )
+    # Reset marginal_cost to resource_cost for non-MOO runs
+    if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
+        element_df['marginal_cost'] = element_df['resource_cost']
+        logger.info(f"Reset marginal_cost to resource_cost for all components in '{element}'")
+    elif 'marginal_cost' in element_df.columns:
+        # If resource_cost doesn't exist, set marginal_cost to 0
+        element_df['marginal_cost'] = 0.0
+        logger.info(f"Reset marginal_cost to 0.0 for all components in '{element}'")
 
     # save the updated dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
