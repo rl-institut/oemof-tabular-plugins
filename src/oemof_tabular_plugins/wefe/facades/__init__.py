@@ -8,3 +8,7 @@ from .inverter import Inverter
 from .hydropower import RRHydropower
 from .functions import *
 from .reverse_osmosis import ReverseOsmosis
+from .ultrafiltration import UltraFiltration
+from .nanofiltration import NanoFiltration
+from .microfiltration import MicroFiltration
+from .biofiltration import BioFiltration

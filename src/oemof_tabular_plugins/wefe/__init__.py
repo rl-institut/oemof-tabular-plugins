@@ -4,6 +4,8 @@ from oemof_tabular_plugins.wefe.constraints.constraint_facades import (
 from oemof.tabular.facades import TYPEMAP
 
 from oemof.tabular.facades import Volatile
+from oemof_tabular_plugins.wefe.facades import UltraFiltration, NanoFiltration, MicroFiltration, BioFiltration
+
 from .facades import (
     PVPanel,
     WindTurbine,
@@ -30,7 +32,11 @@ WEFE_TYPEMAP = {
     "hydropower": RRHydropower,
     "river-flow": Volatile,
     "wind-turbine": WindTurbine,
-    "reverse_osmosis": ReverseOsmosis
+    "reverse_osmosis": ReverseOsmosis,
+    "ultrafiltration": UltraFiltration,
+    "nanofiltration": NanoFiltration,
+    "microfiltration": MicroFiltration,
+    "biofiltration": BioFiltration
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
