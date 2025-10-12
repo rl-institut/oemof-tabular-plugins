@@ -81,6 +81,10 @@ class BioFiltration(Converter, Facade):
 
     waste_biomass_out_bus: Bus
 
+    tech: str
+
+    carrier: str = ""
+
     specific_energy_consumption: float = 0.1  # kWh/m³
 
     efficiency: float = 0.85
@@ -90,10 +94,6 @@ class BioFiltration(Converter, Facade):
     nutrient_cost: float = 1.0  # USD/kg
 
     biomass_waste_fraction: float = 0.005
-
-    tech: str
-
-    carrier: str = ""
 
     capacity: float = None
 
@@ -150,9 +150,11 @@ class BioFiltration(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = nutrient_cost_per_m3 + self.marginal_cost,
                     investment = self._investment(),
-                    nutrient_dose = self.nutrient_dose,
                     **self.output_parameters,
                 ),
                 self.waste_biomass_out_bus: Flow(),
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.water_out_bus].custom_attributes = {"nutrient_dose": self.nutrient_dose}
