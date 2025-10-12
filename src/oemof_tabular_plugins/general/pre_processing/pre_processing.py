@@ -40,6 +40,21 @@ def pre_processing_costs(wacc, element, element_path, element_df):
     else:
         annuity_cost = "storage_capacity_cost"
 
+    # Reset capacity_cost for rows that have cost parameters
+    # removing potential artefacts of MOO runs and forcing recalculation
+    if annuity_cost in element_df.columns:
+        for index, row in element_df.iterrows():
+            # Check if this row has the cost parameters to recalculate
+            has_params = all([
+                'capex' in element_df.columns and pd.notna(row.get('capex')),
+                'opex_fix' in element_df.columns and pd.notna(row.get('opex_fix')),
+                'lifetime' in element_df.columns and pd.notna(row.get('lifetime'))
+            ])
+            if has_params:
+                # Clear capacity_cost to force recalculation
+                element_df.at[index, annuity_cost] = None
+        logger.info(f"Cleared '{annuity_cost}' for components with cost parameters in '{element}'")
+
     # check if any of the required columns are missing
     cost_columns = {"capex", "opex_fix", "lifetime"}
     missing_columns = cost_columns - set(element_df.columns)
@@ -213,7 +228,7 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             logger.info(
                 f"'{element}' does not contain '{annuity_cost}' parameter. Skipping..."
             )
-    # Reset marginal_cost to resource_cost for non-MOO runs
+    # Reset marginal_cost to resource_cost removing potential artefacts of MOO runs
     if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
         element_df['marginal_cost'] = element_df['resource_cost']
         logger.info(f"Reset marginal_cost to resource_cost for all components in '{element}'")
