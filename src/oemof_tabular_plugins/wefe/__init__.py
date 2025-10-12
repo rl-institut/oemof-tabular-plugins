@@ -4,7 +4,8 @@ from oemof_tabular_plugins.wefe.constraints.constraint_facades import (
 from oemof.tabular.facades import TYPEMAP
 
 from oemof.tabular.facades import Volatile
-from oemof_tabular_plugins.wefe.facades import UltraFiltration, NanoFiltration, MicroFiltration, BioFiltration
+from oemof_tabular_plugins.wefe.facades import UltraFiltration, NanoFiltration, MicroFiltration, BioFiltration, \
+    ActivatedCarbonFilter, CeramicFilter, CartridgeFilter, SlowSandFilter
 
 from .facades import (
     PVPanel,
@@ -36,7 +37,11 @@ WEFE_TYPEMAP = {
     "ultrafiltration": UltraFiltration,
     "nanofiltration": NanoFiltration,
     "microfiltration": MicroFiltration,
-    "biofiltration": BioFiltration
+    "biofiltration": BioFiltration,
+    "activated_carbon_filter": ActivatedCarbonFilter,
+    "ceramic_filter": CeramicFilter,
+    "cartridge_filter": CartridgeFilter,
+    "slow_sand_filter": SlowSandFilter
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)

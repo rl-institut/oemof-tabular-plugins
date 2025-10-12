@@ -12,3 +12,7 @@ from .ultrafiltration import UltraFiltration
 from .nanofiltration import NanoFiltration
 from .microfiltration import MicroFiltration
 from .biofiltration import BioFiltration
+from .activated_carbon_filter import ActivatedCarbonFilter
+from .ceramic_filter import CeramicFilter
+from .cartridge_filter import CartridgeFilter
+from .slow_sand_filter import SlowSandFilter
