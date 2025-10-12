@@ -72,6 +72,8 @@ class NanoFiltration(Converter, Facade):
 
     water_out_bus: Bus
 
+    brine_out_bus: Bus
+
     tech: str
 
     carrier: str = ""
