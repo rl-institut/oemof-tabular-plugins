@@ -11,17 +11,22 @@ from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
 class Chlorination(Converter, Facade):
-    r""" Chlorination water treatment unit with one water input and one water output.
+    r""" Chlorination water treatment unit with two inputs and one output.
     Chlorine dosing is attached as a parameter to the output water stream.
 
     Parameters
     ----------
+    electricity_bus: oemof.solph.Bus
+        An oemof bus instance where unit is connected to with
+        its electricity input.
     water_in_bus: oemof.solph.Bus
         An oemof bus instance where unit is connected to with
         its untreated water input.
     water_out_bus: oemof.solph.Bus
         An oemof bus instance where unit is connected to with
         its treated water output.
+    specific_energy_consumption: float
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.05
     chlorine_dose: float
         Chlorine dosage in mg/L of treated water (= g/m³). Default: 1.0
     chlorine_cost: float
@@ -58,6 +63,8 @@ class Chlorination(Converter, Facade):
          (see oemof.solph for more information on possible parameters)
     """
 
+    electricity_bus: Bus
+
     water_in_bus: Bus
 
     water_out_bus: Bus
@@ -65,6 +72,8 @@ class Chlorination(Converter, Facade):
     tech: str
 
     carrier: str = ""
+
+    specific_energy_consumption: float = 0.05  # kWh/m³
 
     chlorine_dose: float = 1.0  # mg/L ≡ g/m³
 
@@ -100,6 +109,7 @@ class Chlorination(Converter, Facade):
 
         self.conversion_factors.update(
             {
+                self.electricity_bus: sequence(self.specific_energy_consumption),
                 self.water_in_bus: sequence(1),
                 self.water_out_bus: sequence(1),
             }
@@ -107,7 +117,10 @@ class Chlorination(Converter, Facade):
 
         self.inputs.update(
             {
-                self.water_in_bus: Flow(**self.input_parameters),
+                self.electricity_bus: Flow(
+                    variable_costs=self.carrier_cost, **self.input_parameters
+                ),
+                self.water_in_bus: Flow(),
             }
         )
 
@@ -117,8 +130,10 @@ class Chlorination(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = chlorine_cost_per_m3 + self.marginal_cost,
                     investment = self._investment(),
-                    chlorine_dose = self.chlorine_dose,
                     **self.output_parameters,
                 ),
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.water_out_bus].custom_attributes = {"chlorine_dose": self.chlorine_dose}
