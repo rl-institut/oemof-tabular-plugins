@@ -30,7 +30,7 @@ class MembraneDistillation(Converter, Facade):
         An oemof bus instance where unit is connected to with
         its brine/concentrate output.
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 300
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 5.0
     efficiency: float
         Share of untreated water that becomes treated water.
         Value between 0 and 1. Default: 0.70
@@ -78,7 +78,7 @@ class MembraneDistillation(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 300 # kWh/m³
+    specific_energy_consumption: float = 5.0 # kWh/m³
 
     efficiency: float = 0.70
 
