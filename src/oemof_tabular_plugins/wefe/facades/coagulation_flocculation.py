@@ -147,9 +147,11 @@ class CoagulationFlocculation(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = flocculant_cost_per_m3 + coagulant_cost_per_m3 + self.marginal_cost,
                     investment = self._investment(),
-                    flocculant_dose = self.flocculant_dose,
-                    coagulant_dose = self.coagulant_dose,
                     **self.output_parameters
                 )
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.water_out_bus].custom_attributes = {"flocculant_dose": self.flocculant_dose,
+                                                              "coagulant_dose": self.coagulant_dose}

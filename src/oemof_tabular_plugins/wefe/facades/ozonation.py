@@ -126,8 +126,10 @@ class Ozonation(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = self.marginal_cost,
                     investment = self._investment(),
-                    ozone_dose = self.ozone_dose,
                     **self.output_parameters,
                 ),
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.water_out_bus].custom_attributes = {"ozone_dose": self.ozone_dose}

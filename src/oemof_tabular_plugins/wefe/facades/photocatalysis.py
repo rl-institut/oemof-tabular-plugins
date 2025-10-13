@@ -142,9 +142,11 @@ class PhotocatalyticUnit(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = catalyst_cost_per_m3 + self.marginal_cost,
                     investment = self._investment(),
-                    Cout = Cout,
-                    catalyst_dose = self.catalyst_dose,
                     **self.output_parameters,
                 ),
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.water_out_bus].custom_attributes = {"Cout": Cout,
+                                                              "catalyst_dose": self.catalyst_dose}

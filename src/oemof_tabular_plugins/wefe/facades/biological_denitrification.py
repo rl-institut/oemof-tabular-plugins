@@ -145,10 +145,12 @@ class BiologicalDenitrification(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = carbon_source_cost_per_m3 + self.marginal_cost,
                     investment = self._investment(),
-                    Cout = Cout,
-                    carbon_source_dose = self.carbon_source_dose,
                     **self.output_parameters,
                 ),
-                self.nitrogen_gas_bus: Flow(),
+                self.N2_gas_bus: Flow(),
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.water_out_bus].custom_attributes = {"Cout": Cout,
+                                                              "carbon_source_dose": self.carbon_source_dose}
