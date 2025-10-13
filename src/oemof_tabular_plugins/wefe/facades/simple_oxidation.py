@@ -16,12 +16,17 @@ class SimpleOxidation(Converter, Facade):
 
     Parameters
     ----------
+     electricity_bus: oemof.solph.Bus
+        An oemof bus instance where unit is connected to with
+        its electricity input.
     water_in_bus: oemof.solph.Bus
         An oemof bus instance where unit is connected to with
         its untreated water input.
     water_out_bus: oemof.solph.Bus
         An oemof bus instance where the unit is connected to with
         its treated water output.
+    specific_energy_consumption: float
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.05
     oxidant_type: str
         Type/name of oxidant. Options: 'chlorine', 'chlorine_dioxide', 'hydrogen_peroxide',
         'potassium_permanganate', or custom name. Default: 'hydrogen_peroxide'.
@@ -61,6 +66,8 @@ class SimpleOxidation(Converter, Facade):
          (see oemof.solph for more information on possible parameters)
     """
 
+    electricity_bus: Bus
+
     water_in_bus: Bus
 
     water_out_bus: Bus
@@ -68,6 +75,8 @@ class SimpleOxidation(Converter, Facade):
     tech: str
 
     carrier: str = ""
+
+    specific_energy_consumption: float = 0.05  # kWh/m³
 
     oxidant_type: str = "hydrogen_peroxide"
 
@@ -135,6 +144,7 @@ class SimpleOxidation(Converter, Facade):
 
         self.conversion_factors.update(
             {
+                self.electricity_bus: sequence(self.specific_energy_consumption),
                 self.water_in_bus: sequence(1),
                 self.water_out_bus: sequence(1),
             }
@@ -142,6 +152,9 @@ class SimpleOxidation(Converter, Facade):
 
         self.inputs.update(
             {
+                self.electricity_bus: Flow(
+                    variable_costs=self.carrier_cost, **self.input_parameters
+                ),
                 self.water_in_bus: Flow(),
             }
         )
@@ -152,9 +165,11 @@ class SimpleOxidation(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = oxidant_cost_per_m3 + self.marginal_cost,
                     investment = self._investment(),
-                    oxidant_type = self.oxidant_type,
-                    oxidant_dose = dose,
                     **self.output_parameters,
                 ),
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.water_out_bus].custom_attributes = {"oxidant_type": self.oxidant_type,
+                                                              "oxidant_dose": dose}
