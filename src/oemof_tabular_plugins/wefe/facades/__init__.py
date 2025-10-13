@@ -16,3 +16,9 @@ from .activated_carbon_filter import ActivatedCarbonFilter
 from .ceramic_filter import CeramicFilter
 from .cartridge_filter import CartridgeFilter
 from .slow_sand_filter import SlowSandFilter
+from .electrodialysis import ElectrodialysisUnit
+from .ion_exchange import IonExchange
+from .uv_disinfection import UVDisinfection
+from .boiling import Boiling
+from .distillation import Distillation
+from .membrane_distillation import MembraneDistillation

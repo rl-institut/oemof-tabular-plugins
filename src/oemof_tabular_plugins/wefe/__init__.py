@@ -5,7 +5,8 @@ from oemof.tabular.facades import TYPEMAP
 
 from oemof.tabular.facades import Volatile
 from oemof_tabular_plugins.wefe.facades import UltraFiltration, NanoFiltration, MicroFiltration, BioFiltration, \
-    ActivatedCarbonFilter, CeramicFilter, CartridgeFilter, SlowSandFilter
+    ActivatedCarbonFilter, CeramicFilter, CartridgeFilter, SlowSandFilter, ElectrodialysisUnit, IonExchange, \
+    UVDisinfection, Boiling, Distillation, MembraneDistillation
 
 from .facades import (
     PVPanel,
@@ -41,7 +42,13 @@ WEFE_TYPEMAP = {
     "activated_carbon_filter": ActivatedCarbonFilter,
     "ceramic_filter": CeramicFilter,
     "cartridge_filter": CartridgeFilter,
-    "slow_sand_filter": SlowSandFilter
+    "slow_sand_filter": SlowSandFilter,
+    "electrodialysis": ElectrodialysisUnit,
+    "ion_exchange": IonExchange,
+    "uv_disinfection": UVDisinfection,
+    "boiling": Boiling,
+    "distillation": Distillation,
+    "membrane_distillation": MembraneDistillation
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
