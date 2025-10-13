@@ -27,3 +27,5 @@ from .ozonation import Ozonation
 from .photocatalysis import PhotocatalyticUnit
 from .biological_denitrification import BiologicalDenitrification
 from .coagulation_flocculation import CoagulationFlocculation
+from .simple_oxidation import SimpleOxidation
+from .chlorination import Chlorination

@@ -7,7 +7,7 @@ from oemof.tabular.facades import Volatile
 from oemof_tabular_plugins.wefe.facades import UltraFiltration, NanoFiltration, MicroFiltration, BioFiltration, \
     ActivatedCarbonFilter, CeramicFilter, CartridgeFilter, SlowSandFilter, ElectrodialysisUnit, IonExchange, \
     UVDisinfection, Boiling, Distillation, MembraneDistillation, Ozonation, PhotocatalyticUnit, \
-    BiologicalDenitrification, Adsorption, CoagulationFlocculation
+    BiologicalDenitrification, Adsorption, CoagulationFlocculation, Chlorination, SimpleOxidation
 
 from .facades import (
     PVPanel,
@@ -54,7 +54,9 @@ WEFE_TYPEMAP = {
     "photocatalysis": PhotocatalyticUnit,
     "biological_denitrification": BiologicalDenitrification,
     "adsorption": Adsorption,
-    "coagulation_flocculation": CoagulationFlocculation
+    "coagulation_flocculation": CoagulationFlocculation,
+    "chlorination": Chlorination,
+    "simple_oxidation": SimpleOxidation
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
