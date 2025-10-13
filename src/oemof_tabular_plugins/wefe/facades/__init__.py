@@ -22,3 +22,8 @@ from .uv_disinfection import UVDisinfection
 from .boiling import Boiling
 from .distillation import Distillation
 from .membrane_distillation import MembraneDistillation
+from .adsorption import Adsorption
+from .ozonation import Ozonation
+from .photocatalysis import PhotocatalyticUnit
+from .biological_denitrification import BiologicalDenitrification
+from .coagulation_flocculation import CoagulationFlocculation
