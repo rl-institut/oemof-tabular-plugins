@@ -68,7 +68,7 @@ class Adsorption(Converter, Facade):
          (see oemof.solph for more information on possible parameters)
     """
 
-electricity_bus: Bus
+    electricity_bus: Bus
 
     water_in_bus: Bus
 
@@ -110,41 +110,43 @@ electricity_bus: Bus
 
     output_parameters: dict = field(default_factory=dict)
 
-def build_solph_components(self):
+    def build_solph_components(self):
 
-    # Adsorbent cost per m³ of treated water:
-    # adsorbent_dose [mg/L] * 1e-6 [kg/m³ per mg/L] * adsorbent_cost [currency/kg]
-    adsorbent_cost_per_m3 = self.adsorbent_dose * 1e-6 * self.adsorbent_cost
+        # Adsorbent cost per m³ of treated water:
+        # adsorbent_dose [mg/L] * 1e-6 [kg/m³ per mg/L] * adsorbent_cost [currency/kg]
+        adsorbent_cost_per_m3 = self.adsorbent_dose * 1e-6 * self.adsorbent_cost
 
-    self.conversion_factors.update(
-        {
-            self.electricity_bus: sequence(self.specific_energy_consumption),
-            self.water_in_bus: sequence(1),
-            self.water_out_bus: sequence(1),
-        }
-    )
+        self.conversion_factors.update(
+            {
+                self.electricity_bus: sequence(self.specific_energy_consumption),
+                self.water_in_bus: sequence(1),
+                self.water_out_bus: sequence(1),
+            }
+        )
 
-    self.inputs.update(
-        {
-            self.electricity_bus: Flow(
-                variable_costs=self.carrier_cost, **self.input_parameters
-            ),
-            self.water_in_bus: Flow(),
-        }
-    )
+        self.inputs.update(
+            {
+                self.electricity_bus: Flow(
+                    variable_costs=self.carrier_cost, **self.input_parameters
+                ),
+                self.water_in_bus: Flow(),
+            }
+        )
 
-    # Calculate output concentration based on input and efficiency
-    Cout = self.Cin * (1 - self.removal_efficiency)
+        # Calculate output concentration based on input and efficiency
+        Cout = self.Cin * (1 - self.removal_efficiency)
 
-    self.outputs.update(
-        {
-            self.water_out_bus: Flow(
-                nominal_value = self._nominal_value(),
-                variable_costs = adsorbent_cost_per_m3 + self.marginal_cost,
-                investment = self._investment(),
-                Cout = Cout,
-                adsorbent_dose = self.adsorbent_dose,
-                **self.output_parameters,
-            ),
-        }
-    )
+        self.outputs.update(
+            {
+                self.water_out_bus: Flow(
+                    nominal_value = self._nominal_value(),
+                    variable_costs = adsorbent_cost_per_m3 + self.marginal_cost,
+                    investment = self._investment(),
+                    **self.output_parameters,
+                ),
+            }
+        )
+
+        # Add custom attribute separately
+        self.outputs[self.water_out_bus].custom_attributes = {"Cout": Cout,
+                                                              "adsorbent_dose": self.adsorbent_dose}
