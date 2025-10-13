@@ -4,10 +4,6 @@ from oemof_tabular_plugins.wefe.constraints.constraint_facades import (
 from oemof.tabular.facades import TYPEMAP
 
 from oemof.tabular.facades import Volatile
-from oemof_tabular_plugins.wefe.facades import UltraFiltration, NanoFiltration, MicroFiltration, BioFiltration, \
-    ActivatedCarbonFilter, CeramicFilter, CartridgeFilter, SlowSandFilter, ElectrodialysisUnit, IonExchange, \
-    UVDisinfection, Boiling, Distillation, MembraneDistillation, Ozonation, PhotocatalyticUnit, \
-    BiologicalDenitrification, Adsorption, CoagulationFlocculation, Chlorination, SimpleOxidation
 
 from .facades import (
     PVPanel,
@@ -20,7 +16,28 @@ from .facades import (
     WaterFiltration,
     Inverter,
     RRHydropower,
-    ReverseOsmosis
+    ReverseOsmosis,
+    UltraFiltration,
+    NanoFiltration,
+    MicroFiltration,
+    BioFiltration,
+    ActivatedCarbonFilter,
+    CeramicFilter,
+    CartridgeFilter,
+    SlowSandFilter,
+    ElectrodialysisUnit,
+    IonExchange,
+    UVDisinfection,
+    Boiling,
+    Distillation,
+    MembraneDistillation,
+    Ozonation,
+    PhotocatalyticUnit,
+    BiologicalDenitrification,
+    Adsorption,
+    CoagulationFlocculation,
+    Chlorination,
+    SimpleOxidation
 )
 
 WEFE_TYPEMAP = {
