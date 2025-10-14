@@ -74,13 +74,13 @@ class SepticSystem(Converter, Facade):
 
     sludge_out_bus: Bus
 
-    specific_energy_consumption: float = 0.1 # kWh/m³ (~0.0 ,if assumed gravity based)
-
-    efficiency: float = 0.7
-
     tech: str
 
     carrier: str = ""
+
+    specific_energy_consumption: float = 0.1 # kWh/m³ (~0.0 ,if assumed gravity based)
+
+    efficiency: float = 0.7
 
     capacity: float = None
 

@@ -74,13 +74,13 @@ class DecentralizedWWTP(Converter, Facade):
 
     sludge_out_bus: Bus
 
-    specific_energy_consumption: float = 0.3 # kWh/m³
-
-    efficiency: float = 0.80
-
     tech: str
 
     carrier: str = ""
+
+    specific_energy_consumption: float = 0.3 # kWh/m³
+
+    efficiency: float = 0.80
 
     capacity: float = None
 
