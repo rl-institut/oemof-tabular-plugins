@@ -33,3 +33,8 @@ from .intake_structure import IntakeStructure
 from .coarse_bar_screen import CoarseBarScreen
 from .fine_screen import FineScreen
 from .grit_chamber import GritChamber
+from .water_reuse_system import WaterReuseSystem
+from .constructed_wetland import ConstructedWetland
+from .septic_system import SepticSystem
+from .centralized_WWTP import CentralizedWWTP
+from .decentralized_WWTP import DecentralizedWWTP

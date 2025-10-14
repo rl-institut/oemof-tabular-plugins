@@ -41,7 +41,12 @@ from .facades import (
     IntakeStructure,
     CoarseBarScreen,
     FineScreen,
-    GritChamber
+    GritChamber,
+    WaterReuseSystem,
+    ConstructedWetland,
+    SepticSystem,
+    CentralizedWWTP,
+    DecentralizedWWTP
 )
 
 WEFE_TYPEMAP = {
@@ -81,7 +86,12 @@ WEFE_TYPEMAP = {
     "intake_structure": IntakeStructure,
     "coarse_bar_screen": CoarseBarScreen,
     "fine_screen": FineScreen,
-    "grit_chamber": GritChamber
+    "grit_chamber": GritChamber,
+    "water_reuse_system": WaterReuseSystem,
+    "constructed_wetland": ConstructedWetland,
+    "septic_system": SepticSystem,
+    "centralized_WWTP": CentralizedWWTP,
+    "decentralized_WWTP": DecentralizedWWTP
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
