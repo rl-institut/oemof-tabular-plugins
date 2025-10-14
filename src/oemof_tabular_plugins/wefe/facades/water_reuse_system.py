@@ -1,3 +1,6 @@
+from dataclasses import field
+from typing import Sequence, Union
+
 import numpy as np
 from oemof.solph._plumbing import sequence
 from oemof.solph.buses import Bus
