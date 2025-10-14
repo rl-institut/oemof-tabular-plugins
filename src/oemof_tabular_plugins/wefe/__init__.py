@@ -37,7 +37,11 @@ from .facades import (
     Adsorption,
     CoagulationFlocculation,
     Chlorination,
-    SimpleOxidation
+    SimpleOxidation,
+    IntakeStructure,
+    CoarseBarScreen,
+    FineScreen,
+    GritChamber
 )
 
 WEFE_TYPEMAP = {
@@ -73,7 +77,11 @@ WEFE_TYPEMAP = {
     "adsorption": Adsorption,
     "coagulation_flocculation": CoagulationFlocculation,
     "chlorination": Chlorination,
-    "simple_oxidation": SimpleOxidation
+    "simple_oxidation": SimpleOxidation,
+    "intake_structure": IntakeStructure,
+    "coarse_bar_screen": CoarseBarScreen,
+    "fine_screen": FineScreen,
+    "grit_chamber": GritChamber
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)

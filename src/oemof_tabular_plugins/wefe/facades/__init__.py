@@ -29,3 +29,7 @@ from .biological_denitrification import BiologicalDenitrification
 from .coagulation_flocculation import CoagulationFlocculation
 from .simple_oxidation import SimpleOxidation
 from .chlorination import Chlorination
+from .intake_structure import IntakeStructure
+from .coarse_bar_screen import CoarseBarScreen
+from .fine_screen import FineScreen
+from .grit_chamber import GritChamber
