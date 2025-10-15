@@ -38,3 +38,8 @@ from .constructed_wetland import ConstructedWetland
 from .septic_system import SepticSystem
 from .centralized_WWTP import CentralizedWWTP
 from .decentralized_WWTP import DecentralizedWWTP
+from .flush_toilet import FlushToilet
+from .dry_toilet import DryToilet
+from .latrine import Latrine
+from .composting_toilet import CompostingToilet
+from .open_field import OpenField

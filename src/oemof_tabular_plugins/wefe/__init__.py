@@ -46,7 +46,12 @@ from .facades import (
     ConstructedWetland,
     SepticSystem,
     CentralizedWWTP,
-    DecentralizedWWTP
+    DecentralizedWWTP,
+    FlushToilet,
+    DryToilet,
+    Latrine,
+    CompostingToilet,
+    OpenField
 )
 
 WEFE_TYPEMAP = {
@@ -91,7 +96,12 @@ WEFE_TYPEMAP = {
     "constructed_wetland": ConstructedWetland,
     "septic_system": SepticSystem,
     "centralized_WWTP": CentralizedWWTP,
-    "decentralized_WWTP": DecentralizedWWTP
+    "decentralized_WWTP": DecentralizedWWTP,
+    "flush_toilet": FlushToilet,
+    "dry_toilet": DryToilet,
+    "latrine": Latrine,
+    "composting_toilet": CompostingToilet,
+    "open_field": OpenField
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
