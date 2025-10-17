@@ -253,7 +253,7 @@ class TestPreprocessingCosts:
         pre_processing(self.pre_p_dir, wacc=wacc)
         assert any(
             record.levelname == "INFO"
-            and "defined annuity has been replaced with" in record.message
+            and "the annuity ('capacity_cost') has been calculated and updated" in record.message
             for record in caplog.records
         )
 

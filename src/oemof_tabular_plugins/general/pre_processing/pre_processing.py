@@ -226,7 +226,7 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             )
         elif scenario == "no annuity no cost params":
             logger.info(
-                f"'{element}' does not contain '{annuity_cost}' parameter. Skipping..."
+                f"Component '{row_name}' of element '{element}' does not contain '{annuity_cost}' parameter. Skipping..."
             )
     # Reset marginal_cost to resource_cost removing potential artefacts of MOO runs
     if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
@@ -317,15 +317,17 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
                 if moo is False or moo_wf is None:
                     # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
                     pre_processing_costs(wacc, element, element_path, element_df)
-                    # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
-                    # requirement)
-                    pre_processing_custom_attributes(
-                        element_path, element_df, custom_attributes
-                    )
-                elif moo is True and moo_wf is not None:
+                else:
+                    # performs pre-processing of cost data while taking multile objectives (emissions, water
+                    # footprint, land requiremnt) into account
                     pre_processing_moo(
                         wacc, element, element_path, element_df, scenario_dir, moo_wf
                     )
+                # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
+                # requirement)
+                pre_processing_custom_attributes(
+                    element_path, element_df, custom_attributes
+                )
             except Exception as e:
                 logging.error(
                     f"Error occured while preprocessing resource {element} in scenario {scenario_dir}"

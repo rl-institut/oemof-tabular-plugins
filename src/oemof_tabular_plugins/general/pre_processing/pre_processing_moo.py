@@ -252,12 +252,12 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
                 element_df.at[index, MOO_ANNUITY] = float(annuity)
                 # log info message
                 logger.info(
-                    f"'{annuity}' has been calculated and updated for"
+                    f"'{MOO_ANNUITY}' has been calculated and updated for"
                     f" '{row_name}' in '{element}'."
                 )
             else:
                 logging.warning(
-                    f"'{annuity}' could not be calculated and will not be updated for"
+                    f"'{MOO_ANNUITY}' could not be calculated and will not be updated for"
                     f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
                 )
 
@@ -287,13 +287,13 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
             )
             element_df.at[index, moo_variable_var] = ts_header
             logger.info(
-                f"'{element}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
+                f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
                 f" '{row_name}' in '{element}'."
             )
 
         elif scenario == "no moo indicator":
             logger.info(
-                f"'{element}' does not contain '{moo_variable_fix}' parameter. Skipping..."
+                f"'{row_name}' of element '{element}' does not contain '{moo_variable_fix}' parameter. Skipping..."
             )
     logging.debug(element_path)
 
