@@ -1,0 +1,4 @@
+name;type;balanced;carrier
+irrigation-bus;bus;True;water
+biomass-bus;bus;True;biomass
+crop-bus;bus;True;crop

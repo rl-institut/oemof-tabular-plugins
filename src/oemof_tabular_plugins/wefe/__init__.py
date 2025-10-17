@@ -11,6 +11,7 @@ from .facades import (
     APV,
     MimoCrop,
     SimpleCrop,
+    Crop,
     WaterPump,
     WaterFiltration,
     Inverter,
@@ -20,8 +21,7 @@ from .facades import (
 WEFE_TYPEMAP = {
     "water-pump": WaterPump,
     "water-filtration": WaterFiltration,
-    "crop": SimpleCrop,
-    "mimo-crop": MimoCrop,
+    "crop": Crop,
     "pv-panel": PVPanel,
     "mimo": MIMO,
     "apv": APV,
