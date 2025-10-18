@@ -79,6 +79,10 @@ class CompostingToilet(Converter, Facade):
 
     compost_out_bus: Bus
 
+    tech: str
+
+    carrier: str = ""
+
     bulking_agent_dose: float = 2.61 # kg/kg of compost
 
     bulking_agent_cost: float = 0.2 # USD/kg
@@ -88,10 +92,6 @@ class CompostingToilet(Converter, Facade):
     feces_compost_fraction: float = 3.91
 
     leachate_compost_relation: float = 1.74
-
-    tech: str
-
-    carrier: str = ""
 
     capacity: float = None
 
@@ -149,8 +149,10 @@ class CompostingToilet(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = bulking_agent_cost_per_kg_compost + self.marginal_cost,
                     investment = self._investment(),
-                    bulking_agent_dose = self.bulking_agent_dose,
                     **self.output_parameters,
                 ),
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.compost_out_bus].custom_attributes = {"bulking_agent_dose": self.bulking_agent_dose}
