@@ -79,6 +79,10 @@ class DryToilet(Converter, Facade):
 
     dry_feces_out_bus: Bus
 
+    tech: str
+
+    carrier: str = ""
+
     bulking_agent_dose: float = 0.25 # mg/L = g/m³
 
     bulking_agent_cost: float = 0.1 # USD/kg
@@ -88,10 +92,6 @@ class DryToilet(Converter, Facade):
     wet_feces_dry_feces_fraction: float = 3.3
 
     leachate_dry_feces_relation: float = 0.1
-
-    tech: str
-
-    carrier: str = ""
 
     capacity: float = None
 
@@ -149,8 +149,10 @@ class DryToilet(Converter, Facade):
                     nominal_value = self._nominal_value(),
                     variable_costs = bulking_agent_cost_per_kg_compost + self.marginal_cost,
                     investment = self._investment(),
-                    bulking_agent_dose = self.bulking_agent_dose,
                     **self.output_parameters,
                 ),
             }
         )
+
+        # Add custom attribute separately
+        self.outputs[self.dry_feces_out_bus].custom_attributes = {"bulking_agent_dose": self.bulking_agent_dose}
