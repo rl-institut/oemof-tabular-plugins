@@ -73,9 +73,8 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    # "aiwa"
-    # "aiwa_24"
-    "aiwa_8760"
+    "aiwa_24"
+    # "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
 ]
@@ -104,12 +103,16 @@ custom_attributes = [
 moo = True
 
 # MOO weight factors
-# moo_wf = {
-#    "wf_cost": 15,
-#    "wf_ghg": 1,
-#    "wf_lr": 343434,
-#    "wf_wf": 0,
-#}
+# Assign weights to the different minimization objectives (cost, greenhouse gas emissions,
+# land requirements, water scarcity footprint).
+# We recommend assigning values between 0 and 1 to the weight factors, ensuring that their total sum equals 1.
+
+moo_wf = {
+    "wf_cost": 0.4,
+    "wf_ghg": 0.1,
+    "wf_lr": 0,
+    "wf_wf": 0.5,
+}
 
 # -------------- RUNNING THE SCENARIOS --------------
 for scenario in scenarios:
@@ -126,7 +129,7 @@ for scenario in scenarios:
         custom_attributes=custom_attributes,
         typemap=TYPEMAP,
         moo=moo,
-        #moo_wf=moo_wf,
+        moo_wf=moo_wf,
         dash_app=True,
         parameters_units=parameters_units,
         skip_infer_datapackage_metadata=False

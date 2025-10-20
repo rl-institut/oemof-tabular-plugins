@@ -39,6 +39,22 @@ def pre_processing_costs(wacc, element, element_path, element_df):
         annuity_cost = "capacity_cost"
     else:
         annuity_cost = "storage_capacity_cost"
+
+    # Reset capacity_cost for rows that have cost parameters
+    # removing potential artefacts of MOO runs and forcing recalculation
+    if annuity_cost in element_df.columns:
+        for index, row in element_df.iterrows():
+            # Check if this row has the cost parameters to recalculate
+            has_params = all([
+                'capex' in element_df.columns and pd.notna(row.get('capex')),
+                'opex_fix' in element_df.columns and pd.notna(row.get('opex_fix')),
+                'lifetime' in element_df.columns and pd.notna(row.get('lifetime'))
+            ])
+            if has_params:
+                # Clear capacity_cost to force recalculation
+                element_df.at[index, annuity_cost] = None
+        logger.info(f"Cleared '{annuity_cost}' for components with cost parameters in '{element}'")
+
     # check if any of the required columns are missing
     cost_columns = {"capex", "opex_fix", "lifetime"}
     missing_columns = cost_columns - set(element_df.columns)
@@ -210,8 +226,16 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             )
         elif scenario == "no annuity no cost params":
             logger.info(
-                f"'{element}' does not contain '{annuity_cost}' parameter. Skipping..."
+                f"Component '{row_name}' of element '{element}' does not contain '{annuity_cost}' parameter. Skipping..."
             )
+    # Reset marginal_cost to resource_cost removing potential artefacts of MOO runs
+    if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
+        element_df['marginal_cost'] = element_df['resource_cost']
+        logger.info(f"Reset marginal_cost to resource_cost for all components in '{element}'")
+    elif 'marginal_cost' in element_df.columns:
+        # If resource_cost doesn't exist, set marginal_cost to 0
+        element_df['marginal_cost'] = 0.0
+        logger.info(f"Reset marginal_cost to 0.0 for all components in '{element}'")
 
     # save the updated dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
@@ -265,6 +289,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
     :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
     :param custom_attributes: list of custom attributes included in the model (defined in compute.py), default is None
     :param moo: whether the multi-objective optimization is activated, default is False
+    :param moo_wf: dictionary of moo weight factors
     """
     if moo is False:
         logger.info(f"Optimization activated for only costs")
@@ -292,15 +317,17 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
                 if moo is False or moo_wf is None:
                     # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
                     pre_processing_costs(wacc, element, element_path, element_df)
-                    # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
-                    # requirement)
-                    pre_processing_custom_attributes(
-                        element_path, element_df, custom_attributes
-                    )
-                elif moo is True and moo_wf is not None:
+                else:
+                    # performs pre-processing of cost data while taking multile objectives (emissions, water
+                    # footprint, land requiremnt) into account
                     pre_processing_moo(
                         wacc, element, element_path, element_df, scenario_dir, moo_wf
                     )
+                # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
+                # requirement)
+                pre_processing_custom_attributes(
+                    element_path, element_df, custom_attributes
+                )
             except Exception as e:
                 logging.error(
                     f"Error occured while preprocessing resource {element} in scenario {scenario_dir}"
