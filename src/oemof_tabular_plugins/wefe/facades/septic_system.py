@@ -30,10 +30,10 @@ class SepticSystem(Converter, Facade):
         An oemof bus instance where the unit is connected to with
         its sludge output.
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.1 (~0.0 ,if assumed gravity based)
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.13 (~0.0 ,if assumed gravity based)
     efficiency: float
         Share of untreated water that becomes treated water.
-        Value between 0 and 1. Default: 0.70
+        Value between 0 and 1. Default: 0.80
     capacity: numeric
         The water treatment capacity (output side) of the unit.
     carrier_cost: numeric
@@ -78,7 +78,7 @@ class SepticSystem(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.1 # kWh/m³ (~0.0 ,if assumed gravity based)
+    specific_energy_consumption: float = 0.13 # kWh/m³ (~0.0 ,if assumed gravity based)
 
     efficiency: float = 0.7
 

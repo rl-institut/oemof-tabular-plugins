@@ -33,7 +33,7 @@ class CentralizedWWTP(Converter, Facade):
         Specific electricity demand/consumption in kWh per m³ treated water. Default: 1.0
     efficiency: float
         Share of untreated water that becomes treated water.
-        Value between 0 and 1. Default: 0.80
+        Value between 0 and 1. Default: 0.92
     capacity: numeric
         The water treatment capacity (output side) of the unit.
     carrier_cost: numeric
@@ -80,7 +80,7 @@ class CentralizedWWTP(Converter, Facade):
 
     specific_energy_consumption: float = 1.0 # kWh/m³
 
-    efficiency: float = 0.80
+    efficiency: float = 0.92
 
     capacity: float = None
 
