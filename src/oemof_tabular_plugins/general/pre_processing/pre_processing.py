@@ -40,6 +40,11 @@ def pre_processing_costs(wacc, element, element_path, element_df):
     else:
         annuity_cost = "storage_capacity_cost"
 
+    # For consistency, 'annuity' (raw, economic annuity) is defined separately:
+    # It will be the same as 'capacity_cost' for cost-optimization.
+    # It will be different for MOO, as 'capacity_cost' takes additional weight factors into account
+    annuity_cost_raw = "annuity"
+
     # Reset capacity_cost for rows that have cost parameters
     # removing potential artefacts of MOO runs and forcing recalculation
     if annuity_cost in element_df.columns:
@@ -183,6 +188,7 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
             # update the dataframe
             element_df.at[index, annuity_cost] = float(capacity_cost)
+            element_df.at[index, annuity_cost_raw] = float(capacity_cost)
             # log info message
             logger.info(
                 f"the annuity ('{annuity_cost}') has been calculated and updated for"
@@ -199,6 +205,7 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
             # update the dataframe
             element_df.at[index, annuity_cost] = float(capacity_cost)
+            element_df.at[index, annuity_cost_raw] = float(capacity_cost)
             # if all parameters are defined, the user is asked if they want to calculate the annuity
             # from the capex, opex_fix and lifetime or use the annuity directly
             logger.info(
@@ -218,7 +225,8 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             # calculate the annuity using the calculate_annuity function
             capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
             # update the dataframe
-            element_df["capacity_cost"] = float(capacity_cost)
+            element_df[annuity_cost] = float(capacity_cost)
+            element_df.at[index, annuity_cost_raw] = float(capacity_cost)
             # log info message
             logger.info(
                 f"the annuity ('{annuity_cost}') has been calculated and updated for"

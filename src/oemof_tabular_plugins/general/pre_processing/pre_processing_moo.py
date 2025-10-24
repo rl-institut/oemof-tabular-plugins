@@ -119,9 +119,12 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
     global_annual_deprived_water = 7.91 * 10**13  # Unit: [m³/a], Source: EU JRC (2017)
     # https://data.europa.eu/doi/10.2760/88930
     moo_profiles = "moo_profile"
-    cf_aware = get_moo_timeseries(
-        scenario_dir, ts_name="cf_aware", resource_name="moo_profile"
-    )  # Unit: dimensionless
+    try:
+        cf_aware = get_moo_timeseries(
+            scenario_dir, ts_name="cf_aware", resource_name="moo_profile"
+        )  # Unit: dimensionless
+    except:
+        pass
     # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
 
@@ -151,15 +154,26 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
         scenario = NO_MOO_VARIABLE_SCEN
     elif element in [
         "conversion.csv",
+        "energy_conversion.csv",
+        "hydropower.csv",
         "mimo.csv",
+        "pv_panel.csv",
         "storage.csv",
+        "toilets.csv",
         "volatile.csv",
+        "wastewater_treatment.csv",
         "water_filtration.csv",
         "water_pumps.csv",
-        "hydropower.csv",
+        "water_treatment.csv",
+        "wind_turbine.csv"
+        ""
     ]:
         scenario = MOO_VARIABLE_SCEN
-    elif element == "dispatchable.csv":
+    elif element in [
+        "dispatchable.csv",
+        "energy_sources.csv",
+        "water_sources.csv",
+    ]:
         scenario = MOO_DISPATCHABLE_SCEN
     else:
         raise ValueError(
@@ -197,14 +211,17 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
                 annuity / global_GDP * wf_cost
                 + land_requirement_factor / global_land_surface * wf_lr
             ) * 10**15
-            moo_variable_flow = 10**15 * (
-                resource_cost / global_GDP * wf_cost
-                + ghg_emission_factor / global_GHG * wf_ghg
-                + cf_aware
-                * water_consumption_factor
-                / global_annual_deprived_water
-                * wf_wf
-            )
+            try:
+                moo_variable_flow = 10**15 * (
+                    resource_cost / global_GDP * wf_cost
+                    + ghg_emission_factor / global_GHG * wf_ghg
+                    + cf_aware
+                    * water_consumption_factor
+                    / global_annual_deprived_water
+                    * wf_wf
+                )
+            except:
+                moo_variable_flow = None
 
             # moo variables are expanded by 10e15 to have numbers in range which will not be reduced while optimization
             if not np.isnan(moo_variable_capacity):
@@ -225,7 +242,7 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
 
             # TODO change this to insert it into sequences
 
-            if not np.isnan(moo_variable_flow).any():
+            if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
                 # TODO should save the moo_variable_flow as a sequence and write the sequence header here instead of a float
                 # save this into "moo_profile.csv" or "moo_variable_flow.csv", cf_aware should stay in volatile profile
                 ts_header = f"{row_name}_moo_profile"
@@ -268,28 +285,37 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
             indirect_water_consumption_factor = row["indirect_water_consumption_factor"]
             resource_cost = row["resource_cost"]
 
-            moo_variable_flow = 10**15 * (
-                resource_cost / global_GDP * wf_cost
-                + ghg_emission_factor / global_GHG * wf_ghg
-                + cf_aware
-                * (water_consumption_factor + indirect_water_consumption_factor)
-                / global_annual_deprived_water
-                * wf_wf
-            )
+            try:
+                moo_variable_flow = 10**15 * (
+                    resource_cost / global_GDP * wf_cost
+                    + ghg_emission_factor / global_GHG * wf_ghg
+                    + cf_aware
+                    * (water_consumption_factor + indirect_water_consumption_factor)
+                    / global_annual_deprived_water
+                    * wf_wf
+                )
+            except:
+                moo_variable_flow = None
 
             # TODO change this to insert it into sequences
-            ts_header = f"{row_name}_moo_profile"
-            add_moo_timeseries(
-                ts_values=moo_variable_flow,
-                ts_header=ts_header,
-                scenario_dir=scenario_dir,
-                sequence_resource="moo_profile",
-            )
-            element_df.at[index, moo_variable_var] = ts_header
-            logger.info(
-                f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
-                f" '{row_name}' in '{element}'."
-            )
+            if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
+                ts_header = f"{row_name}_moo_profile"
+                add_moo_timeseries(
+                    ts_values=moo_variable_flow,
+                    ts_header=ts_header,
+                    scenario_dir=scenario_dir,
+                    sequence_resource="moo_profile",
+                )
+                element_df.at[index, moo_variable_var] = ts_header
+                logger.info(
+                    f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
+                    f" '{row_name}' in '{element}'."
+                )
+            else:
+                logging.warning(
+                    f"'{moo_variable_var}' could not be calculated and will not be updated for"
+                    f" '{row_name}' in '{element}'."
+                )
 
         elif scenario == "no moo indicator":
             logger.info(
