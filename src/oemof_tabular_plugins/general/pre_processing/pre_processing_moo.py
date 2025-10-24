@@ -5,6 +5,7 @@ import numpy as np
 from datapackage import Package
 import pandas as pd
 import logging
+import csv
 
 # from .pre_processing import calculate_annuity
 
@@ -30,41 +31,44 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     return annuity
 
 
-def add_moo_timeseries(
-    ts_values, ts_header, scenario_dir, sequence_resource="volatile_profile"
-):
-    sequences_path = os.path.join(
-        scenario_dir, "data", "sequences", sequence_resource + ".csv"
-    )
-    df = pd.read_csv(sequences_path)
+def add_moo_timeseries(ts_values, ts_header, sequences_path=None):
+    """
+    TODO: The delimiter is specified as ';' but should be flexible
+    """
+    df = pd.read_csv(sequences_path, sep=";")
     df[ts_header] = ts_values
-    df.to_csv(sequences_path, index=False)
+    df.to_csv(sequences_path, index=False, sep=";")
 
 
-def get_moo_timeseries(
-    scenario_dir, ts_name="cf_aware", resource_name="volatile_profile"
-):
-    # datapackage_path = os.path.join(scenario_dir, "datapackage.json")
-    # # if doesn't exists then look the path and open with pd.read_csv
-    # pkg = Package(datapackage_path)
-    # res = pkg.get_resource(resource_name)
-    # if res is None:
-    #     raise FileNotFoundError(f"'The resource '{resource_name}.csv', where {ts_name} column should be provided, is missing from datapackage '{pkg.descriptor['name']}' sequences. If it is there, then 'datapackage.json' file must be updated accordingly, to to so, run the script with 'moo' set to 'False', this will update the datapackage automatically.")
-    # df = pd.DataFrame.from_records(res.read(keyed=True))
+def get_moo_timeseries(scenario_dir, ts_name=""):
+    """
+    This function is now flexible as it looks for a column 'ts_name' in
+    any csv file in <scenario_dir>/data/sequences
 
-    sequences_path = os.path.join(
-        scenario_dir, "data", "sequences", resource_name + ".csv"
-    )
-    df = pd.read_csv(sequences_path)
+    TODO: The delimiter is specified as ';' but should be flexible
+    """
+    scenario_name = os.path.basename(scenario_dir)
+    sequences_dir = os.path.join(scenario_dir, "data", "sequences")
+    sequences_path = None
 
-    answer = None
-    if ts_name in df.columns:
-        answer = df[ts_name].values
-    else:
+    for file in os.listdir(sequences_dir):
+        if file.endswith(".csv"):
+            file_path = os.path.join(sequences_dir, file)
+            try:
+                df_header = pd.read_csv(file_path, nrows=0, sep=";")
+                if ts_name in df_header.columns:
+                    sequences_path = file_path
+                    break
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}")
+
+    if sequences_path is None:
         raise ValueError(
-            f"'{ts_name} column is missing from sequence resource '{resource_name}' of datapackage '{pkg.descriptor['name']}' "
+            f"'{ts_name}' could not be found in any file under 'sequences' of datapackage '{scenario_name}'"
         )
-    return answer
+
+    df = pd.read_csv(sequences_path, sep=";")
+    return df[ts_name], sequences_path
 
 
 def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, moo_wf):
@@ -118,10 +122,9 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
     global_land_surface = 1.49 * 10**14  # Unit: m²
     global_annual_deprived_water = 7.91 * 10**13  # Unit: [m³/a], Source: EU JRC (2017)
     # https://data.europa.eu/doi/10.2760/88930
-    moo_profiles = "moo_profile"
-    cf_aware = get_moo_timeseries(
-        scenario_dir, ts_name="cf_aware", resource_name="moo_profile"
-    )  # Unit: dimensionless
+
+    # Get cf_aware and the file where it was found
+    cf_aware, cf_aware_path = get_moo_timeseries(scenario_dir, ts_name="cf-aware-profile")  # Unit: dimensionless
     # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
 
@@ -143,27 +146,35 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
     else:
         moo_variable_fix = "storage_capacity_cost"
 
-        # loop through each entry in the csv file
 
     # ---------------- Possible SCENARIOS ----------------
-
     if element in ["bus.csv", "load.csv", "excess.csv", "crop.csv"]:
         scenario = NO_MOO_VARIABLE_SCEN
     elif element in [
         "conversion.csv",
+        "energy_conversion.csv",
+        "hydropower.csv",
         "mimo.csv",
+        "pv_panel.csv",
         "storage.csv",
+        "toilets.csv",
         "volatile.csv",
+        "wastewater_treatment.csv",
         "water_filtration.csv",
         "water_pumps.csv",
-        "hydropower.csv",
+        "water_treatment.csv",
+        "wind_turbine.csv"
     ]:
         scenario = MOO_VARIABLE_SCEN
-    elif element == "dispatchable.csv":
+    elif element in [
+        "dispatchable.csv",
+        "energy_sources.csv",
+        "water_sources.csv",
+    ]:
         scenario = MOO_DISPATCHABLE_SCEN
     else:
         raise ValueError(
-            f"The technology defined in {element} cannot be used for multi-objective at the moment"
+            f"The technology defined in {element} cannot be used for multi-objective optimization at the moment"
         )
 
     # ---------------- ACTIONS TAKEN FOR EACH SCENARIO ----------------
@@ -225,15 +236,14 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
 
             # TODO change this to insert it into sequences
 
-            if not np.isnan(moo_variable_flow).any():
+            if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
                 # TODO should save the moo_variable_flow as a sequence and write the sequence header here instead of a float
                 # save this into "moo_profile.csv" or "moo_variable_flow.csv", cf_aware should stay in volatile profile
-                ts_header = f"{row_name}_moo_profile"
+                ts_header = f"{row_name}_mc_profile"
                 add_moo_timeseries(
                     ts_values=moo_variable_flow,
                     ts_header=ts_header,
-                    scenario_dir=scenario_dir,
-                    sequence_resource="moo_profile",
+                    sequences_path=cf_aware_path,
                 )
                 # import pdb;
                 # pdb.set_trace()
@@ -278,18 +288,23 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
             )
 
             # TODO change this to insert it into sequences
-            ts_header = f"{row_name}_moo_profile"
-            add_moo_timeseries(
-                ts_values=moo_variable_flow,
-                ts_header=ts_header,
-                scenario_dir=scenario_dir,
-                sequence_resource="moo_profile",
-            )
-            element_df.at[index, moo_variable_var] = ts_header
-            logger.info(
-                f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
-                f" '{row_name}' in '{element}'."
-            )
+            if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
+                ts_header = f"{row_name}_mc_profile"
+                add_moo_timeseries(
+                    ts_values=moo_variable_flow,
+                    ts_header=ts_header,
+                    sequences_path=cf_aware_path,
+                )
+                element_df.at[index, moo_variable_var] = ts_header
+                logger.info(
+                    f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
+                    f" '{row_name}' in '{element}'."
+                )
+            else:
+                logging.warning(
+                    f"'{moo_variable_var}' could not be calculated and will not be updated for"
+                    f" '{row_name}' in '{element}'."
+                )
 
         elif scenario == "no moo indicator":
             logger.info(

@@ -74,7 +74,7 @@ scenarios = [
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
     # "aiwa_24"
-    "aiwa_8760"
+    # "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
 ]
@@ -132,7 +132,7 @@ for scenario in scenarios:
         moo_wf=moo_wf,
         dash_app=True,
         parameters_units=parameters_units,
-        skip_infer_datapackage_metadata=False
+        skip_infer_datapackage_metadata=True
     )
     df = calculator.df_results
     print(df)
