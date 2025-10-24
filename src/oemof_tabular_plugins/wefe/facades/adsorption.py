@@ -32,9 +32,9 @@ class Adsorption(Converter, Facade):
     removal_efficiency: float
         Fraction of pollutants removed from the untreated water.
         Value between 0 and 1. Default: 0.8
-    Adsorbent_dose: float
+    adsorbent_dose: float
         Adsorbent consumption in g per m³ of treated water (mg/L = g/m³). Default: 50
-    Adsorbent_cost: float
+    adsorbent_cost: float
         Adsorbent cost in USD per kg. Default: 5
     capacity: numeric
         The water treatment capacity (output side) of the unit.
