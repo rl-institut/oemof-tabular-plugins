@@ -35,7 +35,7 @@ class BiologicalDenitrification(Converter, Facade):
         Fraction of nitrate and nitrogen oxide components removed from the untreated water.
         Value between 0 and 1. Default: 0.90
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.005
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.008
     carbon_source_dose: float
         Carbon source consumption in g per m³ of treated water (mg/L = g/m³). Default: 90
     carbon_source_cost: float
@@ -80,7 +80,7 @@ class BiologicalDenitrification(Converter, Facade):
 
     N2_gas_bus: Bus
 
-    specific_energy_consumption: float = 0.005 # kWh/m³
+    specific_energy_consumption: float = 0.008 # kWh/m³
 
     carbon_source_dose: float = 90 # mg/L = g/m³
 

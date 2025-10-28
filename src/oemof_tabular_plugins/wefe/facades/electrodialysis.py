@@ -30,10 +30,10 @@ class ElectrodialysisUnit(Converter, Facade):
         An oemof bus instance where unit is connected to with
         its brine/concentrate output.
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.7.
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.9.
     efficiency: float
         Share of untreated water that becomes treated water.
-        Value between 0 and 1. Default: 0.7
+        Value between 0 and 1. Default: 0.75
     capacity: numeric
         The water treatment capacity (output side) of the unit.
     carrier_cost: numeric
@@ -78,9 +78,9 @@ class ElectrodialysisUnit(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.7  # kWh/m³
+    specific_energy_consumption: float = 0.9  # kWh/m³
 
-    efficiency: float = 0.7
+    efficiency: float = 0.75
 
     capacity: float = None
 

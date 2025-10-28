@@ -25,10 +25,10 @@ class CoarseBarScreen(Converter, Facade):
         An oemof bus instance where the unit is connected to with
         its treated water output.
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.05
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.04
     efficiency: float
         Share of untreated water that becomes treated water.
-        Value between 0 and 1. Default: 0.95
+        Value between 0 and 1. Default: 0.90
     capacity: numeric
         The water pre-treatment capacity (output side) of the unit.
     carrier_cost: numeric
@@ -71,9 +71,9 @@ class CoarseBarScreen(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.05  # kWh/m³
+    specific_energy_consumption: float = 0.04  # kWh/m³
 
-    efficiency: float = 0.95
+    efficiency: float = 0.90
 
     capacity: float = None
 

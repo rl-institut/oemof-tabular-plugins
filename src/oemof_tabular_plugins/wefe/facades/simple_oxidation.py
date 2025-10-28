@@ -26,7 +26,7 @@ class SimpleOxidation(Converter, Facade):
         An oemof bus instance where the unit is connected to with
         its treated water output.
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.05
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.07
     oxidant_type: str
         Type/name of oxidant. Options: 'chlorine', 'chlorine_dioxide', 'hydrogen_peroxide',
         'potassium_permanganate', or custom name. Default: 'hydrogen_peroxide'.
@@ -76,7 +76,7 @@ class SimpleOxidation(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.05  # kWh/m³
+    specific_energy_consumption: float = 0.07  # kWh/m³
 
     oxidant_type: str = "hydrogen_peroxide"
 

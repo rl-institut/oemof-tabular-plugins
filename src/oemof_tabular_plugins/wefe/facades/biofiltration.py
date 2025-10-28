@@ -30,7 +30,7 @@ class BioFiltration(Converter, Facade):
         An oemof bus instance where the unit is connected to with
         its waste/spent biomass output.
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.1.
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.12.
     efficiency: float
         Share of untreated water that becomes treated water.
         Value between 0 and 1. Default: 0.85
@@ -85,7 +85,7 @@ class BioFiltration(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.1  # kWh/m³
+    specific_energy_consumption: float = 0.12  # kWh/m³
 
     efficiency: float = 0.85
 

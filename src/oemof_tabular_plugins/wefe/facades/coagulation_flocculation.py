@@ -29,7 +29,7 @@ class CoagulationFlocculation(Converter, Facade):
         An oemof bus instance where the unit is connected to with
         its treated water output.
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.03
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.04
     efficiency: float
         Share of untreated water that becomes treated water.
         Value between 0 and 1. Default: 0.95
@@ -83,7 +83,7 @@ class CoagulationFlocculation(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.03 # kWh/m³
+    specific_energy_consumption: float = 0.04 # kWh/m³
 
     coagulant_dose: float = 20 # mg/L = g/m³
 

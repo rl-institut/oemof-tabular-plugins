@@ -33,7 +33,7 @@ class ReverseOsmosis(Converter, Facade):
         Specific electricity demand/consumption in kWh per m³ treated water. Default: 1.2
     efficiency: float
         Share of untreated water that becomes treated water.
-        Value between 0 and 1. Default: 0.50
+        Value between 0 and 1. Default: 0.55
     capacity: numeric
         The water treatment capacity (output side) of the unit.
     carrier_cost: numeric
@@ -80,7 +80,7 @@ class ReverseOsmosis(Converter, Facade):
 
     specific_energy_consumption: float = 1.2 # kWh/m³
 
-    efficiency: float = 0.50
+    efficiency: float = 0.55
 
     capacity: float = None
 

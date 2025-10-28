@@ -26,7 +26,7 @@ class Adsorption(Converter, Facade):
         An oemof bus instance where the unit is connected to with
         its treated water output.
     specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.05
+        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.06
     Cin: float
         Input pollutant concentration in g per m³ of untreated water (mg/L = g/m³). Default: 10.0
     removal_efficiency: float
@@ -78,7 +78,7 @@ class Adsorption(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.05 # kWh/m³
+    specific_energy_consumption: float = 0.06 # kWh/m³
 
     adsorbent_dose: float = 50 # mg/L = g/m³
 
