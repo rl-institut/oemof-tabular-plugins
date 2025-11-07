@@ -65,6 +65,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
+    "scenario_19"
     # "test_wind_volatile"
     # "general_add_cost_inputs",
     # "general_basic",
@@ -73,7 +74,7 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    "aiwa_24"
+    # "aiwa_24"
     # "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
@@ -100,7 +101,7 @@ custom_attributes = [
     "annuity"
 ]
 # set whether the multi-objective optimization should be performed
-moo = True
+moo = False
 
 # MOO weight factors
 # Assign weights to the different minimization objectives (cost, greenhouse gas emissions,
@@ -108,10 +109,10 @@ moo = True
 # We recommend assigning values between 0 and 1 to the weight factors, ensuring that their total sum equals 1.
 
 moo_wf = {
-    "wf_cost": 0.4,
-    "wf_ghg": 0.1,
-    "wf_lr": 0,
-    "wf_wf": 0.5,
+    "wf_cost": 1,
+    "wf_ghg": 0.,
+    "wf_lr": 0.,
+    "wf_wf": 0.,
 }
 
 # -------------- RUNNING THE SCENARIOS --------------
@@ -132,7 +133,7 @@ for scenario in scenarios:
         moo_wf=moo_wf,
         dash_app=True,
         parameters_units=parameters_units,
-        skip_infer_datapackage_metadata=False
+        skip_infer_datapackage_metadata=True
     )
     df = calculator.df_results
     print(df)

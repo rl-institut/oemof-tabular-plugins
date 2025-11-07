@@ -3,7 +3,7 @@ import pandas as pd
 import logging
 from oemof.tools import logger, economics
 import json
-from .pre_processing_moo import pre_processing_moo
+from .pre_processing_moo import pre_processing_moo, get_moo_timeseries, add_moo_timeseries
 
 logger.define_logging()
 
@@ -23,7 +23,7 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     return annuity_total
 
 
-def pre_processing_costs(wacc, element, element_path, element_df):
+def pre_processing_costs(scenario_dir, wacc, element, element_path, element_df):
     """
     Applies pre-processing costs to the input CSV files, where the annuity ('capacity_cost') is either
     used directly if stated, or if left empty then calculated using the calculate_annuity function,
@@ -164,7 +164,7 @@ def pre_processing_costs(wacc, element, element_path, element_df):
         elif scenario == "annuity defined no cost params":
             # log info message
             logger.info(
-                f"The annuity cost is directly used for '{row_name}' in '{element}'."
+                f"The {annuity_cost} is directly used for '{row_name}' in '{element}'."
             )
         elif scenario == "annuity empty partial cost params":
             # raise value error
@@ -236,14 +236,30 @@ def pre_processing_costs(wacc, element, element_path, element_df):
             logger.info(
                 f"Component '{row_name}' of element '{element}' does not contain '{annuity_cost}' parameter. Skipping..."
             )
-    # Reset marginal_cost to resource_cost removing potential artefacts of MOO runs
-    if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
-        element_df['marginal_cost'] = element_df['resource_cost']
-        logger.info(f"Reset marginal_cost to resource_cost for all components in '{element}'")
-    elif 'marginal_cost' in element_df.columns:
-        # If resource_cost doesn't exist, set marginal_cost to 0
-        element_df['marginal_cost'] = 0.0
-        logger.info(f"Reset marginal_cost to 0.0 for all components in '{element}'")
+    ts_header = f"{row_name}_mc_profile"
+    try:
+        mc_profile_df, mc_profile_path = get_moo_timeseries(scenario_dir, ts_name=ts_header)
+        # If profile exists, perform pre_processing on marginal cost
+        if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
+            # If resource_cost exists, set marginal cost profile to resource_cost
+            ts_values = pd.Series([row["resource_cost"]] * len(mc_profile_df), dtype=float)
+            add_moo_timeseries(
+                ts_values=ts_values,
+                ts_header=ts_header,
+                sequences_path=mc_profile_path,
+            )
+            logger.info(f"Reset marginal_cost to resource_cost for all components in '{element}'")
+        elif 'marginal_cost' in element_df.columns:
+            # If resource_cost doesn't exist, set marginal cost profile to 0
+            ts_values = pd.Series([0] * len(mc_profile_df), dtype=float)
+            add_moo_timeseries(
+                ts_values=ts_values,
+                ts_header=ts_header,
+                sequences_path=mc_profile_path,
+            )
+            logger.info(f"Reset marginal_cost to 0.0 for all components in '{element}'")
+    except:
+        logger.info(f"No marginal cost profile linked to component {row_name}. Skip pre-processing.")
 
     # save the updated dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
@@ -324,7 +340,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
                 element_df = pd.read_csv(element_path, sep=";")
                 if moo is False or moo_wf is None:
                     # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
-                    pre_processing_costs(wacc, element, element_path, element_df)
+                    pre_processing_costs(scenario_dir, wacc, element, element_path, element_df)
                 else:
                     # performs pre-processing of cost data while taking multile objectives (emissions, water
                     # footprint, land requiremnt) into account
