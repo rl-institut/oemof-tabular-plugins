@@ -1,0 +1,9 @@
+name;type;balanced;carrier
+biogas-bus;bus;True;biogas
+ac-elec-bus;bus;True;electricity
+diesel-bus;bus;True;energy
+drinking-water-bus;bus;True;water
+groundwater-bus;bus;True;water
+seawater-bus;bus;True;water
+tap-water-bus;bus;True;water
+dc-elec-bus;bus;True;electricity
