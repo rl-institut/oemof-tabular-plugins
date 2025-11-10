@@ -60,6 +60,25 @@ def pre_processing_costs(scenario_dir, wacc, element, element_path, element_df):
                 element_df.at[index, annuity_cost] = None
         logger.info(f"Cleared '{annuity_cost}' for components with cost parameters in '{element}'")
 
+    # Reset marginal_cost to remove MOO artifacts (time series profile references)
+    # For SOO, marginal_cost should be set from resource_cost or carrier_cost (scalars)
+    if 'marginal_cost' in element_df.columns:
+        reset_count = 0
+        for index, row in element_df.iterrows():
+            current_mc = row.get('marginal_cost')
+            # If marginal_cost is a string (profile reference), reset it
+            if isinstance(current_mc, str) and ('_mc_profile' in current_mc or '_profile' in current_mc):
+                # Set to resource_cost if available, otherwise set to None
+                if 'resource_cost' in element_df.columns and pd.notna(row.get('resource_cost')):
+                    element_df.at[index, 'marginal_cost'] = row['resource_cost']
+                elif 'carrier_cost' in element_df.columns and pd.notna(row.get('carrier_cost')):
+                    element_df.at[index, 'marginal_cost'] = row['carrier_cost']
+                else:
+                    element_df.at[index, 'marginal_cost'] = None
+                reset_count += 1
+        if reset_count > 0:
+            logger.info(f"Reset {reset_count} marginal_cost values from MOO profile references to scalars in '{element}'")
+
     # check if any of the required columns are missing
     cost_columns = {"capex", "opex_fix", "lifetime"}
     missing_columns = cost_columns - set(element_df.columns)

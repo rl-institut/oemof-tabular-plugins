@@ -169,6 +169,34 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
             f"The technology defined in {element} cannot be used for multi-objective optimization at the moment"
         )
 
+    # ---------------- RESET COST COLUMNS TO FORCE RECALCULATION ----------------
+    # This ensures idempotent preprocessing - removes MOO artifacts from previous runs
+    # and forces recalculation from base parameters (capex, opex_fix, lifetime, resource_cost)
+
+    # Reset capacity_cost for components that will be recalculated
+    if scenario in [MOO_VARIABLE_SCEN]:
+        if moo_variable_fix in element_df.columns:
+            for index, row in element_df.iterrows():
+                # Check if this row has the required parameters for MOO calculation
+                has_cost_params = all([
+                    'capex' in element_df.columns and pd.notna(row.get('capex')),
+                    'opex_fix' in element_df.columns and pd.notna(row.get('opex_fix')),
+                    'lifetime' in element_df.columns and pd.notna(row.get('lifetime')),
+                    'resource_cost' in element_df.columns and pd.notna(row.get('resource_cost'))
+                ])
+                if has_cost_params:
+                    # Clear capacity_cost to force recalculation
+                    element_df.at[index, moo_variable_fix] = None
+            logger.info(f"Reset '{moo_variable_fix}' to force recalculation in '{element}'")
+
+    # Reset marginal_cost for all MOO scenarios that will create time series profiles
+    if scenario in [MOO_VARIABLE_SCEN, MOO_DISPATCHABLE_SCEN]:
+        if moo_variable_var in element_df.columns:
+            for index, row in element_df.iterrows():
+                # Clear marginal_cost to force recalculation
+                element_df.at[index, moo_variable_var] = None
+            logger.info(f"Reset '{moo_variable_var}' to force recalculation in '{element}'")
+
     # ---------------- ACTIONS TAKEN FOR EACH SCENARIO ----------------
     for index, row in element_df.iterrows():
         # define the row name
@@ -200,14 +228,27 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
                 annuity / global_GDP * wf_cost
                 + land_requirement_factor / global_land_surface * wf_lr
             ) * 10**15
-            moo_variable_flow = 10**15 * (
-                resource_cost / global_GDP * wf_cost
-                + ghg_emission_factor / global_GHG * wf_ghg
-                + cf_aware
-                * water_consumption_factor
-                / global_annual_deprived_water
-                * wf_wf
-            )
+
+            # Calculate variable flow cost
+            # CRITICAL: Only include time-varying cf_aware when wf_wf > 0
+            # When wf_wf=0, multiplying cf_aware (time series) by 0 creates numerical
+            # artifacts that can make the result slightly non-constant, causing different
+            # optimization behavior even though mathematically it should be identical.
+            if wf_wf > 0:
+                moo_variable_flow = 10**15 * (
+                    resource_cost / global_GDP * wf_cost
+                    + ghg_emission_factor / global_GHG * wf_ghg
+                    + cf_aware
+                    * water_consumption_factor
+                    / global_annual_deprived_water
+                    * wf_wf
+                )
+            else:
+                # Exclude cf_aware term to ensure clean constant result
+                moo_variable_flow = 10**15 * (
+                    resource_cost / global_GDP * wf_cost
+                    + ghg_emission_factor / global_GHG * wf_ghg
+                )
 
             # moo variables are expanded by 10e15 to have numbers in range which will not be reduced while optimization
             if not np.isnan(moo_variable_capacity):
@@ -270,14 +311,26 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
             indirect_water_consumption_factor = row["indirect_water_consumption_factor"]
             resource_cost = row["resource_cost"]
 
-            moo_variable_flow = 10**15 * (
-                resource_cost / global_GDP * wf_cost
-                + ghg_emission_factor / global_GHG * wf_ghg
-                + cf_aware
-                * (water_consumption_factor + indirect_water_consumption_factor)
-                / global_annual_deprived_water
-                * wf_wf
-            )
+            # Calculate variable flow cost
+            # CRITICAL: Only include time-varying cf_aware when wf_wf > 0
+            # When wf_wf=0, multiplying cf_aware (time series) by 0 creates numerical
+            # artifacts that can make the result slightly non-constant, causing different
+            # optimization behavior even though mathematically it should be identical.
+            if wf_wf > 0:
+                moo_variable_flow = 10**15 * (
+                    resource_cost / global_GDP * wf_cost
+                    + ghg_emission_factor / global_GHG * wf_ghg
+                    + cf_aware
+                    * (water_consumption_factor + indirect_water_consumption_factor)
+                    / global_annual_deprived_water
+                    * wf_wf
+                )
+            else:
+                # Exclude cf_aware term to ensure clean constant result
+                moo_variable_flow = 10**15 * (
+                    resource_cost / global_GDP * wf_cost
+                    + ghg_emission_factor / global_GHG * wf_ghg
+                )
 
             # TODO change this to insert it into sequences
             if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():

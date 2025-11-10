@@ -399,12 +399,6 @@
                     {
                         "fields": "profile",
                         "reference": {
-                            "resource": "load_profile"
-                        }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
                             "resource": "profiles"
                         }
                     }

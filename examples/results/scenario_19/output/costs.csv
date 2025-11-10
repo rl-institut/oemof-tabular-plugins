@@ -1,0 +1,20 @@
+bus,direction,asset,carrier,facade_type,Upfront Investment Costs,Annuity Total
+ac-elec-bus,in,ac-electricity-excess,electricity,excess,,
+ac-elec-bus,in,el_demand,electricity,load,,
+ac-elec-bus,out,biomass-cogeneration,electricity,conversion,1532847.91,148204.10237075193
+ac-elec-bus,out,diesel-generator,electricity,conversion,0.0,0.0
+ac-elec-bus,out,grid,electricity,dispatchable,,0.0
+ac-elec-bus,out,hydro-power,electricity,dispatchable,,
+ac-elec-bus,out,inverter,electricity,conversion,119353.5,18960.155479660032
+ac-elec-bus,out,wind-turbine,electricity,wind-turbine,0.0,0.0
+biogas-bus,in,biomass-cogeneration,biogas,conversion,,
+biogas-bus,out,biogas,biogas,dispatchable,,0.0
+dc-elec-bus,in,battery-storage,electricity,storage,275057.05049999995,38375.31130765411
+dc-elec-bus,in,dc-electricity-excess,electricity,excess,,
+dc-elec-bus,in,inverter,electricity,conversion,,
+dc-elec-bus,out,battery-storage,electricity,storage,275057.05049999995,38375.31130765411
+dc-elec-bus,out,pv-panel,electricity,pv-panel,367620.99,30382.649719370726
+diesel-bus,in,diesel-generator,energy,conversion,,
+diesel-bus,out,diesel,energy,dispatchable,,0.0
+drinking-water-bus,in,drinking-water-storage,water,storage,0.0,0.0
+drinking-water-bus,out,drinking-water-storage,water,storage,0.0,0.0

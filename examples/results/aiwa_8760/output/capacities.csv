@@ -1,0 +1,10 @@
+,Component name,Capacity,Optimized Capacity,Capacity Total,Maximum Capacity,unit
+6,inverter,0.0,142.50044,142.50044,,[kW]
+9,battery-storage,0.0,1.137608,1.137608,,[kWh]
+12,photovoltaics,0.0,185.9724,185.9724,,[kW]
+13,wind-turbine,0.0,16.906168,16.906168,,[kW]
+16,drinking-water-storage,0.0,4.4292927,4.4292927,,[m³]
+20,water-filtration-system,0.0,3.1289859,3.1289859,,[m³/h]
+22,seawater-reverse-osmosis,0.0,8.8585853,8.8585853,,[m³/h]
+25,service-water-storage,0.0,173.53988,193.53988,,[m³]
+30,water pump,0.0,14.600187,14.600187,,[m³/h]

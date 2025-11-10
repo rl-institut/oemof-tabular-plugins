@@ -1,0 +1,80 @@
+digraph {
+	subgraph cluster_1 {
+		color=black
+		label=Legends
+		Bus [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip=Bus width=4.1]
+		Sink [color="#FFD6E0" fontsize=10 shape=trapezium]
+		Source [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+		"Transforme
+r" [color="#7BF1A8" fontsize=10 shape=rectangle]
+		Storage [color="#90F1EF" fontsize=10 shape=rectangle style=rounded]
+	}
+	"biogas-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="biogas-bus" width=4.1]
+	"ac-elec-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="ac-elec-bus" width=4.1]
+	"diesel-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="diesel-bus" width=4.1]
+	"drinking-water-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="drinking-water-bus" width=4.1]
+	"groundwater-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="groundwater-bus" width=4.1]
+	"seawater-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="seawater-bus" width=4.1]
+	"tap-water-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="tap-water-bus" width=4.1]
+	"dc-elec-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="dc-elec-bus" width=4.1]
+	inverter [color="#7BF1A8" fontsize=10 shape=rectangle]
+	"diesel-gen
+erator" [color="#7BF1A8" fontsize=10 shape=rectangle]
+	"biomass-co
+generation" [color="#7BF1A8" fontsize=10 shape=rectangle]
+	diesel [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+	"hydro-powe
+r" [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+	grid [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+	biogas [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+	"dc-electri
+city-exces
+s" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"ac-electri
+city-exces
+s" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	el_demand [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"pv-panel" [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+	"battery-st
+orage" [color="#90F1EF" fontsize=10 shape=rectangle style=rounded]
+	"drinking-w
+ater-stora
+ge" [color="#90F1EF" fontsize=10 shape=rectangle style=rounded]
+	"wind-turbi
+ne" [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+	biogas -> "biogas-bus"
+	"biogas-bus" -> "biomass-co
+generation"
+	"wind-turbi
+ne" -> "ac-elec-bus"
+	inverter -> "ac-elec-bus"
+	"diesel-gen
+erator" -> "ac-elec-bus"
+	"hydro-powe
+r" -> "ac-elec-bus"
+	grid -> "ac-elec-bus"
+	"biomass-co
+generation" -> "ac-elec-bus"
+	"ac-elec-bus" -> "ac-electri
+city-exces
+s"
+	"ac-elec-bus" -> el_demand
+	diesel -> "diesel-bus"
+	"diesel-bus" -> "diesel-gen
+erator"
+	"drinking-w
+ater-stora
+ge" -> "drinking-water-bus"
+	"drinking-water-bus" -> "drinking-w
+ater-stora
+ge"
+	"battery-st
+orage" -> "dc-elec-bus"
+	"pv-panel" -> "dc-elec-bus"
+	"dc-elec-bus" -> inverter
+	"dc-elec-bus" -> "dc-electri
+city-exces
+s"
+	"dc-elec-bus" -> "battery-st
+orage"
+}
