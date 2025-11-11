@@ -1,0 +1,13 @@
+flow,value
+diesel-generator_to_ac-elec,0.0
+electricity-grid_to_ac-elec,256840.212497838
+inverter_to_ac-elec,200586.01460167003
+bottled-water_to_drinking-water,0.0
+drinking-water-storage_to_drinking-water,0.0
+seawater-reverse-osmosis_to_drinking-water,0.0
+water-filtration-system_to_drinking-water,10494.1317896
+condensed-water_to_service-water,28.907999999999994
+rainwater-harvesting_to_service-water,0.0
+service-water-storage_to_service-water,733.2842874877999
+water pump_to_service-water,34613.783445666
+water-truck_to_service-water,23.288312414

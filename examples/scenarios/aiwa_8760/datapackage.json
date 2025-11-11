@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
     "name": "aiwa_8760",
-    "oemof_tabular_version": "0.0.5",
+    "oemof_tabular_version": "0.0.6dev",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -91,7 +91,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -360,7 +360,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -703,7 +703,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {

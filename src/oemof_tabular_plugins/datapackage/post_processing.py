@@ -84,7 +84,11 @@ def compute_annuity_total(results_df):
     if investments is None:
         investments = 0
 
-    if "storage" in results_df.name:
+    # When MOO is active, capacity_cost is scaled for optimization but annuity contains
+    # the original unscaled value. Use annuity if available to ensure correct cost reporting.
+    if "annuity" in results_df.index and pd.notna(results_df.annuity):
+        return results_df.annuity * investments
+    elif "storage" in results_df.name:
         return results_df.storage_capacity_cost * investments
     else:
         return results_df.capacity_cost * investments

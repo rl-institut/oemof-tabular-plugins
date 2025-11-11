@@ -73,8 +73,8 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    "aiwa_24"
-    # "aiwa_8760"
+    # "aiwa_24"
+    "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
 ]
@@ -108,10 +108,10 @@ moo = True
 # We recommend assigning values between 0 and 1 to the weight factors, ensuring that their total sum equals 1.
 
 moo_wf = {
-    "wf_cost": 0.4,
-    "wf_ghg": 0.1,
+    "wf_cost": 1,
+    "wf_ghg": 0,
     "wf_lr": 0,
-    "wf_wf": 0.5,
+    "wf_wf": 0,
 }
 
 # -------------- RUNNING THE SCENARIOS --------------
