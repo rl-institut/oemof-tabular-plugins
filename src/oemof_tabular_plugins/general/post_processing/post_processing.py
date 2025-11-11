@@ -14,7 +14,7 @@ from oemof_tabular_plugins.datapackage.post_processing import (
     process_raw_inputs,
     apply_calculations,
     apply_kpi_calculations,
-    RAW_INPUTS,
+    get_raw_inputs,
     RAW_OUTPUTS,
     PROCESSED_RAW_OUTPUTS,
     CALCULATED_OUTPUTS,
@@ -93,8 +93,11 @@ def save_table_to_csv(table, results_path, filename):
 # --------------------------------------------------
 class OTPCalculator(Calculator):
     def __init__(
-        self, input_parameters, energy_system, dp_path, infer_bus_carrier=True
+        self, input_parameters, energy_system, dp_path, infer_bus_carrier=True, moo=False
     ):
+
+        self.moo = moo
+        self.raw_inputs_list = get_raw_inputs(moo=moo)
 
         self.df_results = construct_dataframe_from_results(
             energy_system, dp_path=dp_path, infer_bus_carrier=infer_bus_carrier
@@ -102,7 +105,32 @@ class OTPCalculator(Calculator):
         self.n_timesteps = len(energy_system.timeindex)
 
         self.df_results = process_raw_results(self.df_results)
-        self.df_results = process_raw_inputs(self.df_results, dp_path)
+        self.df_results = process_raw_inputs(self.df_results, dp_path, moo=moo)
+
+        # Load cf_aware from datapackage if MOO is active
+        self.cf_aware = None
+        if moo:
+            try:
+                import os
+                from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
+
+                # Extract scenario directory from dp_path
+                scenario_dir = os.path.dirname(os.path.dirname(dp_path))
+                cf_aware_array = get_moo_timeseries(
+                    scenario_dir, ts_name="cf_aware", resource_name="moo_profile"
+                )
+                # Take the mean value as cf_aware is typically constant for a location
+                self.cf_aware = float(cf_aware_array.mean())
+
+                # Add cf_aware as a column to df_results for use in KPI calculations
+                self.df_results['cf_aware'] = self.cf_aware
+
+                logging.info(f"Loaded cf_aware value: {self.cf_aware}")
+            except Exception as e:
+                logging.warning(f"Could not load cf_aware from moo_profile.csv: {str(e)}. Using default value of 1")
+                self.cf_aware = 1
+                self.df_results['cf_aware'] = self.cf_aware
+
         self.kpis = None
 
         try:
@@ -125,46 +153,11 @@ class OTPCalculator(Calculator):
         if scalar_category == "raw_inputs":
             existing_cols = []
             for c in scalars.columns:
-                if c in RAW_INPUTS:
+                if c in self.raw_inputs_list:
                     existing_cols.append(c)
             answer = scalars[existing_cols]
         elif scalar_category == "outputs":
-            answer = scalars[scalars.columns.difference(RAW_INPUTS)]
-        return answer
-
-    @property
-    def raw_outputs(self):
-        self.df_results.iloc[:, : self.n_timesteps]
-        cols = self.df_results.iloc[:, : self.n_timesteps].columns.tolist()
-        cols = cols + RAW_OUTPUTS + PROCESSED_RAW_OUTPUTS
-        return self.df_results[cols]
-
-    @property
-    def raw_inputs(self):
-        return self.__scalars("raw_inputs")
-
-    @property
-    def calculated_outputs(self):
-        return self.__scalars("outputs")
-
-    def apply_calculations(self, calculations):
-        apply_calculations(self.df_results, calculations=calculations)
-
-    def apply_kpi_calculations(self, calculations):
-        self.kpis = apply_kpi_calculations(self.df_results, calculations=calculations)
-
-    def __scalars(self, scalar_category):
-        """Ignore the flow data columns (by construction those are the first columns after the multi-index)"""
-        scalars = self.df_results.iloc[:, self.n_timesteps :]
-        answer = scalars
-        if scalar_category == "raw_inputs":
-            existing_cols = []
-            for c in scalars.columns:
-                if c in RAW_INPUTS:
-                    existing_cols.append(c)
-            answer = scalars[existing_cols]
-        elif scalar_category == "outputs":
-            answer = scalars[scalars.columns.difference(RAW_INPUTS)]
+            answer = scalars[scalars.columns.difference(self.raw_inputs_list)]
         return answer
 
     @property
@@ -193,6 +186,7 @@ def post_processing(
     infer_bus_carrier=True,
     calculations=None,
     kpi_calculations=None,
+    moo=False,
 ):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
@@ -202,6 +196,7 @@ def post_processing(
     :param es: oemof energy_system with results in it, ie es.results = processing.results(m) has been performed
     :param results_path: results directory path
     :param dp_path: path to the datapackage.json file
+    :param moo: bool, if True MOO mode is active
     """
 
     if parameters_units is None:
@@ -255,7 +250,7 @@ def post_processing(
     if kpi_calculations is None:
         kpi_calculations = CALCULATED_KPIS
     # initiate calculator for post-processing
-    calculator = OTPCalculator(params, es, dp_path, infer_bus_carrier=infer_bus_carrier)
+    calculator = OTPCalculator(params, es, dp_path, infer_bus_carrier=infer_bus_carrier, moo=moo)
     calculator.apply_calculations(calculations)
     calculator.apply_kpi_calculations(kpi_calculations)
 

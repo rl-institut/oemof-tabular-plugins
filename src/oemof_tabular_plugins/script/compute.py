@@ -142,6 +142,7 @@ def compute_scenario(
         dash_app=dash_app,
         parameters_units=parameters_units,
         infer_bus_carrier=infer_bus_carrier,
+        moo=moo,
     )
 
 
