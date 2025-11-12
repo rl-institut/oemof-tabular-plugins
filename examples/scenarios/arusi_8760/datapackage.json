@@ -1,7 +1,7 @@
 {
     "profile": "tabular-data-package",
     "name": "arusi_8760",
-    "oemof_tabular_version": "0.0.5",
+    "oemof_tabular_version": "0.0.6dev",
     "resources": [
         {
             "path": "data/elements/bus.csv",
@@ -91,7 +91,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "string",
                         "format": "default"
                     },
                     {
@@ -248,7 +248,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -320,12 +320,6 @@
                         }
                     },
                     {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "moo_profile"
-                        }
-                    },
-                    {
                         "fields": "profile",
                         "reference": {
                             "resource": "volatile_profile"
@@ -360,7 +354,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -425,7 +419,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -520,7 +514,7 @@
                     },
                     {
                         "name": "output_parameters",
-                        "type": "number",
+                        "type": "object",
                         "format": "default"
                     },
                     {
@@ -534,12 +528,6 @@
                 ],
                 "primaryKey": "name",
                 "foreignKeys": [
-                    {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "moo_profile"
-                        }
-                    },
                     {
                         "fields": "profile",
                         "reference": {
@@ -594,7 +582,7 @@
                     },
                     {
                         "name": "year",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -604,7 +592,7 @@
                     },
                     {
                         "name": "amount",
-                        "type": "integer",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
@@ -680,7 +668,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -795,12 +783,6 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "moo_profile"
-                        }
-                    },
-                    {
                         "fields": "from_bus_0",
                         "reference": {
                             "resource": "bus",
@@ -887,7 +869,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "number",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1032,7 +1014,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -1123,12 +1105,6 @@
                         "reference": {
                             "resource": "volatile_profile"
                         }
-                    },
-                    {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "moo_profile"
-                        }
                     }
                 ]
             }
@@ -1179,7 +1155,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1274,12 +1250,6 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "moo_profile"
-                        }
-                    },
-                    {
                         "fields": "electricity_bus",
                         "reference": {
                             "resource": "bus",
@@ -1349,7 +1319,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1448,12 +1418,6 @@
                 ],
                 "primaryKey": "name",
                 "foreignKeys": [
-                    {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "moo_profile"
-                        }
-                    },
                     {
                         "fields": "electricity_bus",
                         "reference": {

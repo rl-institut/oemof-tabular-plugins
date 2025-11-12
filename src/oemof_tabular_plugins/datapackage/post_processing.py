@@ -6,7 +6,7 @@ import oemof.solph as solph
 import numpy as np
 from oemof_tabular_plugins.datapackage.building import infer_busses_carrier
 
-#  from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
+from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
 
 # ToDo: check to see if the storage optimized input/output (invest_out) and
 #  optimized capacity (invest) are saved correctly
@@ -14,11 +14,8 @@ from oemof_tabular_plugins.datapackage.building import infer_busses_carrier
 RAW_OUTPUTS = ["investments"]
 PROCESSED_RAW_OUTPUTS = ["flow_min", "flow_max", "aggregated_flow"]
 
-moo = True  # TODO write code which passes moo condition from compute.py to here
-cf_aware = 4.5  # TODO obtain cf_aware from sequences/volatile_profile.csv
-#  cf_aware = get_moo_timeseries(scenario_dir, ts_name="cf_aware", resource_name="volatile_profile")
-RAW_INPUTS = [
-    #  "marginal_cost",
+# Base raw inputs that are always included
+RAW_INPUTS_BASE = [
     "carrier_cost",
     "capacity_cost",
     "storage_capacity_cost",
@@ -40,14 +37,31 @@ RAW_INPUTS = [
     "indirect_water_consumption_factor",
     "annuity",
     "resource_cost",
-    "renewable_factor",
-    "emission_factor",
-    "cf_aware",
 ]
-# Conditionally add "marginal_cost" if MOO is not true
-if not moo:
-    RAW_INPUTS.insert(0, "marginal cost")  # Add "marginal_cost" at the beginning
-print(RAW_INPUTS)
+
+
+def get_raw_inputs(moo=False):
+    """
+    Construct the list of raw inputs based on whether MOO mode is active.
+
+    Parameters
+    ----------
+    moo : bool
+        If True, MOO mode is active and marginal_cost should not be included.
+        If False, marginal_cost should be included.
+
+    Returns
+    -------
+    list
+        List of raw input parameter names
+    """
+    raw_inputs = RAW_INPUTS_BASE.copy()
+
+    # Add marginal_cost only if MOO is not active
+    if not moo:
+        raw_inputs.insert(0, "marginal_cost")
+
+    return raw_inputs
 
 
 # Functions for results per component
@@ -84,7 +98,11 @@ def compute_annuity_total(results_df):
     if investments is None:
         investments = 0
 
-    if "storage" in results_df.name:
+    # When MOO is active, capacity_cost is scaled for optimization but annuity contains
+    # the original unscaled value. Use annuity if available to ensure correct cost reporting.
+    if "annuity" in results_df.index and pd.notna(results_df.annuity):
+        return results_df.annuity * investments
+    elif "storage" in results_df.name:
         return results_df.storage_capacity_cost * investments
     else:
         return results_df.capacity_cost * investments
@@ -364,11 +382,24 @@ def compute_indirect_water_consumption_total(results_df):
 
 def compute_water_scarcity_footprint(results_df):
     """Calculates the overall water scarcity footprint by multiplying the total water consumption of the system with
-    the available water remaining characterization factor: CFaware"""
-    if results_df.indirect_water_consumption is None:
-        water_scarcity_footprint = cf_aware * results_df["water_consumption"].sum()
+    the available water remaining characterization factor: CFaware
+
+    Note: cf_aware should be available in results_df as a column, added during OTPCalculator initialization.
+    If not present, a default value of 4.5 is used.
+    """
+    # Get cf_aware value from results_df if available, otherwise use default
+    cf_aware_default = 4.5
+    if 'cf_aware' in results_df.columns:
+        # Take the average value (values should be constant across all rows)
+        cf_aware_value = results_df['cf_aware'].dropna().mean() if not results_df['cf_aware'].dropna().empty else cf_aware_default
     else:
-        water_scarcity_footprint = cf_aware * (
+        logging.warning("cf_aware not found in results_df, using default value of 4.5")
+        cf_aware_value = cf_aware_default
+
+    if results_df.indirect_water_consumption is None:
+        water_scarcity_footprint = cf_aware_value * results_df["water_consumption"].sum()
+    else:
+        water_scarcity_footprint = cf_aware_value * (
             results_df["water_consumption"].sum()
             + results_df["indirect_water_consumption"].sum()
         )
@@ -880,7 +911,7 @@ def process_raw_results(df_results):
     return df_results
 
 
-def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None):
+def process_raw_inputs(df_results, dp_path, moo=False, raw_inputs=None, typemap=None):
     """Find the input parameters from the datapackage.json file
 
 
@@ -890,8 +921,13 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
         the outcome of construct_dataframe_from_results()
     dp_path: string
         path to the datapackage.json file
-    raw_inputs: list of string
+    moo: bool
+        If True, MOO mode is active
+    raw_inputs: list of string (optional)
         list of parameters from the datapackage one would like to collect for result post-processing
+        If None, will be determined based on moo parameter
+    typemap: dict (optional)
+        type mapping for components
 
     Returns
     -------
@@ -899,6 +935,9 @@ def process_raw_inputs(df_results, dp_path, raw_inputs=RAW_INPUTS, typemap=None)
     """
     if typemap is None:
         typemap = {}
+
+    if raw_inputs is None:
+        raw_inputs = get_raw_inputs(moo=moo)
 
     p = Package(dp_path)
     # initialise inputs_df with raw inputs as indexes
