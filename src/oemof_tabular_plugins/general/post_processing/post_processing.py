@@ -127,8 +127,9 @@ class OTPCalculator(Calculator):
 
                 logging.info(f"Loaded cf_aware value: {self.cf_aware}")
             except Exception as e:
-                logging.warning(f"Could not load cf_aware from moo_profile.csv: {str(e)}. Using default value of 1")
-                self.cf_aware = 1
+                cf_aware_default = 4.5
+                logging.warning(f"Could not load cf_aware from moo_profile.csv: {str(e)}. Using default value of 4.5")
+                self.cf_aware = cf_aware_default
                 self.df_results['cf_aware'] = self.cf_aware
 
         self.kpis = None

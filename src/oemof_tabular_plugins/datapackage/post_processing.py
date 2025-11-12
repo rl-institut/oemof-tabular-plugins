@@ -388,12 +388,13 @@ def compute_water_scarcity_footprint(results_df):
     If not present, a default value of 4.5 is used.
     """
     # Get cf_aware value from results_df if available, otherwise use default
+    cf_aware_default = 4.5
     if 'cf_aware' in results_df.columns:
-        # Take the first non-null value (should be constant across all rows)
-        cf_aware_value = results_df['cf_aware'].dropna().iloc[0] if not results_df['cf_aware'].dropna().empty else 4.5
+        # Take the average value (values should be constant across all rows)
+        cf_aware_value = results_df['cf_aware'].dropna().mean() if not results_df['cf_aware'].dropna().empty else cf_aware_default
     else:
         logging.warning("cf_aware not found in results_df, using default value of 4.5")
-        cf_aware_value = 1
+        cf_aware_value = cf_aware_default
 
     if results_df.indirect_water_consumption is None:
         water_scarcity_footprint = cf_aware_value * results_df["water_consumption"].sum()
