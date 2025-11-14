@@ -3,9 +3,20 @@ import pandas as pd
 import logging
 from oemof.tools import logger, economics
 import json
+import datapackage as dp
+from decimal import Decimal
 from .pre_processing_moo import pre_processing_moo, get_moo_timeseries, add_moo_timeseries
 
 logger.define_logging()
+
+
+def scenario_datapackage(scenario_dir):
+    dp_json = os.path.join(scenario_dir, "datapackage.json")
+    if os.path.exists(dp_json):
+        answer = dp.Package(dp_json)
+    else:
+        answer = dp.Package(base_path=scenario_dir)
+    return answer
 
 
 def calculate_annuity(capex, opex_fix, lifetime, wacc):
@@ -23,7 +34,7 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     return annuity_total
 
 
-def pre_processing_costs(scenario_dir, wacc, element, element_path, element_df):
+def pre_processing_costs(wacc, element, element_path, element_df):
     """
     Applies pre-processing costs to the input CSV files, where the annuity ('capacity_cost') is either
     used directly if stated, or if left empty then calculated using the calculate_annuity function,
@@ -236,30 +247,14 @@ def pre_processing_costs(scenario_dir, wacc, element, element_path, element_df):
             logger.info(
                 f"Component '{row_name}' of element '{element}' does not contain '{annuity_cost}' parameter. Skipping..."
             )
-    ts_header = f"{row_name}_mc_profile"
-    try:
-        mc_profile_df, mc_profile_path = get_moo_timeseries(scenario_dir, ts_name=ts_header)
-        # If profile exists, perform pre_processing on marginal cost
-        if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
-            # If resource_cost exists, set marginal cost profile to resource_cost
-            ts_values = pd.Series([row["resource_cost"]] * len(mc_profile_df), dtype=float)
-            add_moo_timeseries(
-                ts_values=ts_values,
-                ts_header=ts_header,
-                sequences_path=mc_profile_path,
-            )
-            logger.info(f"Reset marginal_cost to resource_cost for all components in '{element}'")
-        elif 'marginal_cost' in element_df.columns:
-            # If resource_cost doesn't exist, set marginal cost profile to 0
-            ts_values = pd.Series([0] * len(mc_profile_df), dtype=float)
-            add_moo_timeseries(
-                ts_values=ts_values,
-                ts_header=ts_header,
-                sequences_path=mc_profile_path,
-            )
-            logger.info(f"Reset marginal_cost to 0.0 for all components in '{element}'")
-    except:
-        logger.info(f"No marginal cost profile linked to component {row_name}. Skip pre-processing.")
+    # Reset marginal_cost to resource_cost removing potential artefacts of MOO runs
+    if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
+        element_df['marginal_cost'] = element_df['resource_cost']
+        logger.info(f"Reset marginal_cost to resource_cost for all components in '{element}'")
+    elif 'marginal_cost' in element_df.columns:
+        # If resource_cost doesn't exist, set marginal_cost to 0
+        element_df['marginal_cost'] = 0.0
+        logger.info(f"Reset marginal_cost to 0.0 for all components in '{element}'")
 
     # save the updated dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
@@ -314,50 +309,67 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
     :param custom_attributes: list of custom attributes included in the model (defined in compute.py), default is None
     :param moo: whether the multi-objective optimization is activated, default is False
     :param moo_wf: dictionary of moo weight factors
-
-    TODO: Add another function that turns mc_profiles back to numbers in case they are constant (changing data and metadata)
     """
+
+    logger.info("Pre-processing activated")
+
     if moo is False:
         logger.info(f"Optimization activated for only costs")
     elif moo_wf is None:
+        moo = False
         logger.info("No weight factors for multi-objective optimization provided, "
                     "optimization activated for only costs")
-    elif moo is True:
+    else:
         logger.info(f"Multi-objective optimization activated")
 
-    logger.info("Pre-processing activated")
+    dp = scenario_datapackage(scenario_dir)
+
     # locate the elements directory
-    elements_dir = os.path.join(scenario_dir, "data", "elements")
-    # raise error if the elements directory is not found in the scenario directory
-    if not os.path.exists(elements_dir):
-        raise FileNotFoundError(f"No 'elements' directory found in {scenario_dir}.")
-    # loop through each csv file in the elements directory
-    for element in os.listdir(elements_dir):
-        # only consider csv files
-        if element.endswith(".csv"):
+    for res in dp.resources:
+        x = res.name
+        if "/elements/" in res.descriptor["path"]:
             try:
-                # set the path of the considered csv file
-                element_path = os.path.join(elements_dir, element)
-                # read the csv file and save it as a pandas dataframe
-                element_df = pd.read_csv(element_path, sep=";")
-                if moo is False or moo_wf is None:
-                    # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
-                    pre_processing_costs(scenario_dir, wacc, element, element_path, element_df)
+                resource_data = pd.DataFrame.from_records(res.read(keyed=True))
+            except tableschema.exceptions.CastError as err:
+                if err.errors:
+                    logging.error(
+                        f"The resource {res.name} has the following casting errors: {','.join([str(e) for e in err.errors])}")
                 else:
-                    # performs pre-processing of cost data while taking multile objectives (emissions, water
-                    # footprint, land requiremnt) into account
-                    pre_processing_moo(
-                        wacc, element, element_path, element_df, scenario_dir, moo_wf
-                    )
-                # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
-                # requirement)
-                pre_processing_custom_attributes(
-                    element_path, element_df, custom_attributes
+                    logging.error(f"The resource {res.name} has the following casting error: {err}")
+                resource_data = pd.DataFrame()
+                # TODO: some more debugging if resource_data is empty
+
+            element = res.descriptor["name"]
+            element_path = os.path.join(scenario_dir, res.descriptor["path"])
+            element_df = resource_data
+            for col in element_df.columns:
+                if element_df[col].map(lambda val: isinstance(val, Decimal)).any():
+                    element_df[col] = element_df[col].map(float)
+
+
+            if moo is False:
+                # casts 'marginal_cost' to number
+                for f in res.descriptor["schema"]["fields"]:
+                    if f["name"] == "marginal_cost":
+                        f["type"] = "number"
+                # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
+                pre_processing_costs(wacc, element, element_path, element_df)
+            else:
+                # cast 'marginal_cost' to string because it is the name of a profile
+                for f in res.descriptor["schema"]["fields"]:
+                    if f["name"] == "marginal_cost":
+                        f["type"] = "string"
+                # performs pre-processing of cost data while taking multile objectives (emissions, water
+                # footprint, land requiremnt) into account
+                pre_processing_moo(
+                    wacc, element, element_path, element_df, scenario_dir, moo_wf
                 )
-            except Exception as e:
-                logging.error(
-                    f"Error occured while preprocessing resource {element} in scenario {scenario_dir}"
-                )
-                raise e
+            # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
+            # requirement)
+            pre_processing_custom_attributes(
+                element_path, element_df, custom_attributes
+            )
+
+
     logger.info("Pre-processing completed")
     return

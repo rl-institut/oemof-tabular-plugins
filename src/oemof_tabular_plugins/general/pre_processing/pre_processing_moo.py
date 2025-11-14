@@ -239,7 +239,7 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
             if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
                 # TODO should save the moo_variable_flow as a sequence and write the sequence header here instead of a float
                 # save this into "moo_profile.csv" or "moo_variable_flow.csv", cf_aware should stay in volatile profile
-                ts_header = f"{row_name}_mc_profile"
+                ts_header = f"{row_name}_moo_profile"
                 add_moo_timeseries(
                     ts_values=moo_variable_flow,
                     ts_header=ts_header,
@@ -289,7 +289,7 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
 
             # TODO change this to insert it into sequences
             if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
-                ts_header = f"{row_name}_mc_profile"
+                ts_header = f"{row_name}_moo_profile"
                 add_moo_timeseries(
                     ts_values=moo_variable_flow,
                     ts_header=ts_header,
