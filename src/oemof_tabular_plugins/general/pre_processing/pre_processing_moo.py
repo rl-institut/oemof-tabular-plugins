@@ -31,47 +31,50 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     return annuity
 
 
-def add_moo_timeseries(ts_values, ts_header, sequences_path=None):
-    """
-    TODO: The delimiter is specified as ';' but should be flexible
-    """
-    df = pd.read_csv(sequences_path, sep=";")
+def add_moo_timeseries(res, ts_name="", ts_values = None):
+    """ """
+    df = pd.DataFrame.from_records(res.read(keyed=True))
+
     df[ts_header] = ts_values
-    df.to_csv(sequences_path, index=False, sep=";")
+    df.to_csv(sequences_path, index=False)
+
+    field_names = [f.name for f in res.schema.fields]
+    if ts_name not in field_names:
+        # Add new field to descriptor
+        res.descriptor["schema"]["fields"].append({
+            "name": ts_name,
+            "type": "number",
+            "format": "default"
+        })
 
 
-def get_moo_timeseries(scenario_dir, ts_name=""):
-    """
-    This function is now flexible as it looks for a column 'ts_name' in
-    any csv file in <scenario_dir>/data/sequences
+def get_moo_timeseries(dp, ts_name=""):
+    """ """
+    for res in dp.resources:
+        if "/sequences/" in res.descriptor["path"]:
+            field_names = [f.name for f in res.schema.fields]
+            if ts_name in field_names:
+                try:
+                    df = pd.DataFrame.from_records(res.read(keyed=True))
+                except tableschema.exceptions.CastError as err:
+                    if err.errors:
+                        logging.error(
+                            f"The resource {res.name} has the following casting errors: "
+                            f"{','.join([str(e) for e in err.errors])}"
+                        )
+                    else:
+                        logging.error(f"The resource {res.name} has the following casting error: {err}")
+                    df = pd.DataFrame()
 
-    TODO: The delimiter is specified as ';' but should be flexible
-    """
-    scenario_name = os.path.basename(scenario_dir)
-    sequences_dir = os.path.join(scenario_dir, "data", "sequences")
-    sequences_path = None
+                    return res, df[ts_name]
 
-    for file in os.listdir(sequences_dir):
-        if file.endswith(".csv"):
-            file_path = os.path.join(sequences_dir, file)
-            try:
-                df_header = pd.read_csv(file_path, nrows=0, sep=";")
-                if ts_name in df_header.columns:
-                    sequences_path = file_path
-                    break
-            except Exception as e:
-                print(f"Error reading {file_path}: {e}")
-
-    if sequences_path is None:
-        raise ValueError(
-            f"'{ts_name}' could not be found in any file under 'sequences' of datapackage '{scenario_name}'"
-        )
-
-    df = pd.read_csv(sequences_path, sep=";")
-    return df[ts_name], sequences_path
+    raise ValueError(
+        f"'{ts_name}' could not be found in any file under '/sequences/' of datapackage '{dp.descriptor['name']}'"
+    )
 
 
-def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, moo_wf):
+
+def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir, moo_wf):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -124,7 +127,7 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
     # https://data.europa.eu/doi/10.2760/88930
 
     # Get cf_aware and the file where it was found
-    cf_aware, cf_aware_path = get_moo_timeseries(scenario_dir, ts_name="cf-aware-profile")  # Unit: dimensionless
+    cf_aware_res, cf_aware = get_moo_timeseries(dp, ts_name="cf-aware-profile")  # Unit: dimensionless
     # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
 
@@ -138,32 +141,34 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
 
     # ---------------- Assigning MOO variables in csv ----------------
     moo_variable_var = "marginal_cost"
-    # annuity = "annuity"
-    # for every element other than storage, the fixed moo optimization variable is 'capacity_cost'
-    # for storage, the fixed moo optimization variable is 'storage_capacity_cost'
-    if element != "storage.csv":
-        moo_variable_fix = "capacity_cost"
+    # Every element that has the column 'storage_capacity_cost' is assumed to only contain components of type storage
+    # where 'storage_capacity_cost' represents the cost parameter to be calculated.
+    # All other elements require 'capacity_cost' as the cost parameter to be calculated.
+    if "storage_capacity_cost" in element_df.columns:
+        annuity_cost = "storage_capacity_cost"
     else:
-        moo_variable_fix = "storage_capacity_cost"
+        annuity_cost = "capacity_cost"
 
 
     # ---------------- Possible SCENARIOS ----------------
-    if element in ["bus.csv", "load.csv", "excess.csv", "crop.csv"]:
+    # Different calculation of cost parameters for different component types,
+    # assuming all components of an element (resource) have the same type
+    element_type = element_df["type"].iloc[0]
+    if element_type in ["bus", "load", "excess", "crop"]:
         scenario = NO_MOO_VARIABLE_SCEN
-    elif element in [
-        "conversion.csv",
-        "energy_conversion.csv",
-        "hydropower.csv",
-        "mimo.csv",
-        "pv_panel.csv",
+    elif element_type in [
+        "conversion",
+        "hydropower",
+        "mimo",
+        "pv-panel",
         "storage.csv",
         "toilets.csv",
         "volatile.csv",
         "wastewater_treatment.csv",
         "water_filtration.csv",
-        "water_pumps.csv",
+        "water-pump",
         "water_treatment.csv",
-        "wind_turbine.csv"
+        "wind-turbine"
     ]:
         scenario = MOO_VARIABLE_SCEN
     elif element in [

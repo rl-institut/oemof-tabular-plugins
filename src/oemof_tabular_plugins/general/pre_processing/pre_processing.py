@@ -4,7 +4,9 @@ import logging
 from oemof.tools import logger, economics
 import json
 import datapackage as dp
+import tableschema
 from decimal import Decimal
+from copy import deepcopy
 from .pre_processing_moo import pre_processing_moo, get_moo_timeseries, add_moo_timeseries
 
 logger.define_logging()
@@ -44,12 +46,13 @@ def pre_processing_costs(wacc, element, element_path, element_df):
     :param element_path: path of the csv file
     :param element_df: dataframe containing data from the csv file
     """
-    # for every element other than storage, the annuity cost parameter is 'capacity_cost'
-    # for storage, the annuity cost parameter is 'storage_capacity_cost'
-    if element != "storage.csv":
-        annuity_cost = "capacity_cost"
-    else:
+    # Every element that has the column 'storage_capacity_cost' is assumed to only contain components of type storage
+    # where 'storage_capacity_cost' represents the cost parameter to be calculated.
+    # All other elements require 'capacity_cost' as the cost parameter to be calculated.
+    if "storage_capacity_cost" in element_df.columns:
         annuity_cost = "storage_capacity_cost"
+    else:
+        annuity_cost = "capacity_cost"
 
     # For consistency, 'annuity' (raw, economic annuity) is defined separately:
     # It will be the same as 'capacity_cost' for cost-optimization.
@@ -301,6 +304,38 @@ def pre_processing_custom_attributes(element_path, element_df, custom_attributes
     return
 
 
+def moo_profiles_cleanup(scenario_dir, dp, suffix=""):
+    """ Remove dynamically added timeseries from all resources in /sequences/ based on suffix"""
+    removed_fields = []
+    for res in dp.resources:
+        if "/sequences/" in res.descriptor["path"]:
+            df = pd.DataFrame.from_records(res.read(keyed=True))
+            fields_to_remove = [f.name for f in res.schema.fields if f.name.endswith(suffix)]
+
+            if fields_to_remove:
+                # Remove from descriptor
+                res.descriptor["schema"]["fields"] = [
+                    f for f in res.descriptor["schema"]["fields"] if f["name"] not in fields_to_remove
+                ]
+                # Remove from CSV
+                df = df[[col for col in df.columns if col not in fields_to_remove]]
+                if "timeindex" in df.columns:
+                    df["timeindex"] = pd.to_datetime(df["timeindex"]).dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+                df.to_csv(os.path.join(scenario_dir, res.descriptor["path"]), sep=";", index=False)
+
+                # Rebuild metadata and safe datapackage.json
+                dp.remove_resource(res.name)
+                dp.add_resource(res.descriptor)
+                dp.commit()
+                dp.save(os.path.join(scenario_dir, "datapackage.json"))
+
+
+                # Fill the removed_fields list if fieds were found
+                removed_fields.extend(fields_to_remove)
+
+    return removed_fields
+
+
 def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf=None):
     """Performs pre-processing of input scenario data before running the model.
 
@@ -313,20 +348,21 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
 
     logger.info("Pre-processing activated")
 
+    dp = scenario_datapackage(scenario_dir)
+
+    if moo_wf is None:
+        moo = False
+        logger.info("No weight factors for multi-objective optimization provided")
+
+    moo_suffix = "mc_profile"
     if moo is False:
         logger.info(f"Optimization activated for only costs")
-    elif moo_wf is None:
-        moo = False
-        logger.info("No weight factors for multi-objective optimization provided, "
-                    "optimization activated for only costs")
+        removed_fields = moo_profiles_cleanup(scenario_dir, dp, suffix=moo_suffix)
     else:
         logger.info(f"Multi-objective optimization activated")
 
-    dp = scenario_datapackage(scenario_dir)
-
     # locate the elements directory
     for res in dp.resources:
-        x = res.name
         if "/elements/" in res.descriptor["path"]:
             try:
                 resource_data = pd.DataFrame.from_records(res.read(keyed=True))
@@ -337,38 +373,49 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
                 else:
                     logging.error(f"The resource {res.name} has the following casting error: {err}")
                 resource_data = pd.DataFrame()
-                # TODO: some more debugging if resource_data is empty
 
-            element = res.descriptor["name"]
+            element = res.name
             element_path = os.path.join(scenario_dir, res.descriptor["path"])
-            element_df = resource_data
+            element_df = resource_data.copy()
             for col in element_df.columns:
                 if element_df[col].map(lambda val: isinstance(val, Decimal)).any():
                     element_df[col] = element_df[col].map(float)
 
-
             if moo is False:
-                # casts 'marginal_cost' to number
+                # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
+                pre_processing_costs(wacc, element, element_path, element_df)
+                # cast 'marginal_cost' to number
                 for f in res.descriptor["schema"]["fields"]:
                     if f["name"] == "marginal_cost":
                         f["type"] = "number"
-                # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
-                pre_processing_costs(wacc, element, element_path, element_df)
+                # remove potential foreign keys for marginal_cost
+                res.descriptor["schema"]["foreignKeys"] = [
+                    fk for fk in res.descriptor["schema"]["foreignKeys"] if fk["fields"] != "marginal_cost"
+                ]
             else:
-                # cast 'marginal_cost' to string because it is the name of a profile
-                for f in res.descriptor["schema"]["fields"]:
-                    if f["name"] == "marginal_cost":
-                        f["type"] = "string"
                 # performs pre-processing of cost data while taking multile objectives (emissions, water
-                # footprint, land requiremnt) into account
+                # footprint, land requiremnt) into account, turns marginal_cost into profile linked with foreign key
                 pre_processing_moo(
                     wacc, element, element_path, element_df, scenario_dir, moo_wf
                 )
+                # cast 'marginal_cost' to string because it is a foreign key (name of a profile)
+                for f in res.descriptor["schema"]["fields"]:
+                    if f["name"] == "marginal_cost":
+                        f["type"] = "string"
+
             # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
             # requirement)
             pre_processing_custom_attributes(
                 element_path, element_df, custom_attributes
             )
+            existing_fields = [f.name for f in res.schema.fields]
+            if "output_parameters" not in existing_fields:
+                # Add field to descriptor
+                res.descriptor["schema"]["fields"].append({
+                    "name": "output_parameters",
+                    "type": "object",
+                    "format": "default"
+                })
 
 
     logger.info("Pre-processing completed")
