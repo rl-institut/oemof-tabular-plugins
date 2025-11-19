@@ -396,7 +396,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
                 # performs pre-processing of cost data while taking multile objectives (emissions, water
                 # footprint, land requiremnt) into account, turns marginal_cost into profile linked with foreign key
                 pre_processing_moo(
-                    wacc, element, element_path, element_df, scenario_dir, moo_wf
+                    dp, wacc, element, element_path, element_df, scenario_dir, moo_wf
                 )
                 # cast 'marginal_cost' to string because it is a foreign key (name of a profile)
                 for f in res.descriptor["schema"]["fields"]:
