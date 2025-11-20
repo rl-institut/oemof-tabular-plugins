@@ -65,6 +65,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
+    "scenario_19"
     # "test_wind_volatile"
     # "general_add_cost_inputs",
     # "general_basic",
@@ -100,7 +101,7 @@ custom_attributes = [
     "annuity"
 ]
 # set whether the multi-objective optimization should be performed
-moo = True
+moo = False
 
 # MOO weight factors
 # Assign weights to the different minimization objectives (cost, greenhouse gas emissions,

@@ -377,9 +377,13 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
             element = res.name
             element_path = os.path.join(scenario_dir, res.descriptor["path"])
             element_df = resource_data.copy()
+            debug = 13
             for col in element_df.columns:
-                if element_df[col].map(lambda val: isinstance(val, Decimal)).any():
-                    element_df[col] = element_df[col].map(float)
+                if element_df[col].apply(lambda v: isinstance(v, Decimal)).any():
+                    # Convert only Decimal values, leave None and other types alone
+                    element_df[col] = element_df[col].apply(
+                        lambda v: float(v) if isinstance(v, Decimal) else v
+                    )
 
             if moo is False:
                 # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
@@ -396,7 +400,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
                 # performs pre-processing of cost data while taking multile objectives (emissions, water
                 # footprint, land requiremnt) into account, turns marginal_cost into profile linked with foreign key
                 pre_processing_moo(
-                    dp, wacc, element, element_path, element_df, scenario_dir, moo_wf
+                    dp, wacc, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix
                 )
                 # cast 'marginal_cost' to string because it is a foreign key (name of a profile)
                 for f in res.descriptor["schema"]["fields"]:

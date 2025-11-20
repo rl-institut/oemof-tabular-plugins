@@ -74,7 +74,7 @@ def get_moo_timeseries(dp, ts_name=""):
 
 
 
-def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir, moo_wf):
+def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -244,7 +244,7 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
             if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
                 # TODO should save the moo_variable_flow as a sequence and write the sequence header here instead of a float
                 # save this into "moo_profile.csv" or "moo_variable_flow.csv", cf_aware should stay in volatile profile
-                ts_header = f"{row_name}_moo_profile"
+                ts_header = f"{row_name}_{moo_suffix}"
                 add_moo_timeseries(
                     ts_values=moo_variable_flow,
                     ts_header=ts_header,
@@ -294,7 +294,7 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
 
             # TODO change this to insert it into sequences
             if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
-                ts_header = f"{row_name}_moo_profile"
+                ts_header = f"{row_name}_{moo_suffix}"
                 add_moo_timeseries(
                     ts_values=moo_variable_flow,
                     ts_header=ts_header,
