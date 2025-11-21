@@ -1,416 +1,6 @@
 {
-    "profile": "tabular-data-package",
-    "name": "scenario_19",
-    "oemof_tabular_version": "0.0.6dev",
+    "profile": "data-package",
     "resources": [
-        {
-            "path": "data/elements/bus.csv",
-            "profile": "tabular-data-resource",
-            "name": "bus",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "balanced",
-                        "type": "boolean",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier",
-                        "type": "string",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ],
-                "primaryKey": "name",
-                "foreignKeys": []
-            }
-        },
-        {
-            "path": "data/elements/energy_conversion.csv",
-            "profile": "tabular-data-resource",
-            "name": "energy_conversion",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "tech",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity_potential",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "marginal_cost",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "efficiency",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "annuity",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capex",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "opex_fix",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "lifetime",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "resource_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "land_requirement_factor",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ghg_emission_factor",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "water_consumption_factor",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "from_bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "to_bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "output_parameters",
-                        "type": "object",
-                        "format": "default"
-                    },
-                    {
-                        "name": "expandable",
-                        "type": "boolean",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ],
-                "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "profiles"
-                        }
-                    },
-                    {
-                        "fields": "from_bus",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "to_bus",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "path": "data/elements/energy_sources.csv",
-            "profile": "tabular-data-resource",
-            "name": "energy_sources",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "tech",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "capacity_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "marginal_cost",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "carrier_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "resource_cost",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "land_requirement_factor",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ghg_emission_factor",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "water_consumption_factor",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "indirect_water_consumption_factor",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "profile",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "output_parameters",
-                        "type": "object",
-                        "format": "default"
-                    },
-                    {
-                        "name": "expandable",
-                        "type": "boolean",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ],
-                "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "bus",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "profiles"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "path": "data/elements/excess.csv",
-            "profile": "tabular-data-resource",
-            "name": "excess",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "bus",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "marginal_cost",
-                        "type": "number",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ],
-                "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "bus",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "path": "data/elements/load.csv",
-            "profile": "tabular-data-resource",
-            "name": "load",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "amount",
-                        "type": "integer",
-                        "format": "default"
-                    },
-                    {
-                        "name": "profile",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "type",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "bus",
-                        "type": "string",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
-                ],
-                "primaryKey": "name",
-                "foreignKeys": [
-                    {
-                        "fields": "bus",
-                        "reference": {
-                            "resource": "bus",
-                            "fields": "name"
-                        }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
-                            "resource": "load_profile"
-                        }
-                    },
-                    {
-                        "fields": "profile",
-                        "reference": {
-                            "resource": "profiles"
-                        }
-                    }
-                ]
-            }
-        },
         {
             "path": "data/elements/pv_panel.csv",
             "profile": "tabular-data-resource",
@@ -457,7 +47,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -547,12 +137,6 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "profiles"
-                        }
-                    },
-                    {
                         "fields": "bus",
                         "reference": {
                             "resource": "bus",
@@ -569,6 +153,193 @@
                         "fields": "ghi",
                         "reference": {
                             "resource": "profiles"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "path": "data/elements/energy_conversion.csv",
+            "profile": "tabular-data-resource",
+            "name": "energy_conversion",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_potential",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "marginal_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "efficiency",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "annuity",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capex",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "opex_fix",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "lifetime",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "resource_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "land_requirement_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghg_emission_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_consumption_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "from_bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "to_bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "from_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "to_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "path": "data/elements/excess.csv",
+            "profile": "tabular-data-resource",
+            "name": "excess",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "marginal_cost",
+                        "type": "number",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
                         }
                     }
                 ]
@@ -635,7 +406,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -715,11 +486,115 @@
                             "resource": "bus",
                             "fields": "name"
                         }
+                    }
+                ]
+            }
+        },
+        {
+            "path": "data/elements/energy_sources.csv",
+            "profile": "tabular-data-resource",
+            "name": "energy_sources",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
                     },
                     {
-                        "fields": "marginal_cost",
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "tech",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "capacity_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bus",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "marginal_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "resource_cost",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "land_requirement_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghg_emission_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "water_consumption_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "indirect_water_consumption_factor",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "profile",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
+                    },
+                    {
+                        "name": "expandable",
+                        "type": "boolean",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "bus",
                         "reference": {
-                            "resource": "profiles"
+                            "resource": "bus",
+                            "fields": "name"
                         }
                     }
                 ]
@@ -771,7 +646,7 @@
                     },
                     {
                         "name": "marginal_cost",
-                        "type": "string",
+                        "type": "number",
                         "format": "default"
                     },
                     {
@@ -861,12 +736,6 @@
                 "primaryKey": "name",
                 "foreignKeys": [
                     {
-                        "fields": "marginal_cost",
-                        "reference": {
-                            "resource": "profiles"
-                        }
-                    },
-                    {
                         "fields": "bus",
                         "reference": {
                             "resource": "bus",
@@ -889,6 +758,99 @@
             }
         },
         {
+            "path": "data/elements/load.csv",
+            "profile": "tabular-data-resource",
+            "name": "load",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "integer",
+                        "format": "default"
+                    },
+                    {
+                        "name": "profile",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "bus",
+                        "type": "string",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": [
+                    {
+                        "fields": "bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "profile",
+                        "reference": {
+                            "resource": "profiles"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "path": "data/elements/bus.csv",
+            "profile": "tabular-data-resource",
+            "name": "bus",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "type",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
+                        "name": "balanced",
+                        "type": "boolean",
+                        "format": "default"
+                    },
+                    {
+                        "name": "carrier",
+                        "type": "string",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ],
+                "primaryKey": "name",
+                "foreignKeys": []
+            }
+        },
+        {
             "path": "data/sequences/profiles.csv",
             "profile": "tabular-data-resource",
             "name": "profiles",
@@ -898,67 +860,12 @@
             "schema": {
                 "fields": [
                     {
-                        "name": "pv-panel_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
                         "name": "air-temperature-profile",
                         "type": "number",
                         "format": "default"
                     },
                     {
                         "name": "ghi-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "inverter_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "diesel-generator_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "biomass-cogeneration_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "battery-storage_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "drinking-water-storage_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "diesel_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "hydro-power_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "grid_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "biogas_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "wind-turbine_mc_profile",
                         "type": "number",
                         "format": "default"
                     },
@@ -973,151 +880,6 @@
                         "format": "default"
                     },
                     {
-                        "name": "groundwater_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "tap-water_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "seawater_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "surface-water_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "truck-water_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "bottled-water_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "intake_structure_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "coarse_bar_screen_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "cartridge_filter_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "coagulation_flocculation_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "slow_sand_filter_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ceramic_filter_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "microfiltration_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ultrafiltration_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "adsorption_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "nanofiltration_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "electrodialysis_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "reverse_osmosis_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "membrane_distillation_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "activated_carbon_filter_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "uv_disinfection_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "chlorination_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "simple_oxidation_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "biofiltration_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ion_exchange_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "photocatalysis_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ozonation_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "biological_denitrification_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "flush_toilet_mc_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
                         "name": "electricity-load-profile",
                         "type": "number",
                         "format": "default"
@@ -1128,13 +890,13 @@
                         "format": "default"
                     },
                     {
-                        "name": "cf-aware-profile",
-                        "type": "number",
+                        "name": "timeindex",
+                        "type": "datetime",
                         "format": "default"
                     },
                     {
-                        "name": "timeindex",
-                        "type": "datetime",
+                        "name": "cf-aware-profile",
+                        "type": "number",
                         "format": "default"
                     }
                 ],
