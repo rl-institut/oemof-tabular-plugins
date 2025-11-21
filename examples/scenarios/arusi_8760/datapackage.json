@@ -509,7 +509,7 @@
                     },
                     {
                         "name": "water_footprint",
-                        "type": "object",
+                        "type": "integer",
                         "format": "default"
                     },
                     {
@@ -1498,97 +1498,12 @@
                     },
                     {
                         "name": "time",
-                        "type": "datetime",
+                        "type": "string",
                         "format": "default"
                     },
                     {
                         "name": "cf_aware",
                         "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "seawater-source_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "solar-resource_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "wind-resource_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "precipitation_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "diesel_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "groundwater_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "bottled-water_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "run-of-river-hydropower_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "seawater-reverse-osmosis_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "photovoltaics_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "rainwater-harvesting_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "wind-turbine_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "river-flow_moo_profile",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "water-filtration-system_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "water pump_moo_profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "river-water-source_moo_profile",
-                        "type": "string",
-                        "format": "default"
-                    },
-                    {
-                        "name": "river-water-uptake_moo_profile",
-                        "type": "string",
                         "format": "default"
                     }
                 ],
