@@ -301,7 +301,7 @@ def pre_processing_custom_attributes(element_path, element_df, custom_attributes
                     continue
     # write the updated dataframe back to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
-    return
+    return has_custom_attributes
 
 
 def moo_profiles_cleanup(scenario_dir, dp, suffix=""):
@@ -354,12 +354,20 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
         moo = False
         logger.info("No weight factors for multi-objective optimization provided")
 
-    moo_suffix = "mc_profile"
+    moo_suffix = "moo_profile"
     if moo is False:
         logger.info(f"Optimization activated for only costs")
         removed_fields = moo_profiles_cleanup(scenario_dir, dp, suffix=moo_suffix)
     else:
         logger.info(f"Multi-objective optimization activated")
+        cf_aware_name = "cf-aware-profile"
+        cf_aware_res, cf_aware_df = get_moo_timeseries(dp, ts_name=cf_aware_name)  # Unit: dimensionless
+        existing_cf_fields = set(cf_aware_df.columns)
+        for col in cf_aware_df.columns:
+            # Convert to float
+            cf_aware_df[col] = cf_aware_df[col].apply(
+                lambda v: float(v) if isinstance(v, Decimal) else v
+            )
 
     # locate the elements directory
     for res in dp.resources:
@@ -377,13 +385,11 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
             element = res.name
             element_path = os.path.join(scenario_dir, res.descriptor["path"])
             element_df = resource_data.copy()
-            debug = 13
+
             for col in element_df.columns:
-                if element_df[col].apply(lambda v: isinstance(v, Decimal)).any():
-                    # Convert only Decimal values, leave None and other types alone
-                    element_df[col] = element_df[col].apply(
-                        lambda v: float(v) if isinstance(v, Decimal) else v
-                    )
+                element_df[col] = element_df[col].apply(
+                    lambda v: float(v) if isinstance(v, Decimal) else v
+                )
 
             if moo is False:
                 # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
@@ -399,28 +405,55 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
             else:
                 # performs pre-processing of cost data while taking multile objectives (emissions, water
                 # footprint, land requiremnt) into account, turns marginal_cost into profile linked with foreign key
-                pre_processing_moo(
-                    dp, wacc, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix
+                cf_aware_df = pre_processing_moo(
+                    dp, wacc, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix, cf_aware_df, cf_aware_name
                 )
-                # cast 'marginal_cost' to string because it is a foreign key (name of a profile)
-                for f in res.descriptor["schema"]["fields"]:
-                    if f["name"] == "marginal_cost":
-                        f["type"] = "string"
+                # cast 'marginal_cost' to string because it is a foreign key (name of a profile),
+                # unless it's one of the following exceptions
+                element_type = element_df["type"].iloc[0]
+                if element_type not in ["bus", "load", "excess", "crop"]:
+                    for f in res.descriptor["schema"]["fields"]:
+                        if f["name"] == "marginal_cost":
+                            f["type"] = "string"
 
             # performs pre-processing for custom attributes (e.g. emission factor, renewable factor, land
             # requirement)
-            pre_processing_custom_attributes(
+            has_custom_attrs = pre_processing_custom_attributes(
                 element_path, element_df, custom_attributes
             )
-            existing_fields = [f.name for f in res.schema.fields]
-            if "output_parameters" not in existing_fields:
-                # Add field to descriptor
-                res.descriptor["schema"]["fields"].append({
-                    "name": "output_parameters",
-                    "type": "object",
+            if has_custom_attrs:
+                existing_res_fields = [f.name for f in res.schema.fields]
+                if "output_parameters" not in existing_res_fields:
+                    # Add field to descriptor
+                    res.descriptor["schema"]["fields"].append({
+                        "name": "output_parameters",
+                        "type": "object",
+                        "format": "default"
+                    })
+
+            # update element metadata
+            dp.remove_resource(res.name)
+            dp.add_resource(res.descriptor)
+            dp.commit()
+
+    if moo is True:
+        for col in cf_aware_df:
+            if col not in existing_cf_fields:
+                cf_aware_res.descriptor["schema"]["fields"].append({
+                    "name": col,
+                    "type": "number",
                     "format": "default"
                 })
+        if "timeindex" in cf_aware_df.columns:
+            cf_aware_df["timeindex"] = pd.to_datetime(cf_aware_df["timeindex"]).dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        cf_aware_df.to_csv(cf_aware_res.source, index=False, sep=";")
 
+        # update profiles metadata
+        dp.remove_resource(cf_aware_res.name)
+        dp.add_resource(cf_aware_res.descriptor)
+        dp.commit()
+
+    dp.save(os.path.join(scenario_dir, "datapackage.json"))
 
     logger.info("Pre-processing completed")
     return

@@ -6,6 +6,8 @@ from datapackage import Package
 import pandas as pd
 import logging
 import csv
+from decimal import Decimal
+import tableschema
 
 # from .pre_processing import calculate_annuity
 
@@ -31,12 +33,12 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     return annuity
 
 
-def add_moo_timeseries(res, ts_name="", ts_values = None):
+def add_moo_timeseries(res, ts_name="", ts_values=None):
     """ """
     df = pd.DataFrame.from_records(res.read(keyed=True))
 
-    df[ts_header] = ts_values
-    df.to_csv(sequences_path, index=False)
+    df[ts_name] = ts_values
+    df.to_csv(res.source, index=False, sep=";")
 
     field_names = [f.name for f in res.schema.fields]
     if ts_name not in field_names:
@@ -66,15 +68,17 @@ def get_moo_timeseries(dp, ts_name=""):
                         logging.error(f"The resource {res.name} has the following casting error: {err}")
                     df = pd.DataFrame()
 
-                    return res, df[ts_name]
+                return res, df
 
+    #TODO: dp.descriptor['name'] not present yet for ScenarioBuilder scenarios
+    dp_name = os.path.basename(os.path.normpath(dp.base_path))
     raise ValueError(
-        f"'{ts_name}' could not be found in any file under '/sequences/' of datapackage '{dp.descriptor['name']}'"
+        f"'{ts_name}' could not be found in any file under '/sequences/' of datapackage '{dp_name}'"
     )
 
 
 
-def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix):
+def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix, cf_aware_df, cf_aware_name):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -127,9 +131,10 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
     # https://data.europa.eu/doi/10.2760/88930
 
     # Get cf_aware and the file where it was found
-    cf_aware_res, cf_aware = get_moo_timeseries(dp, ts_name="cf-aware-profile")  # Unit: dimensionless
+
     # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
+    cf_aware = cf_aware_df[cf_aware_name]
 
     # -------------- MOO Customizable Weights ------------------
     wf_cost = moo_wf["wf_cost"]
@@ -145,9 +150,9 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
     # where 'storage_capacity_cost' represents the cost parameter to be calculated.
     # All other elements require 'capacity_cost' as the cost parameter to be calculated.
     if "storage_capacity_cost" in element_df.columns:
-        annuity_cost = "storage_capacity_cost"
+        moo_variable_fix = "storage_capacity_cost"
     else:
-        annuity_cost = "capacity_cost"
+        moo_variable_fix = "capacity_cost"
 
 
     # ---------------- Possible SCENARIOS ----------------
@@ -161,20 +166,20 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
         "hydropower",
         "mimo",
         "pv-panel",
-        "storage.csv",
-        "toilets.csv",
-        "volatile.csv",
-        "wastewater_treatment.csv",
-        "water_filtration.csv",
+        "storage",
+        # "toilets",
+        "volatile",
+        "wastewater_treatment",
+        "water_filtration",
         "water-pump",
-        "water_treatment.csv",
+        "water_treatment",
         "wind-turbine"
     ]:
         scenario = MOO_VARIABLE_SCEN
     elif element in [
-        "dispatchable.csv",
-        "energy_sources.csv",
-        "water_sources.csv",
+        "dispatchable",
+        "energy_sources",
+        "water_sources",
     ]:
         scenario = MOO_DISPATCHABLE_SCEN
     else:
@@ -245,11 +250,12 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
                 # TODO should save the moo_variable_flow as a sequence and write the sequence header here instead of a float
                 # save this into "moo_profile.csv" or "moo_variable_flow.csv", cf_aware should stay in volatile profile
                 ts_header = f"{row_name}_{moo_suffix}"
-                add_moo_timeseries(
-                    ts_values=moo_variable_flow,
-                    ts_header=ts_header,
-                    sequences_path=cf_aware_path,
-                )
+                cf_aware_df[ts_header] = moo_variable_flow
+                # add_moo_timeseries(
+                #     res=cf_aware_res,
+                #     ts_name=ts_header,
+                #     ts_values=moo_variable_flow
+                # )
                 # import pdb;
                 # pdb.set_trace()
                 element_df.at[index, moo_variable_var] = ts_header
@@ -295,11 +301,12 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
             # TODO change this to insert it into sequences
             if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
                 ts_header = f"{row_name}_{moo_suffix}"
-                add_moo_timeseries(
-                    ts_values=moo_variable_flow,
-                    ts_header=ts_header,
-                    sequences_path=cf_aware_path,
-                )
+                cf_aware_df[ts_header] = moo_variable_flow
+                # add_moo_timeseries(
+                #     res=cf_aware_res,
+                #     ts_name=ts_header,
+                #     ts_values=moo_variable_flow
+                # )
                 element_df.at[index, moo_variable_var] = ts_header
                 logger.info(
                     f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
@@ -317,6 +324,6 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
             )
     logging.debug(element_path)
 
-    # save the updated dataframe to the csv file
+    # save the updated element dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
-    return
+    return cf_aware_df
