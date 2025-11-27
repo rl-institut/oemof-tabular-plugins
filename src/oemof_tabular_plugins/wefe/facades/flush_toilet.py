@@ -28,6 +28,12 @@ class FlushToilet(Converter, Facade):
     human_urine_bus: oemof.solph.Bus
         An oemof bus instance where unit is connected to with
         its human urine input.
+    human_feces_density: float
+        Density in kg per m³ of wet human feces (kg/m³). Default: 1060.0
+    urine_flush_factor: float
+        Flush water consumption in m³ per m³ of human urine (m³/m³). Default: 0.001
+    feces_flush_factor: float
+        Flush water consumption in m³ per kg of human feces (m³/kg). Default: 0.06
     capacity: numeric
         The capacity (output side) of the unit.
     carrier_cost: numeric
@@ -72,6 +78,12 @@ class FlushToilet(Converter, Facade):
 
     carrier: str = ""
 
+    human_feces_density: float = 1060.0 # kg/m³
+
+    urine_flush_factor: float = 0.001 # m³/m³
+
+    feces_flush_factor: float = 0.06 # m³/kg
+
     capacity: float = None
 
     marginal_cost: float = 0
@@ -98,12 +110,14 @@ class FlushToilet(Converter, Facade):
 
         # Assume volume conservation: sum of feces + urine + service water = blackwater output volume
 
+        # Flush water required in m³ per time step of time series: self.feces_flush_factor
+
         self.conversion_factors.update(
             {
-                self.human_feces_bus: sequence(1),
+                self.human_feces_bus: sequence(1 / self.human_feces_density),
                 self.human_urine_bus: sequence(1),
-                self.water_in_bus: sequence(1),
-                self.water_out_bus: sequence(3),
+                self.water_in_bus: sequence(self.feces_flush_factor),
+                self.water_out_bus: sequence(1),
             }
         )
 
