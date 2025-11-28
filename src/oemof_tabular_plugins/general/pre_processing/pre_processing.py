@@ -406,7 +406,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
                 # performs pre-processing of cost data while taking multile objectives (emissions, water
                 # footprint, land requiremnt) into account, turns marginal_cost into profile linked with foreign key
                 cf_aware_df = pre_processing_moo(
-                    dp, wacc, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix, cf_aware_df, cf_aware_name
+                    dp, wacc, res, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix, cf_aware_df, cf_aware_name, cf_aware_res
                 )
                 # cast 'marginal_cost' to string because it is a foreign key (name of a profile),
                 # unless it's one of the following exceptions

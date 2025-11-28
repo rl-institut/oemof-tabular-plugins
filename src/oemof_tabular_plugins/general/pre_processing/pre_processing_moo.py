@@ -78,7 +78,7 @@ def get_moo_timeseries(dp, ts_name=""):
 
 
 
-def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix, cf_aware_df, cf_aware_name):
+def pre_processing_moo(dp, wacc, res, element, element_path, element_df, scenario_dir, moo_wf, moo_suffix, cf_aware_df, cf_aware_name, cf_aware_res):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -259,6 +259,21 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
                 # import pdb;
                 # pdb.set_trace()
                 element_df.at[index, moo_variable_var] = ts_header
+
+                # check if the foreign key is already there to avoid duplicates, add foreign key
+                fk_exists = any(
+                    fk.get("fields") == [moo_variable_var] and fk.get("reference", {}).get(
+                        "resource") == cf_aware_res.name
+                    for fk in res.descriptor["schema"]["foreignKeys"]
+                )
+                if not fk_exists:
+                    res.descriptor["schema"]["foreignKeys"].append({
+                        "fields": [moo_variable_var],
+                        "reference": {
+                            "resource": cf_aware_res.name
+                        }
+                    })
+
                 logger.info(
                     f"'{moo_variable_var}' has been calculated and updated for"
                     f" '{row_name}' in '{element}'."
@@ -308,6 +323,21 @@ def pre_processing_moo(dp, wacc, element, element_path, element_df, scenario_dir
                 #     ts_values=moo_variable_flow
                 # )
                 element_df.at[index, moo_variable_var] = ts_header
+
+                # check if the foreign key is already there to avoid duplicates, add foreign key
+                fk_exists = any(
+                    fk.get("fields") == [moo_variable_var] and fk.get("reference", {}).get(
+                        "resource") == cf_aware_res.name
+                    for fk in res.descriptor["schema"]["foreignKeys"]
+                )
+                if not fk_exists:
+                    res.descriptor["schema"]["foreignKeys"].append({
+                        "fields": [moo_variable_var],
+                        "reference": {
+                            "resource": cf_aware_res.name
+                        }
+                    })
+
                 logger.info(
                     f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
                     f" '{row_name}' in '{element}'."
