@@ -173,6 +173,7 @@ def pre_processing_moo(dp, wacc, res, element, element_path, element_df, scenari
         "water_filtration",
         "water-pump",
         "water_treatment",
+        "water-filtration",
         "wind-turbine"
     ]:
         scenario = MOO_VARIABLE_SCEN
@@ -218,14 +219,18 @@ def pre_processing_moo(dp, wacc, res, element, element_path, element_df, scenari
                 annuity / global_GDP * wf_cost
                 + land_requirement_factor / global_land_surface * wf_lr
             ) * 10**15
-            moo_variable_flow = 10**15 * (
-                resource_cost / global_GDP * wf_cost
-                + ghg_emission_factor / global_GHG * wf_ghg
-                + cf_aware
-                * water_consumption_factor
-                / global_annual_deprived_water
-                * wf_wf
-            )
+            try:
+                moo_variable_flow = 10**15 * (
+                    resource_cost / global_GDP * wf_cost
+                    + ghg_emission_factor / global_GHG * wf_ghg
+                    + cf_aware
+                    * water_consumption_factor
+                    / global_annual_deprived_water
+                    * wf_wf
+                )
+            except:
+                print(element, row_name)
+                moo_variable_flow = cf_aware
 
             # moo variables are expanded by 10e15 to have numbers in range which will not be reduced while optimization
             if not np.isnan(moo_variable_capacity):
