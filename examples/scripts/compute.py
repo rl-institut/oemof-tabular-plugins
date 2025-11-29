@@ -101,7 +101,7 @@ custom_attributes = [
     "annuity"
 ]
 # set whether the multi-objective optimization should be performed
-moo = False
+moo = True
 
 # MOO weight factors
 # Assign weights to the different minimization objectives (cost, greenhouse gas emissions,
