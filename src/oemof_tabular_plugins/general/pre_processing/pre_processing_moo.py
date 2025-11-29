@@ -262,13 +262,13 @@ def pre_processing_moo(dp, wacc, res, element, element_path, element_df, scenari
 
                 # check if the foreign key is already there to avoid duplicates, add foreign key
                 fk_exists = any(
-                    fk.get("fields") == [moo_variable_var] and fk.get("reference", {}).get(
+                    fk.get("fields") == moo_variable_var and fk.get("reference", {}).get(
                         "resource") == cf_aware_res.name
                     for fk in res.descriptor["schema"]["foreignKeys"]
                 )
                 if not fk_exists:
                     res.descriptor["schema"]["foreignKeys"].append({
-                        "fields": [moo_variable_var],
+                        "fields": moo_variable_var,
                         "reference": {
                             "resource": cf_aware_res.name
                         }
@@ -326,13 +326,13 @@ def pre_processing_moo(dp, wacc, res, element, element_path, element_df, scenari
 
                 # check if the foreign key is already there to avoid duplicates, add foreign key
                 fk_exists = any(
-                    fk.get("fields") == [moo_variable_var] and fk.get("reference", {}).get(
+                    fk.get("fields") == moo_variable_var and fk.get("reference", {}).get(
                         "resource") == cf_aware_res.name
                     for fk in res.descriptor["schema"]["foreignKeys"]
                 )
                 if not fk_exists:
                     res.descriptor["schema"]["foreignKeys"].append({
-                        "fields": [moo_variable_var],
+                        "fields": moo_variable_var,
                         "reference": {
                             "resource": cf_aware_res.name
                         }
