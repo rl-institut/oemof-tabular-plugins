@@ -30,10 +30,12 @@ class FlushToilet(Converter, Facade):
         its human urine input.
     human_feces_density: float
         Density in kg per m³ of wet human feces (kg/m³). Default: 1060.0
-    urine_flush_factor: float
-        Flush water consumption in m³ per m³ of human urine (m³/m³). Default: 0.001
-    feces_flush_factor: float
-        Flush water consumption in m³ per kg of human feces (m³/kg). Default: 0.06
+    urine_factor: float
+        Human urine contribution in m³ per m³ of black water (m³/m³). Default: 0.11
+    feces_factor: float
+        Human feces contribution in m³ per m³ of black water (m³/m³). Default: 0.01
+    flush_water_factor: float
+        Flush water contribution in m³ per m³ of black water (m³/m³). Default: 0.88
     capacity: numeric
         The capacity (output side) of the unit.
     carrier_cost: numeric
@@ -80,9 +82,11 @@ class FlushToilet(Converter, Facade):
 
     human_feces_density: float = 1060.0 # kg/m³
 
-    urine_flush_factor: float = 0.001 # m³/m³
+    urine_factor: float = 0.11 # m³/m³
 
-    feces_flush_factor: float = 0.06 # m³/kg
+    feces_factor: float = 0.01 # m³/m³
+
+    flush_water_factor: float = 0.88 # m³/m³
 
     capacity: float = None
 
@@ -110,13 +114,11 @@ class FlushToilet(Converter, Facade):
 
         # Assume volume conservation: sum of feces + urine + service water = blackwater output volume
 
-        # Flush water required in m³ per time step of time series: self.feces_flush_factor
-
         self.conversion_factors.update(
             {
-                self.human_feces_bus: sequence(1 / self.human_feces_density),
-                self.human_urine_bus: sequence(1),
-                self.water_in_bus: sequence(self.feces_flush_factor),
+                self.human_feces_bus: sequence(self.feces_factor / self.human_feces_density),
+                self.human_urine_bus: sequence(self.urine_factor),
+                self.water_in_bus: sequence(self.flush_water_factor),
                 self.water_out_bus: sequence(1),
             }
         )
