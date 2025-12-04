@@ -361,6 +361,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
         except ValueError:
             cf_aware_name = "cf_aware"
             cf_aware_res, cf_aware_df = get_moo_timeseries(dp, ts_name=cf_aware_name)  # Unit: dimensionless
+
         existing_cf_fields = set(cf_aware_df.columns)
         for col in cf_aware_df.columns:
             # Convert to float
@@ -405,13 +406,11 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
             else:
                 # performs pre-processing of cost data while taking multiple objectives (emissions, water
                 # footprint, land requirement) into account, returns cf_aware_df with new profiles
-                cf_aware_df = pre_processing_moo(
+                cf_aware_df, profiles_created = pre_processing_moo(
                     wacc, res, element, element_path, element_df, moo_wf, moo_suffix, cf_aware_df, cf_aware_name, cf_aware_res
                 )
-                # cast 'marginal_cost' to string because it is a foreign key (name of a profile),
-                # unless it's one of the following exceptions
-                element_type = element_df["type"].iloc[0]
-                if element_type not in ["bus", "load", "excess", "crop"]:
+                # if profiles were created, cast 'marginal_cost' to string because it is a foreign key (name of a profile)
+                if profiles_created:
                     for f in res.descriptor["schema"]["fields"]:
                         if f["name"] == "marginal_cost":
                             f["type"] = "string"

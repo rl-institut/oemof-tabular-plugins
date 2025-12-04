@@ -18,21 +18,6 @@ MOO_DISPATCHABLE_SCEN = "moo variable calculation with dispatchable"
 MOO_ANNUITY = "annuity"
 
 
-def calculate_annuity(capex, opex_fix, lifetime, wacc):
-    """
-    Calculates the total annuity for each component, including CAPEX and fixed OPEX.
-    :param capex: CAPEX (currency/MW*) *or the unit you choose to use throughout the model e.g. kW/GW
-    :param opex_fix: fixed OPEX (currency/MW*/year)
-    :param lifetime: lifetime of the component (years)
-    :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
-    :return: total annuity (currency/MW*/year)
-    """
-    annuity_capex = economics.annuity(capex, lifetime, wacc)
-    annuity_opex_fix = opex_fix
-    annuity = round(annuity_capex + annuity_opex_fix, 2)
-    return annuity
-
-
 def to_float(row, key):
     # Key missing
     if key not in row:
@@ -47,6 +32,21 @@ def to_float(row, key):
     except (TypeError, ValueError):
         logging.warning(f"Row {row.name}: Could not convert '{key}'='{value}' to float. Setting to '0.0'.")
         return 0.0
+
+
+def calculate_annuity(capex, opex_fix, lifetime, wacc):
+    """
+    Calculates the total annuity for each component, including CAPEX and fixed OPEX.
+    :param capex: CAPEX (currency/MW*) *or the unit you choose to use throughout the model e.g. kW/GW
+    :param opex_fix: fixed OPEX (currency/MW*/year)
+    :param lifetime: lifetime of the component (years)
+    :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
+    :return: total annuity (currency/MW*/year)
+    """
+    annuity_capex = economics.annuity(capex, lifetime, wacc)
+    annuity_opex_fix = opex_fix
+    annuity = round(annuity_capex + annuity_opex_fix, 2)
+    return annuity
 
 
 def get_moo_timeseries(dp, ts_name=""):
@@ -147,10 +147,7 @@ def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo
     # Every element that has the column 'storage_capacity_cost' is assumed to only contain components of type storage
     # where 'storage_capacity_cost' represents the cost parameter to be calculated.
     # All other elements require 'capacity_cost' as the cost parameter to be calculated.
-    if "storage_capacity_cost" in element_df.columns:
-        moo_variable_fix = "storage_capacity_cost"
-    else:
-        moo_variable_fix = "capacity_cost"
+    moo_variable_fix = "storage_capacity_cost" if "storage_capacity_cost" in element_df.columns else "capacity_cost"
 
 
     # ---------------- Possible SCENARIOS ----------------
@@ -188,6 +185,8 @@ def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo
         )
 
     # ---------------- ACTIONS TAKEN FOR EACH SCENARIO ----------------
+    cf_aware_temp_df = pd.DataFrame(index=cf_aware_df.index)  # temporary storage of moo profiles
+    row_temp_dict = {}    # temporary storage mapping the rows of element_df to the moo profile names
     for index, row in element_df.iterrows():
         # define the row name
         row_name = row["name"]
@@ -241,25 +240,10 @@ def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo
                     f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
                 )
 
-
             if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
                 ts_header = f"{row_name}_{moo_suffix}"
-                cf_aware_df[ts_header] = moo_variable_flow
-                element_df.at[index, moo_variable_var] = ts_header
-
-                # check if the foreign key is already there to avoid duplicates, add foreign key
-                fk_exists = any(
-                    fk.get("fields") == moo_variable_var and fk.get("reference", {}).get(
-                        "resource") == cf_aware_res.name
-                    for fk in res.descriptor["schema"]["foreignKeys"]
-                )
-                if not fk_exists:
-                    res.descriptor["schema"]["foreignKeys"].append({
-                        "fields": moo_variable_var,
-                        "reference": {
-                            "resource": cf_aware_res.name
-                        }
-                    })
+                cf_aware_temp_df[ts_header] = moo_variable_flow
+                row_temp_dict[index] = ts_header
 
                 logger.info(
                     f"'{moo_variable_var}' has been calculated and updated for"
@@ -291,7 +275,6 @@ def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo
             indirect_water_consumption_factor = to_float(row, "indirect_water_consumption_factor")
             resource_cost = to_float(row, "resource_cost")
 
-
             moo_variable_flow = 10**15 * (
                 resource_cost / global_GDP * wf_cost
                 + ghg_emission_factor / global_GHG * wf_ghg
@@ -303,22 +286,8 @@ def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo
 
             if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
                 ts_header = f"{row_name}_{moo_suffix}"
-                cf_aware_df[ts_header] = moo_variable_flow
-                element_df.at[index, moo_variable_var] = ts_header
-
-                # check if the foreign key is already there to avoid duplicates, add foreign key
-                fk_exists = any(
-                    fk.get("fields") == moo_variable_var and fk.get("reference", {}).get(
-                        "resource") == cf_aware_res.name
-                    for fk in res.descriptor["schema"]["foreignKeys"]
-                )
-                if not fk_exists:
-                    res.descriptor["schema"]["foreignKeys"].append({
-                        "fields": moo_variable_var,
-                        "reference": {
-                            "resource": cf_aware_res.name
-                        }
-                    })
+                cf_aware_temp_df[ts_header] = moo_variable_flow
+                row_temp_dict[index] = ts_header
 
                 logger.info(
                     f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
@@ -334,8 +303,46 @@ def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo
             logger.info(
                 f"'{row_name}' of element '{element}' does not contain '{moo_variable_fix}' parameter. Skipping..."
             )
+
+    # check if any of the moo profiles is a variable profile:
+    # any_variable=False means all profiles created from this element are constant and unnecessary,
+    # marginal_cost will be kept as a constant, numeric value
+    any_variable = any(len(cf_aware_temp_df[col].unique()) > 1 for col in cf_aware_temp_df.columns)
+
+    if any_variable:
+        # 1) transfer all columns to cf_aware_df
+        for col in cf_aware_temp_df.columns:
+            cf_aware_df[col] = cf_aware_temp_df[col]
+
+        # 2) set element_df to profile names
+        for index, col in row_temp_dict.items():
+            element_df.at[index, moo_variable_var] = col
+
+        # 3) add foreign key (once)
+        fk_exists = any(
+            fk.get("fields") == moo_variable_var and fk.get("reference", {}).get("resource") == cf_aware_res.name
+            for fk in res.descriptor["schema"]["foreignKeys"]
+        )
+        if not fk_exists:
+            res.descriptor["schema"]["foreignKeys"].append({
+                "fields": moo_variable_var,
+                "reference": {"resource": cf_aware_res.name}
+            })
+
+        profiles_created = True
+
+    else:
+        # All columns are constant → write numeric values directly
+        # This will also be the case for 'scenario == "no moo indicator"' as cf_aware_temp_df will be empty
+        for index, col in row_temp_dict.items():
+            const_val = float(cf_aware_temp_df[col].iloc[0])
+            element_df.at[index, moo_variable_var] = const_val
+
+        profiles_created = False
+
+
     logging.debug(element_path)
 
     # save the updated element dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
-    return cf_aware_df
+    return cf_aware_df, profiles_created
