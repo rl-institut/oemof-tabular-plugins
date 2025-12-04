@@ -5,6 +5,9 @@ import numpy as np
 from datapackage import Package
 import pandas as pd
 import logging
+import csv
+from decimal import Decimal
+import tableschema
 
 # from .pre_processing import calculate_annuity
 
@@ -30,44 +33,50 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     return annuity
 
 
-def add_moo_timeseries(
-    ts_values, ts_header, scenario_dir, sequence_resource="volatile_profile"
-):
-    sequences_path = os.path.join(
-        scenario_dir, "data", "sequences", sequence_resource + ".csv"
+def to_float(row, key):
+    # Key missing
+    if key not in row:
+        logging.warning(f"Row {row.name}: Missing key '{key}'. Setting to '0.0'.")
+        return 0.0
+
+    value = row[key]
+
+    # Value present but not convertible
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        logging.warning(f"Row {row.name}: Could not convert '{key}'='{value}' to float. Setting to '0.0'.")
+        return 0.0
+
+
+def get_moo_timeseries(dp, ts_name=""):
+    """ """
+    for res in dp.resources:
+        if "/sequences/" in res.descriptor["path"]:
+            field_names = [f.name for f in res.schema.fields]
+            if ts_name in field_names:
+                try:
+                    df = pd.DataFrame.from_records(res.read(keyed=True))
+                except tableschema.exceptions.CastError as err:
+                    if err.errors:
+                        logging.error(
+                            f"The resource {res.name} has the following casting errors: "
+                            f"{','.join([str(e) for e in err.errors])}"
+                        )
+                    else:
+                        logging.error(f"The resource {res.name} has the following casting error: {err}")
+                    df = pd.DataFrame()
+
+                return res, df
+
+    #TODO: dp.descriptor['name'] not present yet for ScenarioBuilder scenarios
+    dp_name = os.path.basename(os.path.normpath(dp.base_path))
+    raise ValueError(
+        f"'{ts_name}' could not be found in any file under '/sequences/' of datapackage '{dp_name}'"
     )
-    df = pd.read_csv(sequences_path)
-    df[ts_header] = ts_values
-    df.to_csv(sequences_path, index=False)
 
 
-def get_moo_timeseries(
-    scenario_dir, ts_name="cf_aware", resource_name="volatile_profile"
-):
-    # datapackage_path = os.path.join(scenario_dir, "datapackage.json")
-    # # if doesn't exists then look the path and open with pd.read_csv
-    # pkg = Package(datapackage_path)
-    # res = pkg.get_resource(resource_name)
-    # if res is None:
-    #     raise FileNotFoundError(f"'The resource '{resource_name}.csv', where {ts_name} column should be provided, is missing from datapackage '{pkg.descriptor['name']}' sequences. If it is there, then 'datapackage.json' file must be updated accordingly, to to so, run the script with 'moo' set to 'False', this will update the datapackage automatically.")
-    # df = pd.DataFrame.from_records(res.read(keyed=True))
-
-    sequences_path = os.path.join(
-        scenario_dir, "data", "sequences", resource_name + ".csv"
-    )
-    df = pd.read_csv(sequences_path)
-
-    answer = None
-    if ts_name in df.columns:
-        answer = df[ts_name].values
-    else:
-        raise ValueError(
-            f"'{ts_name} column is missing from sequence resource '{resource_name}' of datapackage '{pkg.descriptor['name']}' "
-        )
-    return answer
-
-
-def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, moo_wf):
+def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo_suffix, cf_aware_df, cf_aware_name, cf_aware_res):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -118,12 +127,12 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
     global_land_surface = 1.49 * 10**14  # Unit: m²
     global_annual_deprived_water = 7.91 * 10**13  # Unit: [m³/a], Source: EU JRC (2017)
     # https://data.europa.eu/doi/10.2760/88930
-    moo_profiles = "moo_profile"
-    cf_aware = get_moo_timeseries(
-        scenario_dir, ts_name="cf_aware", resource_name="moo_profile"
-    )  # Unit: dimensionless
+
+    # Get cf_aware and the file where it was found
+
     # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
     # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
+    cf_aware = cf_aware_df[cf_aware_name]
 
     # -------------- MOO Customizable Weights ------------------
     wf_cost = moo_wf["wf_cost"]
@@ -135,35 +144,47 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
 
     # ---------------- Assigning MOO variables in csv ----------------
     moo_variable_var = "marginal_cost"
-    # annuity = "annuity"
-    # for every element other than storage, the fixed moo optimization variable is 'capacity_cost'
-    # for storage, the fixed moo optimization variable is 'storage_capacity_cost'
-    if element != "storage.csv":
-        moo_variable_fix = "capacity_cost"
-    else:
+    # Every element that has the column 'storage_capacity_cost' is assumed to only contain components of type storage
+    # where 'storage_capacity_cost' represents the cost parameter to be calculated.
+    # All other elements require 'capacity_cost' as the cost parameter to be calculated.
+    if "storage_capacity_cost" in element_df.columns:
         moo_variable_fix = "storage_capacity_cost"
+    else:
+        moo_variable_fix = "capacity_cost"
 
-        # loop through each entry in the csv file
 
     # ---------------- Possible SCENARIOS ----------------
-
-    if element in ["bus.csv", "load.csv", "excess.csv", "crop.csv"]:
+    # Different calculation of cost parameters for different component types,
+    # assuming all components of an element (resource) have the same type
+    # TODO: add missing types (eg of water components), eventually link to TYPEMAP directly
+    element_type = element_df["type"].iloc[0]
+    if element_type in ["bus", "load", "excess", "crop"]:
         scenario = NO_MOO_VARIABLE_SCEN
-    elif element in [
-        "conversion.csv",
-        "mimo.csv",
-        "storage.csv",
-        "volatile.csv",
-        "water_filtration.csv",
-        "water_pumps.csv",
-        "hydropower.csv",
+    elif element_type in [
+        "conversion",
+        "hydropower",
+        "mimo",
+        "pv-panel",
+        "storage",
+        # "toilets",
+        "volatile",
+        "wastewater_treatment",
+        "water_filtration",
+        "water-pump",
+        "water_treatment",
+        "water-filtration",
+        "wind-turbine"
     ]:
         scenario = MOO_VARIABLE_SCEN
-    elif element == "dispatchable.csv":
+    elif element in [
+        "dispatchable",
+        "energy_sources",
+        "water_sources",
+    ]:
         scenario = MOO_DISPATCHABLE_SCEN
     else:
         raise ValueError(
-            f"The technology defined in {element} cannot be used for multi-objective at the moment"
+            f"The technology defined in {element} cannot be used for multi-objective optimization at the moment"
         )
 
     # ---------------- ACTIONS TAKEN FOR EACH SCENARIO ----------------
@@ -186,10 +207,10 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
                     f"The resource_cost is the cost of one unit of flow (could be EUR/kWh or EUR/kg, EUR/m³ etc "
                 )
 
-            ghg_emission_factor = row["ghg_emission_factor"]
-            land_requirement_factor = row["land_requirement_factor"]
-            water_consumption_factor = row["water_consumption_factor"]
-            resource_cost = row["resource_cost"]
+            ghg_emission_factor = to_float(row, "ghg_emission_factor")
+            land_requirement_factor = to_float(row, "land_requirement_factor")
+            water_consumption_factor = to_float(row, "water_consumption_factor")
+            resource_cost = to_float(row, "resource_cost")
 
             logging.debug(f"capex: {capex}, lifetime: {lifetime}, wacc: {wacc}")
             annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
@@ -220,24 +241,26 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
                     f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
                 )
 
-            # if isinstance(moo_variable_flow, np.ndarray):
-            #     element_df.at[index, moo_variable_var] = "cf_aware"
 
-            # TODO change this to insert it into sequences
-
-            if not np.isnan(moo_variable_flow).any():
-                # TODO should save the moo_variable_flow as a sequence and write the sequence header here instead of a float
-                # save this into "moo_profile.csv" or "moo_variable_flow.csv", cf_aware should stay in volatile profile
-                ts_header = f"{row_name}_moo_profile"
-                add_moo_timeseries(
-                    ts_values=moo_variable_flow,
-                    ts_header=ts_header,
-                    scenario_dir=scenario_dir,
-                    sequence_resource="moo_profile",
-                )
-                # import pdb;
-                # pdb.set_trace()
+            if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
+                ts_header = f"{row_name}_{moo_suffix}"
+                cf_aware_df[ts_header] = moo_variable_flow
                 element_df.at[index, moo_variable_var] = ts_header
+
+                # check if the foreign key is already there to avoid duplicates, add foreign key
+                fk_exists = any(
+                    fk.get("fields") == moo_variable_var and fk.get("reference", {}).get(
+                        "resource") == cf_aware_res.name
+                    for fk in res.descriptor["schema"]["foreignKeys"]
+                )
+                if not fk_exists:
+                    res.descriptor["schema"]["foreignKeys"].append({
+                        "fields": moo_variable_var,
+                        "reference": {
+                            "resource": cf_aware_res.name
+                        }
+                    })
+
                 logger.info(
                     f"'{moo_variable_var}' has been calculated and updated for"
                     f" '{row_name}' in '{element}'."
@@ -263,10 +286,11 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
 
         elif scenario == MOO_DISPATCHABLE_SCEN:
             # store the parameters
-            ghg_emission_factor = row["ghg_emission_factor"]
-            water_consumption_factor = row["water_consumption_factor"]
-            indirect_water_consumption_factor = row["indirect_water_consumption_factor"]
-            resource_cost = row["resource_cost"]
+            ghg_emission_factor = to_float(row, "ghg_emission_factor")
+            water_consumption_factor = to_float(row, "water_consumption_factor")
+            indirect_water_consumption_factor = to_float(row, "indirect_water_consumption_factor")
+            resource_cost = to_float(row, "resource_cost")
+
 
             moo_variable_flow = 10**15 * (
                 resource_cost / global_GDP * wf_cost
@@ -277,19 +301,34 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
                 * wf_wf
             )
 
-            # TODO change this to insert it into sequences
-            ts_header = f"{row_name}_moo_profile"
-            add_moo_timeseries(
-                ts_values=moo_variable_flow,
-                ts_header=ts_header,
-                scenario_dir=scenario_dir,
-                sequence_resource="moo_profile",
-            )
-            element_df.at[index, moo_variable_var] = ts_header
-            logger.info(
-                f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
-                f" '{row_name}' in '{element}'."
-            )
+            if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
+                ts_header = f"{row_name}_{moo_suffix}"
+                cf_aware_df[ts_header] = moo_variable_flow
+                element_df.at[index, moo_variable_var] = ts_header
+
+                # check if the foreign key is already there to avoid duplicates, add foreign key
+                fk_exists = any(
+                    fk.get("fields") == moo_variable_var and fk.get("reference", {}).get(
+                        "resource") == cf_aware_res.name
+                    for fk in res.descriptor["schema"]["foreignKeys"]
+                )
+                if not fk_exists:
+                    res.descriptor["schema"]["foreignKeys"].append({
+                        "fields": moo_variable_var,
+                        "reference": {
+                            "resource": cf_aware_res.name
+                        }
+                    })
+
+                logger.info(
+                    f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
+                    f" '{row_name}' in '{element}'."
+                )
+            else:
+                logging.warning(
+                    f"'{moo_variable_var}' could not be calculated and will not be updated for"
+                    f" '{row_name}' in '{element}'."
+                )
 
         elif scenario == "no moo indicator":
             logger.info(
@@ -297,6 +336,6 @@ def pre_processing_moo(wacc, element, element_path, element_df, scenario_dir, mo
             )
     logging.debug(element_path)
 
-    # save the updated dataframe to the csv file
+    # save the updated element dataframe to the csv file
     element_df.to_csv(element_path, sep=";", index=False)
-    return
+    return cf_aware_df
