@@ -82,16 +82,16 @@ def compute_scenario(
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
-    if skip_preprocessing is False:
-        # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
-        pre_processing(scenario_dir, wacc, custom_attributes, moo, moo_wf)
-
     if skip_infer_datapackage_metadata is False:
         otp_building.infer_metadata_from_data(
             package_name=scenario_name,
             path=scenario_dir,
             typemap=typemap,
         )
+
+    if skip_preprocessing is False:
+        # pre-processing to update input csv files based on cost parameters: CAPEX, OPEX fix, lifetime, WACC
+        pre_processing(scenario_dir, wacc, custom_attributes, moo, moo_wf)
 
     # create energy system object from the datapackage
     es = EnergySystem.from_datapackage(
