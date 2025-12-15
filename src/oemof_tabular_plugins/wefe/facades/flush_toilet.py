@@ -2,6 +2,7 @@ from dataclasses import field
 from typing import Sequence, Union
 
 import numpy as np
+import pandas as pd
 from oemof.solph._plumbing import sequence
 from oemof.solph.buses import Bus
 from oemof.solph.components import Converter
@@ -68,25 +69,21 @@ class FlushToilet(Converter, Facade):
          (see oemof.solph for more information on possible parameters)
     """
 
-    water_in_bus: Bus
+    service_water_bus: Bus
 
     human_feces_bus: Bus
 
     human_urine_bus: Bus
 
-    water_out_bus: Bus
+    black_water_bus: Bus
 
     tech: str
 
     carrier: str = ""
 
-    human_feces_density: float = 1060.0 # kg/m³
+    urine_profile: Union[float, Sequence[float]] = None
 
-    urine_factor: float = 0.11 # m³/m³
-
-    feces_factor: float = 0.01 # m³/m³
-
-    flush_water_factor: float = 0.88 # m³/m³
+    feces_profile: Union[float, Sequence[float]] = None
 
     capacity: float = None
 
@@ -113,19 +110,28 @@ class FlushToilet(Converter, Facade):
     def build_solph_components(self):
 
         # Assume volume conservation: sum of feces + urine + service water = blackwater output volume
+        human_feces_density = 1060.0  # kg/m³
+
+        flush_factor = 0.88 / 0.12  # m³/m³
+
+        urine_factor = pd.Series(self.urine_profile)
+
+        feces_factor = pd.Series(self.feces_profile) #/human_feces_density
+        flush_water_profile = (urine_factor + feces_factor) * flush_factor
+        black_water_profile = urine_factor + feces_factor + flush_water_profile
 
         self.conversion_factors.update(
             {
-                self.human_feces_bus: sequence(self.feces_factor / self.human_feces_density),
-                self.human_urine_bus: sequence(self.urine_factor),
-                self.water_in_bus: sequence(self.flush_water_factor),
-                self.water_out_bus: sequence(1),
+                self.human_feces_bus: sequence(feces_factor),
+                self.human_urine_bus: sequence(urine_factor),
+                self.service_water_bus: sequence(flush_water_profile),
+                self.black_water_bus: sequence(black_water_profile),
             }
         )
 
         self.inputs.update(
             {
-                self.water_in_bus: Flow(),
+                self.service_water_bus: Flow(),
                 self.human_feces_bus: Flow(),
                 self.human_urine_bus: Flow(),
             }
@@ -133,7 +139,7 @@ class FlushToilet(Converter, Facade):
 
         self.outputs.update(
             {
-                self.water_out_bus: Flow(
+                self.black_water_bus: Flow(
                     nominal_value = self._nominal_value(),
                     variable_costs = self.marginal_cost,
                     investment = self._investment(),
