@@ -104,7 +104,7 @@ def encode_image_file(img_path):
     return encoded_img
 
 
-def sankey(energy_system, ts=None):
+def sankey(results, nodes, ts=None):
     """Return a dict to a plotly sankey diagram"""
     busses = []
 
@@ -113,10 +113,8 @@ def sankey(energy_system, ts=None):
     targets = []
     values = []
 
-    results = energy_system.results
-
     # draw a node for each of the network's component. The shape depends on the component's type
-    for nd in energy_system.nodes:
+    for nd in nodes:
         if isinstance(nd, solph.Bus):
 
             # keep the bus reference for drawing edges later
@@ -239,26 +237,14 @@ def sankey(energy_system, ts=None):
     return fig.to_dict()
 
 
-def prepare_app(energy_system, dp_path, tables, services, units=None):
-
-    # TODO to display energy system
-    energy_system_graph = f"energy_system.png"
-    # if ES_GRAPH is True:
-    #     es = ESGraphRenderer(
-    #     energy_system, legend=True, filepath=energy_system_graph, img_format="png"
-    #     )
-    #     es.render()
-    #     energy_system_graph = encode_image_file(f"energy_system.png")
-
-    results = energy_system.results
+def prepare_app(dp_path, results, date_time_index, nodes, tables, services, units=None):
+    # prepare_app(dash_payload=None)
 
     bus_figures = []
 
     p0 = Package(dp_path)
     bus_data = pd.DataFrame.from_records(p0.get_resource("bus").read(keyed=True))
     busses = bus_data.name.tolist()
-
-    date_time_index = energy_system.timeindex
 
     for bus in busses:
         if bus != "battery":
@@ -473,7 +459,7 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
                 options={k: v for k, v in enumerate(date_time_index)},
                 value=None,
             ),
-            dcc.Graph(id="sankey", figure=sankey(energy_system)),
+            dcc.Graph(id="sankey", figure=sankey(results, nodes)),
         ]
         + [
             dcc.Graph(
@@ -482,7 +468,7 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
             )
             for bus, fig in zip(busses, bus_figures)
         ]
-        + [dcc.Graph(id="sankey_aggregate", figure=sankey(energy_system))]
+        + [dcc.Graph(id="sankey_aggregate", figure=sankey(results, nodes))]
         # + [
         #     html.H4(["Energy system"]),
         #     html.Img(
@@ -510,8 +496,8 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
         if ts is None:
             ts = "0"
         ts = int(ts)
-        # see if case changes, otherwise do not rerun this
-        date_time_index = energy_system.timeindex
+        # # see if case changes, otherwise do not rerun this
+        # date_time_index = energy_system.timeindex
 
         bus_figures = []
         for bus in busses:
@@ -588,7 +574,7 @@ def prepare_app(energy_system, dp_path, tables, services, units=None):
             bus_figures.append(fig)
 
         return [
-            sankey(energy_system, date_time_index[ts]),
+            sankey(results, nodes, date_time_index[ts]),
         ] + bus_figures
 
     @demo_app.callback(

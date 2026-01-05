@@ -390,13 +390,27 @@ def post_processing(
     if dash_app is True:
 
         demo_app = prepare_app(
-            es,
             dp_path=dp_path,
+            results=calculator.df_results,
+            date_time_index=es.timeindex,
+            nodes=es.nodes,
             tables=result_tables,
             services=service_tables,
             units=parameters_units,
         )
         demo_app.run(debug=False, port=8060)
+
+    # Attach minimal results for dash directly to calculator so they can be send to gui
+    if not hasattr(calculator, "dash_tables"):
+        calculator.result_tables = result_tables
+    if not hasattr(calculator, "dash_services"):
+        calculator.service_tables = service_tables
+    if not hasattr(calculator, "dash_units"):
+        calculator.parameters_units = parameters_units
+    if not hasattr(calculator, "timeindex"):
+        calculator.timeindex = es.timeindex
+    if not hasattr(calculator, "nodes"):
+        calculator.nodes = es.nodes  # for simserver; for GUI serialize this
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
     if hasattr(calculator, "scalar_params"):
