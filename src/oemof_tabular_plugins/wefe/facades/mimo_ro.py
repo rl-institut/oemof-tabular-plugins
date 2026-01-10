@@ -13,15 +13,15 @@ class MIMO_ReverseOsmosis(MIMO):
 
     Inputs:
     - electricity_bus
-    - feedwater_bus
+    - water_in_bus
 
     Outputs:
-    - permeate_bus (PRIMARY)
-    - brine_bus
+    - water_out_bus (PRIMARY)
+    - brine_out_bus
 
     Conversion factors are derived internally from:
     - specific_energy_consumption
-    - recovery_rate
+    - efficiency
     """
 
     # ---- tabular identity ----
@@ -40,13 +40,13 @@ class MIMO_ReverseOsmosis(MIMO):
 
     # ---- buses ----
     electricity_bus: Bus = None
-    feedwater_bus: Bus = None
-    permeate_bus: Bus = None
-    brine_bus: Bus = None
+    water_in_bus: Bus = None
+    water_out_bus: Bus = None
+    brine_out_bus: Bus = None
 
     # ---- physics parameters ----
     specific_energy_consumption: float = 1.2   # kWh / m³ permeate
-    recovery_rate: float = 0.55                # permeate / feedwater
+    efficiency: float = 0.55                # permeate / feedwater
 
     # ---- economics ----
     marginal_cost: float = 0.0                 # €/m³ permeate
@@ -78,9 +78,9 @@ class MIMO_ReverseOsmosis(MIMO):
         # buses
         # ---------------------------
         self.electricity_bus = attributes.pop("electricity_bus")
-        self.feedwater_bus = attributes.pop("feedwater_bus")
-        self.permeate_bus = attributes.pop("permeate_bus")
-        self.brine_bus = attributes.pop("brine_bus")
+        self.water_in_bus = attributes.pop("water_in_bus")
+        self.water_out_bus = attributes.pop("water_out_bus")
+        self.brine_out_bus = attributes.pop("brine_out_bus")
 
         # ---------------------------
         # physics parameters
@@ -88,12 +88,12 @@ class MIMO_ReverseOsmosis(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.recovery_rate = attributes.pop(
-            "recovery_rate", self.recovery_rate
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
 
-        if not 0 < self.recovery_rate < 1:
-            raise ValueError("recovery_rate must be between 0 and 1")
+        if not 0 < self.efficiency < 1:
+            raise ValueError("efficiency must be in (0, 1]")
 
         # ---------------------------
         # economics
@@ -125,26 +125,26 @@ class MIMO_ReverseOsmosis(MIMO):
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
 
         # ==========================================================
-        # PHYSICS → CONVERSION FACTORS (normalized to permeate = 1)
+        # PHYSICS → CONVERSION FACTORS (normalized to treated water output = 1)
         # ==========================================================
 
-        feedwater_per_permeate = 1.0 / self.recovery_rate
-        brine_per_permeate = feedwater_per_permeate - 1.0
-        electricity_per_permeate = self.specific_energy_consumption
+        feedwater_per_output = 1.0 / self.efficiency
+        brine_per_output = feedwater_per_output - 1.0
+        electricity_per_output = self.specific_energy_consumption
 
         attributes.update(
             {
                 # inputs
-                f"conversion_factor_{self.electricity_bus.label}":
-                    sequence(electricity_per_permeate),
-                f"conversion_factor_{self.feedwater_bus.label}":
-                    sequence(feedwater_per_permeate),
+                f"conversion_factor_{self.electricity_bus}":
+                    sequence(electricity_per_output),
+                f"conversion_factor_{self.water_in_bus}":
+                    sequence(feedwater_per_output),
 
                 # outputs
-                f"conversion_factor_{self.permeate_bus.label}":
+                f"conversion_factor_{self.water_out_bus}":
                     sequence(1.0),
-                f"conversion_factor_{self.brine_bus.label}":
-                    sequence(brine_per_permeate),
+                f"conversion_factor_{self.brine_out_bus}":
+                    sequence(brine_per_output),
             }
         )
 
@@ -164,9 +164,9 @@ class MIMO_ReverseOsmosis(MIMO):
         # ==========================================================
         super().__init__(
             from_bus_0=self.electricity_bus,
-            from_bus_1=self.feedwater_bus,
-            to_bus_0=self.permeate_bus,   # PRIMARY
-            to_bus_1=self.brine_bus,
+            from_bus_1=self.water_in_bus,
+            to_bus_0=self.water_out_bus,  # PRIMARY
+            to_bus_1=self.brine_out_bus,
             primary=self.primary,
             marginal_cost=self.marginal_cost,
             carrier_cost=self.carrier_cost,
