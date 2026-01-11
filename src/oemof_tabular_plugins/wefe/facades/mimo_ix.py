@@ -7,9 +7,9 @@ from oemof_tabular_plugins.wefe.facades import MIMO
 
 
 @dataclasses.dataclass(unsafe_hash=False, frozen=False, eq=False)
-class MIMO_BioFiltration(MIMO):
+class MIMO_IonExchange(MIMO):
     """
-    Specialized MIMO-B Biofiltration facade with code-driven physics.
+    Specialized MIMO-B Ion Exchange facade with code-driven physics.
 
     Inputs:
     - electricity_bus
@@ -17,16 +17,14 @@ class MIMO_BioFiltration(MIMO):
 
     Outputs:
     - water_out_bus (PRIMARY)
-    - waste_biomass_out_bus
 
     Conversion factors are derived internally from:
     - specific_energy_consumption
     - efficiency
-    - biomass_waste_fraction
     """
 
     # ---- tabular identity ----
-    type: str = "mimo_biof"
+    type: str = "mimo_ix"
     name: str = ""
     tech: str = "mimo"
     carrier: str = ""
@@ -43,16 +41,10 @@ class MIMO_BioFiltration(MIMO):
     electricity_bus: Bus = None
     water_in_bus: Bus = None
     water_out_bus: Bus = None
-    waste_biomass_out_bus: Bus = None
 
-    # ---- physics parameters ----
-    specific_energy_consumption: float = 0.12   # kWh / m³ treated water
-    efficiency: float = 0.85                    # permeate / feedwater
-    biomass_waste_fraction: float = 0.005       # fraction of treated water
-
-    # ---- nutrient parameters ----
-    nutrient_dose: float = 1.0                  # mg/L = g/m³
-    nutrient_cost: float = 1.0                  # USD/kg
+    # ---- physics ----
+    specific_energy_consumption: float = 0.06   # kWh / m³ treated water
+    efficiency: float = 0.96                    # permeate / feedwater
 
     # ---- economics ----
     marginal_cost: float = 0.0                  # €/m³ treated water
@@ -85,7 +77,6 @@ class MIMO_BioFiltration(MIMO):
         self.electricity_bus = attributes.pop("electricity_bus")
         self.water_in_bus = attributes.pop("water_in_bus")
         self.water_out_bus = attributes.pop("water_out_bus")
-        self.waste_biomass_out_bus = attributes.pop("waste_biomass_out_bus")
 
         # ---------------------------
         # physics
@@ -93,28 +84,10 @@ class MIMO_BioFiltration(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.efficiency = attributes.pop(
-            "efficiency", self.efficiency
-        )
-        self.biomass_waste_fraction = attributes.pop(
-            "biomass_waste_fraction", self.biomass_waste_fraction
-        )
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
 
         if not 0 < self.efficiency <= 1:
             raise ValueError("efficiency must be in (0, 1]")
-        if not 0 <= self.biomass_waste_fraction <= 1:
-            raise ValueError("biomass_waste_fraction must be in [0, 1]")
-
-        # ---------------------------
-        # nutrients
-        # ---------------------------
-        self.nutrient_dose = attributes.pop("nutrient_dose", self.nutrient_dose)
-        self.nutrient_cost = attributes.pop("nutrient_cost", self.nutrient_cost)
-
-        # nutrient cost per m³ treated water
-        nutrient_cost_per_m3 = (
-            self.nutrient_dose * 1e-6 * self.nutrient_cost
-        )
 
         # ---------------------------
         # economics
@@ -145,37 +118,27 @@ class MIMO_BioFiltration(MIMO):
         # ==================================================
         # PHYSICS → CONVERSION FACTORS (normalized to treated water output = 1)
         # ==================================================
-
-        feedwater_per_output = 1.0 / self.efficiency
+        feedwater_per_output = 1 / self.efficiency
         electricity_per_output = self.specific_energy_consumption
-        biomass_per_output = self.biomass_waste_fraction
 
         attributes.update(
             {
                 # inputs
-                f"conversion_factor_{self.electricity_bus.label}":
+                f"conversion_factor_{self.electricity_bus}":
                     sequence(electricity_per_output),
-                f"conversion_factor_{self.water_in_bus.label}":
+                f"conversion_factor_{self.water_in_bus}":
                     sequence(feedwater_per_output),
 
                 # outputs
-                f"conversion_factor_{self.water_out_bus.label}":
+                f"conversion_factor_{self.water_out_bus}":
                     sequence(1.0),
-                f"conversion_factor_{self.waste_biomass_out_bus.label}":
-                    sequence(biomass_per_output),
             }
         )
 
         # ---------------------------
-        # output costs
+        # output-specific costs
         # ---------------------------
         attributes.setdefault("output_parameters", {})
-        attributes["output_parameters"].update(
-            {
-                "variable_costs": nutrient_cost_per_m3 + self.marginal_cost,
-                "custom_attributes": {"nutrient_dose": self.nutrient_dose},
-            }
-        )
 
         # ==================================================
         # MIMO initialization
@@ -183,9 +146,9 @@ class MIMO_BioFiltration(MIMO):
         super().__init__(
             from_bus_0=self.electricity_bus,
             from_bus_1=self.water_in_bus,
-            to_bus_0=self.water_out_bus,   # PRIMARY
-            to_bus_1=self.waste_biomass_out_bus,
+            to_bus_0=self.water_out_bus,
             primary=self.primary,
+            marginal_cost=self.marginal_cost,
             carrier_cost=self.carrier_cost,
             expandable=self.expandable,
             capacity=self.capacity,
