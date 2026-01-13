@@ -124,13 +124,13 @@ class MIMO_CoarseBarScreen(MIMO):
         attributes.update(
             {
                 # inputs
-                f"conversion_factor_{self.electricity_bus}":
+                f"conversion_factor_{self.electricity_bus.label}":
                     sequence(electricity_per_output),
-                f"conversion_factor_{self.water_in_bus}":
+                f"conversion_factor_{self.water_in_bus.label}":
                     sequence(feedwater_per_output),
 
                 # outputs
-                f"conversion_factor_{self.water_out_bus}":
+                f"conversion_factor_{self.water_out_bus.label}":
                     sequence(1.0),
             }
         )

@@ -62,6 +62,12 @@ class MIMO_Photocatalysis(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     def __init__(self, **attributes):
+        """
+        Specialized MIMO-B initialization:
+        - validate physics
+        - compute conversion factors
+        - inject into MIMO
+        """
 
         # -------------------------
         # identity
