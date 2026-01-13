@@ -104,112 +104,74 @@ def encode_image_file(img_path):
     return encoded_img
 
 
-def sankey(results, nodes, ts=None):
-    """Return a dict to a plotly sankey diagram"""
-    busses = []
-
+def sankey(results, date_time_index=None, ts=None):
+    """
+    Return a dict for a Plotly Sankey diagram, using df_results (MultiIndex).
+    Optionally, select a single timestep `ts` for the flow values.
+    """
     labels = []
     sources = []
     targets = []
     values = []
 
-    # draw a node for each of the network's component. The shape depends on the component's type
-    for nd in nodes:
-        if isinstance(nd, solph.Bus):
+    # Extract all buses from df_results
+    busses = results.index.get_level_values("bus").unique()
 
-            # keep the bus reference for drawing edges later
-            bus = nd
-            busses.append(bus)
+    for bus in busses:
+        # Skip buses not in the results
+        if bus not in results.index.get_level_values("bus"):
+            logging.warning(f"Bus '{bus}' not found in results, skipping in Sankey.")
+            continue
 
-            bus_label = bus.label
+        bus_df = results.loc[bus]
 
-            labels.append(nd.label)
+        if bus_df is None or bus_df.empty:
+            logging.warning(f"No flows found for bus '{bus}', skipping in Sankey.")
+            continue
 
-            flows = solph.views.node(results, bus_label).get("sequences", {})
+        for direction, asset, carrier, facade_type in bus_df.index:
+            row = bus_df.loc[(direction, asset, carrier, facade_type)]
 
-            # draw an arrow from the component to the bus
-            for component in bus.inputs:
-                if component.label not in labels:
-                    labels.append(component.label)
+            # Determine source and target depending on flow direction with df_results semantics:
+            # direction == "in"  → flow FROM bus TO asset
+            # direction == "out" → flow FROM asset TO bus
 
-                sources.append(labels.index(component.label))
-                targets.append(labels.index(bus_label))
+            if direction == "in":
+                source_label = bus
+                target_label = asset
+            elif direction == "out":
+                source_label = asset
+                target_label = bus
+            else:
+                continue
 
-                try:
-                    val = flows[
-                        (
-                            (component.label, bus_label),
-                            (component.label, bus_label, "flow"),
-                        )
-                    ].sum()
-                except Exception as e:
-                    try:
-                        val = flows[((component.label, bus_label), "flow")].sum()
-                    except KeyError:
-                        val = 0
-                    else:
-                        raise (e)
+            # Add labels if not already present
+            for lbl in (source_label, target_label):
+                if lbl not in labels:
+                    labels.append(lbl)
 
+            # Get flow value
+            if date_time_index is not None:
+                # intersect datetime index with actual row columns
+                ts_cols = [c for c in date_time_index if c in row.index]
+            else:
+                # fallback: pick all datetime-like columns
+                ts_cols = [c for c in row.index if not pd.isna(pd.to_datetime(c, errors="coerce"))]
+
+            if ts_cols:
+                ts_series = row[ts_cols].fillna(0)
                 if ts is not None:
-                    try:
-                        val = flows[
-                            (
-                                (component.label, bus_label),
-                                (component.label, bus_label, "flow"),
-                            )
-                        ][ts]
-                    except:
-                        val = flows[((component.label, bus_label), "flow")][ts]
-                # if val == 0:
-                #     val = 1
-                values.append(val)
+                    flow_value = ts_series.iloc[ts] if ts < len(ts_series) else 0
+                else:
+                    flow_value = ts_series.sum()
+            else:
+                flow_value = 0
 
-            for component in bus.outputs:
-                # draw an arrow from the bus to the component
-                if component.label not in labels:
-                    labels.append(component.label)
+            sources.append(labels.index(source_label))
+            targets.append(labels.index(target_label))
+            values.append(flow_value)
 
-                sources.append(labels.index(bus_label))
-                targets.append(labels.index(component.label))
-
-                try:
-                    val = flows[
-                        (
-                            (bus_label, component.label),
-                            (bus_label, component.label, "flow"),
-                        )
-                    ].sum()
-                except Exception as e:
-                    try:
-                        val = flows[((bus_label, component.label), "flow")].sum()
-                    except KeyError:
-                        val = 0
-                    else:
-                        raise (e)
-
-                if ts is not None:
-                    try:
-                        val = flows[
-                            (
-                                (bus_label, component.label),
-                                (bus_label, component.label, "flow"),
-                            )
-                        ][ts]
-                    except Exception as e:
-                        try:
-                            val = flows[
-                                (
-                                    (bus_label, component.label),
-                                    "flow",
-                                )
-                            ][ts]
-                        except KeyError:
-                            val = 0
-                        else:
-                            raise (e)
-
-                values.append(val)
-
+    # Build the Sankey figure
     fig = go.Figure(
         data=[
             go.Sankey(
@@ -222,12 +184,13 @@ def sankey(results, nodes, ts=None):
                     color="blue",
                 ),
                 link=dict(
-                    source=sources,  # indices correspond to labels, eg A1, A2, A2, B1, ...
+                    source=sources,
                     target=targets,
                     value=values,
-                    hovertemplate="Link from node %{source.label}<br />"
-                    + "to node%{target.label}<br />has value %{value}"
-                    + "<br />and data <extra></extra>",
+                    hovertemplate=(
+                        "Link from node %{source.label}<br />"
+                        + "to node %{target.label}<br />has value %{value}<extra></extra>"
+                    ),
                 ),
             )
         ]
@@ -237,9 +200,18 @@ def sankey(results, nodes, ts=None):
     return fig.to_dict()
 
 
-def prepare_app(dp_path, results, date_time_index, nodes, tables, services, units=None):
-    # prepare_app(dash_payload=None)
 
+def prepare_app(dp_path, results, tables, services, units=None):
+    """ """
+    # Derive datetime index from results
+    time_cols = [
+        c for c in results.columns
+        if not pd.isna(pd.to_datetime(c, errors="coerce"))
+    ]
+
+    date_time_index = pd.to_datetime(time_cols)
+
+    # List for bus figures
     bus_figures = []
 
     p0 = Package(dp_path)
@@ -247,23 +219,29 @@ def prepare_app(dp_path, results, date_time_index, nodes, tables, services, unit
     busses = bus_data.name.tolist()
 
     for bus in busses:
-        if bus != "battery":
-            fig = go.Figure(layout=dict(title=f"{bus} bus node"))
-            if "sequences" in solph.views.node(results, node=bus):
-                for t, g in solph.views.node(results, node=bus)["sequences"].items():
-                    idx_asset = abs(t[0].index(bus) - 1)
+        fig = go.Figure(layout=dict(title=f"{bus} bus node"))
 
-                    fig.add_trace(
-                        go.Scatter(
-                            x=g.index,
-                            y=g.values * pow(-1, idx_asset),
-                            name=t[0][idx_asset],
-                        )
+        # Extract flows for this bus directly from df_results
+        bus_df = results.loc[bus] if bus in results.index.get_level_values("bus") else None
+
+        if bus_df is not None and not bus_df.empty:
+            for (direction, asset, carrier, facade_type), row in bus_df.iterrows():
+                flow_values = row[date_time_index].values
+
+                sign = 1 if direction == "out" else -1
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=date_time_index,
+                        y=flow_values * sign,
+                        name=asset,
                     )
-            else:
-                logging.error(
-                    f"No flow was recorded through the bus '{bus}'. This is likely due to an error in the input files."
                 )
+        else:
+            logging.error(
+                f"No flow was recorded through the bus '{bus}'. This is likely due to an error in the input files."
+            )
+
         # else:
         #     capacity_battery = asset_results.capacity.battery
         #     if capacity_battery != 0:
@@ -459,7 +437,7 @@ def prepare_app(dp_path, results, date_time_index, nodes, tables, services, unit
                 options={k: v for k, v in enumerate(date_time_index)},
                 value=None,
             ),
-            dcc.Graph(id="sankey", figure=sankey(results, nodes)),
+            dcc.Graph(id="sankey", figure=sankey(results, date_time_index)),
         ]
         + [
             dcc.Graph(
@@ -468,7 +446,7 @@ def prepare_app(dp_path, results, date_time_index, nodes, tables, services, unit
             )
             for bus, fig in zip(busses, bus_figures)
         ]
-        + [dcc.Graph(id="sankey_aggregate", figure=sankey(results, nodes))]
+        + [dcc.Graph(id="sankey_aggregate", figure=sankey(results, date_time_index))]
         # + [
         #     html.H4(["Energy system"]),
         #     html.Img(
@@ -496,86 +474,66 @@ def prepare_app(dp_path, results, date_time_index, nodes, tables, services, unit
         if ts is None:
             ts = "0"
         ts = int(ts)
-        # # see if case changes, otherwise do not rerun this
-        # date_time_index = energy_system.timeindex
 
         bus_figures = []
+
         for bus in busses:
-            if bus != "battery":
-                fig = go.Figure(layout=dict(title=f"{bus} bus node"))
-                max_y = 0
-                for t, g in solph.views.node(results, node=bus)["sequences"].items():
-                    idx_asset = abs(t[0].index(bus) - 1)
-                    asset_name = t[0][idx_asset]
-                    if t[0][idx_asset] == "battery":
-                        if idx_asset == 0:
-                            asset_name += " discharge"
-                        else:
-                            asset_name += " charge"
-                    opts = {}
-                    negative_sign = pow(-1, idx_asset)
-                    opts["stackgroup"] = (
-                        "negative_sign" if negative_sign < 0 else "positive_sign"
-                    )
+            fig = go.Figure(layout=dict(title=f"{bus} bus node"))
+            max_y = 0
 
-                    fig.add_trace(
-                        go.Scatter(
-                            x=g.index,
-                            y=g.values * negative_sign,
-                            name=asset_name,
-                            **opts,
-                        )
-                    )
-                    if g.max() > max_y:
-                        max_y = g.max()
-            else:
-                capacity_battery = asset_results.capacity.battery
-                if capacity_battery != 0:
-                    soc_battery = (
-                        solph.views.node(results, node=bus)["sequences"][
-                            (("battery", "None"), "storage_content")
-                        ]
-                        / capacity_battery
-                    )
-                else:
-                    soc_battery = solph.views.node(results, node=bus)["sequences"][
-                        (("battery", "None"), "storage_content")
-                    ]
+            # Skip if bus not in results
+            if bus not in results.index.get_level_values("bus"):
+                logging.warning(f"Bus '{bus}' not found in results.")
+                bus_figures.append(fig)
+                continue
 
-                fig = go.Figure(layout=dict(title=f"{bus} node", yaxis_range=[0, 1]))
+            bus_df = results.loc[bus]
+            if bus_df is None or bus_df.empty:
+                logging.warning(f"No flows found for bus '{bus}'.")
+                bus_figures.append(fig)
+                continue
+
+            for direction, asset, carrier, facade_type in bus_df.index:
+                row = bus_df.loc[(direction, asset, carrier, facade_type)]
+
+                # Determine sign for plotting
+                negative_sign = -1 if direction == "in" else 1
+                asset_name = asset
+                if asset == "battery":
+                    asset_name += " discharge" if direction == "out" else " charge"
+
+                # Safe time series extraction
+                ts_cols = [c for c in date_time_index if c in row.index]
+                if not ts_cols:
+                    continue
+                y_values = row[ts_cols].fillna(0).values
 
                 fig.add_trace(
                     go.Scatter(
-                        x=soc_battery.index, y=soc_battery.values, name="soc battery"
+                        x=ts_cols,
+                        y=y_values * negative_sign,
+                        name=asset_name,
+                        stackgroup="negative_sign" if negative_sign < 0 else "positive_sign",
                     )
                 )
+
+                if y_values.size > 0:
+                    max_y = max(max_y, abs(y_values).max())
+
+            # Vertical line at current timestep
+            if ts < len(date_time_index):
                 fig.add_trace(
                     go.Scatter(
-                        x=soc_battery.index,
-                        y=np.ones(len(soc_battery.index)) * settings.storage_soc_min,
-                        name="min soc battery",
+                        x=[date_time_index[ts], date_time_index[ts]],
+                        y=[0, max_y],
+                        name="current timestep",
+                        line_color="black",
                     )
                 )
-                fig.add_trace(
-                    go.Scatter(
-                        x=soc_battery.index,
-                        y=np.ones(len(soc_battery.index)) * settings.storage_soc_max,
-                        name="max soc battery",
-                    )
-                )
-            fig.add_trace(
-                go.Scatter(
-                    x=[date_time_index[ts], date_time_index[ts]],
-                    y=[0, max_y],
-                    name="none",
-                    line_color="black",
-                )
-            )
+
             bus_figures.append(fig)
 
-        return [
-            sankey(results, nodes, date_time_index[ts]),
-        ] + bus_figures
+        return [sankey(results, date_time_index, ts)] + bus_figures
 
     @demo_app.callback(
         # The value of these components of the layout will be changed by this callback

@@ -392,8 +392,6 @@ def post_processing(
         demo_app = prepare_app(
             dp_path=dp_path,
             results=calculator.df_results,
-            date_time_index=es.timeindex,
-            nodes=es.nodes,
             tables=result_tables,
             services=service_tables,
             units=parameters_units,
