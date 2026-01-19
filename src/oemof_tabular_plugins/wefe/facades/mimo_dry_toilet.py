@@ -58,7 +58,7 @@ class MIMO_DryToilet(MIMO):
 
     def __init__(self, **attributes):
         """
-         Specialized MIMO-B initialization:
+        Specialized MIMO-B initialization:
         - validate physics
         - compute conversion factors (kg → m³)
         - inject into MIMO
@@ -144,7 +144,8 @@ class MIMO_DryToilet(MIMO):
         # output costs
         # ---------------------------
         attributes.setdefault("output_parameters", {})
-        attributes["output_parameters"].update(
+        attributes["output_parameters"].setdefault(self.dry_feces_out_bus, {})
+        attributes["output_parameters"][self.dry_feces_out_bus].update(
             {
                 "variable_costs": bulking_cost_per_kg + self.marginal_cost,
                 "custom_attributes": {"bulking_agent_dose": self.bulking_agent_dose},

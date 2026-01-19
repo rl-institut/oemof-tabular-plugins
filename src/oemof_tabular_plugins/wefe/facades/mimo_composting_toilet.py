@@ -148,7 +148,8 @@ class MIMO_CompostingToilet(MIMO):
         # output costs
         # ---------------------------
         attributes.setdefault("output_parameters", {})
-        attributes["output_parameters"].update(
+        attributes["output_parameters"].setdefault(self.compost_out_bus, {})
+        attributes["output_parameters"][self.compost_out_bus].update(
             {
                 "variable_costs": bulking_cost_per_kg + self.marginal_cost,
                 "custom_attributes": {"bulking_agent_dose": self.bulking_agent_dose},
