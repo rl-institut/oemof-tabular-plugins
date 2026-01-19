@@ -92,7 +92,7 @@ class MIMO_OpenField(MIMO):
         # ---------------------------
         # physics
         # ---------------------------
-
+        self.feces_density = attributes.pop("feces_density", self.feces_density)
         # Compute feces volume per kg
         feces_volume = 1.0 / self.feces_density  # m³ per kg feces
 
