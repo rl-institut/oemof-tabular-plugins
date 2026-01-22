@@ -400,15 +400,11 @@ def post_processing(
 
     # Attach minimal results for dash directly to calculator so they can be send to gui
     if not hasattr(calculator, "dash_tables"):
-        calculator.result_tables = result_tables
-    if not hasattr(calculator, "dash_services"):
-        calculator.service_tables = service_tables
-    if not hasattr(calculator, "dash_units"):
-        calculator.parameters_units = parameters_units
-    if not hasattr(calculator, "timeindex"):
-        calculator.timeindex = es.timeindex
-    if not hasattr(calculator, "nodes"):
-        calculator.nodes = es.nodes  # for simserver; for GUI serialize this
+        calculator.dash_tables = {
+            "result_tables": result_tables,
+            "service_tables": service_tables,
+            "parameters_units": parameters_units
+        }
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
     if hasattr(calculator, "scalar_params"):
