@@ -263,7 +263,7 @@ def post_processing(
     service_tables = {}
 
     if results_by_flow is not None:
-        results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
+        results_by_flow.to_csv(results_path / "all_results_by_flow.csv", index=True)
         # get sub-tables from results dataframe
         capacities_table = extract_table_from_results(
             results_by_flow, RESULT_TABLE_COLUMNS["capacities"]
@@ -347,19 +347,20 @@ def post_processing(
         service_flows = []
         service_flow_values = []
         for service, table in service_tables.items():
-            table = table.loc[table["direction"] == "out", ["asset", "aggregated_flow", "carrier", "facade_type"]]
+            table = table.loc[
+                table["direction"] == "out",
+                ["asset", "aggregated_flow", "carrier", "facade_type"],
+            ]
             for row in table.itertuples(index=False):
                 service_flows.append(f"{row.asset}_to_{service}")
                 service_flow_values.append(row.aggregated_flow)
 
-
-        service_flows_table = pd.DataFrame({
-            "flow": service_flows,
-             "value": service_flow_values
-             })
+        service_flows_table = pd.DataFrame(
+            {"flow": service_flows, "value": service_flow_values}
+        )
         # TODO: Move this to tables_to_save BUT to do so, we have to get rid of extra index col
         if service_flows_table is not None:
-            service_flows_table.to_csv(results_path + "/service_flows.csv", index=False)
+            service_flows_table.to_csv(results_path / "service_flows.csv", index=False)
 
         # save tables to csv files
         tables_to_save.update(
@@ -368,7 +369,7 @@ def post_processing(
 
     kpis = calculator.kpis
     if kpis is not None:
-        kpis.to_csv(results_path + "/kpis.csv", index=True)
+        kpis.to_csv(results_path / "kpis.csv", index=True)
 
         if "mimo" in results_by_flow.index.get_level_values("asset"):
             kpis.loc["total_water_produced"] = results_by_flow.loc[
