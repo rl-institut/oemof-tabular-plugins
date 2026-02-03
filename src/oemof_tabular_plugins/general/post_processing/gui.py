@@ -201,7 +201,7 @@ def sankey(results, date_time_index=None, ts=None):
 
 
 
-def prepare_app(dp_path, results, tables, services, units=None):
+def prepare_app(app, dp_path, results, tables, services, units=None):
     """ """
     # Derive datetime index from results
     time_cols = [
@@ -380,13 +380,8 @@ def prepare_app(dp_path, results, tables, services, units=None):
 
     # loading external resources
     external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
-    options = dict(
-        # external_stylesheets=external_stylesheets
-    )
 
-    demo_app = dash.Dash(__name__, **options)
-
-    demo_app.layout = html.Div(
+    app.layout = html.Div(
         children=[
             html.H2("Scalar results"),
             html.H3("KPIS"),
@@ -458,7 +453,7 @@ def prepare_app(dp_path, results, tables, services, units=None):
         # ]
     )
 
-    @demo_app.callback(
+    @app.callback(
         # The value of these components of the layout will be changed by this callback
         [
             Output(component_id="sankey", component_property="figure"),
@@ -535,7 +530,7 @@ def prepare_app(dp_path, results, tables, services, units=None):
 
         return [sankey(results, date_time_index, ts)] + bus_figures
 
-    @demo_app.callback(
+    @app.callback(
         # The value of these components of the layout will be changed by this callback
         Output(component_id="ts_slice_select", component_property="value"),
         # Triggers the callback when the value of one of these components of the layout is changed
@@ -544,7 +539,7 @@ def prepare_app(dp_path, results, tables, services, units=None):
     def change_ts_value(val):
         return val
 
-    @demo_app.callback(
+    @app.callback(
         # The value of these components of the layout will be changed by this callback
         [
             Output(component_id=f"{s}-service-div", component_property="style")
@@ -564,6 +559,6 @@ def prepare_app(dp_path, results, tables, services, units=None):
         ]
         return answer
 
-    return demo_app
+    return app
 
     # import ipdb;ipdb.set_trace()

@@ -1,5 +1,7 @@
 import logging
 import os
+
+import dash
 from datapackage import Package
 import warnings
 
@@ -388,15 +390,21 @@ def post_processing(
         save_table_to_csv(table, results_path, filename)
 
     if dash_app is True:
+        options = dict(
+            # external_stylesheets=external_stylesheets
+        )
 
-        demo_app = prepare_app(
+        app = dash.Dash(__name__, **options)
+
+        app = prepare_app(
+            app=app,
             dp_path=dp_path,
             results=calculator.df_results,
             tables=result_tables,
             services=service_tables,
             units=parameters_units,
         )
-        demo_app.run(debug=False, port=8060)
+        app.run(debug=False, port=8060)
 
     # Attach minimal results for dash directly to calculator so they can be send to gui
     if not hasattr(calculator, "dash_tables"):
