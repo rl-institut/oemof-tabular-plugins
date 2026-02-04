@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import logging
-from oemof.tools import logger, economics
+from oemof.tools import economics
 import json
 import datapackage as dp
 import tableschema
@@ -9,7 +9,7 @@ from decimal import Decimal
 from copy import deepcopy
 from .pre_processing_moo import pre_processing_moo, get_moo_timeseries
 
-logger.define_logging()
+logger = logging.getLogger(__name__)
 
 
 def scenario_datapackage(scenario_dir):
