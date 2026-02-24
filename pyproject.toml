@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "oemof.tabular", "numpy==1.26.0", "dash", "Werkzeug==2.2.2", "oemof-industry"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,7 +15,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dynamic = ["version", "dependencies", "readme"]
+version = "0.1.0"
+dynamic = ["dependencies", "readme"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst"]}
