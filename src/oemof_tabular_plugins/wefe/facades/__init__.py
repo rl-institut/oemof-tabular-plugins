@@ -43,3 +43,10 @@ from .dry_toilet import DryToilet
 from .latrine import Latrine
 from .composting_toilet import CompostingToilet
 from .open_field import OpenField
+from .mimo_ro import MIMO_ReverseOsmosis
+from .mimo_uf import MIMO_UltraFiltration
+from .mimo_nf import MIMO_NanoFiltration
+from .mimo_mf import MIMO_MicroFiltration
+from .mimo_biof import MIMO_BioFiltration
+from .mimo_ix import MIMO_IonExchange
+from .mimo_ed import MIMO_Electrodialysis

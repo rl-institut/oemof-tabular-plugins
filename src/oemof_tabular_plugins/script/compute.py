@@ -134,6 +134,7 @@ def compute_scenario(
     if save_raw_results is True:
         es.dump(dpath=results_path, filename="oemof_raw")
 
+
     return post_processing(
         params,
         es,

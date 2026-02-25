@@ -178,7 +178,7 @@ class WaterPump(Converter, Facade):
 
     tech: str
 
-    pump_height: float
+    head: float = 10.0  # Default 10m
 
     carrier: str = ""
 
@@ -233,7 +233,7 @@ class WaterPump(Converter, Facade):
                     self.g
                     * self.rho_w
                     * conversion_W_to_kW
-                    * self.pump_height
+                    * self.head
                     * conversion_m3_per_hour_to_m3_per_s
                     / eta
                 ),  # in kWh

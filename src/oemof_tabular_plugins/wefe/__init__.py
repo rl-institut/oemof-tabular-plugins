@@ -4,6 +4,10 @@ from oemof_tabular_plugins.wefe.constraints.constraint_facades import (
 from oemof.tabular.facades import TYPEMAP
 
 from oemof.tabular.facades import Volatile
+from oemof_tabular_plugins.wefe.facades import MIMO_ReverseOsmosis, MIMO_UltraFiltration, MIMO_NanoFiltration, \
+    MIMO_MicroFiltration, MIMO_BioFiltration
+from oemof_tabular_plugins.wefe.facades.mimo_ed import MIMO_Electrodialysis
+from oemof_tabular_plugins.wefe.facades.mimo_ix import MIMO_IonExchange
 
 from .facades import (
     PVPanel,
@@ -101,7 +105,14 @@ WEFE_TYPEMAP = {
     "dry_toilet": DryToilet,
     "latrine": Latrine,
     "composting_toilet": CompostingToilet,
-    "open_field": OpenField
+    "open_field": OpenField,
+    "mimo_ro": MIMO_ReverseOsmosis,
+    "mimo_uf": MIMO_UltraFiltration,
+    "mimo_nf": MIMO_NanoFiltration,
+    "mimo_mf": MIMO_MicroFiltration,
+    "mimo_biof": MIMO_BioFiltration,
+    "mimo_ix": MIMO_IonExchange,
+    "mimo_ed": MIMO_Electrodialysis
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
