@@ -36,232 +36,101 @@ def calculate_annuity(capex, opex_fix, lifetime, wacc):
     return annuity_total
 
 
-def pre_processing_costs(wacc, element, element_path, element_df):
+def pre_processing_costs(wacc, element, element_df):
     """
-    Applies pre-processing costs to the input CSV files, where the annuity ('capacity_cost') is either
-    used directly if stated, or if left empty then calculated using the calculate_annuity function,
-    or if all parameters are stated a choice is given.
-    :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
-    :param element: csv filename
-    :param element_path: path of the csv file
-    :param element_df: dataframe containing data from the csv file
+    Pre-process cost parameters.
+
+    Design:
+    - Normalize inputs using COLUMN_RULES
+    - Compute capacity_cost deterministically:
+        only annuity given: use annuity as capacity_cost
+        only capex, opex_fix, lifetime given: compute capacity_cost
+        annuity, capex, opex_fix, lifetime given: compute capacity_cost and warn
+    - Compute marginal_cost from resource_cost
+
+    Inputs:
+        annuity, capex, opex_fix, lifetime, resource_cost
+
+    Outputs:
+        capacity_cost, marginal_cost
     """
-    # Every element that has the column 'storage_capacity_cost' is assumed to only contain components of type storage
-    # where 'storage_capacity_cost' represents the cost parameter to be calculated.
-    # All other elements require 'capacity_cost' as the cost parameter to be calculated.
-    if "storage_capacity_cost" in element_df.columns:
-        annuity_cost = "storage_capacity_cost"
-    else:
-        annuity_cost = "capacity_cost"
 
-    # For consistency, 'annuity' (raw, economic annuity) is defined separately:
-    # It will be the same as 'capacity_cost' for cost-optimization.
-    # It will be different for MOO, as 'capacity_cost' takes additional weight factors into account
-    annuity_cost_raw = "annuity"
+    import pandas as pd
 
-    # Reset capacity_cost for rows that have cost parameters
-    # removing potential artefacts of MOO runs and forcing recalculation
-    if annuity_cost in element_df.columns:
-        for index, row in element_df.iterrows():
-            # Check if this row has the cost parameters to recalculate
-            has_params = all([
-                'capex' in element_df.columns and pd.notna(row.get('capex')),
-                'opex_fix' in element_df.columns and pd.notna(row.get('opex_fix')),
-                'lifetime' in element_df.columns and pd.notna(row.get('lifetime'))
-            ])
-            if has_params:
-                # Clear capacity_cost to force recalculation
-                element_df.at[index, annuity_cost] = None
-        logger.info(f"Cleared '{annuity_cost}' for components with cost parameters in '{element}'")
+    # ---------------- COLUMN RULES ----------------
+    COLUMN_RULES = {
+        "annuity": {"strict_positive": True},
+        "capex": {"strict_positive": True},
+        "lifetime": {"strict_positive": True},
+        "opex_fix": {"strict_positive": False},
+        "resource_cost": {"strict_positive": False},
+    }
 
-    # check if any of the required columns are missing
-    cost_columns = {"capex", "opex_fix", "lifetime"}
-    missing_columns = cost_columns - set(element_df.columns)
+    # ---------------- NORMALIZATION ----------------
+    for col, rules in COLUMN_RULES.items():
+        if col not in element_df.columns:
+            element_df[col] = pd.NA
+            continue
 
-    # ---------------- POSSIBLE SCENARIO GROUPS FOR PARAMETER ENTRIES ----------------
-    # scenario group "annuity no cost params": annuity parameter is included and all of capex, opex fix
-    # and lifetime parameters are not included in the csv file
-    if annuity_cost in element_df.columns and cost_columns == missing_columns:
-        scenario_group = "annuity no cost params"
-    # scenario group "annuity partial cost params": annuity parameter is included and some but not all of
-    # capex, opex fix and lifetime parameters are included in the csv file
-    elif (
-        annuity_cost in element_df.columns
-        and missing_columns
-        and cost_columns != missing_columns
-    ):
-        scenario_group = "annuity partial cost params"
-    # scenario group "annuity all cost params": annuity parameter is included and all of capex, opex fix
-    # and lifetime parameters are included in the csv file
-    elif annuity_cost in element_df.columns and not missing_columns:
-        scenario_group = "annuity all cost params"
-    # scenario group "no annuity partial/all cost params": annuity parameter is not included and at least one
-    # of capex, opex fix and lifetime parameters are included in the csv file
-    elif annuity_cost not in element_df.columns and cost_columns != missing_columns:
-        scenario_group = "no annuity partial/all cost params"
-    # scenario group "no annuity no cost params": the annuity parameter is not included and neither are
-    # capex, opex fix and lifetime parameters in the csv file
-    elif annuity_cost not in element_df.columns and cost_columns == missing_columns:
-        scenario_group = "no annuity no cost params"
+        if rules["strict_positive"]:
+            # 0 or negative → treat as missing
+            element_df[col] = element_df[col].mask(
+                (element_df[col] <= 0) | (pd.isna(element_df[col])),
+                pd.NA
+            )
+        else:
+            # Only NaN stays NaN; 0 is valid
+            element_df[col] = element_df[col].where(
+                pd.notna(element_df[col]),
+                pd.NA
+            )
 
-    # ---------------- POSSIBLE SCENARIOS FOR EACH SCENARIO GROUP ----------------
-    # loop through each entry in the csv file
+    # ---------------- RESET OUTPUT ----------------
+    element_df["capacity_cost"] = pd.NA
+
+    # ---------------- CORE COMPUTATION ----------------
     for index, row in element_df.iterrows():
-        # define the row name
         row_name = row["name"]
-        if scenario_group == "annuity no cost params":
-            # scenario "annuity empty no cost params": the annuity parameter is left empty and the other cost
-            # parameters have not been included
-            if pd.isna(row[annuity_cost]):
-                scenario = "annuity empty no cost params"
-            # scenario "annuity defined no cost params": the annuity parameter is defined and the other cost
-            # parameters have not been included
-            else:
-                scenario = "annuity defined no cost params"
-        elif scenario_group == "annuity partial cost params":
-            # scenario "annuity empty partial cost params": the annuity parameter is left empty and only
-            # some other financial parameters are included
-            if pd.isna(row[annuity_cost]):
-                scenario = "annuity empty partial cost params"
-            # scenario "annuity defined partial cost params": the annuity parameter is defined and only
-            # some other financial parameters are included
-            else:
-                scenario = "annuity defined partial cost params"
-        elif scenario_group == "annuity all cost params":
-            # store the parameters
-            capex = row["capex"]
-            opex_fix = row["opex_fix"]
-            lifetime = row["lifetime"]
-            # scenario "annuity empty all cost params": the annuity parameter is left empty and all of the
-            # other financial parameters are defined
-            if (
-                pd.isna(row[annuity_cost])
-                and pd.notna(capex)
-                and pd.notna(opex_fix)
-                and pd.notna(lifetime)
-            ):
-                scenario = "annuity empty all cost params defined"
-            # scenario "annuity all cost params some empty": the annuity parameter is either defined or empty,
-            # but at least one of 'capex', 'opex_fix' and 'lifetime' is left empty
-            elif pd.isna(capex) or pd.isna(opex_fix) or pd.isna(lifetime):
-                scenario = "annuity all cost params some empty"
-            # scenario "annuity defined all cost params defined": both the annuity parameter is defined and
-            # all the other financial parameters are defined
-            else:
-                scenario = "annuity defined all cost params defined"
-        elif scenario_group == "no annuity partial/all cost params":
-            # store the parameters
-            capex = row["capex"]
-            opex_fix = row["opex_fix"]
-            lifetime = row["lifetime"]
-            # scenario "no annuity partial/all cost params empty": at least one of 'capex', 'opex_fix' and
-            # 'lifetime' is left empty
-            if pd.isna(capex) or pd.isna(opex_fix) or pd.isna(lifetime):
-                scenario = "no annuity partial/all cost params empty"
-            # scenario "no annuity all cost params defined": all financial parameters are defined
-            else:
-                scenario = "no annuity all cost params defined"
-        elif scenario_group == "no annuity no cost params":
-            # scenario "no annuity no cost params": neither the annuity or financial parameters are defined
-            scenario = "no annuity no cost params"
 
-        # ---------------- ACTIONS TAKEN FOR EACH SCENARIO ----------------
-        if scenario == "annuity empty no cost params":
-            # raise value error
-            raise ValueError(
-                f"'{annuity_cost}' (the annuity) has been left empty for '{row_name}' "
-                f"in '{element}', and 'capex', 'opex_fix' and 'lifetime' have not "
-                f" been included. \nEither the annuity ('{annuity_cost}') must be "
-                f"directly stated or all of the other financial parameters must be stated "
-                f"to calculate the annuity."
-            )
-        elif scenario == "annuity defined no cost params":
-            # log info message
-            logger.info(
-                f"The {annuity_cost} is directly used for '{row_name}' in '{element}'."
-            )
-        elif scenario == "annuity empty partial cost params":
-            # raise value error
-            raise ValueError(
-                f"'{annuity_cost}' (the annuity) has been left empty for '{row_name}' "
-                f"in '{element}', and not all of 'capex', 'opex_fix' and 'lifetime' have"
-                f" been included. \nEither the annuity ('{annuity_cost}') must be "
-                f"directly stated or all of the other financial parameters must be stated "
-                f"to calculate the annuity."
-            )
-        elif scenario == "annuity defined partial cost params":
-            # log warning message
-            logging.warning(
-                f"'{annuity_cost}' (the annuity) has been defined and some but not all "
-                f"of 'capex', 'opex_fix' and 'lifetime' have been defined for {row_name} "
-                f"in {element}. The annuity will be directly used but be aware that some "
-                f"cost results will not be calculated."
-            )
-        elif scenario == "annuity empty all cost params defined":
-            # calculate the annuity using the calculate_annuity function
-            capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
-            # update the dataframe
-            element_df.at[index, annuity_cost] = float(capacity_cost)
-            element_df.at[index, annuity_cost_raw] = float(capacity_cost)
-            # log info message
-            logger.info(
-                f"the annuity ('{annuity_cost}') has been calculated and updated for"
-                f" '{row_name}' in '{element}'."
-            )
-        elif scenario == "annuity all cost params some empty":
-            # log warning message
-            logging.warning(
-                f"One or more of 'capex', 'opex_fix' and 'lifetime' have been left "
-                f"empty for {row_name} in {element}. The annuity will be directly used "
-                f"but be aware that some cost results will not be calculated."
-            )
-        elif scenario == "annuity defined all cost params defined":
-            capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
-            # update the dataframe
-            element_df.at[index, annuity_cost] = float(capacity_cost)
-            element_df.at[index, annuity_cost_raw] = float(capacity_cost)
-            # if all parameters are defined, the user is asked if they want to calculate the annuity
-            # from the capex, opex_fix and lifetime or use the annuity directly
-            logger.info(
-                f"All parameters ('capex', 'opex_fix', 'lifetime') and '{annuity_cost}' are "
-                f"provided for '{row_name}' in '{element}'. \nThe defined annuity has been replaced with "
-                f"the calculated value from capex, opex_fix and lifetime."
-            )
-        elif scenario == "no annuity partial/all cost params empty":
-            # raise value error
-            raise ValueError(
-                f"One or more of 'capex', 'opex_fix' and 'lifetime' have been left "
-                f"empty for {row_name} in {element}. Please enter values or remove the"
-                f" parameters and include "
-                f"the 'capacity_cost'."
-            )
-        elif scenario == "no annuity all cost params defined":
-            # calculate the annuity using the calculate_annuity function
-            capacity_cost = calculate_annuity(capex, opex_fix, lifetime, wacc)
-            # update the dataframe
-            element_df.at[index, annuity_cost] = float(capacity_cost)
-            element_df.at[index, annuity_cost_raw] = float(capacity_cost)
-            # log info message
-            logger.info(
-                f"the annuity ('{annuity_cost}') has been calculated and updated for"
-                f" '{row_name}' in '{element}'."
-            )
-        elif scenario == "no annuity no cost params":
-            logger.info(
-                f"Component '{row_name}' of element '{element}' does not contain '{annuity_cost}' parameter. Skipping..."
-            )
-    # Reset marginal_cost to resource_cost removing potential artefacts of MOO runs
-    if 'marginal_cost' in element_df.columns and 'resource_cost' in element_df.columns:
-        element_df['marginal_cost'] = element_df['resource_cost']
-        logger.info(f"Reset marginal_cost to resource_cost for all components in '{element}'")
-    elif 'marginal_cost' in element_df.columns:
-        # If resource_cost doesn't exist, set marginal_cost to 0
-        element_df['marginal_cost'] = 0.0
-        logger.info(f"Reset marginal_cost to 0.0 for all components in '{element}'")
+        capex = row["capex"]
+        opex = row["opex_fix"]
+        lifetime = row["lifetime"]
+        annuity = row["annuity"]
 
-    # save the updated dataframe to the csv file
-    element_df.to_csv(element_path, sep=";", index=False)
-    return
+        has_annuity = pd.notna(annuity)
+        has_all_cost_params = all([
+            pd.notna(capex),
+            pd.notna(opex),      # 0 allowed
+            pd.notna(lifetime)
+        ])
+
+        if has_all_cost_params:
+            capacity_cost = calculate_annuity(capex, opex, lifetime, wacc)
+
+            if has_annuity:
+                logger.warning(
+                    f"Both annuity and cost parameters provided for '{row_name}' in '{element}'. "
+                    f"Using calculated value."
+                )
+
+        elif has_annuity:
+            capacity_cost = annuity
+
+        else:
+            raise ValueError(
+                f"Insufficient cost data for '{row_name}' in '{element}'. "
+                f"Provide either annuity OR all of: capex, opex_fix, lifetime."
+            )
+
+        element_df.at[index, "capacity_cost"] = float(capacity_cost)
+
+    # ---------------- MARGINAL COST ----------------
+    if "resource_cost" in element_df.columns:
+        element_df["marginal_cost"] = element_df["resource_cost"].fillna(0.0)
+    else:
+        element_df["marginal_cost"] = 0.0
+
+    return element_df
 
 
 def pre_processing_custom_attributes(element_path, element_df, custom_attributes):
@@ -393,7 +262,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
 
             if moo is False:
                 # performs pre-processing of additional cost data (capex, opex_fix, lifetime)
-                pre_processing_costs(wacc, element, element_path, element_df)
+                element_df = pre_processing_costs(wacc, element, element_path, element_df)
                 # cast 'marginal_cost' to number
                 for f in res.descriptor["schema"]["fields"]:
                     if f["name"] == "marginal_cost":
