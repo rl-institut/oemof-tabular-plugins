@@ -17,6 +17,52 @@ MOO_DISPATCHABLE_SCEN = "moo variable calculation with dispatchable"
 
 MOO_ANNUITY = "annuity"
 
+def moo_profiles_cleanup(scenario_dir, dp, suffix=""):
+    """Remove dynamically added timeseries (by suffix) from /sequences/ resources."""
+
+    modified_resources = []
+
+    # --- only check resources in /sequences/ ---
+    for res in dp.resources:
+        if "/sequences/" not in res.descriptor["path"]:
+            continue
+
+        # --- check metadata first (avoid unnecessary reads) ---
+        fields_to_remove = [
+            f.name for f in res.schema.fields if f.name.endswith(suffix)
+        ]
+        if not fields_to_remove:
+            continue
+
+        # --- read only if needed ---
+        df = pd.DataFrame.from_records(res.read(keyed=True))
+
+        # --- drop columns ---
+        df = df.drop(columns=fields_to_remove, errors="ignore")
+
+        # --- normalize timeindex ---
+        if "timeindex" in df.columns:
+            df["timeindex"] = pd.to_datetime(df["timeindex"]).dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        # --- write CSV ---
+        df.to_csv(os.path.join(scenario_dir, res.descriptor["path"]), sep=";", index=False)
+
+        # --- update descriptor ---
+        res.descriptor["schema"]["fields"] = [
+            f for f in res.descriptor["schema"]["fields"]
+            if f["name"] not in fields_to_remove
+        ]
+
+        modified_resources.append(res)
+
+    # --- commit once ---
+    if modified_resources:
+        for res in modified_resources:
+            dp.remove_resource(res.name)
+            dp.add_resource(res.descriptor)
+
+        dp.commit()
+
 
 def get_moo_timeseries(dp, ts_name=""):
     """ """

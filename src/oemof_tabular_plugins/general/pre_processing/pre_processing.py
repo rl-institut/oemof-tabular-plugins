@@ -173,31 +173,6 @@ def pre_processing_custom_attributes(element_path, element_df, custom_attributes
     return has_custom_attributes
 
 
-def moo_profiles_cleanup(scenario_dir, dp, suffix=""):
-    """ Remove dynamically added timeseries from all resources in /sequences/ based on suffix"""
-    for res in dp.resources:
-        if "/sequences/" in res.descriptor["path"]:
-            df = pd.DataFrame.from_records(res.read(keyed=True))
-            fields_to_remove = [f.name for f in res.schema.fields if f.name.endswith(suffix)]
-
-            if fields_to_remove:
-                # Remove from descriptor
-                res.descriptor["schema"]["fields"] = [
-                    f for f in res.descriptor["schema"]["fields"] if f["name"] not in fields_to_remove
-                ]
-                # Remove from CSV
-                df = df[[col for col in df.columns if col not in fields_to_remove]]
-                if "timeindex" in df.columns:
-                    df["timeindex"] = pd.to_datetime(df["timeindex"]).dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-                df.to_csv(os.path.join(scenario_dir, res.descriptor["path"]), sep=";", index=False)
-
-                # Rebuild metadata and safe datapackage.json
-                dp.remove_resource(res.name)
-                dp.add_resource(res.descriptor)
-                dp.commit()
-                dp.save(os.path.join(scenario_dir, "datapackage.json"))
-
-
 def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf=None):
     """Performs pre-processing of input scenario data before running the model.
 
