@@ -104,17 +104,17 @@ def pre_processing_costs(wacc, element, element_df):
             pd.notna(lifetime)
         ])
 
-        if has_all_cost_params:
-            capacity_cost = calculate_annuity(capex, opex, lifetime, wacc)
+        if has_annuity:
+            capacity_cost = annuity
 
-            if has_annuity:
+            if has_all_cost_params:
                 logger.warning(
                     f"Both annuity and cost parameters provided for '{row_name}' in '{element}'. "
-                    f"Using calculated value."
+                    f"Using given annuity."
                 )
 
-        elif has_annuity:
-            capacity_cost = annuity
+        elif has_all_cost_params:
+            capacity_cost = calculate_annuity(capex, opex, lifetime, wacc)
 
         else:
             raise ValueError(
