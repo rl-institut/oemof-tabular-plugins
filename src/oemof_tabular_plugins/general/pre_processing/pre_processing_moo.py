@@ -65,30 +65,41 @@ def moo_profiles_cleanup(scenario_dir, dp, suffix=""):
 
 
 def get_moo_timeseries(dp, ts_name=""):
-    """ """
+    """Return (resource, dataframe) for a timeseries containing ts_name column."""
+
+    matches = []
+
+    # --- only check resources in /sequences/ ---
     for res in dp.resources:
-        if "/sequences/" in res.descriptor["path"]:
-            field_names = [f.name for f in res.schema.fields]
-            if ts_name in field_names:
-                try:
-                    df = pd.DataFrame.from_records(res.read(keyed=True))
-                except tableschema.exceptions.CastError as err:
-                    if err.errors:
-                        logging.error(
-                            f"The resource {res.name} has the following casting errors: "
-                            f"{','.join([str(e) for e in err.errors])}"
-                        )
-                    else:
-                        logging.error(f"The resource {res.name} has the following casting error: {err}")
-                    df = pd.DataFrame()
+        if "/sequences/" not in res.descriptor["path"]:
+            continue
 
-                return res, df
+        # --- check metadata first (avoid unnecessary reads) ---
+        field_names = [f.name for f in res.schema.fields]
+        if ts_name not in field_names:
+            continue
 
-    #TODO: dp.descriptor['name'] not present yet for ScenarioBuilder scenarios
-    dp_name = os.path.basename(os.path.normpath(dp.base_path))
-    raise ValueError(
-        f"'{ts_name}' could not be found in any file under '/sequences/' of datapackage '{dp_name}'"
-    )
+        # --- read the resource if it has ts_name and write to df
+        try:
+            df = pd.DataFrame.from_records(res.read(keyed=True))
+        except tableschema.exceptions.CastError as err:
+            if err.errors:
+                logging.error(
+                    f"{res.name} casting errors: {','.join(map(str, err.errors))}"
+                )
+            else:
+                logging.error(f"{res.name} casting error: {err}")
+            df = pd.DataFrame()
+
+        matches.append((res, df))
+
+    if len(matches) == 0:
+        raise ValueError(f"No timeseries with column '{ts_name}' found")
+
+    if len(matches) > 1:
+        logging.warning(f"Multiple timeseries with column '{ts_name}' found, first match will be used")
+
+    return matches[0]
 
 
 def pre_processing_moo(
