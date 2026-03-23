@@ -18,37 +18,6 @@ MOO_DISPATCHABLE_SCEN = "moo variable calculation with dispatchable"
 MOO_ANNUITY = "annuity"
 
 
-def calculate_annuity(capex, opex_fix, lifetime, wacc):
-    """
-    Calculates the total annuity for each component, including CAPEX and fixed OPEX.
-    :param capex: CAPEX (currency/MW*) *or the unit you choose to use throughout the model e.g. kW/GW
-    :param opex_fix: fixed OPEX (currency/MW*/year)
-    :param lifetime: lifetime of the component (years)
-    :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
-    :return: total annuity (currency/MW*/year)
-    """
-    annuity_capex = economics.annuity(capex, lifetime, wacc)
-    annuity_opex_fix = opex_fix
-    annuity = round(annuity_capex + annuity_opex_fix, 2)
-    return annuity
-
-
-def to_float(row, key):
-    # Key missing
-    if key not in row:
-        logging.warning(f"Row {row.name}: Missing key '{key}'. Setting to '0.0'.")
-        return 0.0
-
-    value = row[key]
-
-    # Value present but not convertible
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        logging.warning(f"Row {row.name}: Could not convert '{key}'='{value}' to float. Setting to '0.0'.")
-        return 0.0
-
-
 def get_moo_timeseries(dp, ts_name=""):
     """ """
     for res in dp.resources:
@@ -76,7 +45,18 @@ def get_moo_timeseries(dp, ts_name=""):
     )
 
 
-def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo_suffix, cf_aware_df, cf_aware_name, cf_aware_res):
+def pre_processing_moo(
+    wacc,
+    res,
+    element,
+    element_path,
+    element_df,
+    moo_wf,
+    moo_suffix,
+    cf_aware_df,
+    cf_aware_name,
+    cf_aware_res
+):
     """This function will run the multi-objective optimization
 
     The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
@@ -116,226 +96,140 @@ def pre_processing_moo(wacc, res, element, element_path, element_df, moo_wf, moo
     :param element_df: dataframe containing data from the csv file
     :param scenario_dir: scenario directory path
     """
-    # ---------------- MOO Normalization PARAMS ----------------
-    # Global Inputs (used for normalization)
-    global_GDP = 1.10 * 10**14  # forecasted for 2024, Unit: [USD/a], Source: IMF (2024)
-    # https://www.imf.org/en/Publications/WEO/weo-database/2024/April/weo-report?c=512,914,612,171,614,311,213,911,314,193,122,912,313,419,513,316,913,124,339,638,514,218,963,616,223,516,918,748,618,624,522,622,156,626,628,228,924,233,632,636,634,238,662,960,423,935,128,611,321,243,248,469,253,642,643,939,734,644,819,172,132,646,648,915,134,652,174,328,258,656,654,336,263,268,532,944,176,534,536,429,433,178,436,136,343,158,439,916,664,826,542,967,443,917,544,941,446,666,668,672,946,137,546,674,676,548,556,678,181,867,682,684,273,868,921,948,943,686,688,518,728,836,558,138,196,278,692,694,962,142,449,564,565,283,853,288,293,566,964,182,359,453,968,922,714,862,135,716,456,722,942,718,724,576,936,961,813,726,199,733,184,524,361,362,364,732,366,144,146,463,528,923,738,578,537,742,866,369,744,186,925,869,746,926,466,112,111,298,927,846,299,582,487,474,754,698,&s=NGDPD,&sy=2022&ey=2029&ssm=0&scsm=1&scc=0&ssd=1&ssc=0&sic=0&sort=country&ds=.&br=1
-    global_GHG = (
-        3.74 * 10**14
-    )  # global CO2 emission in 2023; [kgCO2/a], Source: iea (2024);
-    # https://www.iea.org/reports/co2-emissions-in-2023/executive-summary
-    global_land_surface = 1.49 * 10**14  # Unit: m²
-    global_annual_deprived_water = 7.91 * 10**13  # Unit: [m³/a], Source: EU JRC (2017)
-    # https://data.europa.eu/doi/10.2760/88930
 
-    # Get cf_aware and the file where it was found
+    # ---------------- SAFE ----------------
+    def safe(val):
+        if val is None:
+            return 0
+        try:
+            return 0 if np.isnan(val) else val
+        except TypeError:
+            return val
 
-    # TODO cf_aware shall be collected automatically for specific location (in WEFESiteAnalyst)
-    # the factors can be found here: https://wulca-waterlca.org/aware/download-aware-factors/
-    cf_aware = cf_aware_df[cf_aware_name]
+    def to_float_safe(row, col):
+        if col not in row or row[col] is None:
+            return None
+        try:
+            val = float(row[col])
+            return val if not np.isnan(val) else None
+        except (TypeError, ValueError):
+            return None
 
-    # -------------- MOO Customizable Weights ------------------
+    # ---------------- WEIGHTS ----------------
     wf_cost = moo_wf["wf_cost"]
     wf_ghg = moo_wf["wf_ghg"]
     wf_lr = moo_wf["wf_lr"]
     wf_wf = moo_wf["wf_wf"]
 
-    # TODO Create GUI interface so web app can directly provide customizable weights
+    # TODO: is this safehandling necessary/sufficient?
+    if not np.isclose(wf_cost + wf_ghg + wf_lr + wf_wf, 1.0):
+        raise ValueError("MOO weights must sum to 1")
 
-    # ---------------- Assigning MOO variables in csv ----------------
+    # ---------------- GLOBALS ----------------
+    global_GDP = 1.10e14
+    global_GHG = 3.74e14
+    global_land_surface = 1.49e14
+    global_annual_deprived_water = 7.91e13
+    normalization_factor = 1e15
+
+    cf_aware = cf_aware_df[cf_aware_name]
+
+    # ---------------- OUTPUT COLS ----------------
     moo_variable_var = "marginal_cost"
-    # Every element that has the column 'storage_capacity_cost' is assumed to only contain components of type storage
-    # where 'storage_capacity_cost' represents the cost parameter to be calculated.
-    # All other elements require 'capacity_cost' as the cost parameter to be calculated.
-    if "storage_capacity_cost" in element_df.columns:
-        moo_variable_fix = "storage_capacity_cost"
-    else:
-        moo_variable_fix = "capacity_cost"
+    moo_variable_fix = (
+        "storage_capacity_cost"
+        if "storage_capacity_cost" in element_df.columns
+        else "capacity_cost"
+    )
 
+    # ---------------- TEMP STORAGE ----------------
+    cf_aware_temp_df = pd.DataFrame(index=cf_aware_df.index)
+    row_temp_dict = {}
 
-    # ---------------- Possible SCENARIOS ----------------
-    # Different calculation of cost parameters for different component types,
-    # assuming all components of an element (resource) have the same type
-    # TODO: add missing types (eg of water components), eventually link to TYPEMAP directly
-    element_type = element_df["type"].iloc[0]
-    if element_type in ["bus", "load", "excess", "crop"]:
-        scenario = NO_MOO_VARIABLE_SCEN
-    elif element_type in [
-        "conversion",
-        "hydropower",
-        "mimo",
-        "pv-panel",
-        "storage",
-        # "toilets",
-        "volatile",
-        "wastewater_treatment",
-        "water_filtration",
-        "water-pump",
-        "water_treatment",
-        "water-filtration",
-        "wind-turbine"
-    ]:
-        scenario = MOO_VARIABLE_SCEN
-    elif element in [
-        "dispatchable",
-        "energy_sources",
-        "water_sources",
-    ]:
-        scenario = MOO_DISPATCHABLE_SCEN
-    else:
-        raise ValueError(
-            f"The technology defined in {element} cannot be used for multi-objective optimization at the moment"
+    # ---------------- LOOP ----------------
+    for index, row in element_df.iterrows():
+        row_name = row["name"]
+
+        # ---- inputs ----
+        capacity_cost = to_float_safe(row, "capacity_cost")
+        marginal_cost = to_float_safe(row, "marginal_cost")
+
+        ghg = to_float_safe(row, "ghg_emission_factor")
+        land = to_float_safe(row, "land_requirement_factor")
+        water_direct = to_float_safe(row, "water_direct")
+        water_indirect = to_float_safe(row, "indirect_water_consumption_factor")
+
+        has_capacity = capacity_cost is not None
+        has_flow_inputs = any(
+            v is not None for v in [marginal_cost, ghg, water_direct, water_indirect]
         )
 
-    # ---------------- ACTIONS TAKEN FOR EACH SCENARIO ----------------
-    for index, row in element_df.iterrows():
-        # define the row name
-        row_name = row["name"]
-        if scenario == MOO_VARIABLE_SCEN:
-            if MOO_ANNUITY not in element_df.columns:
-                element_df[MOO_ANNUITY] = None
-            # store the parameters
-            capex = row["capex"]
-            opex_fix = row["opex_fix"]
-            lifetime = row["lifetime"]
-            if "resource_cost" in row:
-                carrier_cost = row["resource_cost"]
-            else:
-                raise AttributeError(
-                    f"The column 'resource_cost' is missing from component {row_name} within resource '{element}'"
-                    f" and is needed for multi-objective cost calculation. "
-                    f"The resource_cost is the cost of one unit of flow (could be EUR/kWh or EUR/kg, EUR/m³ etc "
-                )
+        # -------- CAPACITY MOO --------
+        if has_capacity:
+            moo_capacity = (
+                           capacity_cost / global_GDP * wf_cost
+                           + safe(land) / global_land_surface * wf_lr
+                           ) * normalization_factor
 
-            ghg_emission_factor = to_float(row, "ghg_emission_factor")
-            land_requirement_factor = to_float(row, "land_requirement_factor")
-            water_consumption_factor = to_float(row, "water_consumption_factor")
-            resource_cost = to_float(row, "resource_cost")
+            if not np.isnan(moo_capacity):
+                element_df.at[index, moo_variable_fix] = float(moo_capacity)
 
-            logging.debug(f"capex: {capex}, lifetime: {lifetime}, wacc: {wacc}")
-            annuity = calculate_annuity(capex, opex_fix, lifetime, wacc)
-            moo_variable_capacity = (
-                annuity / global_GDP * wf_cost
-                + land_requirement_factor / global_land_surface * wf_lr
-            ) * 10**15
-            moo_variable_flow = 10**15 * (
-                resource_cost / global_GDP * wf_cost
-                + ghg_emission_factor / global_GHG * wf_ghg
-                + cf_aware
-                * water_consumption_factor
-                / global_annual_deprived_water
-                * wf_wf
-            )
+        # -------- FLOW MOO (UNIFIED) --------
+        if has_flow_inputs:
+            water_total = safe(water_direct) + safe(water_indirect)
 
-            # moo variables are expanded by 10e15 to have numbers in range which will not be reduced while optimization
-            if not np.isnan(moo_variable_capacity):
-                element_df.at[index, moo_variable_fix] = float(moo_variable_capacity)
-                # log info message
-                logger.info(
-                    f"'{moo_variable_fix}' has been calculated and updated for"
-                    f" '{row_name}' in '{element}'."
-                )
-            else:
-                logging.warning(
-                    f"'{moo_variable_fix}' could not be calculated and will not be updated for"
-                    f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
-                )
+            moo_flow = (
+                    safe(marginal_cost) / global_GDP * wf_cost
+                    + safe(ghg) / global_GHG * wf_ghg
+                    + cf_aware * water_total / global_annual_deprived_water * wf_wf
+                    ) + normalization_factor
 
-
-            if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
+            if moo_flow is not None and not np.isnan(moo_flow).any():
                 ts_header = f"{row_name}_{moo_suffix}"
-                cf_aware_df[ts_header] = moo_variable_flow
-                element_df.at[index, moo_variable_var] = ts_header
+                cf_aware_temp_df[ts_header] = moo_flow
+                row_temp_dict[index] = ts_header
 
-                # check if the foreign key is already there to avoid duplicates, add foreign key
-                fk_exists = any(
-                    fk.get("fields") == moo_variable_var and fk.get("reference", {}).get(
-                        "resource") == cf_aware_res.name
-                    for fk in res.descriptor["schema"]["foreignKeys"]
-                )
-                if not fk_exists:
-                    res.descriptor["schema"]["foreignKeys"].append({
-                        "fields": moo_variable_var,
-                        "reference": {
-                            "resource": cf_aware_res.name
-                        }
-                    })
+        if not has_capacity and not has_flow_inputs:
+            logging.info(f"Skipping '{row_name}' in '{element}'")
 
-                logger.info(
-                    f"'{moo_variable_var}' has been calculated and updated for"
-                    f" '{row_name}' in '{element}'."
-                )
-            else:
-                logging.warning(
-                    f"'{moo_variable_var}' could not be calculated and will not be updated for"
-                    f" '{row_name}' in '{element}'."
-                )
+    # ---------------- CHECK VARIABILITY ----------------
+    any_variable = any(
+        len(cf_aware_temp_df[col].unique()) > 1
+        for col in cf_aware_temp_df.columns
+    )
 
-            if not np.isnan(annuity):
-                element_df.at[index, MOO_ANNUITY] = float(annuity)
-                # log info message
-                logger.info(
-                    f"'{MOO_ANNUITY}' has been calculated and updated for"
-                    f" '{row_name}' in '{element}'."
-                )
-            else:
-                logging.warning(
-                    f"'{MOO_ANNUITY}' could not be calculated and will not be updated for"
-                    f" '{row_name}' in '{element}'. Capex: {capex}, lifetime: {lifetime}, wacc: {wacc}"
-                )
+    if any_variable:
+        # ---- write timeseries ----
+        for col in cf_aware_temp_df.columns:
+            cf_aware_df[col] = cf_aware_temp_df[col]
 
-        elif scenario == MOO_DISPATCHABLE_SCEN:
-            # store the parameters
-            ghg_emission_factor = to_float(row, "ghg_emission_factor")
-            water_consumption_factor = to_float(row, "water_consumption_factor")
-            indirect_water_consumption_factor = to_float(row, "indirect_water_consumption_factor")
-            resource_cost = to_float(row, "resource_cost")
+        for index, col in row_temp_dict.items():
+            element_df.at[index, moo_variable_var] = col
 
+        # ---- FK ----
+        fk_exists = any(
+            fk.get("fields") == moo_variable_var and
+            fk.get("reference", {}).get("resource") == cf_aware_res.name
+            for fk in res.descriptor["schema"]["foreignKeys"]
+        )
 
-            moo_variable_flow = 10**15 * (
-                resource_cost / global_GDP * wf_cost
-                + ghg_emission_factor / global_GHG * wf_ghg
-                + cf_aware
-                * (water_consumption_factor + indirect_water_consumption_factor)
-                / global_annual_deprived_water
-                * wf_wf
-            )
+        if not fk_exists:
+            res.descriptor["schema"]["foreignKeys"].append({
+                "fields": moo_variable_var,
+                "reference": {"resource": cf_aware_res.name}
+            })
 
-            if moo_variable_flow is not None and not np.isnan(moo_variable_flow).any():
-                ts_header = f"{row_name}_{moo_suffix}"
-                cf_aware_df[ts_header] = moo_variable_flow
-                element_df.at[index, moo_variable_var] = ts_header
+        profiles_created = True
 
-                # check if the foreign key is already there to avoid duplicates, add foreign key
-                fk_exists = any(
-                    fk.get("fields") == moo_variable_var and fk.get("reference", {}).get(
-                        "resource") == cf_aware_res.name
-                    for fk in res.descriptor["schema"]["foreignKeys"]
-                )
-                if not fk_exists:
-                    res.descriptor["schema"]["foreignKeys"].append({
-                        "fields": moo_variable_var,
-                        "reference": {
-                            "resource": cf_aware_res.name
-                        }
-                    })
+    else:
+        # ---- write constants ----
+        for index, col in row_temp_dict.items():
+            const_val = float(cf_aware_temp_df[col].iloc[0])
+            element_df.at[index, moo_variable_var] = const_val
 
-                logger.info(
-                    f"'{row_name}' is a dispatchable source.'{moo_variable_var}' has been calculated for"
-                    f" '{row_name}' in '{element}'."
-                )
-            else:
-                logging.warning(
-                    f"'{moo_variable_var}' could not be calculated and will not be updated for"
-                    f" '{row_name}' in '{element}'."
-                )
+        profiles_created = False
 
-        elif scenario == "no moo indicator":
-            logger.info(
-                f"'{row_name}' of element '{element}' does not contain '{moo_variable_fix}' parameter. Skipping..."
-            )
-    logging.debug(element_path)
-
-    # save the updated element dataframe to the csv file
+    # ---------------- SAVE ----------------
     element_df.to_csv(element_path, sep=";", index=False)
-    return cf_aware_df
+
+    return cf_aware_df, profiles_created
