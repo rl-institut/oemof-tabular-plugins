@@ -7,6 +7,8 @@ import pandas as pd
 from oemof.tabular.postprocessing import calculations as clc, naming
 from oemof.tabular.postprocessing.core import Calculator
 
+from oemof_tabular_plugins.general.pre_processing.pre_processing import scenario_datapackage
+from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
 
 from oemof_tabular_plugins.datapackage.post_processing import (
     construct_dataframe_from_results,
@@ -111,14 +113,14 @@ class OTPCalculator(Calculator):
         self.cf_aware = None
         if moo:
             try:
-                import os
-                from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
-
                 # Extract scenario directory from dp_path
-                scenario_dir = os.path.dirname(os.path.dirname(dp_path))
-                cf_aware_array = get_moo_timeseries(
-                    scenario_dir, ts_name="cf_aware", resource_name="moo_profile"
-                )
+                scenario_dir = os.path.dirname(dp_path)
+                dp = scenario_datapackage(scenario_dir)
+                ts_name = "cf-aware-profile"
+
+                cf_aware_res, cf_aware_df = get_moo_timeseries(dp, ts_name)
+                cf_aware_array = cf_aware_df[ts_name]
+
                 # Take the mean value as cf_aware is typically constant for a location
                 self.cf_aware = float(cf_aware_array.mean())
 
