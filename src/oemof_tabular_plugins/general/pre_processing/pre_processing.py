@@ -7,7 +7,7 @@ import datapackage as dp
 import tableschema
 from decimal import Decimal
 from copy import deepcopy
-from .pre_processing_moo import pre_processing_moo, get_moo_timeseries
+from .pre_processing_moo import pre_processing_moo, get_moo_timeseries, moo_profiles_cleanup
 
 logger.define_logging()
 
@@ -43,20 +43,16 @@ def pre_processing_costs(wacc, element, element_df):
     Design:
     - Normalize inputs using COLUMN_RULES
     - Compute capacity_cost deterministically:
-        only annuity given: use annuity as capacity_cost
-        only capex, opex_fix, lifetime given: compute capacity_cost
-        annuity, capex, opex_fix, lifetime given: compute capacity_cost and warn
-    - Compute marginal_cost from resource_cost
-
-    Inputs:
-        annuity, capex, opex_fix, lifetime, resource_cost
-
-    Outputs:
-        capacity_cost, marginal_cost
+        Case 0 - capacity_cost present and zero, no other cost params: pass (no intent)
+        Case 1 - capacity_cost present and non-zero, no other cost params: set to zero and info
+        Case 2a - capacity_cost present, only annuity as cost params: use annuity
+        Case 2b - capacity_cost present, all cost params: use annuity and info
+        Case 3 - capacity_cost present, only capex, opex_fix, lifetime as cost params: compute capacity_cost
+        Case 4 - capacity_cost present, none of the above: set to zero and warn (broken intent)
+    - Compute marginal_cost deterministically:
+        marginal_cost present, resource_cost present: set marginal_cost to resource_cost
+        only marginal_cost present: set to zero and warn
     """
-
-    import pandas as pd
-
     # ---------------- COLUMN RULES ----------------
     COLUMN_RULES = {
         "annuity": {"strict_positive": True},
@@ -69,66 +65,86 @@ def pre_processing_costs(wacc, element, element_df):
     # ---------------- NORMALIZATION ----------------
     for col, rules in COLUMN_RULES.items():
         if col not in element_df.columns:
-            element_df[col] = pd.NA
-            continue
+            continue  # <-- do NOT create columns
 
         if rules["strict_positive"]:
-            # 0 or negative → treat as missing
             element_df[col] = element_df[col].mask(
                 (element_df[col] <= 0) | (pd.isna(element_df[col])),
                 pd.NA
             )
         else:
-            # Only NaN stays NaN; 0 is valid
             element_df[col] = element_df[col].where(
                 pd.notna(element_df[col]),
                 pd.NA
             )
 
-    # ---------------- RESET OUTPUT ----------------
-    element_df["capacity_cost"] = pd.NA
+    # ================= CAPACITY COST =================
+    if "capacity_cost" in element_df.columns:
+        for index, row in element_df.iterrows():
+            row_name = row["name"]
+            capacity_cost = row["capacity_cost"]
 
-    # ---------------- CORE COMPUTATION ----------------
-    for index, row in element_df.iterrows():
-        row_name = row["name"]
+            capex = row.get("capex")
+            opex = row.get("opex_fix")
+            lifetime = row.get("lifetime")
+            annuity = row.get("annuity")
 
-        capex = row["capex"]
-        opex = row["opex_fix"]
-        lifetime = row["lifetime"]
-        annuity = row["annuity"]
+            has_annuity = pd.notna(annuity)
+            has_all_cost_params = all([
+                pd.notna(capex),
+                pd.notna(opex),
+                pd.notna(lifetime)
+            ])
+            has_any_cost_input = any([
+                has_annuity,
+                pd.notna(capex),
+                pd.notna(opex),
+                pd.notna(lifetime)
+            ])
 
-        has_annuity = pd.notna(annuity)
-        has_all_cost_params = all([
-            pd.notna(capex),
-            pd.notna(opex),      # 0 allowed
-            pd.notna(lifetime)
-        ])
+            # -------- CASE 0: intentional zero --------
+            if capacity_cost == 0 and not has_any_cost_input:
+                pass
 
-        if has_annuity:
-            capacity_cost = annuity
-
-            if has_all_cost_params:
-                logger.warning(
-                    f"Both annuity and cost parameters provided for '{row_name}' in '{element}'. "
-                    f"Using given annuity."
+            # -------- CASE 1: no cost inputs --------
+            elif capacity_cost != 0 and not has_any_cost_input:
+                logging.info(
+                    f"No cost inputs for '{row_name}' in '{element}', setting capacity_cost to 0.0"
                 )
+                capacity_cost = 0.0
 
-        elif has_all_cost_params:
-            capacity_cost = calculate_annuity(capex, opex, lifetime, wacc)
+            # -------- CASE 2: annuity given --------
+            elif has_annuity:
+                capacity_cost = annuity
 
+                if has_all_cost_params:
+                    logging.info(
+                        f"Both annuity and cost parameters provided for '{row_name}' in '{element}'. "
+                        f"Using annuity."
+                    )
+
+            # -------- CASE 3: compute from params --------
+            elif has_all_cost_params:
+                capacity_cost = calculate_annuity(capex, opex, lifetime, wacc)
+
+            # -------- CASE 4: broken intent --------
+            else:
+                logging.warning(
+                    f"Incomplete cost data for '{row_name}' in '{element}', setting capacity_cost to 0.0"
+                )
+                capacity_cost = 0.0
+
+            element_df.at[index, "capacity_cost"] = float(capacity_cost)
+
+    # ================= MARGINAL COST =================
+    if "marginal_cost" in element_df.columns:
+        if "resource_cost" in element_df.columns:
+            element_df["marginal_cost"] = element_df["resource_cost"].fillna(0.0)
         else:
-            raise ValueError(
-                f"Insufficient cost data for '{row_name}' in '{element}'. "
-                f"Provide either annuity OR all of: capex, opex_fix, lifetime."
+            logging.warning(
+                f"'marginal_cost' exists but no 'resource_cost' in '{element}', setting to 0.0"
             )
-
-        element_df.at[index, "capacity_cost"] = float(capacity_cost)
-
-    # ---------------- MARGINAL COST ----------------
-    if "resource_cost" in element_df.columns:
-        element_df["marginal_cost"] = element_df["resource_cost"].fillna(0.0)
-    else:
-        element_df["marginal_cost"] = 0.0
+            element_df["marginal_cost"] = 0.0
 
     return element_df
 
@@ -182,12 +198,12 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
       :param moo: whether the multi-objective optimization is activated, default is False
       :param moo_wf: dictionary of moo weight factors
       """
-    logger.info("Pre-processing activated")
+    logging.info("Pre-processing activated")
 
     dp = scenario_datapackage(scenario_dir)
 
     if moo and moo_wf is None:
-        logging.warning("MOO activated but no weight factors provided. Deactivate MOO")
+        logging.warning("MOO activated but no weight factors provided. Deactivate MOO...")
         moo = False
 
     moo_suffix = "moo_profile"
@@ -197,7 +213,7 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
 
     # ---------------- MOO SETUP ----------------
     if moo:
-        logger.info("Multi-objective optimization activated")
+        logging.info("Multi-objective optimization activated")
 
         cf_aware_name = "cf-aware-profile"
         try:
@@ -209,11 +225,11 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
         existing_cf_fields = set(cf_aware_df.columns)
 
         # normalize Decimal → float
-        cf_aware_df = cf_aware_df.applymap(
+        cf_aware_df = cf_aware_df.map(
             lambda v: float(v) if isinstance(v, Decimal) else v
         )
     else:
-        logger.info("Cost-only optimization activated")
+        logging.info("Cost-only optimization activated")
 
     # ---------------- PROCESS ELEMENTS ----------------
     updated_resources = []
@@ -232,12 +248,12 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
             element_df = pd.DataFrame()
 
         # normalize Decimal → float
-        element_df = element_df.applymap(
+        element_df = element_df.map(
             lambda v: float(v) if isinstance(v, Decimal) else v
         )
 
         # -------- ALWAYS run cost preprocessing --------
-        element_df = pre_processing_costs(wacc, element, element_path, element_df)
+        element_df = pre_processing_costs(wacc, element, element_df)
 
         # default: marginal_cost numeric
         for f in res.descriptor["schema"]["fields"]:
@@ -312,4 +328,4 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
     # ---------------- FINAL SAVE ----------------
     dp.save(os.path.join(scenario_dir, "datapackage.json"))
 
-    logger.info("Pre-processing completed")
+    logging.info("Pre-processing completed")

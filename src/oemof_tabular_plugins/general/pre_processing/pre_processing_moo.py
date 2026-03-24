@@ -114,44 +114,66 @@ def pre_processing_moo(
     cf_aware_name,
     cf_aware_res
 ):
-    """This function will run the multi-objective optimization
+    """
+    Apply multi-objective optimization (MOO) preprocessing to an element's cost and flow parameters.
 
-    The outcome is that the main costs 'capacity_cost' will be replaced by an aggregated
-    indicator representing the multi-objective optimization goals.
-    This function will replace the pre_processing_costs function if moo is set to True
+    This function is intended to run **after standard cost preprocessing**. If MOO is active,
+    it recalculates the element's cost and flow indicators based on multiple objectives, overriding
+    the standard capacity_cost and marginal_cost values.
 
-    Inputs
-    Weights: defined by model-user e.g. percentages up to 1
-        (in OptiMG, the user defining this will be e.g. local prosumers)
-    0.5 for costs 0.2 for emissions 0.2 for land requirement 0.1 for water dissipated
-    Has to add up to 1, otherwise error
+    The MOO calculation includes:
+        - Capital and fixed costs (capacity_cost or storage_capacity_cost)
+        - Greenhouse gas emissions
+        - Land requirement
+        - Water consumption (direct + indirect)
 
-    Normalization: done with global values
-    User sets costs are defined in the CSV e.g. CAPEX, OPEX fix, lifetime
-        -> this cost is normalised based on global GDP
-        -> value is calculated for proportion of cost to global GDP
-    Same applies for total emissions
-        -> the value is normalised based on total global annual GHG emissions
-    Land requirements
-        ->  the value is normalised based on the worlds surface area
-    Water dissipated
-        -> the value is normalised based on e.g. global availability
-    Then these values are added together
+    The MOO indicators are normalized using global values and optionally scaled by a large factor
+    (default 1e15) to avoid numerical underflow in optimization.
 
-    User includes specific cost, specific emission factor, specific land requirement, specific water footprint
-    This function will take those, normalise based on normalisation data (global)
-    One aggregated value will be calculated based on adding these values
-    This value will be entered in the csv file under 'capacity_cost'
-    The csv file will be updated
+    Parameters
+    ----------
+    wacc : float
+        Weighted average cost of capital (WACC) [%] used for annuity calculations if needed.
+    res : DataPackage Resource
+        The resource object corresponding to the element being preprocessed.
+    element : str
+        Name of the element (e.g., 'hydropower', 'pv-panel').
+    element_path : str
+        Path to the CSV file of the element; updated values are written here.
+    element_df : pd.DataFrame
+        DataFrame containing the element's data.
+    moo_wf : dict
+        Dictionary with weights for the multi-objective optimization goals:
+            - 'wf_cost': weight for cost
+            - 'wf_ghg': weight for greenhouse gas emissions
+            - 'wf_lr': weight for land requirement
+            - 'wf_wf': weight for water footprint
+        The weights must sum to 1.0.
+    moo_suffix : str
+        Suffix used for naming new MOO profile columns in timeseries (e.g., '_moo_profile').
+    cf_aware_df : pd.DataFrame
+        DataFrame containing the CF-aware timeseries for water consumption normalization.
+    cf_aware_name : str
+        Column name in cf_aware_df corresponding to the CF-aware factor.
+    cf_aware_res : DataPackage Resource
+        Resource corresponding to cf_aware_df; used to add foreign keys if variable profiles are created.
 
-    Applies pre-processing costs to the input CSV files, where the annuity ('capacity_cost') is either
-    used directly if stated, or if left empty then calculated using the calculate_annuity function,
-    or if all parameters are stated a choice is given.
-    :param wacc: weighted average cost of capital (WACC) applied throughout the model (%)
-    :param element: csv filename
-    :param element_path: path of the csv file
-    :param element_df: dataframe containing data from the csv file
-    :param scenario_dir: scenario directory path
+    Returns
+    -------
+    cf_aware_df : pd.DataFrame
+        Updated CF-aware DataFrame including any newly generated MOO profiles.
+    profiles_created : bool
+        True if at least one variable timeseries profile was created; False if all profiles were constant.
+
+    Notes
+    -----
+    - This function **overwrites** capacity_cost and marginal_cost values if MOO is active.
+    - If 'capacity_cost' is missing or zero, it is handled silently; no warnings are issued for intentional zero values.
+    - Flow-related values (marginal_cost, ghg_emission_factor, water_direct, indirect_water_consumption_factor)
+      missing or NaN are treated as zero in the MOO calculation.
+    - All MOO indicators are multiplied by a normalization factor (default 1e15) to bring them to a comparable scale.
+    - Variable timeseries are linked via foreign keys to cf_aware_res if applicable.
+    - The function updates the element CSV in-place.
     """
 
     # ---------------- SAFE ----------------
@@ -239,7 +261,7 @@ def pre_processing_moo(
                     safe(marginal_cost) / global_GDP * wf_cost
                     + safe(ghg) / global_GHG * wf_ghg
                     + cf_aware * water_total / global_annual_deprived_water * wf_wf
-                    ) + normalization_factor
+                    ) * normalization_factor
 
             if moo_flow is not None and not np.isnan(moo_flow).any():
                 ts_header = f"{row_name}_{moo_suffix}"
@@ -247,7 +269,7 @@ def pre_processing_moo(
                 row_temp_dict[index] = ts_header
 
         if not has_capacity and not has_flow_inputs:
-            logging.info(f"Skipping '{row_name}' in '{element}'")
+            logging.info(f"MOO: Skipping '{row_name}' in '{element}'")
 
     # ---------------- CHECK VARIABILITY ----------------
     any_variable = any(
