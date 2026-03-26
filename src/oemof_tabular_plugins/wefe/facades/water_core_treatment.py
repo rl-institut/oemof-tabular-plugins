@@ -1,5 +1,5 @@
 from dataclasses import field
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
 import numpy as np
 from oemof.solph._plumbing import sequence
@@ -9,11 +9,11 @@ from oemof.solph.flows import Flow
 
 from oemof.tabular._facade import dataclass_facade, Facade
 
-@dataclass_facade
-class BiologicalDenitrification(Converter, Facade):
-    """Biological denitrification water treatment unit with two inputs and two outputs.
-    Reduces nitrate and nitrogen oxide ions in the water and converts them into nitrogen gas
-    with the help of a suitable carbon source. The outputs are treated water and nitrogen gas.
+@dataclass_facade #v1.0   #please check default values once more #improve more pending
+class WaterCoreTreatment(Converter, Facade):
+    r"""Water core treatment unit with mandatory electricity and water input,
+    mandatory treated water output, and optional brine, waste biomass,
+    and nitrogen gas outputs.
 
     Parameters
     ----------
@@ -72,23 +72,20 @@ class BiologicalDenitrification(Converter, Facade):
          (see oemof.solph for more information on possible parameters)
     """
 
+    # required fields from CSV / facade logic
     electricity_bus: Bus
 
     water_in_bus: Bus
 
     water_out_bus: Bus
 
-    N2_gas_bus: Bus
+    tech: str
 
-    specific_energy_consumption: float = 0.008 # kWh/m³
+    carrier: str = ""
 
-    carbon_source_dose: float = 90 # mg/L = g/m³
+    specific_energy_consumption: float = 10.103
 
-    carbon_source_cost: float = 0.40 # USD/kg
-
-    removal_efficiency: float = 0.90
-
-    Cin: float = 30.0 # mg/L, user specifies input concentration
+    efficiency: float = 0.75
 
     capacity: float = None
 
@@ -112,45 +109,96 @@ class BiologicalDenitrification(Converter, Facade):
 
     output_parameters: dict = field(default_factory=dict)
 
+    # optional fields to the right of expandable
+    brine_out_bus: Optional[Bus] = None
+    waste_biomass_out_bus: Optional[Bus] = None
+    N2_gas_bus: Optional[Bus] = None
+
+    # optional technical parameters for optional biomass branch
+    nutrient_dose: float = 1.0  # mg/L = g/m³
+
+    nutrient_cost: float = 1.0  # USD/kg
+
+    biomass_waste_fraction: float = 0.005
+
+    # optional technical parameters for optional N2 branch
+    carbon_source_dose: float = 90  # mg/L = g/m³
+
+    carbon_source_cost: float = 0.40  # USD/kg
+
+    removal_efficiency: float = 0.90
+
+    Cin: float = 30.0  # mg/L, user specifies input concentration
+
     def build_solph_components(self):
 
-        # Carbon source dose per m³ of treated water:
-        # carbon_source_dose [mg/L] * 1e-6 [kg/m³ per mg/L] * carbon_source_cost [USD/kg]
-        carbon_source_cost_per_m3 = (self.carbon_source_dose * 1e-6 * self.carbon_source_cost)
+        water_out_variable_costs = self.marginal_cost
+        custom_attrs = {}
 
         self.conversion_factors.update(
             {
+                # Electricity input per unit treated water output
                 self.electricity_bus: sequence(self.specific_energy_consumption),
-                self.water_in_bus: sequence(1),
+                # Raw water input per unit treated water output (inverse of efficiency)
+                self.water_in_bus: sequence(1 / self.efficiency),
+                # Treated water output normalized to 1
                 self.water_out_bus: sequence(1),
-                self.N2_gas_bus: sequence(self.Cin * self.removal_efficiency), #  g N2/m³ of treated water
             }
         )
+
+        if self.brine_out_bus is not None:
+            self.conversion_factors[self.brine_out_bus] = sequence((1/self.efficiency) - 1)
+
+        if self.waste_biomass_out_bus is not None:
+            # Nutrient cost per m³ of treated water:
+            # nutrient_dose [mg/L] * 1e-6 [kg/m³ per mg/L] * nutrient_cost [USD/kg]
+            nutrient_cost_per_m3 = (self.nutrient_dose * 1e-6 * self.nutrient_cost)
+            water_out_variable_costs += nutrient_cost_per_m3
+
+            self.conversion_factors[self.waste_biomass_out_bus] = sequence(self.biomass_waste_fraction)
+            custom_attrs["nutrient_dose"] = self.nutrient_dose
+
+        if self.N2_gas_bus is not None:
+            # Carbon source dose per m³ of treated water:
+            # carbon_source_dose [mg/L] * 1e-6 [kg/m³ per mg/L] * carbon_source_cost [USD/kg]
+            carbon_source_cost_per_m3 = (self.carbon_source_dose * 1e-6 * self.carbon_source_cost)
+            water_out_variable_costs += carbon_source_cost_per_m3
+            # Calculate output concentration based on input and efficiency
+            Cout = self.Cin * (1 - self.removal_efficiency)
+
+            self.conversion_factors[self.N2_gas_bus] = sequence(self.Cin * self.removal_efficiency) #  g N2/m³ of treated water
+            custom_attrs["Cout"] = Cout
+            custom_attrs["carbon_source_dose"] = self.carbon_source_dose
 
         self.inputs.update(
             {
                 self.electricity_bus: Flow(
-                    variable_costs = self.carrier_cost, **self.input_parameters
+                    variable_costs=self.carrier_cost, **self.input_parameters
                 ),
                 self.water_in_bus: Flow(),
             }
         )
 
-        # Calculate output concentration based on input and efficiency
-        Cout = self.Cin * (1 - self.removal_efficiency)
-
         self.outputs.update(
             {
                 self.water_out_bus: Flow(
-                    nominal_value = self._nominal_value(),
-                    variable_costs = carbon_source_cost_per_m3 + self.marginal_cost,
-                    investment = self._investment(),
+                    nominal_value=self._nominal_value(),
+                    variable_costs=water_out_variable_costs,
+                    investment=self._investment(),
                     **self.output_parameters,
                 ),
-                self.N2_gas_bus: Flow(),
             }
         )
 
-        # Add custom attribute separately
-        self.outputs[self.water_out_bus].custom_attributes = {"Cout": Cout,
-                                                              "carbon_source_dose": self.carbon_source_dose}
+        if self.brine_out_bus is not None:
+            self.outputs[self.brine_out_bus] = Flow()
+
+        if self.waste_biomass_out_bus is not None:
+            self.outputs[self.waste_biomass_out_bus] = Flow()
+
+        if self.N2_gas_bus is not None:
+            self.outputs[self.N2_gas_bus] = Flow()
+
+        # Add custom attributes separately if any exists
+        if custom_attrs:
+            self.outputs[self.water_out_bus].custom_attributes = custom_attrs

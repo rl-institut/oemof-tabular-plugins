@@ -1,5 +1,5 @@
 from dataclasses import field
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
 import numpy as np
 from oemof.solph._plumbing import sequence
@@ -10,10 +10,9 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class BioFiltration(Converter, Facade):
-    r"""Biofiltration water treatment unit with two inputs and two outputs.
-    Add parameters to the waste biomass output stream as and when required later.
-    Update self.conversion_factor.update() as and when required if considered MIMO.
+class WaterPostTreatment(Converter, Facade):
+    r"""Water post-treatment unit with mandatory electricity and water input,
+    mandatory treated water output, and an optional waste biomass output.
 
     Parameters
     ----------
@@ -73,27 +72,20 @@ class BioFiltration(Converter, Facade):
          (see oemof.solph for more information on possible parameters)
     """
 
+    # required fields from CSV / facade logic
     electricity_bus: Bus
 
     water_in_bus: Bus
 
     water_out_bus: Bus
 
-    waste_biomass_out_bus: Bus
-
     tech: str
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.12  # kWh/m³
+    specific_energy_consumption: float = 0.325
 
     efficiency: float = 0.85
-
-    nutrient_dose: float = 1.0  # mg/L = g/m³
-
-    nutrient_cost: float = 1.0  # USD/kg
-
-    biomass_waste_fraction: float = 0.005
 
     capacity: float = None
 
@@ -117,11 +109,19 @@ class BioFiltration(Converter, Facade):
 
     output_parameters: dict = field(default_factory=dict)
 
+    # optional fields to the right of expandable
+    waste_biomass_out_bus: Optional[Bus] = None
+
+    # optional technical parameters for optional biomass branch
+    nutrient_dose: float = 1.0  # mg/L = g/m³
+
+    nutrient_cost: float = 1.0  # USD/kg
+
+    biomass_waste_fraction: float = 0.005
+
     def build_solph_components(self):
 
-        # Nutrient cost per m³ of treated water:
-        # nutrient_dose [mg/L] * 1e-6 [kg/m³ per mg/L] * nutrient_cost [USD/kg]
-        nutrient_cost_per_m3 = (self.nutrient_dose * 1e-6 * self.nutrient_cost)
+        water_out_variable_costs = self.marginal_cost
 
         self.conversion_factors.update(
             {
@@ -131,9 +131,16 @@ class BioFiltration(Converter, Facade):
                 self.water_in_bus: sequence(1/self.efficiency),
                 # Treated water output normalized to 1
                 self.water_out_bus: sequence(1),
-                self.waste_biomass_out_bus: sequence(self.biomass_waste_fraction),
             }
         )
+
+        if self.waste_biomass_out_bus is not None:
+            # Nutrient cost per m³ of treated water:
+            # nutrient_dose [mg/L] * 1e-6 [kg/m³ per mg/L] * nutrient_cost [USD/kg]
+            nutrient_cost_per_m3 = (self.nutrient_dose * 1e-6 * self.nutrient_cost)
+            water_out_variable_costs += nutrient_cost_per_m3
+
+            self.conversion_factors[self.waste_biomass_out_bus] = sequence(self.biomass_waste_fraction)
 
         self.inputs.update(
             {
@@ -148,13 +155,14 @@ class BioFiltration(Converter, Facade):
             {
                 self.water_out_bus: Flow(
                     nominal_value = self._nominal_value(),
-                    variable_costs = nutrient_cost_per_m3 + self.marginal_cost,
+                    variable_costs = water_out_variable_costs,
                     investment = self._investment(),
                     **self.output_parameters,
                 ),
-                self.waste_biomass_out_bus: Flow(),
             }
         )
 
-        # Add custom attribute separately
-        self.outputs[self.water_out_bus].custom_attributes = {"nutrient_dose": self.nutrient_dose}
+        if self.waste_biomass_out_bus is not None:
+            self.outputs[self.waste_biomass_out_bus] = Flow()
+            # Add custom attribute separately
+            self.outputs[self.water_out_bus].custom_attributes = {"nutrient_dose": self.nutrient_dose}

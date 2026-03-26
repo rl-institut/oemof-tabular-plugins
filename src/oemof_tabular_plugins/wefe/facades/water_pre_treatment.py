@@ -10,8 +10,8 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class FineScreen(Converter, Facade):
-    r""" Fine screen water pre-treatment unit with two inputs and one output.
+class WaterPreTreatment(Converter, Facade):
+    r"""Water pre-treatment unit with two inputs and one output.
 
         Parameters
         ----------
@@ -71,9 +71,9 @@ class FineScreen(Converter, Facade):
 
     carrier: str = ""
 
-    specific_energy_consumption: float = 0.04  # kWh/m³
+    specific_energy_consumption: float = 0.218  # kWh/m³
 
-    efficiency: float = 0.99
+    efficiency: float = 0.82
 
     capacity: float = None
 
