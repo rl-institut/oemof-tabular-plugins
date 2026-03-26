@@ -110,6 +110,7 @@ class OTPCalculator(Calculator):
         self.df_results = process_raw_inputs(self.df_results, dp_path, moo=moo)
 
         # Load cf_aware from datapackage if MOO is active
+        # TODO: this works, but should be moved out of the __init__
         self.cf_aware = None
         if moo:
             try:

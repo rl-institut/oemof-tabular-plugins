@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from oemof.solph import EnergySystem, Model
 from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
@@ -65,7 +66,7 @@ project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)
 # -------------- USER INPUTS --------------
 # list of scenarios to be evaluated
 scenarios = [
-    "scenario_19"
+    # "scenario_19"
     # "test_wind_volatile"
     # "general_add_cost_inputs",
     # "general_basic",
@@ -74,7 +75,7 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    # "aiwa_24"
+    "aiwa_24"
     # "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
@@ -119,8 +120,8 @@ moo_wf = {
 for scenario in scenarios:
     print("Running scenario with datapackage {}".format(scenario))
     # set paths for scenario and result directories
-    scenario_dir = os.path.join(project_dir, "scenarios", scenario)
-    results_path = os.path.join(project_dir, "results", scenario, "output")
+    scenario_dir = Path(project_dir) / "scenarios" /scenario
+    results_path = Path(project_dir) / "results" / scenario / "output"
 
     calculator = compute_scenario(
         scenario_dir,

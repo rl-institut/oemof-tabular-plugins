@@ -178,7 +178,8 @@ def pre_processing_custom_attributes(element_path, element_df, custom_attributes
                 # if custom attributes are found for this row, add them to 'output_parameters'
                 if has_custom_attributes:
                     output_parameters_str = json.dumps(
-                        {"custom_attributes": custom_attributes_dict}
+                        {"custom_attributes": custom_attributes_dict},
+                        default=lambda x: None
                     )
                     element_df.at[index, "output_parameters"] = output_parameters_str
                 else:
@@ -206,7 +207,9 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
         logging.warning("MOO activated but no weight factors provided. Deactivate MOO...")
         moo = False
 
+    # ---------------- PROFILE NAMES ----------------
     moo_suffix = "moo_profile"
+    cf_aware_name = "cf-aware-profile"
 
     # ---------------- CLEANUP ----------------
     moo_profiles_cleanup(scenario_dir, dp, suffix=moo_suffix)
@@ -215,13 +218,8 @@ def pre_processing(scenario_dir, wacc, custom_attributes=None, moo=False, moo_wf
     if moo:
         logging.info("Multi-objective optimization activated")
 
-        cf_aware_name = "cf-aware-profile"
-        try:
-            cf_aware_res, cf_aware_df = get_moo_timeseries(dp, ts_name=cf_aware_name)
-        except ValueError:
-            cf_aware_name = "cf_aware"
-            cf_aware_res, cf_aware_df = get_moo_timeseries(dp, ts_name=cf_aware_name)
-
+        # Obtain resource with 'cf_aware_name' in it and resulting DataFrame
+        cf_aware_res, cf_aware_df = get_moo_timeseries(dp, ts_name=cf_aware_name)
         existing_cf_fields = set(cf_aware_df.columns)
 
         # normalize Decimal → float
