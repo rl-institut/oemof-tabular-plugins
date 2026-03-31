@@ -75,7 +75,6 @@ class MIMO_Photocatalysis(MIMO):
         self.type = attributes.pop("type", self.type)
         self.tech = attributes.pop("tech", self.tech)
         self.carrier = attributes.pop("carrier", self.carrier)
-        self.primary = attributes.pop("primary", self.primary)
 
         # -------------------------
         # buses
@@ -83,6 +82,11 @@ class MIMO_Photocatalysis(MIMO):
         self.electricity_bus = attributes.pop("electricity_bus")
         self.water_in_bus = attributes.pop("water_in_bus")
         self.water_out_bus = attributes.pop("water_out_bus")
+
+        # primary bus
+        self.primary = attributes.pop("primary", self.primary)
+        if not self.primary:
+            self.primary = self.water_out_bus.label
 
         # -------------------------
         # physics

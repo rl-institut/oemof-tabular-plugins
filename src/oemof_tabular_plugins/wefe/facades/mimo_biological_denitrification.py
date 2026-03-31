@@ -77,7 +77,6 @@ class MIMO_BiologicalDenitrification(MIMO):
         self.type = attributes.pop("type", self.type)
         self.tech = attributes.pop("tech", self.tech)
         self.carrier = attributes.pop("carrier", self.carrier)
-        self.primary = attributes.pop("primary", self.primary)
 
         # ---------------------------
         # buses
@@ -86,6 +85,11 @@ class MIMO_BiologicalDenitrification(MIMO):
         self.water_in_bus = attributes.pop("water_in_bus")
         self.water_out_bus = attributes.pop("water_out_bus")
         self.N2_gas_bus = attributes.pop("N2_gas_bus")
+
+        # primary bus
+        self.primary = attributes.pop("primary", self.primary)
+        if not self.primary:
+            self.primary = self.water_out_bus.label
 
         # ---------------------------
         # physics
