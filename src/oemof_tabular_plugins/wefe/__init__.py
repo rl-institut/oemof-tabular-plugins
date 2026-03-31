@@ -4,10 +4,6 @@ from oemof_tabular_plugins.wefe.constraints.constraint_facades import (
 from oemof.tabular.facades import TYPEMAP
 
 from oemof.tabular.facades import Volatile
-from oemof_tabular_plugins.wefe.facades import MIMO_ReverseOsmosis, MIMO_UltraFiltration, MIMO_NanoFiltration, \
-    MIMO_MicroFiltration, MIMO_BioFiltration
-from oemof_tabular_plugins.wefe.facades.mimo_ed import MIMO_Electrodialysis
-from oemof_tabular_plugins.wefe.facades.mimo_ix import MIMO_IonExchange
 
 from .facades import (
     PVPanel,
@@ -55,7 +51,43 @@ from .facades import (
     DryToilet,
     Latrine,
     CompostingToilet,
-    OpenField
+    OpenField,
+    MIMO_ReverseOsmosis,
+    MIMO_UltraFiltration,
+    MIMO_NanoFiltration,
+    MIMO_MicroFiltration,
+    MIMO_BioFiltration,
+    MIMO_MembraneDistillation,
+    MIMO_Distillation,
+    MIMO_Electrodialysis,
+    MIMO_IonExchange,
+    MIMO_CartridgeFilter,
+    MIMO_ActivatedCarbonFilter,
+    MIMO_Chlorination,
+    MIMO_CeramicFilter,
+    MIMO_SlowSandFilter,
+    MIMO_UVDisinfection,
+    MIMO_Adsorption,
+    MIMO_SimpleOxidation,
+    MIMO_Ozonation,
+    MIMO_Photocatalysis,
+    MIMO_IntakeStructure,
+    MIMO_CoarseBarScreen,
+    MIMO_CoagulationFlocculation,
+    MIMO_Boiling,
+    MIMO_FineScreen,
+    MIMO_GritChamber,
+    MIMO_FlushToilet,
+    MIMO_Latrine,
+    MIMO_CompostingToilet,
+    MIMO_DryToilet,
+    MIMO_OpenField,
+    MIMO_SepticSystem,
+    MIMO_ConstructedWetland,
+    MIMO_CentralizedWWTP,
+    MIMO_DecentralizedWWTP,
+    MIMO_WaterReuseSystem,
+    MIMO_BiologicalDenitrification
 )
 
 WEFE_TYPEMAP = {
@@ -112,7 +144,36 @@ WEFE_TYPEMAP = {
     "mimo_mf": MIMO_MicroFiltration,
     "mimo_biof": MIMO_BioFiltration,
     "mimo_ix": MIMO_IonExchange,
-    "mimo_ed": MIMO_Electrodialysis
+    "mimo_biological_denitrification": MIMO_BiologicalDenitrification,
+    "mimo_ed": MIMO_Electrodialysis,
+    "mimo_memb_dist": MIMO_MembraneDistillation,
+    "mimo_dist": MIMO_Distillation,
+    "mimo_cartridge_filter": MIMO_CartridgeFilter,
+    "mimo_activated_carbon_filter": MIMO_ActivatedCarbonFilter,
+    "mimo_chlor": MIMO_Chlorination,
+    "mimo_ceramic_filter": MIMO_CeramicFilter,
+    "mimo_slow_sand_filter": MIMO_SlowSandFilter,
+    "mimo_uv": MIMO_UVDisinfection,
+    "mimo_ads": MIMO_Adsorption,
+    "mimo_simple_oxidation":MIMO_SimpleOxidation,
+    "mimo_ozonation": MIMO_Ozonation,
+    "mimo_photo_cat": MIMO_Photocatalysis,
+    "mimo_intake_structure": MIMO_IntakeStructure,
+    "mimo_coarse_bar_screen": MIMO_CoarseBarScreen,
+    "mimo_coag_flocc": MIMO_CoagulationFlocculation,
+    "mimo_boiling": MIMO_Boiling,
+    "mimo_fine_screen": MIMO_FineScreen,
+    "mimo_grit_chamber": MIMO_GritChamber,
+    "mimo_flush_toilet": MIMO_FlushToilet,
+    "mimo_latrine": MIMO_Latrine,
+    "mimo_composting_toilet": MIMO_CompostingToilet,
+    "mimo_dry_toile": MIMO_DryToilet,
+    "mimo_open_field": MIMO_OpenField,
+    "mimo_septic": MIMO_SepticSystem,
+    "mimo_constructed_wetland": MIMO_ConstructedWetland,
+    "mimo_centralized_WWTP": MIMO_CentralizedWWTP,
+    "mimo_decentralized_WWTP": MIMO_DecentralizedWWTP,
+    "mimo_water_reuse": MIMO_WaterReuseSystem
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
