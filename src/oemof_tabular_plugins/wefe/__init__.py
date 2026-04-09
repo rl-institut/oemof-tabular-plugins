@@ -51,7 +51,10 @@ from .facades import (
     DryToilet,
     Latrine,
     CompostingToilet,
-    OpenField
+    OpenField,
+    WaterPreTreatment,
+    WaterCoreTreatment,
+    WaterPostTreatment
 )
 
 WEFE_TYPEMAP = {
@@ -101,7 +104,10 @@ WEFE_TYPEMAP = {
     "dry_toilet": DryToilet,
     "latrine": Latrine,
     "composting_toilet": CompostingToilet,
-    "open_field": OpenField
+    "open_field": OpenField,
+    "water_pre_treatment": WaterPreTreatment,
+    "water_core_treatment": WaterCoreTreatment,
+    "water_post_treatment": WaterPostTreatment
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
