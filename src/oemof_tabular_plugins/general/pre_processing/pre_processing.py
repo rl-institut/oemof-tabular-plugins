@@ -42,7 +42,7 @@ def pre_processing_costs(wacc, element, element_df):
 
     Design:
     - Normalize inputs using COLUMN_RULES
-    - Compute capacity_cost deterministically:
+    - Compute capacity_cost (or storage_capacity_cost if present) deterministically:
         Case 0 - capacity_cost present and zero, no other cost params: pass (no intent)
         Case 1 - capacity_cost present and non-zero, no other cost params: set to zero and info
         Case 2a - capacity_cost present, only annuity as cost params: use annuity
@@ -79,10 +79,16 @@ def pre_processing_costs(wacc, element, element_df):
             )
 
     # ================= CAPACITY COST =================
-    if "capacity_cost" in element_df.columns:
+    capacity_cost_target = (
+        "storage_capacity_cost"
+        if "storage_capacity_cost" in element_df.columns
+        else "capacity_cost"
+    )
+
+    if capacity_cost_target in element_df.columns:
         for index, row in element_df.iterrows():
             row_name = row["name"]
-            capacity_cost = row["capacity_cost"]
+            capacity_cost = row[capacity_cost_target]
 
             capex = row.get("capex")
             opex = row.get("opex_fix")
@@ -109,7 +115,7 @@ def pre_processing_costs(wacc, element, element_df):
             # -------- CASE 1: no cost inputs --------
             elif capacity_cost != 0 and not has_any_cost_input:
                 logging.info(
-                    f"No cost inputs for '{row_name}' in '{element}', setting capacity_cost to 0.0"
+                    f"No cost inputs for '{row_name}' in '{element}', setting {capacity_cost_target} to 0.0"
                 )
                 capacity_cost = 0.0
 
@@ -130,11 +136,11 @@ def pre_processing_costs(wacc, element, element_df):
             # -------- CASE 4: broken intent --------
             else:
                 logging.warning(
-                    f"Incomplete cost data for '{row_name}' in '{element}', setting capacity_cost to 0.0"
+                    f"Incomplete cost data for '{row_name}' in '{element}', setting {capacity_cost_target} to 0.0"
                 )
                 capacity_cost = 0.0
 
-            element_df.at[index, "capacity_cost"] = float(capacity_cost)
+            element_df.at[index, capacity_cost_target] = float(capacity_cost)
 
     # ================= MARGINAL COST =================
     if "marginal_cost" in element_df.columns:
