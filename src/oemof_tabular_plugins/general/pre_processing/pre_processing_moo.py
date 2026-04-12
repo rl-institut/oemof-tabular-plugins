@@ -234,7 +234,7 @@ def pre_processing_moo(
         row_name = row["name"]
 
         # ---- inputs ----
-        capacity_cost = to_float_safe(row, "capacity_cost")
+        capacity_cost = to_float_safe(row, moo_variable_fix)
         marginal_cost = to_float_safe(row, "marginal_cost")
 
         ghg = to_float_safe(row, "ghg_emission_factor")
