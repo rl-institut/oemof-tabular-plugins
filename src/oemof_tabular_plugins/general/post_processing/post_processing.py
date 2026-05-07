@@ -253,9 +253,14 @@ def post_processing(
             "total_water_footprint": "[m³]",
             "system_opex_total": "[USD/a]",
             "total_variable_cost_moo": "[USD/a]",
-            # service units
+            # service (carrier) units
             "electricity": "[kWh]",
-            "water": "[m³]"
+            "water": "[m³]",
+            "energy": "[kWh]",
+            "biogas": "[kWh]",
+            "diesel": "[kWh]",
+            "fuel": "[kWh]",
+            "biomass": "[kg]"
         }
 
     if calculations is None:
