@@ -261,8 +261,6 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
         "name",
     ].tolist()
 
-    import pdb; pdb.set_trace()
-
     for bus in busses:
         fig = go.Figure(layout=dict(title=f"{display_name(bus)} bus node"))
 
@@ -603,5 +601,3 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
         return answer
 
     return app
-
-    # import ipdb;ipdb.set_trace()
