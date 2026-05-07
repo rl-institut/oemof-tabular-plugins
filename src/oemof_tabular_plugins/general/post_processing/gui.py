@@ -109,6 +109,7 @@ def sankey(results, display_name, units, date_time_index=None, ts=None):
     Return a dict for a Plotly Sankey diagram, using df_results (MultiIndex).
     Optionally, select a single timestep `ts` for the flow values.
     """
+    node_ids = []
     labels = []
     sources = []
     targets = []
@@ -138,18 +139,25 @@ def sankey(results, display_name, units, date_time_index=None, ts=None):
             # direction == "out" → flow FROM asset TO bus
 
             if direction == "in":
-                source_label = display_name(bus)
-                target_label = display_name(asset)
+                source_id = bus
+                target_id = asset
             elif direction == "out":
-                source_label = display_name(asset)
-                target_label = display_name(bus)
+                source_id = asset
+                target_id = bus
             else:
                 continue
 
-            # Add labels if not already present
-            for lbl in (source_label, target_label):
-                if lbl not in labels:
-                    labels.append(lbl)
+            source_label = display_name(source_id)
+            target_label = display_name(target_id)
+
+            # Add nodes if not already present
+            for node_id, node_label in (
+                (source_id, source_label),
+                (target_id, target_label),
+            ):
+                if node_id not in node_ids:
+                    node_ids.append(node_id)
+                    labels.append(node_label)
 
             # Get flow value
             if date_time_index is not None:
@@ -171,9 +179,8 @@ def sankey(results, display_name, units, date_time_index=None, ts=None):
             # Get flow value unit
             unit = units.get(carrier, "UNIT NOT FOUND")
 
-
-            sources.append(labels.index(source_label))
-            targets.append(labels.index(target_label))
+            sources.append(node_ids.index(source_id))
+            targets.append(node_ids.index(target_id))
             values.append(flow_value)
             customdata.append(unit)
 
@@ -196,7 +203,8 @@ def sankey(results, display_name, units, date_time_index=None, ts=None):
                     customdata=customdata,
                     hovertemplate=(
                         "Link from node %{source.label}<br />"
-                        + "to node %{target.label}<br />has value %{value} %{customdata}<extra></extra>"
+                        + "to node %{target.label}<br />"
+                        + "has value %{value} %{customdata}<extra></extra>"
                     ),
                 ),
             )
