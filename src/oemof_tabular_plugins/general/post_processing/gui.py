@@ -104,7 +104,7 @@ def encode_image_file(img_path):
     return encoded_img
 
 
-def sankey(results, display_name, date_time_index=None, ts=None):
+def sankey(results, display_name, units, date_time_index=None, ts=None):
     """
     Return a dict for a Plotly Sankey diagram, using df_results (MultiIndex).
     Optionally, select a single timestep `ts` for the flow values.
@@ -113,6 +113,7 @@ def sankey(results, display_name, date_time_index=None, ts=None):
     sources = []
     targets = []
     values = []
+    customdata = []
 
     # Extract all buses from df_results
     busses = results.index.get_level_values("bus").unique()
@@ -167,9 +168,14 @@ def sankey(results, display_name, date_time_index=None, ts=None):
             else:
                 flow_value = 0
 
+            # Get flow value unit
+            unit = units.get(carrier, "UNIT NOT FOUND")
+
+
             sources.append(labels.index(source_label))
             targets.append(labels.index(target_label))
             values.append(flow_value)
+            customdata.append(unit)
 
     # Build the Sankey figure
     fig = go.Figure(
@@ -187,9 +193,10 @@ def sankey(results, display_name, date_time_index=None, ts=None):
                     source=sources,
                     target=targets,
                     value=values,
+                    customdata=customdata,
                     hovertemplate=(
                         "Link from node %{source.label}<br />"
-                        + "to node %{target.label}<br />has value %{value}<extra></extra>"
+                        + "to node %{target.label}<br />has value %{value} %{customdata}<extra></extra>"
                     ),
                 ),
             )
@@ -461,7 +468,7 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
                 options={k: v for k, v in enumerate(date_time_index)},
                 value=None,
             ),
-            dcc.Graph(id="sankey", figure=sankey(results, display_name, date_time_index)),
+            dcc.Graph(id="sankey", figure=sankey(results, display_name, units, date_time_index)),
         ]
         + [
             dcc.Graph(
@@ -470,7 +477,7 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
             )
             for bus, fig in zip(busses, bus_figures)
         ]
-        + [dcc.Graph(id="sankey_aggregate", figure=sankey(results, display_name, date_time_index))]
+        + [dcc.Graph(id="sankey_aggregate", figure=sankey(results, display_name, units, date_time_index))]
         # + [
         #     html.H4(["Energy system"]),
         #     html.Img(
@@ -514,6 +521,13 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
             for direction, asset, carrier, facade_type in bus_df.index:
                 row = bus_df.loc[(direction, asset, carrier, facade_type)]
 
+                # Add unit to bus plot tilte
+                unit = units.get(carrier, "UNIT NOT FOUND")
+
+                fig.update_layout(
+                    title=f"{display_name(bus)} bus node {unit}"
+                )
+
                 # Determine sign for plotting
                 negative_sign = -1 if direction == "in" else 1
                 asset_name = display_name(asset)
@@ -551,7 +565,7 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
 
             bus_figures.append(fig)
 
-        return [sankey(results, display_name, date_time_index, ts)] + bus_figures
+        return [sankey(results, display_name, units, date_time_index, ts)] + bus_figures
 
     @app.callback(
         # The value of these components of the layout will be changed by this callback
