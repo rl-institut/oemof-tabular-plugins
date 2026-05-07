@@ -299,7 +299,8 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
 
             df["unit"] = df[df.columns[0]].apply(set_value, args=(units,))
 
-        df["Component name"] = df["Component name"].apply(display_name)
+        if "Component name" in df.columns:
+            df["Component name"] = df["Component name"].apply(display_name)
         tables_figure.append(
             html.Div(
                 style=table__item_style[table],
@@ -364,7 +365,8 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
                 if excess[unit].sum() > 0:
                     table_headers.append("Excess")
 
-        df["Component name"] = df["Component name"].apply(display_name)
+        if "Component name" in df.columns:
+            df["Component name"] = df["Component name"].apply(display_name)
         services_figure.append(
             html.Div(
                 id=f"{service}-service-div",
