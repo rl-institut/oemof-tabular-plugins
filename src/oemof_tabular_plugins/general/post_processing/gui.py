@@ -517,7 +517,7 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
                 # Determine sign for plotting
                 negative_sign = -1 if direction == "in" else 1
                 asset_name = display_name(asset)
-                if asset == "battery":
+                if facade_type == "storage":
                     asset_name += " discharge" if direction == "out" else " charge"
 
                 # Safe time series extraction
