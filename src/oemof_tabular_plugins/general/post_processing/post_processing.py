@@ -208,6 +208,7 @@ def post_processing(
     if parameters_units is None:
         #  Units of Capacities and Kpis in Results
         parameters_units = {
+            # capacities units: only used if not generated from CAPACITIES_UNIT
             "drinking-water-storage": "[m³]",
             "rainwater-harvesting": "[m²]",
             "service-water-storage": "[m³]",
@@ -236,6 +237,7 @@ def post_processing(
             "pv-panel": "[kW]",
             "water-storage": "[m³]",
             "mimo": "[m³/h]",
+            # kpi units
             "annuity_total": "[USD/a]",
             "variable_costs_total": "[USD/a]",
             "ghg_emission_total": "[kgCO2e/a]",
@@ -244,11 +246,16 @@ def post_processing(
             "total_upfront_investments": "[USD]",
             "land_requirement_total": "[m²]",
             "total_water_consumption": "[m³/a]",
+            "total_indirect_water_consumption": "[m³/a]",
+            "water_scarcity_footprint": "[m³/a]",
             "total_annual_cost_moo": "[USD/a]",
             "ghg_emissions_total": "[kgCO2e/a]",
             "total_water_footprint": "[m³]",
             "system_opex_total": "[USD/a]",
             "total_variable_cost_moo": "[USD/a]",
+            # service units
+            "electricity": "[kWh]",
+            "water": "[m³]"
         }
 
     if calculations is None:
