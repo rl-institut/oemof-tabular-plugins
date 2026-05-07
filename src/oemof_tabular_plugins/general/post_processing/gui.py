@@ -203,7 +203,13 @@ def sankey(results, display_name, units, date_time_index=None, ts=None):
         ]
     )
 
-    fig.update_layout(title_text="Basic Sankey Diagram", font_size=10)
+    # Dynamic title
+    if ts is None:
+        sankey_title = "Full Year Sankey Diagram"
+    else:
+        sankey_title = f"Sankey Diagram at Timestep {ts}"
+
+    fig.update_layout(title_text=sankey_title, font_size=10)
     return fig.to_dict()
 
 
