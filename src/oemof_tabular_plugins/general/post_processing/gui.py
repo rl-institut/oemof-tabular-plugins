@@ -214,32 +214,33 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
     # List for bus figures
     bus_figures = []
 
-    p0 = Package(dp_path)
+    # Only plot busses that a) have the parameter "plot" == True and b) are in the results
     bus_data = pd.DataFrame.from_records(p0.get_resource("bus").read(keyed=True))
-    busses = bus_data.name.tolist()
+    available_busses = set(results.index.get_level_values("bus"))
+
+    busses = bus_data.loc[
+        bus_data["plot"].fillna(False)
+        & bus_data["name"].isin(available_busses),
+        "name",
+    ].tolist()
+
+    import pdb; pdb.set_trace()
 
     for bus in busses:
         fig = go.Figure(layout=dict(title=f"{bus} bus node"))
 
-        # Extract flows for this bus directly from df_results
-        bus_df = results.loc[bus] if bus in results.index.get_level_values("bus") else None
+        bus_df = results.loc[bus]
+        for (direction, asset, carrier, facade_type), row in bus_df.iterrows():
+            flow_values = row[date_time_index].values
 
-        if bus_df is not None and not bus_df.empty:
-            for (direction, asset, carrier, facade_type), row in bus_df.iterrows():
-                flow_values = row[date_time_index].values
+            sign = 1 if direction == "out" else -1
 
-                sign = 1 if direction == "out" else -1
-
-                fig.add_trace(
-                    go.Scatter(
-                        x=date_time_index,
-                        y=flow_values * sign,
-                        name=asset,
-                    )
+            fig.add_trace(
+                go.Scatter(
+                    x=date_time_index,
+                    y=flow_values * sign,
+                    name=asset,
                 )
-        else:
-            logging.error(
-                f"No flow was recorded through the bus '{bus}'. This is likely due to an error in the input files."
             )
 
         # else:
