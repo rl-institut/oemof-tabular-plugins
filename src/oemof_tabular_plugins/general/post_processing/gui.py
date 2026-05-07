@@ -505,14 +505,8 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
             fig = go.Figure(layout=dict(title=f"{display_name(bus)} bus node"))
             max_y = 0
 
-            # Skip if bus not in results
-            if bus not in results.index.get_level_values("bus"):
-                logging.warning(f"Bus '{bus}' not found in results.")
-                bus_figures.append(fig)
-                continue
-
             bus_df = results.loc[bus]
-            if bus_df is None or bus_df.empty:
+            if bus_df.empty:
                 logging.warning(f"No flows found for bus '{bus}'.")
                 bus_figures.append(fig)
                 continue
