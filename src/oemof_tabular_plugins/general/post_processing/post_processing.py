@@ -189,6 +189,7 @@ def post_processing(
     dp_path,
     dash_app=False,
     parameters_units=None,
+    verbose_names=None,
     infer_bus_carrier=True,
     calculations=None,
     kpi_calculations=None,
@@ -261,6 +262,20 @@ def post_processing(
             "diesel": "[kWh]",
             "fuel": "[kWh]",
             "biomass": "[kg]"
+        }
+
+    if verbose_names is None:
+        # KPI verbose names, component verbose names will be added later
+        verbose_names = {
+            "total_variable_cost_moo": "Total Variable OPEX",
+            "total_upfront_investments": "Total Upfront Investment",
+            "land_requirement_additional": "Additional Land Requirement",
+            "land_requirement_total": "Total Land Requirement",
+            "total_water_consumption": "Total Water Consumption",
+            "total_indirect_water_consumption": "Total Indirect Water Consumption",
+            "water_scarcity_footprint": "Water Scarcity Footprint",
+            "ghg_emissions_total": "Total GHG Emissions",
+            "system_opex_total": "Total System OPEX",
         }
 
     if calculations is None:
@@ -418,6 +433,7 @@ def post_processing(
             tables=result_tables,
             services=service_tables,
             units=parameters_units,
+            label_map=verbose_names
         )
         app.run(debug=False, port=8060)
 
@@ -426,7 +442,8 @@ def post_processing(
         calculator.dash_tables = {
             "result_tables": result_tables,
             "service_tables": service_tables,
-            "parameters_units": parameters_units
+            "parameters_units": parameters_units,
+            "verbose_names": verbose_names
         }
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----

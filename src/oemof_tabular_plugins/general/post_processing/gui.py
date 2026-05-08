@@ -222,12 +222,13 @@ def sankey(results, display_name, units, date_time_index=None, ts=None):
 
 
 
-def prepare_app(app, dp_path, results, tables, services, units=None):
+def prepare_app(app, dp_path, results, tables, services, units=None, label_map=None):
     """ """
     p0 = Package(dp_path)
 
     # Dynamic label mapping to use verbose names (if available)
-    label_map = {}
+    if label_map is None:
+        label_map = {}
 
     for resource_name in p0.resource_names:
         try:
@@ -320,6 +321,8 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
 
         if "Component name" in df.columns:
             df["Component name"] = df["Component name"].apply(display_name)
+        elif "kpi" in df.columns:
+            df["kpi"] = df["kpi"].apply(display_name)
         tables_figure.append(
             html.Div(
                 style=table__item_style[table],
