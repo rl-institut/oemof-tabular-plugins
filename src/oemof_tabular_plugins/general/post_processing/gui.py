@@ -264,7 +264,7 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
     available_busses = set(results.index.get_level_values("bus"))
 
     busses = bus_data.loc[
-        bus_data["plot"].fillna(False)
+        bus_data["plot"].fillna(True)   # default: plot == True if missing
         & bus_data["name"].isin(available_busses),
         "name",
     ].tolist()
