@@ -267,6 +267,9 @@ def post_processing(
     if verbose_names is None:
         # KPI verbose names, component verbose names will be added later
         verbose_names = {
+            "annuity_total": "Total Annual Cost",
+            "total_annual_cost_moo": "Total Annual Cost",
+            "variable_costs_total": "Total Variable OPEX",
             "total_variable_cost_moo": "Total Variable OPEX",
             "total_upfront_investments": "Total Upfront Investment",
             "land_requirement_additional": "Additional Land Requirement",
