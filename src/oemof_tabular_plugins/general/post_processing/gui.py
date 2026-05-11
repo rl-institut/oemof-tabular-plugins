@@ -262,6 +262,9 @@ def prepare_app(app, dp_path, results, tables, services, units=None, label_map=N
 
     # Only plot busses that a) have the parameter "plot" == True and b) are in the results
     bus_data = pd.DataFrame.from_records(p0.get_resource("bus").read(keyed=True))
+    if "plot" not in bus_data.columns:
+        bus_data["plot"] = True
+
     available_busses = set(results.index.get_level_values("bus"))
 
     busses = bus_data.loc[
