@@ -189,6 +189,7 @@ def post_processing(
     dp_path,
     dash_app=False,
     parameters_units=None,
+    verbose_names=None,
     infer_bus_carrier=True,
     calculations=None,
     kpi_calculations=None,
@@ -208,6 +209,7 @@ def post_processing(
     if parameters_units is None:
         #  Units of Capacities and Kpis in Results
         parameters_units = {
+            # capacities units: only used if not generated from CAPACITIES_UNIT
             "drinking-water-storage": "[m³]",
             "rainwater-harvesting": "[m²]",
             "service-water-storage": "[m³]",
@@ -236,6 +238,7 @@ def post_processing(
             "pv-panel": "[kW]",
             "water-storage": "[m³]",
             "mimo": "[m³/h]",
+            # kpi units
             "annuity_total": "[USD/a]",
             "variable_costs_total": "[USD/a]",
             "ghg_emission_total": "[kgCO2e/a]",
@@ -244,11 +247,38 @@ def post_processing(
             "total_upfront_investments": "[USD]",
             "land_requirement_total": "[m²]",
             "total_water_consumption": "[m³/a]",
+            "total_indirect_water_consumption": "[m³/a]",
+            "water_scarcity_footprint": "[m³/a]",
             "total_annual_cost_moo": "[USD/a]",
             "ghg_emissions_total": "[kgCO2e/a]",
             "total_water_footprint": "[m³]",
             "system_opex_total": "[USD/a]",
             "total_variable_cost_moo": "[USD/a]",
+            # service (carrier) units
+            "electricity": "[kWh]",
+            "water": "[m³]",
+            "energy": "[kWh]",
+            "biogas": "[kWh]",
+            "diesel": "[kWh]",
+            "fuel": "[kWh]",
+            "biomass": "[kg]"
+        }
+
+    if verbose_names is None:
+        # KPI verbose names, component verbose names will be added later
+        verbose_names = {
+            "annuity_total": "Total Annual Cost",
+            "total_annual_cost_moo": "Total Annual Cost",
+            "variable_costs_total": "Total Variable OPEX",
+            "total_variable_cost_moo": "Total Variable OPEX",
+            "total_upfront_investments": "Total Upfront Investment",
+            "land_requirement_additional": "Additional Land Requirement",
+            "land_requirement_total": "Total Land Requirement",
+            "total_water_consumption": "Total Water Consumption",
+            "total_indirect_water_consumption": "Total Indirect Water Consumption",
+            "water_scarcity_footprint": "Water Scarcity Footprint",
+            "ghg_emissions_total": "Total GHG Emissions",
+            "system_opex_total": "Total System OPEX",
         }
 
     if calculations is None:
@@ -406,6 +436,7 @@ def post_processing(
             tables=result_tables,
             services=service_tables,
             units=parameters_units,
+            label_map=verbose_names
         )
         app.run(debug=False, port=8060)
 
@@ -414,7 +445,8 @@ def post_processing(
         calculator.dash_tables = {
             "result_tables": result_tables,
             "service_tables": service_tables,
-            "parameters_units": parameters_units
+            "parameters_units": parameters_units,
+            "verbose_names": verbose_names
         }
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----

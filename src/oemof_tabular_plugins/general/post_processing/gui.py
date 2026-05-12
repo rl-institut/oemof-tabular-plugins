@@ -104,15 +104,17 @@ def encode_image_file(img_path):
     return encoded_img
 
 
-def sankey(results, date_time_index=None, ts=None):
+def sankey(results, display_name, units, date_time_index=None, ts=None):
     """
     Return a dict for a Plotly Sankey diagram, using df_results (MultiIndex).
     Optionally, select a single timestep `ts` for the flow values.
     """
+    node_ids = []
     labels = []
     sources = []
     targets = []
     values = []
+    customdata = []
 
     # Extract all buses from df_results
     busses = results.index.get_level_values("bus").unique()
@@ -137,18 +139,25 @@ def sankey(results, date_time_index=None, ts=None):
             # direction == "out" → flow FROM asset TO bus
 
             if direction == "in":
-                source_label = bus
-                target_label = asset
+                source_id = bus
+                target_id = asset
             elif direction == "out":
-                source_label = asset
-                target_label = bus
+                source_id = asset
+                target_id = bus
             else:
                 continue
 
-            # Add labels if not already present
-            for lbl in (source_label, target_label):
-                if lbl not in labels:
-                    labels.append(lbl)
+            source_label = display_name(source_id)
+            target_label = display_name(target_id)
+
+            # Add nodes if not already present
+            for node_id, node_label in (
+                (source_id, source_label),
+                (target_id, target_label),
+            ):
+                if node_id not in node_ids:
+                    node_ids.append(node_id)
+                    labels.append(node_label)
 
             # Get flow value
             if date_time_index is not None:
@@ -167,9 +176,13 @@ def sankey(results, date_time_index=None, ts=None):
             else:
                 flow_value = 0
 
-            sources.append(labels.index(source_label))
-            targets.append(labels.index(target_label))
+            # Get flow value unit
+            unit = units.get(carrier, "UNIT NOT FOUND")
+
+            sources.append(node_ids.index(source_id))
+            targets.append(node_ids.index(target_id))
             values.append(flow_value)
+            customdata.append(unit)
 
     # Build the Sankey figure
     fig = go.Figure(
@@ -187,22 +200,55 @@ def sankey(results, date_time_index=None, ts=None):
                     source=sources,
                     target=targets,
                     value=values,
+                    customdata=customdata,
                     hovertemplate=(
                         "Link from node %{source.label}<br />"
-                        + "to node %{target.label}<br />has value %{value}<extra></extra>"
+                        + "to node %{target.label}<br />"
+                        + "has value %{value} %{customdata}<extra></extra>"
                     ),
                 ),
             )
         ]
     )
 
-    fig.update_layout(title_text="Basic Sankey Diagram", font_size=10)
+    # Dynamic title
+    if ts is None:
+        sankey_title = "Full Year Sankey Diagram"
+    else:
+        sankey_title = f"Sankey Diagram at Timestep {ts}"
+
+    fig.update_layout(title_text=sankey_title, font_size=10)
     return fig.to_dict()
 
 
 
-def prepare_app(app, dp_path, results, tables, services, units=None):
+def prepare_app(app, dp_path, results, tables, services, units=None, label_map=None):
     """ """
+    p0 = Package(dp_path)
+
+    # Dynamic label mapping to use verbose names (if available)
+    if label_map is None:
+        label_map = {}
+
+    for resource_name in p0.resource_names:
+        try:
+            df = pd.DataFrame.from_records(p0.get_resource(resource_name).read(keyed=True))
+
+            if "name" in df.columns and "verbose_name" in df.columns:
+                label_map.update(
+                    {
+                        row["name"]: row["verbose_name"]
+                        for _, row in df.iterrows()
+                        if pd.notna(row["verbose_name"])
+                    }
+                )
+
+        except Exception:
+            pass
+
+    def display_name(name):
+        return label_map.get(name, name)
+
     # Derive datetime index from results
     time_cols = [
         c for c in results.columns
@@ -214,32 +260,34 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
     # List for bus figures
     bus_figures = []
 
-    p0 = Package(dp_path)
+    # Only plot busses that a) have the parameter "plot" == True and b) are in the results
     bus_data = pd.DataFrame.from_records(p0.get_resource("bus").read(keyed=True))
-    busses = bus_data.name.tolist()
+    if "plot" not in bus_data.columns:
+        bus_data["plot"] = True
+
+    available_busses = set(results.index.get_level_values("bus"))
+
+    busses = bus_data.loc[
+        bus_data["plot"].fillna(True)   # default: plot == True if missing
+        & bus_data["name"].isin(available_busses),
+        "name",
+    ].tolist()
 
     for bus in busses:
-        fig = go.Figure(layout=dict(title=f"{bus} bus node"))
+        fig = go.Figure(layout=dict(title=f"{display_name(bus)} bus node"))
 
-        # Extract flows for this bus directly from df_results
-        bus_df = results.loc[bus] if bus in results.index.get_level_values("bus") else None
+        bus_df = results.loc[bus]
+        for (direction, asset, carrier, facade_type), row in bus_df.iterrows():
+            flow_values = row[date_time_index].values
 
-        if bus_df is not None and not bus_df.empty:
-            for (direction, asset, carrier, facade_type), row in bus_df.iterrows():
-                flow_values = row[date_time_index].values
+            sign = 1 if direction == "out" else -1
 
-                sign = 1 if direction == "out" else -1
-
-                fig.add_trace(
-                    go.Scatter(
-                        x=date_time_index,
-                        y=flow_values * sign,
-                        name=asset,
-                    )
+            fig.add_trace(
+                go.Scatter(
+                    x=date_time_index,
+                    y=flow_values * sign,
+                    name=display_name(asset),
                 )
-        else:
-            logging.error(
-                f"No flow was recorded through the bus '{bus}'. This is likely due to an error in the input files."
             )
 
         # else:
@@ -274,6 +322,10 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
 
             df["unit"] = df[df.columns[0]].apply(set_value, args=(units,))
 
+        if "Component name" in df.columns:
+            df["Component name"] = df["Component name"].apply(display_name)
+        elif "kpi" in df.columns:
+            df["kpi"] = df["kpi"].apply(display_name)
         tables_figure.append(
             html.Div(
                 style=table__item_style[table],
@@ -338,6 +390,8 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
                 if excess[unit].sum() > 0:
                     table_headers.append("Excess")
 
+        if "Component name" in df.columns:
+            df["Component name"] = df["Component name"].apply(display_name)
         services_figure.append(
             html.Div(
                 id=f"{service}-service-div",
@@ -432,7 +486,7 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
                 options={k: v for k, v in enumerate(date_time_index)},
                 value=None,
             ),
-            dcc.Graph(id="sankey", figure=sankey(results, date_time_index)),
+            dcc.Graph(id="sankey", figure=sankey(results, display_name, units, date_time_index)),
         ]
         + [
             dcc.Graph(
@@ -441,7 +495,7 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
             )
             for bus, fig in zip(busses, bus_figures)
         ]
-        + [dcc.Graph(id="sankey_aggregate", figure=sankey(results, date_time_index))]
+        + [dcc.Graph(id="sankey_aggregate", figure=sankey(results, display_name, units, date_time_index))]
         # + [
         #     html.H4(["Energy system"]),
         #     html.Img(
@@ -473,17 +527,11 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
         bus_figures = []
 
         for bus in busses:
-            fig = go.Figure(layout=dict(title=f"{bus} bus node"))
+            fig = go.Figure(layout=dict(title=f"{display_name(bus)} bus node"))
             max_y = 0
 
-            # Skip if bus not in results
-            if bus not in results.index.get_level_values("bus"):
-                logging.warning(f"Bus '{bus}' not found in results.")
-                bus_figures.append(fig)
-                continue
-
             bus_df = results.loc[bus]
-            if bus_df is None or bus_df.empty:
+            if bus_df.empty:
                 logging.warning(f"No flows found for bus '{bus}'.")
                 bus_figures.append(fig)
                 continue
@@ -491,10 +539,17 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
             for direction, asset, carrier, facade_type in bus_df.index:
                 row = bus_df.loc[(direction, asset, carrier, facade_type)]
 
+                # Add unit to bus plot tilte
+                unit = units.get(carrier, "UNIT NOT FOUND")
+
+                fig.update_layout(
+                    title=f"{display_name(bus)} bus node {unit}"
+                )
+
                 # Determine sign for plotting
                 negative_sign = -1 if direction == "in" else 1
-                asset_name = asset
-                if asset == "battery":
+                asset_name = display_name(asset)
+                if facade_type == "storage":
                     asset_name += " discharge" if direction == "out" else " charge"
 
                 # Safe time series extraction
@@ -528,7 +583,7 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
 
             bus_figures.append(fig)
 
-        return [sankey(results, date_time_index, ts)] + bus_figures
+        return [sankey(results, display_name, units, date_time_index, ts)] + bus_figures
 
     @app.callback(
         # The value of these components of the layout will be changed by this callback
@@ -560,5 +615,3 @@ def prepare_app(app, dp_path, results, tables, services, units=None):
         return answer
 
     return app
-
-    # import ipdb;ipdb.set_trace()
