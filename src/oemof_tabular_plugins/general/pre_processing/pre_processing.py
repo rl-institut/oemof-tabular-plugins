@@ -165,6 +165,7 @@ def pre_processing_custom_attributes(element_path, element_df, custom_attributes
     :param element_df: dataframe containing data from the csv file
     :param custom_attributes: list of custom attributes included in the model (defined in compute.py)
     """
+    has_custom_attributes = False
     # iterate over each entry in the dataframe (from csv file)
     for index, row in element_df.iterrows():
         # create empty custom attributes dict
