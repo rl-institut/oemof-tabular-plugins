@@ -1,5 +1,7 @@
 import logging
 import os
+
+import dash
 from datapackage import Package
 import warnings
 
@@ -7,6 +9,8 @@ import pandas as pd
 from oemof.tabular.postprocessing import calculations as clc, naming
 from oemof.tabular.postprocessing.core import Calculator
 
+from oemof_tabular_plugins.general.pre_processing.pre_processing import scenario_datapackage
+from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
 
 from oemof_tabular_plugins.datapackage.post_processing import (
     construct_dataframe_from_results,
@@ -108,17 +112,18 @@ class OTPCalculator(Calculator):
         self.df_results = process_raw_inputs(self.df_results, dp_path, moo=moo)
 
         # Load cf_aware from datapackage if MOO is active
+        # TODO: this works, but should be moved out of the __init__
         self.cf_aware = None
         if moo:
             try:
-                import os
-                from oemof_tabular_plugins.general.pre_processing.pre_processing_moo import get_moo_timeseries
-
                 # Extract scenario directory from dp_path
-                scenario_dir = os.path.dirname(os.path.dirname(dp_path))
-                cf_aware_array = get_moo_timeseries(
-                    scenario_dir, ts_name="cf_aware", resource_name="moo_profile"
-                )
+                scenario_dir = os.path.dirname(dp_path)
+                dp = scenario_datapackage(scenario_dir)
+                ts_name = "cf-aware-profile"
+
+                cf_aware_res, cf_aware_df = get_moo_timeseries(dp, ts_name)
+                cf_aware_array = cf_aware_df[ts_name]
+
                 # Take the mean value as cf_aware is typically constant for a location
                 self.cf_aware = float(cf_aware_array.mean())
 
@@ -184,6 +189,7 @@ def post_processing(
     dp_path,
     dash_app=False,
     parameters_units=None,
+    verbose_names=None,
     infer_bus_carrier=True,
     calculations=None,
     kpi_calculations=None,
@@ -203,6 +209,7 @@ def post_processing(
     if parameters_units is None:
         #  Units of Capacities and Kpis in Results
         parameters_units = {
+            # capacities units: only used if not generated from CAPACITIES_UNIT
             "drinking-water-storage": "[m³]",
             "rainwater-harvesting": "[m²]",
             "service-water-storage": "[m³]",
@@ -231,6 +238,7 @@ def post_processing(
             "pv-panel": "[kW]",
             "water-storage": "[m³]",
             "mimo": "[m³/h]",
+            # kpi units
             "annuity_total": "[USD/a]",
             "variable_costs_total": "[USD/a]",
             "ghg_emission_total": "[kgCO2e/a]",
@@ -239,11 +247,38 @@ def post_processing(
             "total_upfront_investments": "[USD]",
             "land_requirement_total": "[m²]",
             "total_water_consumption": "[m³/a]",
+            "total_indirect_water_consumption": "[m³/a]",
+            "water_scarcity_footprint": "[m³/a]",
             "total_annual_cost_moo": "[USD/a]",
             "ghg_emissions_total": "[kgCO2e/a]",
             "total_water_footprint": "[m³]",
             "system_opex_total": "[USD/a]",
             "total_variable_cost_moo": "[USD/a]",
+            # service (carrier) units
+            "electricity": "[kWh]",
+            "water": "[m³]",
+            "energy": "[kWh]",
+            "biogas": "[kWh]",
+            "diesel": "[kWh]",
+            "fuel": "[kWh]",
+            "biomass": "[kg]"
+        }
+
+    if verbose_names is None:
+        # KPI verbose names, component verbose names will be added later
+        verbose_names = {
+            "annuity_total": "Total Annual Cost",
+            "total_annual_cost_moo": "Total Annual Cost",
+            "variable_costs_total": "Total Variable OPEX",
+            "total_variable_cost_moo": "Total Variable OPEX",
+            "total_upfront_investments": "Total Upfront Investment",
+            "land_requirement_additional": "Additional Land Requirement",
+            "land_requirement_total": "Total Land Requirement",
+            "total_water_consumption": "Total Water Consumption",
+            "total_indirect_water_consumption": "Total Indirect Water Consumption",
+            "water_scarcity_footprint": "Water Scarcity Footprint",
+            "ghg_emissions_total": "Total GHG Emissions",
+            "system_opex_total": "Total System OPEX",
         }
 
     if calculations is None:
@@ -263,7 +298,7 @@ def post_processing(
     service_tables = {}
 
     if results_by_flow is not None:
-        results_by_flow.to_csv(results_path + "/all_results_by_flow.csv", index=True)
+        results_by_flow.to_csv(results_path / "all_results_by_flow.csv", index=True)
         # get sub-tables from results dataframe
         capacities_table = extract_table_from_results(
             results_by_flow, RESULT_TABLE_COLUMNS["capacities"]
@@ -347,19 +382,20 @@ def post_processing(
         service_flows = []
         service_flow_values = []
         for service, table in service_tables.items():
-            table = table.loc[table["direction"] == "out", ["asset", "aggregated_flow", "carrier", "facade_type"]]
+            table = table.loc[
+                table["direction"] == "out",
+                ["asset", "aggregated_flow", "carrier", "facade_type"],
+            ]
             for row in table.itertuples(index=False):
                 service_flows.append(f"{row.asset}_to_{service}")
                 service_flow_values.append(row.aggregated_flow)
 
-
-        service_flows_table = pd.DataFrame({
-            "flow": service_flows,
-             "value": service_flow_values
-             })
+        service_flows_table = pd.DataFrame(
+            {"flow": service_flows, "value": service_flow_values}
+        )
         # TODO: Move this to tables_to_save BUT to do so, we have to get rid of extra index col
         if service_flows_table is not None:
-            service_flows_table.to_csv(results_path + "/service_flows.csv", index=False)
+            service_flows_table.to_csv(results_path / "service_flows.csv", index=False)
 
         # save tables to csv files
         tables_to_save.update(
@@ -368,7 +404,7 @@ def post_processing(
 
     kpis = calculator.kpis
     if kpis is not None:
-        kpis.to_csv(results_path + "/kpis.csv", index=True)
+        kpis.to_csv(results_path / "kpis.csv", index=True)
 
         if "mimo" in results_by_flow.index.get_level_values("asset"):
             kpis.loc["total_water_produced"] = results_by_flow.loc[
@@ -387,15 +423,31 @@ def post_processing(
         save_table_to_csv(table, results_path, filename)
 
     if dash_app is True:
+        options = dict(
+            # external_stylesheets=external_stylesheets
+        )
 
-        demo_app = prepare_app(
-            es,
+        app = dash.Dash(__name__, **options)
+
+        app = prepare_app(
+            app=app,
             dp_path=dp_path,
+            results=calculator.df_results,
             tables=result_tables,
             services=service_tables,
             units=parameters_units,
+            label_map=verbose_names
         )
-        demo_app.run(debug=False, port=8060)
+        app.run(debug=False, port=8060)
+
+    # Attach minimal results for dash directly to calculator so they can be send to gui
+    if not hasattr(calculator, "dash_tables"):
+        calculator.dash_tables = {
+            "result_tables": result_tables,
+            "service_tables": service_tables,
+            "parameters_units": parameters_units,
+            "verbose_names": verbose_names
+        }
 
     # ----- OLD POST-PROCESSING - TO BE DELETED ONCE CERTAIN -----
     if hasattr(calculator, "scalar_params"):

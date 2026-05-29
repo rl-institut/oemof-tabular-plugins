@@ -76,18 +76,16 @@ def write_csv(
 
 
 def rebuild_single_json(
-    src_file: Path, out_dir: Path, *, overwrite: bool = False
+    dp_dict: Dict, out_dir: Path, *, overwrite: bool = False
 ) -> Dict[str, Any]:
-    with src_file.open("r", encoding="utf-8") as f:
-        payload = json.load(f)
 
-    pkg = payload.get("metadata") or {}
-    data = payload.get("data") or {}
+    dp_metadata = dp_dict.get("metadata") or {}
+    dp_resources = dp_dict.get("data") or {}
 
-    if not pkg or "resources" not in pkg:
+    if not dp_metadata or "resources" not in dp_metadata:
         raise ValueError("Invalid single-JSON export: missing 'metadata.resources'")
 
-    resources = pkg.get("resources") or []
+    resources = dp_metadata.get("resources") or []
 
     updated_resources = []
 
@@ -95,7 +93,7 @@ def rebuild_single_json(
 
         name = res.get("name") or "resource"
         res["dialect"] = dialect_from_resource(res)
-        rows = data.get(name, [])
+        rows = dp_resources.get(name, [])
         path_spec = res.get("path")
 
         # Determine output strategy based on path type
@@ -128,12 +126,12 @@ def rebuild_single_json(
     ensure_dir(out_dir)
     dp_out = out_dir / "datapackage.json"
 
-    pkg["resources"] = updated_resources
+    dp_metadata["resources"] = updated_resources
 
     with dp_out.open("w", encoding="utf-8") as f:
-        json.dump(pkg, f, ensure_ascii=False, indent=4)
+        json.dump(dp_metadata, f, ensure_ascii=False, indent=4)
 
-    return str(out_dir)
+    return out_dir
 
 
 def main():
@@ -147,8 +145,9 @@ def main():
 
     src = Path(args.single_json).expanduser().resolve()
     out_dir = Path(args.out).expanduser().resolve()
-
-    result = rebuild_single_json(src, out_dir, overwrite=args.overwrite)
+    with src.open("r", encoding="utf-8") as f:
+        json_dp = json.load(f)
+    result = rebuild_single_json(json_dp, out_dir, overwrite=args.overwrite)
     print(f"Datapackage saved under '{result}'")
 
 

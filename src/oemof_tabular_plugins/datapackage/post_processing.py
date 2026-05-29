@@ -168,6 +168,8 @@ def compute_variable_costs(results_df):
 
 def compute_variable_cost_moo(results_df):
     """Calculates variable costs by multiplying the resource cost by the aggregated flow."""
+    if results_df.name[4] == "excess":
+        return None
     return results_df.resource_cost * results_df.aggregated_flow
 
 
@@ -194,6 +196,8 @@ def compute_co2_emissions(results_df):
 
 def compute_ghg_emissions(results_df):
     """Calculates ghg emissions by multiplying aggregated flow by emission factor"""
+    if results_df.name[4] == "excess":
+        return None
     if "ghg_emission_factor" not in results_df.index:
         return None
     else:
@@ -221,6 +225,8 @@ def compute_land_requirement_total(results_df):
 
 def compute_water_consumption(results_df):
     """Calculates water footprint by multiplying aggregated flow by water_consumption_factor"""
+    if results_df.name[4] == "excess":
+        return None
     if "water_consumption_factor" not in results_df.index:
         return None
     else:
@@ -229,6 +235,8 @@ def compute_water_consumption(results_df):
 
 def compute_indirect_water_consumption(results_df):
     """Calculates water footprint by multiplying aggregated flow by water_consumption_factor"""
+    if results_df.name[4] == "excess":
+        return None
     if "indirect_water_consumption_factor" not in results_df.index:
         return None
     else:

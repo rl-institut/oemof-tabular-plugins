@@ -137,9 +137,13 @@ class WaterPump(Converter, Facade):
     pump_height: numeric
         The height in meters the pump must overcome.
     efficiency: numeric (iterable or scalar) (optional)
-        The efficiency of the pump
+        The efficiency of the pump. Default: 0.7
+        Efficiency varies with head and flow rate, typically between 0.6 and 0.9,
+        source: Martin-Candilejo, Santillán & Garrote (2020); DOI:10.3390/w12010132
     capacity: numeric (optional)
-        The thermal capacity (high temperature output side) of the unit.
+        The capacity of the pump, possible water throughput in m³ per hour
+    power: numeric (optional)
+        The electric power of the pump in kW
     carrier_cost: numeric (optional)
         Carrier cost for one unit of used input. Default: 0
     capacity_cost: numeric (optional)
@@ -178,13 +182,15 @@ class WaterPump(Converter, Facade):
 
     tech: str
 
-    head: float = 10.0  # Default 10m
+    head: float
 
     carrier: str = ""
 
-    efficiency: Union[float, Sequence[float]] = 1
+    efficiency: Union[float, Sequence[float]] = 0.7
 
-    capacity: float = None
+    capacity: float = 0
+
+    power: float = 0
 
     marginal_cost: float = 0
 
@@ -217,8 +223,7 @@ class WaterPump(Converter, Facade):
         return 1000  # kg/m³
 
     def build_solph_components(self):
-        """TODO change efficiencies here"""
-        # TODO ask vivek for references for water pumps
+        """ """
         conversion_W_to_kW = 1e-3
         conversion_m3_per_hour_to_m3_per_s = 1.0 / 3600
 
@@ -226,6 +231,17 @@ class WaterPump(Converter, Facade):
             eta = np.array(self.efficiency)
         else:
             eta = self.efficiency
+
+        if self.capacity == 0:
+            # Revert the calculation of electric conversion factor: Calculate capacity [m³/h] from power [kW] if given
+            if self.power != 0:
+                self.capacity = self.power * eta / (
+                        self.g
+                        * self.rho_w
+                        * conversion_W_to_kW
+                        * self.head
+                        * conversion_m3_per_hour_to_m3_per_s
+                )
 
         self.conversion_factors.update(
             {
