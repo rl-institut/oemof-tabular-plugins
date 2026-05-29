@@ -43,3 +43,6 @@ from .dry_toilet import DryToilet
 from .latrine import Latrine
 from .composting_toilet import CompostingToilet
 from .open_field import OpenField
+from .water_pre_treatment import WaterPreTreatment
+from .water_core_treatment import WaterCoreTreatment
+from .water_post_treatment import WaterPostTreatment

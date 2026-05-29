@@ -87,7 +87,10 @@ from .facades import (
     MIMO_CentralizedWWTP,
     MIMO_DecentralizedWWTP,
     MIMO_WaterReuseSystem,
-    MIMO_BiologicalDenitrification
+    MIMO_BiologicalDenitrification,
+    WaterPreTreatment,
+    WaterCoreTreatment,
+    WaterPostTreatment
 )
 
 WEFE_TYPEMAP = {
@@ -173,7 +176,10 @@ WEFE_TYPEMAP = {
     "mimo_constructed_wetland": MIMO_ConstructedWetland,
     "mimo_centralized_WWTP": MIMO_CentralizedWWTP,
     "mimo_decentralized_WWTP": MIMO_DecentralizedWWTP,
-    "mimo_water_reuse": MIMO_WaterReuseSystem
+    "mimo_water_reuse": MIMO_WaterReuseSystem,
+    "water_pre_treatment": WaterPreTreatment,
+    "water_core_treatment": WaterCoreTreatment,
+    "water_post_treatment": WaterPostTreatment
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
