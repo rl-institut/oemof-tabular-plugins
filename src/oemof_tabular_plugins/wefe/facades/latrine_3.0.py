@@ -329,6 +329,7 @@ class Latrine(MIMO):
 
         # Group-level normalization: no extra scaling on the group
         attributes["conversion_factor_in_main"] = sequence(1.0)
+        attributes["conversion_factor_out_main"] = sequence(1.0)
 
         if self.flushwater_bus is not None:
             attributes[f"conversion_factor_{self.flushwater_bus.label}"] = sequence(
