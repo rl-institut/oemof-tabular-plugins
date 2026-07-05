@@ -21,43 +21,46 @@ class SepticSystem(MIMO):
 
     Core references
     ---------------
-    1. ENPHO Septic Tank Design Manual (2020): septic tank sizing, HRT 24-48 h,
-       desludging intervals 1-3 yr, BOD removal 30-50 %, TSS removal 40-60 %.
-    2. USEPA Onsite Wastewater Treatment Systems Manual (2002): wastewater
-       characteristics, effluent/septage quality ranges, and conventional
-       septic tank role in primary treatment.
-    3. Elmitwalli et al. (2014): sludge accumulation and methane conversion in
-       septic tanks; HRT, COD, and temperature are governing variables.
-    4. Challenges to Accurate Estimation of Methane Emission from Septic Tanks
-       (ACS ES&T, 2023): desludging interval affects BOD removal and CH4 yield;
-       supports documentation-only checks for desludging_interval_years.
+    1. Septic tank sizing, HRT 24-48 h, desludging intervals 2-3 yr, BOD removal 30-50 %, TSS removal 40-60 %.
+       Shrestha, R. (2020). Septic tank design manual. Environment and Public Health Organization (ENPHO).
+       https://enpho.org/wp-content/uploads/2021/10/SepticTankManualEnpho-Book.pdf
+    2. Wastewater characteristics, effluent/septage quality ranges, and conventional septic tank role in primary treatment.
+       Otis, R., Kreissl, J. F., Frederick, R., Goo, R., Casey, P., & Tonning, B. (2002).
+       Onsite wastewater treatment systems manual (EPA/625/R-00/008). U.S. Environmental Protection Agency.
+       https://www.epa.gov/sites/default/files/2015-06/documents/2004_07_07_septics_septic_2002_osdm_all.pdf
+    3. Sludge accumulation and methane conversion in septic tanks; HRT, COD, and temperature are governing variables.
+       Elmitwalli, T. (2013). Sludge accumulation and conversion to methane in a septic tank treating domestic
+       wastewater or black water. Water Science and Technology, 68(4), 956–964. https://doi.org/10.2166/wst.2013.337
+    4. Desludging interval affects BOD removal and CH4 yield; supports documentation-only checks for desludging_interval_years.
+       Moonkawin, J., Huynh, L. T., & Schneider, M. Y. (2023). Challenges to accurate estimation
+       of methane emission from septic tanks with long emptying intervals. Environmental Science & Technology.
+       https://doi.org/10.1021/acs.est.3c05724 (Free full text: https://pmc.ncbi.nlm.nih.gov/articles/PMC10621000/)
+    5. Specific energy consumption
+       Chesley, J. (2025, August 8). Beyond the grid: Exploring decentralized wastewater treatment. Ecologix Systems.
+       https://ecologixsystems.com/articles/beyond-the-grid-decentralized-wastewater-treatment
 
     Main equations
     --------------
     Hydraulic split (normalized to treated liquid output = 1):
 
-        feedwater_per_output = 1 / liquid_recovery
-        sludge_per_output    = sludge_yield_per_m3_in / liquid_recovery
+        feedwater_per_output = 1 / efficiency
+        sludge_per_output    = sludge_yield_per_m3_in / efficiency
 
-    If sludge_yield_per_m3_in == (1 - liquid_recovery):
+    If sludge_yield_per_m3_in == (1 - efficiency):
         Q_in(t) = Q_out(t) + Q_sludge(t)
 
     Electricity consumption:
         E(t) = specific_energy_consumption * Q_out(t)
 
     Optional methane proxy:
-        Q_CH4(t) = methane_emission_factor_per_m3_in / liquid_recovery * Q_out(t)
+        Q_CH4(t) = methane_emission_factor_per_m3_in / efficiency * Q_out(t)
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains maximum
-      treated liquid throughput.
-    - Electricity input is optional. Set specific_energy_consumption=0.0
-      and omit electricity_bus for passive gravity-fed septic tanks.
-    - CH4 output is optional and linear. If ch4_out_bus is not provided,
-      methane_emission_factor_per_m3_in is stored as metadata only.
-    - BOD/TSS/COD removal, HRT, and desludging interval are validated and
-      documented but NOT enforced as dispatch constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains maximum treated liquid throughput.
+    - Electricity input is optional. Set specific_energy_consumption=0.0 and omit electricity_bus for passive gravity-fed septic tanks.
+    - CH4 output is optional and linear. If ch4_out_bus is not provided, methane_emission_factor_per_m3_in is stored as metadata only.
+    - BOD/TSS/COD removal, HRT, and desludging interval are validated and documented but NOT enforced as dispatch constraints.
     """
 
     # ------------------------------------------------------------------
@@ -81,9 +84,9 @@ class SepticSystem(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    water_in_bus: Bus = None    # expected unit: m³
-    water_out_bus: Bus = None   # expected unit: m³  (PRIMARY)
-    sludge_out_bus: Bus = None  # expected unit: m³
+    water_in_bus: Bus = None    # m³
+    water_out_bus: Bus = None   # m³  (PRIMARY)
+    sludge_out_bus: Bus = None  # m³
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -93,23 +96,23 @@ class SepticSystem(MIMO):
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
-    ch4_out_bus: Optional[Bus] = None  # proxy unit — activate for GHG accounting
+    ch4_out_bus: Optional[Bus] = None  # proxy unit — activate for detailed GHG accounting
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.0        # kWh/m³; 0.0 for passive gravity flow
-    liquid_recovery: float = 0.85                   # m³ effluent / m³ influent  [ENPHO]
-    sludge_yield_per_m3_in: float = None            # defaults to 1 - liquid_recovery
-    methane_emission_factor_per_m3_in: float = 0.0  # m³ CH4 / m³ influent  [Elmitwalli]
+    specific_energy_consumption: float = 0.13       # kWh/m³; 0.0 for passive gravity flow [Ecologix]
+    efficiency: float = 0.85                        # m³ effluent / m³ influent (liquid recovery) [ENPHO]
+    sludge_yield_per_m3_in: float = None            # defaults to 1 - efficiency
+    methane_emission_factor_per_m3_in: float = 0.0  # m³ CH4 / m³ influent [Elmitwalli]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0          # €/m³ treated water
-    carrier_cost: float = 0.0           # €/kWh electricity
-    sludge_disposal_cost: float = 0.0   # €/m³ sludge
-    ghg_cost: float = 0.0               # €/unit CH4 output
+    marginal_cost: float = 0.0          # USD/m³ treated water
+    carrier_cost: float = 0.0           # USD/m³ grey water
+    sludge_disposal_cost: float = 0.0   # USD/m³ sludge
+    ghg_cost: float = 0.0               # USD/ proxy unit CH4 output
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -119,14 +122,14 @@ class SepticSystem(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Based on ENPHO (2020), USEPA (2002), and SaniHub case study
+    # documentation / calibration defaults (not hard constraints)
+    # Based on ENPHO (2020) and CH4 paper (ACS ES&T, 2023)
     # ------------------------------------------------------------------
     bod_removal: float = 0.40                         # fraction  [ENPHO: 30-50%]
     tss_removal: float = 0.50                         # fraction  [ENPHO: 40-60%]
-    cod_removal: Optional[float] = None               # fraction  [optional]
+    cod_removal: Optional[float] = None               # fraction  [ENPHO]
     minimum_hydraulic_retention_time_h: float = 24.0  # hr  [ENPHO]
-    desludging_interval_years: float = 2.0            # yr  [ENPHO; CH4 paper]
+    desludging_interval_years: float = 2.5            # yr  [ENPHO; CH4 paper]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -157,8 +160,8 @@ class SepticSystem(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.liquid_recovery = attributes.pop(
-            "liquid_recovery", self.liquid_recovery
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
         self.sludge_yield_per_m3_in = attributes.pop(
             "sludge_yield_per_m3_in", self.sludge_yield_per_m3_in
@@ -187,6 +190,7 @@ class SepticSystem(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -209,20 +213,19 @@ class SepticSystem(MIMO):
 
         # --------------------------------------------------------------
         # derived hydraulic split ratios
-        # normalized to treated liquid output = 1
-        #
-        # If sludge_yield_per_m3_in is None → defaults to (1 - liquid_recovery)
+        # normalized to treated liquid output [m³/hr] = 1
+        # If sludge_yield_per_m3_in is None → defaults to (1 - efficiency)
         # giving the strict identity: Q_in = Q_out + Q_sludge
         # If set explicitly → independent empirical yield factor.
         # --------------------------------------------------------------
         if self.sludge_yield_per_m3_in is None:
-            self.sludge_yield_per_m3_in = 1.0 - self.liquid_recovery
+            self.sludge_yield_per_m3_in = 1.0 - self.efficiency
 
-        self._feedwater_per_output = 1.0 / self.liquid_recovery
-        self._sludge_per_output = self.sludge_yield_per_m3_in / self.liquid_recovery
+        self._feedwater_per_output = 1.0 / self.efficiency
+        self._sludge_per_output = self.sludge_yield_per_m3_in / self.efficiency
         self._electricity_per_output = self.specific_energy_consumption
         self._methane_per_output = (
-                self.methane_emission_factor_per_m3_in / self.liquid_recovery
+                self.methane_emission_factor_per_m3_in / self.efficiency
         )
 
         # --------------------------------------------------------------
@@ -239,22 +242,6 @@ class SepticSystem(MIMO):
         if self.ch4_out_bus is not None:
             attributes[f"conversion_factor_{self.ch4_out_bus.label}"] = sequence(
                 self._methane_per_output
-            )
-
-        # --------------------------------------------------------------
-        # output-specific costs
-        # to_bus_0=water_out, to_bus_1=sludge_out, to_bus_2=ch4_out (optional)
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-        attributes.setdefault("output_parameters_1", {})
-        if self.sludge_disposal_cost > 0:
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.sludge_disposal_cost}
-            )
-        if self.ch4_out_bus is not None and self.ghg_cost > 0:
-            attributes.setdefault("output_parameters_2", {})
-            attributes["output_parameters_2"].update(
-                {"variable_costs": self.ghg_cost}
             )
 
         # --------------------------------------------------------------
@@ -291,6 +278,42 @@ class SepticSystem(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.sludge_out_bus in self.outputs:
+            self.outputs[self.sludge_out_bus].variable_costs = sequence(
+                self.sludge_disposal_cost
+            )
+
+        if self.ch4_out_bus is not None and self.ch4_out_bus in self.outputs:
+            self.outputs[self.ch4_out_bus].variable_costs = sequence(self.ghg_cost)
+
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 1
@@ -313,8 +336,8 @@ class SepticSystem(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.liquid_recovery <= 1:
-            raise ValueError("liquid_recovery must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
         if self.specific_energy_consumption < 0:
             raise ValueError("specific_energy_consumption must be >= 0.")
         if self.methane_emission_factor_per_m3_in < 0:
