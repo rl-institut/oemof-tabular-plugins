@@ -140,7 +140,7 @@ class DecentralizedWWTP(MIMO):
     # economics
     # ------------------------------------------------------------------
     marginal_cost: float = 0.0          # USD/m³ treated water
-    carrier_cost: float = 0.0           # USD/kWh influent water
+    carrier_cost: float = 0.0           # USD/m³ influent water
     sludge_disposal_cost: float = 0.0   # USD/m³ sludge
     chemical_cost: float = 0.0          # USD/unit chemical
     biogas_revenue: float = 0.0         # USD/m³ biogas  (applied as negative cost)

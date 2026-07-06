@@ -9,66 +9,74 @@ from oemof_tabular_plugins.wefe.facades import MIMO
 @dataclasses.dataclass(unsafe_hash=False, frozen=False, eq=False)
 class CentralizedWWTP(MIMO):
     """
-    Literature-informed centralized wastewater treatment plant facade (v3.0).
+    Literature-informed generic centralized WWTP facade based on MIMO.
 
     Purpose
     -------
-    Linear whole-plant surrogate for a centralized municipal WWTP based on
-    activated-sludge treatment concepts. Designed as a planning-level component
-    for oemof-style optimization, not a full mechanistic ASM model.
-    All conversion factors are normalized to 1 m³ influent wastewater.
+    Generic whole-plant surrogate for a centralized municipal WWTP based on
+    activated-sludge treatment concepts. The model is designed as a process-yield
+    unit representing a WWTP as a water-energy-resource intervention. It is not a
+    full mechanistic biological reactor model or pollutant-state model.
 
     Core references
     ---------------
-    1. Tchobanoglous et al. (2014): Wastewater Engineering: Treatment and
-       Resource Recovery (5th ed.) — core mass-balance, biomass yield, oxygen
-       requirements, and activated-sludge design.
-    2. WEF OM-9 (3rd ed.): Activated Sludge and Nutrient Removal — operational
-       logic, sludge-age selection, wasting rates, and nutrient-removal control.
-    3. Nguyen et al. (2025): Energy efficiency evaluation of a centralised WWTP
-       in an industrial zone — empirical SEC per m³ and per kg pollutant removed.
-    4. PCA et al. (2024): Energy efficiency benchmarking of WWTPs — whole-plant
-       SEC benchmarking methodology and DEA-based performance framing.
-    5. Abbadi et al. (2025): Comprehensive assessment of WWTP contributions to
-       urban GHG and ammonia emissions — direct CH4 / N2O emission factors.
+    1. Core mass-balance principles, biosolids yield relationships, and activated-sludge design fundamentals; basis for
+       the efficiency (hydraulic recovery) and sludge_yield parameters.
+       Metcalf & Eddy, Inc., Tchobanoglous, G., Stensel, H. F., Tsuchihashi, R., & Burton, F. L. (2014). Wastewater
+       engineering: Treatment and resource recovery (5th ed.). McGraw-Hill Education.
+    2. Activated-sludge operational logic: sludge-age (SRT) selection, wasting-rate calculation, RAS/WAS flow optimization,
+       and DO/ORP set-point control; basis for srt_days, hrt_hours, fm_ratio, do_setpoint_mg_per_l, ras_ratio, was_ratio,
+       and the aeration/nitrification-linked energy terms.
+       Water Environment Federation. (2025). Activated sludge and nutrient removal (4th ed.). Water Environment Federation.
+       https://prod.wef.org/publications/publications/books/activated-sludge-and-nutrient-removal-mop-om-9-4th-edition/
+    3. Empirical specific energy consumption (SEC) per m³ treated and per kg pollutant removed, measured at a real
+       centralized industrial WWTP; basis for base_energy_kwh_per_m3_out (SEC) and the BOD/TN-removal energy decomposition.
+       Nguyen, V. T., Anh, L. H., Dao, T. M., Nguyen, T. A., & Le, T. T. (2025). Energy efficiency evaluation of a
+       centralised wastewater treatment plant in an industrial zone of former Binh Duong province, Vietnam. Vietnam
+       Journal of Science, Technology and Engineering. https://doaj.org/article/1b4f35d46a4242e88d761a93ece06c15
+    4. Whole-plant SEC benchmarking methodology and DEA-based performance framing; supports documentation-only calibration
+       checks against fleet-wide efficiency norms.
+       Gallo, M., Malluta, D., Del Borghi, A., & Gagliano, E. (2024). A critical review on methodologies for the energy
+       benchmarking of wastewater treatment plants. Sustainability, 16(5), 1922. https://doi.org/10.3390/su16051922
+    5. Measured direct CH4/N2O emission factors normalized to influent BOD/TN loading, across 96 real US water resource
+       recovery facilities; basis for direct_ch4_kgco2e_per_m3_out and direct_n2o_kgco2e_per_m3_out.
+       Moore, D. P., Li, N., Song, C., Zhu, J.-J., Yi, H., Tao, L., McSpiritt, J., Sevostianov, V. I., Wendt, L. P.,
+       Rojas-Robles, N. E., Hopkins, F. M., Ren, Z. J., & Zondlo, M. A. (2025). Comprehensive assessment of the
+       contribution of wastewater treatment to urban greenhouse gas and ammonia emissions. Nature Water, 3, 1114–1124.
+       https://doi.org/10.1038/s44221-025-00490-z
 
     Main equations
     --------------
-    Whole-plant electricity demand per m³ influent
-    (Tchobanoglous et al. 2014; Nguyen et al. 2025):
-        E_total(t) = E_base
-                   + E_aer  * BOD_removed
-                   + E_nit  * TN_removed
-        [kWh/m³_in]
+    All flows normalized to treated water output = 1 [m³/hr]:
+
+    Whole-plant electricity demand per m³ effluent (Tchobanoglous et al. 2014 [1]; Nguyen et al. 2025 [3]):
+        E_total(t) = E_base (SEC) + E_aer  * BOD_removed + E_nit  * TN_removed
+        [kWh/m³_out]
 
     Hydraulic recovery:
-        V_treated(t) = water_recovery * V_influent(t)
+        V_treated(t) = efficiency * V_influent(t)
         [m³/hr]
 
     Sludge generation (independent of hydraulic recovery):
-        V_sludge(t) = sludge_yield * V_influent(t)
+        V_sludge(t) = sludge_yield * V_treated(t)
         [m³/hr]
 
-    Optional direct emissions (Abbadi et al. 2025):
-        E_CH4(t) = direct_ch4_kgco2e_per_m3_in * V_influent(t)
-        E_N2O(t) = direct_n2o_kgco2e_per_m3_in * V_influent(t)
+    Optional direct emissions (Moore et al. 2025 [5]):
+        E_CH4(t) = direct_ch4_kgco2e_per_m3_out * V_treated(t)
+        E_N2O(t) = direct_n2o_kgco2e_per_m3_out * V_treated(t)
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated-water output of the plant.
-    - Sludge yield is an independent parameter, not derived from water recovery.
-      Actual biological sludge production is governed by observed yield and SRT
-      (Tchobanoglous et al. 2014, Ch. 7), not hydraulic loss.
-    - Electricity demand is decomposed into a base load, an aeration-linked
-      BOD-removal term, and a nitrification-linked TN-removal term. If only a
-      lumped SEC is available, set aeration and nitrification terms to 0 and
-      use base_energy_kwh_per_m3_in alone.
-    - Optional direct-emissions buses (CH4, N2O) can be connected for
-      environmental accounting. If buses are absent, emissions are ignored.
-    - Operational variables (SRT, HRT, F:M, DO, RAS, WAS) are stored as
-      documentation / calibration metadata. They are not enforced as hard
-      optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water output of the plant.
+    - Sludge yield is an independent parameter, not derived from water recovery. Actual biological sludge production is
+      governed by observed yield and SRT (Tchobanoglous et al. (2014) [1] and WEF OM-9 (2025) [2]), not hydraulic loss.
+    - Electricity demand is decomposed into a base load, an aeration-linked BOD-removal term, and a nitrification-linked
+      TN-removal term. If only a lumped SEC is available, set aeration and nitrification terms to 0.0 and use
+      SEC (base_energy_kwh_per_m3_out) alone.
+    - Optional direct-emissions buses (CH4, N2O) can be connected for detailed environmental accounting.
+      If buses are absent, emissions are ignored.
+    - Operational variables (SRT, HRT, F:M, DO, RAS, WAS) are stored as documentation / calibration metadata.
+      They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -94,7 +102,7 @@ class CentralizedWWTP(MIMO):
     # ------------------------------------------------------------------
     electricity_bus: Bus = None      # kWh
     water_in_bus: Bus = None         # m³ influent wastewater
-    water_out_bus: Bus = None        # m³ treated water
+    water_out_bus: Bus = None        # m³ treated water (PRIMARY)
     sludge_out_bus: Bus = None       # m³ sludge
 
     # ------------------------------------------------------------------
@@ -111,24 +119,24 @@ class CentralizedWWTP(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    water_recovery: float = 0.98                             # m³_out / m³_in
-    sludge_yield: float = 0.01                               # m³_sludge / m³_in
-    base_energy_kwh_per_m3_in: float = 0.05                  # kWh / m³_in
-    aeration_energy_kwh_per_kg_bod_removed: float = 0.0      # kWh / kgBOD
-    removed_bod_kg_per_m3_in: float = 0.0                    # kgBOD / m³_in
-    nitrification_energy_kwh_per_kg_tn_removed: float = 0.0  # kWh / kgTN
-    removed_tn_kg_per_m3_in: float = 0.0                     # kgTN / m³_in
-    direct_ch4_kgco2e_per_m3_in: float = 0.0                 # kgCO2e / m³_in
-    direct_n2o_kgco2e_per_m3_in: float = 0.0                 # kgCO2e / m³_in
+    efficiency: float = 0.98                                    # m³_out / m³_in (water recovery) [1]
+    sludge_yield: float = 0.0102                                # m³_sludge / m³_out [1, 2]
+    specific_energy_consumption: float = 0.0510                  # kWh / m³_out (base_energy_kwh_per_m3_out)[3, 4]
+    aeration_energy_kwh_per_kg_bod_removed: float = 0.0         # kWh / kgBOD [2, 3]
+    removed_bod_kg_per_m3_out: float = 0.0                      # kgBOD / m³_out [3, 4]
+    nitrification_energy_kwh_per_kg_tn_removed: float = 0.0     # kWh / kgTN [2, 3]
+    removed_tn_kg_per_m3_out: float = 0.0                       # kgTN / m³_out [3, 4]
+    direct_ch4_kgco2e_per_m3_out: float = 0.0                   # kgCO2e / m³_out [5]
+    direct_n2o_kgco2e_per_m3_out: float = 0.0                   # kgCO2e / m³_out [5]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0          # €/m³ treated water
-    carrier_cost: float = 0.0           # €/kWh electricity
-    sludge_disposal_cost: float = 0.0   # €/m³ sludge
-    ch4_emissions_cost: float = 0.0     # €/kgCO2e CH4
-    n2o_emissions_cost: float = 0.0     # €/kgCO2e N2O
+    marginal_cost: float = 0.0          # USD/m³ treated water
+    carrier_cost: float = 0.0           # USD/m³ influent water
+    sludge_disposal_cost: float = 0.0   # USD/m³ sludge
+    ch4_emissions_cost: float = 0.0     # USD/kgCO2e CH4
+    n2o_emissions_cost: float = 0.0     # USD/kgCO2e N2O
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -138,15 +146,15 @@ class CentralizedWWTP(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Tchobanoglous et al. (2014) and WEF OM-9 style operational descriptors
+    # documentation / calibration defaults (not hard constraints)
+    # Based on Tchobanoglous et al. (2014) [1] and WEF OM-9 (2025) [2]
     # ------------------------------------------------------------------
-    srt_days: float = None
-    hrt_hours: float = None
-    fm_ratio: float = None
-    do_setpoint_mg_per_l: float = None
-    ras_ratio: float = None
-    was_ratio: float = None
+    srt_days: float = None              # days, solids retention time / sludge age [1, 2]
+    hrt_hours: float = None             # hours, hydraulic retention time (reactor sizing) [1]
+    fm_ratio: float = None              # kgBOD/kgMLVSS/day, food-to-microorganism ratio [1, 2]
+    do_setpoint_mg_per_l: float = None  # mg/L, aeration basin dissolved oxygen set point [2]
+    ras_ratio: float = None             # Q_RAS/Q_in, return activated sludge flow ratio [2]
+    was_ratio: float = None             # fraction, waste activated sludge rate [1, 2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -175,34 +183,34 @@ class CentralizedWWTP(MIMO):
         # --------------------------------------------------------------
         # active physical parameters
         # --------------------------------------------------------------
-        self.water_recovery = attributes.pop(
-            "water_recovery", self.water_recovery
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
         self.sludge_yield = attributes.pop(
             "sludge_yield", self.sludge_yield
         )
-        self.base_energy_kwh_per_m3_in = attributes.pop(
-            "base_energy_kwh_per_m3_in", self.base_energy_kwh_per_m3_in
+        self.specific_energy_consumption = attributes.pop(
+            "specific_energy_consumption", self.specific_energy_consumption
         )
         self.aeration_energy_kwh_per_kg_bod_removed = attributes.pop(
             "aeration_energy_kwh_per_kg_bod_removed",
             self.aeration_energy_kwh_per_kg_bod_removed,
         )
-        self.removed_bod_kg_per_m3_in = attributes.pop(
-            "removed_bod_kg_per_m3_in", self.removed_bod_kg_per_m3_in
+        self.removed_bod_kg_per_m3_out = attributes.pop(
+            "removed_bod_kg_per_m3_out", self.removed_bod_kg_per_m3_out
         )
         self.nitrification_energy_kwh_per_kg_tn_removed = attributes.pop(
             "nitrification_energy_kwh_per_kg_tn_removed",
             self.nitrification_energy_kwh_per_kg_tn_removed,
         )
-        self.removed_tn_kg_per_m3_in = attributes.pop(
-            "removed_tn_kg_per_m3_in", self.removed_tn_kg_per_m3_in
+        self.removed_tn_kg_per_m3_out = attributes.pop(
+            "removed_tn_kg_per_m3_out", self.removed_tn_kg_per_m3_out
         )
-        self.direct_ch4_kgco2e_per_m3_in = attributes.pop(
-            "direct_ch4_kgco2e_per_m3_in", self.direct_ch4_kgco2e_per_m3_in
+        self.direct_ch4_kgco2e_per_m3_out = attributes.pop(
+            "direct_ch4_kgco2e_per_m3_out", self.direct_ch4_kgco2e_per_m3_out
         )
-        self.direct_n2o_kgco2e_per_m3_in = attributes.pop(
-            "direct_n2o_kgco2e_per_m3_in", self.direct_n2o_kgco2e_per_m3_in
+        self.direct_n2o_kgco2e_per_m3_out = attributes.pop(
+            "direct_n2o_kgco2e_per_m3_out", self.direct_n2o_kgco2e_per_m3_out
         )
 
         # --------------------------------------------------------------
@@ -235,6 +243,7 @@ class CentralizedWWTP(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -254,62 +263,44 @@ class CentralizedWWTP(MIMO):
         self._validate_parameters()
 
         # --------------------------------------------------------------
-        # derived whole-plant electricity demand per m³ influent
-        # E_total = E_base + E_aer * BOD_removed + E_nit * TN_removed
-        # (Tchobanoglous et al. 2014; Nguyen et al. 2025)
+        # derived whole-plant electricity demand per m³ effluent
+        # E_total = E_base (SEC) + E_aer * BOD_removed + E_nit * TN_removed
+        # (Tchobanoglous et al., 2014 [1]; Nguyen et al., 2025 [3])
+        # feedwater ratio: m³ influent per m³ treated water output
         # --------------------------------------------------------------
-        self._electricity_per_m3_in = (
-            self.base_energy_kwh_per_m3_in
+        self._electricity_per_m3_out = (
+            self.specific_energy_consumption
             + self.aeration_energy_kwh_per_kg_bod_removed
-            * self.removed_bod_kg_per_m3_in
+            * self.removed_bod_kg_per_m3_out
             + self.nitrification_energy_kwh_per_kg_tn_removed
-            * self.removed_tn_kg_per_m3_in
+            * self.removed_tn_kg_per_m3_out
         )
+
+        self._feedwater_per_output = 1.0 / self.efficiency
 
         # --------------------------------------------------------------
         # conversion factors
-        # Normalization basis: 1 m³ influent wastewater (water_in_bus)
-        # electricity:  kWh per m³ influent
-        # water_in:     1.0 (reference flow)
-        # water_out:    water_recovery  [m³_out / m³_in]
-        # sludge_out:   sludge_yield    [m³_sludge / m³_in]
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
-        attributes[
-            f"conversion_factor_{self.electricity_bus.label}"
-        ] = sequence(self._electricity_per_m3_in)
-        attributes[
-            f"conversion_factor_{self.water_in_bus.label}"
-        ] = sequence(1.0)
-        attributes[
-            f"conversion_factor_{self.water_out_bus.label}"
-        ] = sequence(self.water_recovery)
-        attributes[
-            f"conversion_factor_{self.sludge_out_bus.label}"
-        ] = sequence(self.sludge_yield)
+        attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
+            self._electricity_per_m3_out
+        )
+        attributes[f"conversion_factor_{self.water_in_bus.label}"] = sequence(
+            self._feedwater_per_output
+        )
+        attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(1.0)
+        attributes[f"conversion_factor_{self.sludge_out_bus.label}"] = sequence(
+            self.sludge_yield
+        )
 
-        # --------------------------------------------------------------
-        # optional direct emissions conversion factors
-        # (Abbadi et al. 2025)
-        # --------------------------------------------------------------
         if self.ch4_emissions_bus is not None:
-            attributes[
-                f"conversion_factor_{self.ch4_emissions_bus.label}"
-            ] = sequence(self.direct_ch4_kgco2e_per_m3_in)
+            attributes[f"conversion_factor_{self.ch4_emissions_bus.label}"] = sequence(
+                self.direct_ch4_kgco2e_per_m3_out
+            )
 
         if self.n2o_emissions_bus is not None:
-            attributes[
-                f"conversion_factor_{self.n2o_emissions_bus.label}"
-            ] = sequence(self.direct_n2o_kgco2e_per_m3_in)
-
-        # --------------------------------------------------------------
-        # output-specific variable costs
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-        attributes.setdefault("output_parameters_1", {})
-
-        if self.sludge_disposal_cost != 0:
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.sludge_disposal_cost}
+            attributes[f"conversion_factor_{self.n2o_emissions_bus.label}"] = sequence(
+                self.direct_n2o_kgco2e_per_m3_out
             )
 
         # --------------------------------------------------------------
@@ -321,6 +312,8 @@ class CentralizedWWTP(MIMO):
             primary_label = self.water_in_bus.label
         elif self.primary == "sludge_out_bus":
             primary_label = self.sludge_out_bus.label
+        elif self.primary == "electricity_bus":
+            primary_label = self.electricity_bus.label
         else:
             primary_label = self.primary
 
@@ -347,6 +340,48 @@ class CentralizedWWTP(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.sludge_out_bus in self.outputs:
+            self.outputs[self.sludge_out_bus].variable_costs = sequence(
+                self.sludge_disposal_cost
+            )
+
+        if self.ch4_emissions_bus is not None and self.ch4_emissions_bus in self.outputs:
+            self.outputs[self.ch4_emissions_bus].variable_costs = sequence(
+                self.ch4_emissions_cost
+            )
+
+        if self.n2o_emissions_bus is not None and self.n2o_emissions_bus in self.outputs:
+            self.outputs[self.n2o_emissions_bus].variable_costs = sequence(
+                self.n2o_emissions_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -369,35 +404,35 @@ class CentralizedWWTP(MIMO):
 
     def _validate_parameters(self):
         # --- active physical parameters ---
-        if not 0 < self.water_recovery <= 1:
-            raise ValueError("water_recovery must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
 
         if self.sludge_yield < 0:
             raise ValueError("sludge_yield must be >= 0.")
 
         nonneg = {
-            "base_energy_kwh_per_m3_in": self.base_energy_kwh_per_m3_in,
+            "specific_energy_consumption": self.specific_energy_consumption,
             "aeration_energy_kwh_per_kg_bod_removed": self.aeration_energy_kwh_per_kg_bod_removed,
-            "removed_bod_kg_per_m3_in": self.removed_bod_kg_per_m3_in,
+            "removed_bod_kg_per_m3_out": self.removed_bod_kg_per_m3_out,
             "nitrification_energy_kwh_per_kg_tn_removed": self.nitrification_energy_kwh_per_kg_tn_removed,
-            "removed_tn_kg_per_m3_in": self.removed_tn_kg_per_m3_in,
-            "direct_ch4_kgco2e_per_m3_in": self.direct_ch4_kgco2e_per_m3_in,
-            "direct_n2o_kgco2e_per_m3_in": self.direct_n2o_kgco2e_per_m3_in,
+            "removed_tn_kg_per_m3_out": self.removed_tn_kg_per_m3_out,
+            "direct_ch4_kgco2e_per_m3_out": self.direct_ch4_kgco2e_per_m3_out,
+            "direct_n2o_kgco2e_per_m3_out": self.direct_n2o_kgco2e_per_m3_out,
         }
         for name, value in nonneg.items():
             if value < 0:
                 raise ValueError(f"{name} must be >= 0.")
 
         # --- warn if emissions bus is set but factor is zero ---
-        if self.ch4_emissions_bus is not None and self.direct_ch4_kgco2e_per_m3_in == 0:
+        if self.ch4_emissions_bus is not None and self.direct_ch4_kgco2e_per_m3_out == 0:
             warnings.warn(
-                "ch4_emissions_bus is set but direct_ch4_kgco2e_per_m3_in is 0. "
+                "ch4_emissions_bus is set but direct_ch4_kgco2e_per_m3_out is 0. "
                 "The CH4 emission output will always be zero.",
                 UserWarning,
             )
-        if self.n2o_emissions_bus is not None and self.direct_n2o_kgco2e_per_m3_in == 0:
+        if self.n2o_emissions_bus is not None and self.direct_n2o_kgco2e_per_m3_out == 0:
             warnings.warn(
-                "n2o_emissions_bus is set but direct_n2o_kgco2e_per_m3_in is 0. "
+                "n2o_emissions_bus is set but direct_n2o_kgco2e_per_m3_out is 0. "
                 "The N2O emission output will always be zero.",
                 UserWarning,
             )
