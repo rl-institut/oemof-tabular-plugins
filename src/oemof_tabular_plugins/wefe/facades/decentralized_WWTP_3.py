@@ -21,28 +21,40 @@ class DecentralizedWWTP(MIMO):
 
     Core references
     ---------------
-    1. Metcalf & Eddy, Wastewater Engineering: Treatment and Resource Recovery
-       (5th ed., 2014): core process design equations, influent characterization,
-       hydraulic and organic loading standards.
-    2. von Sperling et al., Sludge Treatment and Disposal, Biological Wastewater
-       Treatment Series Vol. 6 (IWA, 2007): solids mass balance, sludge yield
-       equations, dewatering and volume-mass relationships.
-    3. USEPA Onsite Wastewater Treatment Systems Manual, EPA/625/R-00/008 (2002):
-       decentralized system sizing, hydraulic design, treatment performance
-       standards, and siting constraints.
-    4. ATV-DVWK-A 131E, Dimensioning of Single-Stage Activated Sludge Plants
-       (2000): European design standards, F/M ratios, oxygen transfer, and
-       sludge production factors.
-    5. Nature Reviews Water (2024), "Using water and wastewater decentralization
-       to enhance the resilience and sustainability of cities": resource recovery
-       framing, sustainability metrics, biogas and nutrient reuse pathways.
+    1. Standard mass-balance equations, per-capita wastewater generation rates (154–246 L/capita·day) used to convert
+       sludge-volume data into m³/m³ terms, and general influent characterization/removal-performance context.
+       Metcalf & Eddy, Inc., Tchobanoglous, G., Stensel, H. F., Tsuchihashi, R., & Burton, F. L. (2014). Wastewater
+       engineering: Treatment and resource recovery (5th ed.). McGraw-Hill Education.
+    2. Sludge volume production by treatment process (L/inhabitant·day), Table 2.1 — primary basis for sludge_specific_production.
+       von Sperling, M., Andreoli, C. V., & Fernandes, F. (2007). Sludge treatment and disposal
+       (Biological Wastewater Treatment Series, Vol. 6). IWA Publishing.
+       https://kh.aquaenergyexpo.com/wp-content/uploads/2022/07/Sludge-Treatment-and-Disposal.pdf
+    3. Removal-efficiency targets (COD, BOD, TN, TP) tied to the EU Urban Wastewater Treatment Directive;
+       F/M ratios, oxygen transfer, and sludge production factors for single-stage activated sludge design.
+       Normative Committee for Wastewater, Sludge and Waste Management (ATV-DVWK). (2000). ATV-DVWK-A 131E: Dimensioning
+       of single-stage activated sludge plants. GFA-Gesellschaft zur Förderung der Abwassertechnik.
+       https://kh.aquaenergyexpo.com/wp-content/uploads/2022/11/Dimensioning-of-Single-Stage-Activated-Sludge-Plants.pdf
+    4. Septic tank and ABR design as gravity-fed/passive systems requiring no external energy input under normal operation.
+       Sasse, L. (1998). DEWATS: Decentralized wastewater treatment in developing countries.
+       Bremen Overseas Research and Development Association (BORDA).
+       https://sswm.info/sites/default/files/reference_attachments/SASSE%201998%20DEWATS%20Decentralised%20Wastewater%20Treatment%20in%20Developing%20Countries_0.pdf
+    5. Measured specific energy consumption (kWh/m³) from 8 real small-community plants (60–4,400 m³/d): extended aeration
+       2.8 kWh/m³, MBR 6.6 kWh/m³, SBR 8.6–11.3 kWh/m³ — basis for generic_decentralized, mbr, and sbr energy defaults and ranges.
+       Hamza, R., Hamoda, M. F., & Elassar, M. (2022). Energy and reliability analysis of wastewater treatment plants in
+       small communities in Ontario. Water Science and Technology, 85(6), 1824–1839. https://doi.org/10.2166/wst.2022.093
+    6. Pilot-scale decentralized MBBR greywater treatment, measured power consumption 0.09–0.25 kWh/m³
+       — basis for the mbbr energy default and range.
+       Al Hosani, N., Fathelrahman, E., Ahmed, H., & Rikabi, E. (2022). Moving bed biofilm reactor (MBBR) for decentralized
+       grey water treatment: Technical, ecological and cost efficiency comparison for domestic applications.
+       Emirates Journal of Food and Agriculture, 34(9), 731–742.
+       https://research.uaeu.ac.ae/en/publications/moving-bed-biofilm-reactor-mbbr-for-decentralized-grey-water-trea/
 
     Main equations
     --------------
     All flows normalized to treated water output = 1 [m³/hr]:
 
     Feedwater input:
-        Q_in(t) = Q_out(t) / hydraulic_recovery         [m³/hr]
+        Q_in(t) = Q_out(t) / efficiency                  [m³/hr]
 
     Electricity input:
         E(t)    = SEC * Q_out(t)                         [kWh/hr]
@@ -51,8 +63,6 @@ class DecentralizedWWTP(MIMO):
     Sludge output (explicit solids-based factor, not hydraulic residual):
         S(t)    = SSP * Q_out(t)                         [m³ sludge/hr]
         where SSP = sludge_specific_production           [m³ sludge / m³ treated]
-        Note: set SSP = (1 / hydraulic_recovery) - 1 to reproduce
-        the v2.0 hydraulic-residual sludge behavior.
 
     Optional chemical input:
         C(t)    = CSC * Q_out(t)                         [unit chemical/hr]
@@ -68,20 +78,15 @@ class DecentralizedWWTP(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated water output of the unit, representing the design hydraulic
-      capacity of the treatment plant.
-    - Sludge is modeled via an explicit specific production factor (von Sperling),
-      independent of hydraulic recovery. This separates solids generation from
-      hydraulic throughput, which is more defensible against process-design
-      textbooks than a hydraulic-residual formulation.
-    - Influent quality and removal-efficiency fields are stored as metadata for
-      scenario documentation and plausibility checks. They are not enforced as
-      hard optimization constraints in v3.0.
-    - All optional side streams (chemical, biogas, nutrient) are linear and
-      normalized to treated water output, preserving full MIMO compatibility.
-    - No input grouping is applied; each bus occupies its own MIMO group.
-      MIMO's _unify_groups handles this automatically.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated water output, representing the design
+      hydraulic capacity of the treatment plant.
+    - Sludge is modeled via an explicit specific production factor (von Sperling), independent of hydraulic recovery.
+      This separates solids generation from hydraulic throughput.
+    - Influent quality and removal-efficiency fields are stored as metadata for scenario documentation and plausibility
+      checks. They are not enforced as hard optimization constraints.
+    - All optional side streams (chemical, biogas, nutrient) are linear and normalized to treated water output,
+      preserving full MIMO compatibility.
+    - No input grouping is applied; each bus occupies its own MIMO group. MIMO's _unify_groups handles this automatically.
     """
 
     # ------------------------------------------------------------------
@@ -124,9 +129,9 @@ class DecentralizedWWTP(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.35   # kWh / m³ treated water
-    hydraulic_recovery: float = 0.85            # m³ treated / m³ influent
-    sludge_specific_production: float = 0.05    # m³ sludge / m³ treated
+    specific_energy_consumption: float = 2.8    # kWh / m³ treated water [Hamza]
+    efficiency: float = 0.975                   # m³ treated / m³ influent (hydraulic recovery)[Metcalf & Eddy, von Sperling]
+    sludge_specific_production: float = 0.025   # m³ sludge / m³ treated [Metcalf & Eddy, von Sperling]
     chemical_specific_consumption: float = 0.0  # unit chemical / m³ treated
     biogas_specific_yield: float = 0.0          # m³ biogas / m³ treated
     nutrient_specific_yield: float = 0.0        # unit nutrient / m³ treated
@@ -134,12 +139,12 @@ class DecentralizedWWTP(MIMO):
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0          # €/m³ treated water
-    carrier_cost: float = 0.0           # €/kWh electricity
-    sludge_disposal_cost: float = 0.0   # €/m³ sludge
-    chemical_cost: float = 0.0          # €/unit chemical
-    biogas_revenue: float = 0.0         # €/m³ biogas  (applied as negative cost)
-    nutrient_revenue: float = 0.0       # €/unit nutrient product (negative cost)
+    marginal_cost: float = 0.0          # USD/m³ treated water
+    carrier_cost: float = 0.0           # USD/kWh influent water
+    sludge_disposal_cost: float = 0.0   # USD/m³ sludge
+    chemical_cost: float = 0.0          # USD/unit chemical
+    biogas_revenue: float = 0.0         # USD/m³ biogas  (applied as negative cost)
+    nutrient_revenue: float = 0.0       # USD/unit nutrient product (negative cost)
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -149,8 +154,8 @@ class DecentralizedWWTP(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Metcalf & Eddy (2014) / EPA (2002) style characterization fields
+    # documentation / calibration defaults (not hard constraints)
+    # Based on Metcalf & Eddy (2014) / Sasse (1998) / ATV-DVWK-A 131E (2000)
     # ------------------------------------------------------------------
     process_type: str = "generic_decentralized"
     quality_class: str = ""
@@ -192,8 +197,8 @@ class DecentralizedWWTP(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.hydraulic_recovery = attributes.pop(
-            "hydraulic_recovery", self.hydraulic_recovery
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
         self.sludge_specific_production = attributes.pop(
             "sludge_specific_production", self.sludge_specific_production
@@ -229,6 +234,7 @@ class DecentralizedWWTP(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -257,7 +263,7 @@ class DecentralizedWWTP(MIMO):
         # derived constants
         # feedwater ratio: m³ influent per m³ treated water output
         # --------------------------------------------------------------
-        self._feedwater_per_output = 1.0 / self.hydraulic_recovery
+        self._feedwater_per_output = 1.0 / self.efficiency
 
         # --------------------------------------------------------------
         # conversion factors
@@ -267,11 +273,11 @@ class DecentralizedWWTP(MIMO):
             self.specific_energy_consumption  # kWh/m³ — electricity per treated water
         )
         attributes[f"conversion_factor_{self.water_in_bus.label}"] = sequence(
-            self._feedwater_per_output  # m³/m³  — influent per treated water
+            self._feedwater_per_output  # m³/m³ — influent per treated water
         )
         attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(1.0)
         attributes[f"conversion_factor_{self.sludge_out_bus.label}"] = sequence(
-            self.sludge_specific_production  # m³/m³  — sludge per treated water
+            self.sludge_specific_production  # m³/m³ — sludge per treated water
         )
 
         if self.chemical_bus is not None:
@@ -290,41 +296,14 @@ class DecentralizedWWTP(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/revenue
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters_1", {})
-        if self.sludge_disposal_cost != 0:
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.sludge_disposal_cost}
-            )
-
-        if self.chemical_bus is not None and self.chemical_cost != 0:
-            attributes.setdefault("input_parameters_2", {})
-            attributes["input_parameters_2"].update(
-                {"variable_costs": self.chemical_cost}
-            )
-
-        if self.biogas_out_bus is not None and self.biogas_revenue != 0:
-            attributes.setdefault("output_parameters_2", {})
-            attributes["output_parameters_2"].update(
-                {"variable_costs": -abs(self.biogas_revenue)}
-            )
-        # index shifts by 1 if biogas_out_bus is also present
-        if self.nutrient_out_bus is not None and self.nutrient_revenue != 0:
-            nutrient_idx = 3 if self.biogas_out_bus is not None else 2
-            nutrient_key = f"output_parameters_{nutrient_idx}"
-            attributes.setdefault(nutrient_key, {})
-            attributes[nutrient_key].update(
-                {"variable_costs": -abs(self.nutrient_revenue)}
-            )
-
-        # --------------------------------------------------------------
         # primary bus label resolution
         # --------------------------------------------------------------
         if self.primary == "water_out_bus":
             primary_label = self.water_out_bus.label
         elif self.primary == "water_in_bus":
             primary_label = self.water_in_bus.label
+        elif self.primary == "sludge_out_bus":
+            primary_label = self.sludge_out_bus.label
         elif self.primary == "electricity_bus":
             primary_label = self.electricity_bus.label
         else:
@@ -353,6 +332,53 @@ class DecentralizedWWTP(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.chemical_bus is not None and self.chemical_bus in self.inputs:
+            self.inputs[self.chemical_bus].variable_costs = sequence(
+                self.chemical_cost
+            )
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.sludge_out_bus in self.outputs:
+            self.outputs[self.sludge_out_bus].variable_costs = sequence(
+                self.sludge_disposal_cost
+            )
+
+        if self.biogas_out_bus is not None and self.biogas_out_bus in self.outputs:
+            self.outputs[self.biogas_out_bus].variable_costs = sequence(
+                -abs(self.biogas_revenue)
+            )
+
+        if self.nutrient_out_bus is not None and self.nutrient_out_bus in self.outputs:
+            self.outputs[self.nutrient_out_bus].variable_costs = sequence(
+                -abs(self.nutrient_revenue)
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -376,8 +402,8 @@ class DecentralizedWWTP(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.hydraulic_recovery <= 1:
-            raise ValueError("hydraulic_recovery must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
         if self.specific_energy_consumption < 0:
             raise ValueError("specific_energy_consumption must be >= 0.")
         if self.sludge_specific_production < 0:
@@ -432,38 +458,38 @@ class DecentralizedWWTP(MIMO):
 
         # ----------------------------------------------------------
         # process-type plausibility checks (soft warnings, not hard failures)
-        # Ranges from Metcalf & Eddy (2014), ATV-DVWK (2000), EPA (2002)
+        # Ranges from Sasse (1998), von Sperling (2007), Hamza (2022)
         # ----------------------------------------------------------
         _ranges = {
             "generic_decentralized": {
-                "hydraulic_recovery": (0.70, 0.98),
-                "specific_energy_consumption": (0.05, 1.50),
-                "sludge_specific_production": (0.00, 0.20),
+                "efficiency": (0.97, 0.995),
+                "specific_energy_consumption": (1.50, 4.00),
+                "sludge_specific_production": (0.013, 0.036),
             },
             "septic": {
-                "hydraulic_recovery": (0.80, 0.98),
-                "specific_energy_consumption": (0.00, 0.10),
-                "sludge_specific_production": (0.005, 0.08),
+                "efficiency": (0.97, 0.995),
+                "specific_energy_consumption": (0.00, 0.05),
+                "sludge_specific_production": (0.01, 0.06),
             },
             "abr": {
-                "hydraulic_recovery": (0.80, 0.98),
-                "specific_energy_consumption": (0.00, 0.15),
-                "sludge_specific_production": (0.005, 0.08),
+                "efficiency": (0.97, 0.995),
+                "specific_energy_consumption": (0.00, 0.05),
+                "sludge_specific_production": (0.01, 0.06),
             },
             "mbbr": {
-                "hydraulic_recovery": (0.80, 0.98),
-                "specific_energy_consumption": (0.15, 0.80),
-                "sludge_specific_production": (0.01, 0.12),
+                "efficiency": (0.97, 0.995),
+                "specific_energy_consumption": (0.05, 0.30),
+                "sludge_specific_production": (0.015, 0.04),
             },
             "sbr": {
-                "hydraulic_recovery": (0.80, 0.98),
-                "specific_energy_consumption": (0.20, 1.20),
-                "sludge_specific_production": (0.02, 0.15),
+                "efficiency": (0.97, 0.995),
+                "specific_energy_consumption": (7.00, 12.00),
+                "sludge_specific_production": (0.013, 0.036),
             },
             "mbr": {
-                "hydraulic_recovery": (0.85, 0.99),
-                "specific_energy_consumption": (0.30, 1.50),
-                "sludge_specific_production": (0.02, 0.15),
+                "efficiency": (0.97, 0.995),
+                "specific_energy_consumption": (1.00, 8.00),
+                "sludge_specific_production": (0.01, 0.03),
             },
         }
 
@@ -477,7 +503,7 @@ class DecentralizedWWTP(MIMO):
 
         checks = _ranges[self.process_type]
         for param, attr in [
-            ("hydraulic_recovery", self.hydraulic_recovery),
+            ("efficiency", self.efficiency),
             ("specific_energy_consumption", self.specific_energy_consumption),
             ("sludge_specific_production", self.sludge_specific_production),
         ]:
