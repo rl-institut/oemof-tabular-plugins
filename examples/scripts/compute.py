@@ -75,7 +75,8 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    "aiwa_24"
+    "simple_biomass_digester",
+    #"aiwa_24"
     # "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
@@ -102,7 +103,7 @@ custom_attributes = [
     "annuity"
 ]
 # set whether the multi-objective optimization should be performed
-moo = True
+moo = False
 
 # MOO weight factors
 # Assign weights to the different minimization objectives (cost, greenhouse gas emissions,
