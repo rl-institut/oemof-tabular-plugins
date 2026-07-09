@@ -24,7 +24,7 @@ class Digester(Converter, Facade):
     rawbiogas_bus: oemof.solph.Bus
         An oemof bus instance where the unit is connected to with
         its rawbiogas output.
-    rawbiogas_efficiency: float
+    efficiency: float
         Conversion efficiency from biomass to rawbiogas (e.g., energy or mass ratio).
         Default: 0.25
     capacity: numeric
@@ -62,9 +62,7 @@ class Digester(Converter, Facade):
 
     carrier: str = ""
 
-    rawbiogas_efficiency: float = 0.25
-
-    digestate_efficiency: float = 0.75
+    efficiency: float = 0.25 # rawbiogas efficiency
 
     capacity: float = None
 
@@ -97,10 +95,8 @@ class Digester(Converter, Facade):
         self.conversion_factors.update(
             {
                 self.biomass_bus: sequence(1),
-                self.rawbiogas_bus: sequence(self.rawbiogas_efficiency),
-                self.digestate_bus: sequence(
-                    self.digestate_efficiency
-                ),
+                self.rawbiogas_bus: sequence(self.efficiency),
+                self.digestate_bus: sequence(1-(self.efficiency)),
             }
         )
 

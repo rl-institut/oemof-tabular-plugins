@@ -75,11 +75,11 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    "simple_biomass_digester",
     #"aiwa_24"
     # "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
+    "test_niyi"
 ]
 # Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;
 # this parameter is needed to calculate the regionalized water scarcity footprint in moo.

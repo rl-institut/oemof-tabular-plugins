@@ -1,2 +1,0 @@
-name;type;biomass_bus;biogas_bus;digestate_bus;tech;biogas_efficiency;digestate_efficiency;capacity
-digester_1;digester;biomass-bus;biogas-bus;digestate-bus;AD;0.25;0.75;100

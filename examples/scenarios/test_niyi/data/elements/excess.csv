@@ -1,0 +1,3 @@
+name;type;bus;marginal_cost;resource_cost;ghg_emission_factor;water_consumption_factor;indirect_water_consumption_factor;verbose_name;output_parameters
+rawbiogas-excess;excess;rawbiogas-bus;0.0;0.0;0.0;0.0;0.0;Excess Raw Biogas;"{""custom_attributes"": {""ghg_emission_factor"": 0.0, ""water_consumption_factor"": 0.0, ""resource_cost"": 0.0}}"
+digestate-excess;excess;digestate-bus;0.0;0.0;0.0;0.0;0.0;Excess Digestate;"{""custom_attributes"": {""ghg_emission_factor"": 0.0, ""water_consumption_factor"": 0.0, ""resource_cost"": 0.0}}"

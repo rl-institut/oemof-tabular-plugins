@@ -1,3 +1,0 @@
-name;type;bus;carrier;tech;flow_nominal_capacity;profile
-biogas_demand;sink;biogas-bus;biogas;demand;1;biogas_demand.fix
-digestate_demand;sink;digestate-bus;digestate;demand;1;digestate_demand.fix
