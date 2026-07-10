@@ -4,6 +4,7 @@ from oemof.solph import EnergySystem, Model
 from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
 
+
 # TODO this should be with from oemof.tabular.datapackage import building when https://github.com/oemof/oemof-tabular/pull/173 is merged
 from oemof_tabular_plugins.script import compute_scenario
 
@@ -79,7 +80,7 @@ scenarios = [
     # "aiwa_8760"
     # "arusi_8760"
     # "arusi_24"
-    "test_niyi"
+   "test_niyi_chp"
 ]
 # Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;
 # this parameter is needed to calculate the regionalized water scarcity footprint in moo.
@@ -136,6 +137,7 @@ for scenario in scenarios:
         dash_app=True,
         parameters_units=parameters_units,
         skip_infer_datapackage_metadata=True
+
     )
     df = calculator.df_results
     print(df)

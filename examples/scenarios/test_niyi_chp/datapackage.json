@@ -1,8 +1,98 @@
 {
     "profile": "tabular-data-package",
-    "name": "test_niyi",
+    "name": "test_niyi_chp",
     "oemof_tabular_version": "0.0.6dev",
     "resources": [
+        {
+            "path": "data/sequences/profiles.csv",
+            "profile": "tabular-data-resource",
+            "name": "profiles",
+            "format": "csv",
+            "mediatype": "text/csv",
+            "encoding": "utf-8",
+            "schema": {
+                "fields": [
+                    {
+                        "name": "human-urine-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "human-feces-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "animal-urine-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "animal-feces-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "household-grey-water-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "air-temperature-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "ghi-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "groundwater-recharge",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "service-water-demand-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "electricity-load-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "drinking-water-demand",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "cf-aware-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "electricity-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "heat-profile",
+                        "type": "number",
+                        "format": "default"
+                    },
+                    {
+                        "name": "timeindex",
+                        "type": "datetime",
+                        "format": "default"
+                    }
+                ],
+                "missingValues": [
+                    ""
+                ]
+            }
+        },
         {
             "path": "data/elements/bus.csv",
             "profile": "tabular-data-resource",
@@ -51,9 +141,9 @@
             }
         },
         {
-            "path": "data/elements/digester.csv",
+            "path": "data/elements/chp.csv",
             "profile": "tabular-data-resource",
-            "name": "digester",
+            "name": "chp",
             "format": "csv",
             "mediatype": "text/csv",
             "encoding": "utf-8",
@@ -185,6 +275,27 @@
                 ],
                 "primaryKey": "name",
                 "foreignKeys": [
+                    {
+                        "fields": "electricity_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "fuel_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
+                    {
+                        "fields": "heat_bus",
+                        "reference": {
+                            "resource": "bus",
+                            "fields": "name"
+                        }
+                    },
                     {
                         "fields": "biomass_bus",
                         "reference": {
@@ -438,91 +549,6 @@
                             "fields": "name"
                         }
                     }
-                ]
-            }
-        },
-        {
-            "path": "data/sequences/profiles.csv",
-            "profile": "tabular-data-resource",
-            "name": "profiles",
-            "format": "csv",
-            "mediatype": "text/csv",
-            "encoding": "utf-8",
-            "schema": {
-                "fields": [
-                    {
-                        "name": "human-urine-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "human-feces-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "animal-urine-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "animal-feces-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "household-grey-water-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "air-temperature-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "ghi-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "groundwater-recharge",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "service-water-demand-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "electricity-load-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "drinking-water-demand",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "cf-aware-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "raw-biogas-profile",
-                        "type": "number",
-                        "format": "default"
-                    },
-                    {
-                        "name": "timeindex",
-                        "type": "datetime",
-                        "format": "default"
-                    }
-                ],
-                "missingValues": [
-                    ""
                 ]
             }
         }

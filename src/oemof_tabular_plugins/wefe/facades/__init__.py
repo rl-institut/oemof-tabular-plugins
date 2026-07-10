@@ -46,4 +46,4 @@ from .open_field import OpenField
 from .water_pre_treatment import WaterPreTreatment
 from .water_core_treatment import WaterCoreTreatment
 from .water_post_treatment import WaterPostTreatment
-from .digester import Digester
+from .chp import Chp
