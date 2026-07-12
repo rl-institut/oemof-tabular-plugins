@@ -21,21 +21,36 @@ class ConstructedWetland(MIMO):
 
     Core references
     ---------------
-    1. EPA Manual: Constructed Wetlands Treatment of Municipal Wastewaters —
-       core process concept, wetland types, treatment mechanisms, and
-       performance/modelling boundaries.
-    2. EPA/NRCS Handbook of Constructed Wetlands — design-level fields and
-       hydraulic design variables (HRT, HLR, hydrology, substrate, vegetation).
-    3. Rahman et al. (2020): Design, Operation and Optimization of Constructed
-       Wetland for Removal of Pollutant — parameter selection and validation
-       logic for v3.0 fields.
-    4. Meta-analysis review for pilot and large-scale CWs (2024) — evidence-
-       backed design envelopes, performance ranges, and "what to leave out".
+    1. Core process concept, wetland types, treatment mechanisms, and performance/modelling boundaries.
+       Brown, D. S., Kreissl, J. F., Gearhart, R. A., et al. (2000). Constructed wetlands treatment of municipal wastewaters
+       (EPA/625/R-99/010). U.S. Environmental Protection Agency, Office of Research and Development.
+       https://nepis.epa.gov/Exe/ZyNET.exe/30004TBD.txt?Client=EPA&Index=1995%20Thru%201999
+    2. Design-level fields and hydraulic design variables (HRT, HLR, hydrology, substrate, vegetation, water balance).
+       Davis, L. (1995). A handbook of constructed wetlands: A guide to creating wetlands for agricultural wastewater,
+       domestic wastewater, coal mine drainage, stormwater in the Mid-Atlantic region. USDA Natural Resources Conservation
+       Service & U.S. EPA Region III. https://www.epa.gov/sites/default/files/2015-10/documents/constructed-wetlands-handbook.pdf.
+    3. Parameter selection and validation logic for design-level fields, including macrophyte species selection tied to
+       pollutant-removal performance.
+       Rahman, M. E., Bin Halmi, M. I. E., Bin Abd Samad, M. Y., Uddin, M. K., Mahmud, K., Abd Shukor, M. Y., Sheikh
+       Abdullah, S. R., & Shamsuzzaman, S. M. (2020). Design, operation and optimization of constructed wetland for removal
+       of pollutant. International Journal of Environmental Research and Public Health, 17(22), 8339.
+       https://doi.org/10.3390/ijerph17228339
+    4. Evidence-backed design envelopes and performance ranges from a quantitative meta-analysis of 55 studies / 163 real
+       pilot and full-scale systems (bootstrap confidence intervals on HLR, HRT, and removal performance).
+       Lam, V. S., Tran, T. C. P., Vo, T. D., Nguyen, D. D., & Nguyen, X. C. (2024). Meta-analysis review for pilot and
+       large-scale constructed wetlands: Design parameters, treatment performance, and influencing factors. The Science
+       of the total environment, 927, 172140. https://doi.org/10.1016/j.scitotenv.2024.172140
+    5. Measured direct CH4/N2O and other gaseous emission factors from a systematic review and meta-analysis of constructed wetland studies.
+       Hu, S., Zhu, H., Bañuelos, G., Shutes, B., Wang, X., Hou, S., & Yan, B. (2023). Factors influencing gaseous
+       emissions in constructed wetlands: A meta-analysis and systematic review. International Journal of Environmental
+       Research and Public Health, 20(5), 3876. https://doi.org/10.3390/ijerph20053876
 
     Main equations
     --------------
+    All flows normalized to treated water output = 1 [m³/hr]:
+
     Core water recovery:
-        water_in(t) = water_out(t) / recovery_rate
+        water_in(t) = water_out(t) / efficiency
         [m³/hr]       [m³/hr]         [-]
 
     Electricity demand:
@@ -54,22 +69,12 @@ class ConstructedWetland(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr] by default. Capacity constrains
-      the maximum treated water throughput of the unit.
-    - No explicit MIMO groups are defined. Each bus forms its own auto-group,
-      preserving exact v1.0-style proportional coupling.
-    - Hydraulic design variables (HLR, HRT, water depth, substrate, vegetation,
-      wetland type) are stored as documentation/validation fields. They are not
-      enforced as hard optimization constraints in v3.0.
-    - specific_energy_consumption defaults to 0.07 kWh/m³ for pumped systems.
-      Set to 0.0 for gravity-fed configurations.
-    - Exact v1.0-equivalence holds only when all optional buses are None.
-    - If an optional output bus is provided, its corresponding factor must be
-      > 0. A factor of 0 with an active bus causes division-by-zero in the
-      MIMO group-flow equations.
-    - CH4 and N2O are modelled as proportional outputs via conversion_factor,
-      coupled to the main activity chain. Their factors must be > 0 when
-      the corresponding bus is active (enforced in _validate_parameters).
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated water throughput of the unit.
+    - Hydraulic design variables (HLR, HRT, water depth, substrate, vegetation, wetland type) are stored as documentation
+      /validation fields. They are not enforced as hard optimization constraints.
+    - specific_energy_consumption defaults to 0.07 kWh/m³ for pumped systems. Set to 0.0 for gravity-fed configurations.
+    - CH4 and N2O are modelled as proportional outputs via conversion_factor, coupled to the main activity chain.
+      Their factors must be > 0 when the corresponding bus is active (enforced in _validate_parameters).
     """
 
     # ------------------------------------------------------------------
@@ -113,18 +118,18 @@ class ConstructedWetland(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    recovery_rate: float = 0.90                 # treated water / influent water
-    specific_energy_consumption: float = 0.07   # kWh / m³ treated water
-    water_loss_fraction: float = 0.0            # m³ water loss / m³ treated water
-    biomass_yield_factor: float = 0.0           # kg biomass / m³ treated water
-    ch4_emission_factor: float = 0.0            # kgCO2e CH4 / m³ treated water
-    n2o_emission_factor: float = 0.0            # kgCO2e N2O / m³ treated water
+    efficiency: float = 0.90                    # m³ treated water / m³ influent water (recovery rate) [1, 3]
+    specific_energy_consumption: float = 0.07   # kWh / m³ treated water ; 0.0 for passive gravity flow [1, 4]
+    water_loss_fraction: float = 0.0            # m³ water loss / m³ treated water [2, 3]
+    biomass_yield_factor: float = 0.0           # kg biomass / m³ treated water [3, 4]
+    ch4_emission_factor: float = 0.0            # kgCO2e CH4 / m³ treated water [5]
+    n2o_emission_factor: float = 0.0            # kgCO2e N2O / m³ treated water [5]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0              # €/m³ treated water
-    carrier_cost: float = 0.0               # €/kWh electricity
+    marginal_cost: float = 0.0              # USD/m³ treated water
+    carrier_cost: float = 0.0               # USD/m³ grey water
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -134,17 +139,18 @@ class ConstructedWetland(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / validation fields (not hard constraints in v3.0)
+    # documentation / validation fields (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    wetland_type: str = "subsurface_horizontal"         # free_water_surface | subsurface_horizontal | subsurface_vertical | hybrid
-    hydraulic_loading_rate: Optional[float] = None      # m³/m²/day — design check only
-    hydraulic_retention_time: Optional[float] = None    # days — design check only
-    water_depth: Optional[float] = None                 # m — design check only
-    substrate_type: str = ""                            # e.g. gravel, sand, zeolite
-    vegetation_type: str = ""                           # e.g. Phragmites australis
-    pretreatment_required: bool = True                  # safeguard against solids clogging
-    climate_zone_note: str = ""                         # seasonal sensitivity documentation
-    clogging_risk_note: str = ""                        # operational risk
+    wetland_type: str = "subsurface_horizontal"         # free_water_surface | subsurface_horizontal | subsurface_vertical | hybrid [1, 2]
+    hydraulic_loading_rate: Optional[float] = None      # m³/m²/day — design check only [2, 3]
+    hydraulic_retention_time: Optional[float] = None    # days — design check only [2, 3]
+    water_depth: Optional[float] = None                 # m — design check only [2]
+    substrate_type: str = ""                            # e.g. gravel, sand, zeolite [2]
+    vegetation_type: str = ""                           # e.g. Phragmites australis [2]
+    pretreatment_required: bool = True                  # safeguard against solids clogging [1]
+    climate_zone_note: str = ""                         # seasonal sensitivity documentation [4]
+    clogging_risk_note: str = ""                        # operational risk [3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -177,8 +183,8 @@ class ConstructedWetland(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.recovery_rate = attributes.pop(
-            "recovery_rate", self.recovery_rate
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
 
         self.water_loss_fraction = attributes.pop(
@@ -216,6 +222,7 @@ class ConstructedWetland(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / validation fields
@@ -249,7 +256,7 @@ class ConstructedWetland(MIMO):
         # derived conversion quantities
         # feedwater ratio: m³ influent per m³ treated water output
         # --------------------------------------------------------------
-        self._feedwater_per_output = 1.0 / self.recovery_rate
+        self._feedwater_per_output = 1.0 / self.efficiency
 
         # --------------------------------------------------------------
         # conversion factors
@@ -289,11 +296,6 @@ class ConstructedWetland(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-
-        # --------------------------------------------------------------
         # primary bus label resolution
         # --------------------------------------------------------------
         if self.primary == "water_out_bus":
@@ -326,6 +328,33 @@ class ConstructedWetland(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
 
     def _optional_bus_kwargs(self):
         kwargs = {}
@@ -361,8 +390,8 @@ class ConstructedWetland(MIMO):
                 f"wetland_type must be one of {sorted(valid_wetland_types)}."
             )
 
-        if not 0 < self.recovery_rate <= 1:
-            raise ValueError("recovery_rate must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
 
         if self.specific_energy_consumption < 0:
             raise ValueError("specific_energy_consumption must be >= 0.")

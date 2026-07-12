@@ -46,6 +46,8 @@ class WaterReuseSystem(MIMO):
 
     Main equations
     --------------
+    All flows normalized to treated water output = 1 [m³/hr]:
+
     Feedwater input per unit treated water:
         f_feed(t) = f_product(t) / efficiency
         [m³/hr]     [m³/hr]        [-]
@@ -231,6 +233,7 @@ class WaterReuseSystem(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
