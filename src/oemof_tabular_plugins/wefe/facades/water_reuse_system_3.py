@@ -21,29 +21,37 @@ class WaterReuseSystem(MIMO):
 
     Core references
     ---------------
-    1. AWWA M62 — Membrane Processes for Water Reuse (2020):
-       treatment train design, SEC ranges (0.3–1.5 kWh/m³), recovery
-       operating envelope (70–85%), and fouling impact on capacity.
-    2. DuPont RO Operations Advisor User Manual:
-       operating limits (recovery ≤ 80%), fouling effects on flux and SEC,
-       cleaning frequency and maintenance realism.
-    3. Kehrein et al. (2021), Water Reuse:
-       reuse-target differentiation (potable / industrial / agricultural),
-       SEC by application, and concentrate / brine management costs.
-    4. Tang et al. (2018), Environmental Science & Technology:
-       advanced membrane reuse energy fundamentals, fouling–energy coupling,
-       and RO as standard technology for advanced reuse trains.
-    5. Potable water reuse energy modeling review (2021):
-       train-level SEC abstraction and energy-recovery feasibility.
+    1. Recovery-ratio operating envelope (70-85%), gross specific energy consumption range (0.3-1.5 kWh/m3), and
+       fouling's impact on achievable capacity for membrane-based water reuse trains.
+       American Water Works Association. (2018). M62: Membrane applications for water reuse. American Water Works Association.
+       https://store.awwa.org/M62-Membrane-Applications-for-Water-Reuse
+    2. Operating limits (recovery <=80%), fouling effects on flux and specific energy consumption, and
+       cleaning-frequency/maintenance realism for RO trains in continuous operation.
+       DuPont Water Solutions. (n.d.). RO Operations Advisor [Online platform and user documentation]. DuPont de Nemours, Inc.
+       https://www.dupont.com/water/resources/ro-operations-advisor.html
+    3. Reuse-target differentiation (potable / industrial / agricultural), techno-economic comparison of specific energy
+       consumption and net cost by reuse application, and concentrate/brine management cost framing.
+       Kehrein, P., Jafari, M., Slagt, M., Cornelissen, E., Osseweijer, P., Posada, J., & van Loosdrecht, M. (2021).
+       A techno-economic analysis of membrane-based advanced treatment processes for the reuse of municipal
+       wastewater. Water Reuse, 11(4), 705-725. https://doi.org/10.2166/wrd.2021.016
+    4. Advanced membrane reuse energy fundamentals, fouling-energy coupling, and reverse osmosis as the standard
+       technology underpinning advanced potable reuse trains.
+       Tang, C. Y., Yang, Z., Guo, H., Wen, J. J., Nghiem, L. D., & Cornelissen, E. (2018). Potable water reuse through
+       advanced membrane technology. Environmental Science & Technology, 52(18), 10215-10223. https://doi.org/10.1021/acs.est.8b00562
+    5. Train-level specific energy consumption abstraction and energy-recovery-device feasibility across real potable
+       reuse schemes (1.2-2.1 kWh/m3 for full direct/indirect schemes).
+       Tow, E. W., Hartman, A. L., Jaworowski, A., Zucker, I., Kum, S., AzadiAghdam, M., Blatchley, E. R., Achilli, A.,
+       Gu, H., Urper, G. M., & Warsinger, D. M. (2021). Modeling the energy consumption of potable water reuse schemes.
+       Water Research X, 13, 100126. https://doi.org/10.1016/j.wroa.2021.100126
 
     Main equations
     --------------
     Feedwater input per unit treated water:
-        f_feed(t) = f_product(t) / recovery_ratio
+        f_feed(t) = f_product(t) / efficiency
         [m³/hr]     [m³/hr]        [-]
 
     Reject output per unit treated water (only when reject_bus is set):
-        f_reject(t) = f_product(t) * (1 - recovery_ratio) / recovery_ratio
+        f_reject(t) = f_product(t) * (1 - efficiency) / efficiency
         [m³/hr]        [m³/hr]        [-]
 
     Effective specific energy consumption:
@@ -58,21 +66,13 @@ class WaterReuseSystem(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains maximum
-      treated water production of the treatment train.
-    - recovery_ratio replaces the "efficiency" concept from v2.0, following
-      standard membrane reuse terminology (AWWA M62; Kehrein et al., 2021).
-    - reject_bus is optional: when provided, concentrate/brine becomes a
-      first-class output. When absent, the facade behaves like v1.0 topology
-      (2 inputs → 1 output).
-    - fouling_factor and energy_recovery_factor are reduced-order surrogates
-      for operational deterioration and energy integration benefits. They are
-      not mechanistic fouling or pressure models.
-    - Characterization values (SEC reference ranges, recovery envelope) are
-      stored as metadata for scenario documentation. They are enforced only
-      as soft warnings, not as hard optimization constraints in v3.0.
-    - reuse_mode provides optional initialization presets for agricultural,
-      industrial, and potable reuse targets (Kehrein et al., 2021).
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains maximum treated water production of the treatment train.
+    - reject_bus is optional: when provided, concentrate/brine becomes a first-class output.
+    - fouling_factor and energy_recovery_factor are reduced-order surrogates for operational deterioration and energy
+      integration benefits. They are not mechanistic fouling or pressure models.
+    - Characterization values (SEC reference ranges, recovery envelope) are stored as metadata for scenario documentation.
+      They are enforced only as soft warnings, not as hard optimization constraints.
+    - reuse_mode provides optional initialization presets for agricultural, industrial, and potable reuse targets (Kehrein et al., 2021).
     """
 
     # ------------------------------------------------------------------
@@ -97,9 +97,9 @@ class WaterReuseSystem(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    electricity_bus: Bus = None     # expected unit: kWh
-    water_in_bus: Bus = None        # expected unit: m³  (secondary effluent / feedwater)
-    water_out_bus: Bus = None       # expected unit: m³  (product / reclaimed water)
+    electricity_bus: Bus = None     # kWh
+    water_in_bus: Bus = None        # m³  (secondary effluent / feedwater)
+    water_out_bus: Bus = None       # m³  (product / reclaimed water) (PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -114,18 +114,18 @@ class WaterReuseSystem(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.90      # kWh / m³ treated water (gross, baseline)
-    recovery_ratio: float = 0.80                   # treated water / feedwater [-], (0, 1)
-    fouling_factor: float = 1.00                   # multiplier on SEC [-], must be > 0
-    energy_recovery_factor: float = 0.00           # fractional SEC reduction [-], [0, 1)
+    specific_energy_consumption: float = 0.90      # kWh / m³ treated water (gross, baseline) [1, 4]
+    efficiency: float = 0.80                       # m³ treated water / m³ feedwater [-], (0, 1) (recovery ratio) [1, 2]
+    fouling_factor: float = 1.00                   # multiplier on SEC [-], must be > 0 [2, 1]
+    energy_recovery_factor: float = 0.00           # fractional SEC reduction [-], [0, 1) [5, 4]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0      # €/m³ treated water
-    carrier_cost: float = 0.0       # €/kWh electricity
-    chemical_cost: float = 0.0      # €/m³ treated water (OPEX proxy)
-    reject_cost: float = 0.0        # €/m³ reject water (disposal / brine handling)
+    marginal_cost: float = 0.0      # USD/m³ treated water
+    carrier_cost: float = 0.0       # USD/m³ influent water
+    chemical_cost: float = 0.0      # USD/m³ treated water (OPEX proxy)
+    reject_cost: float = 0.0        # USD/m³ reject water (disposal / brine handling)
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -135,15 +135,15 @@ class WaterReuseSystem(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # literature-backed reference values for scenario documentation
+    # documentation / calibration defaults (not hard constraints)
+    # Based on AWWA M62 (2018) [1] / DuPont [2] / Kehrein et al. (2021) [3] / Tow et al. (2021) [5]
     # ------------------------------------------------------------------
-    sec_reference_potable: float = 1.20         # kWh/m³
-    sec_reference_industrial: float = 0.80      # kWh/m³
-    sec_reference_agricultural: float = 0.50    # kWh/m³
-    recovery_recommended_min: float = 0.50      # [-]
-    recovery_recommended_max: float = 0.85      # [-]
-    recovery_warning_threshold: float = 0.85    # [-]
+    sec_reference_potable: float = 1.20         # kWh/m³ [3, 5]
+    sec_reference_industrial: float = 0.80      # kWh/m³ [3, 5]
+    sec_reference_agricultural: float = 0.50    # kWh/m³ [3, 5]
+    recovery_recommended_min: float = 0.50      # [-] [1, 2]
+    recovery_recommended_max: float = 0.85      # [-] [1, 2]
+    recovery_warning_threshold: float = 0.85    # [-] [1, 2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -169,20 +169,20 @@ class WaterReuseSystem(MIMO):
         self.reject_bus = attributes.pop("reject_bus", None)
 
         # --------------------------------------------------------------
-        # optional reuse-mode presets
+        # optional reuse-mode presets (Kehrein et al. (2021) [3])
         # applied before physics parameters so explicit user values override
         # --------------------------------------------------------------
         preset_map = {
             "agricultural": {
-                "recovery_ratio": 0.85,
+                "efficiency": 0.85,
                 "specific_energy_consumption": 0.50,
             },
             "industrial": {
-                "recovery_ratio": 0.80,
+                "efficiency": 0.80,
                 "specific_energy_consumption": 0.80,
             },
             "potable": {
-                "recovery_ratio": 0.75,
+                "efficiency": 0.75,
                 "specific_energy_consumption": 1.20,
             },
         }
@@ -190,8 +190,7 @@ class WaterReuseSystem(MIMO):
         if self.reuse_mode is not None:
             if self.reuse_mode not in preset_map:
                 raise ValueError(
-                    "reuse_mode must be one of "
-                    "{'agricultural', 'industrial', 'potable'}."
+                    "reuse_mode must be one of {'agricultural', 'industrial', 'potable'}."
                 )
             preset = preset_map[self.reuse_mode]
 
@@ -199,12 +198,10 @@ class WaterReuseSystem(MIMO):
         # active physical parameters
         # --------------------------------------------------------------
         self.specific_energy_consumption = attributes.pop(
-            "specific_energy_consumption",
-            preset.get("specific_energy_consumption", self.specific_energy_consumption),
+            "specific_energy_consumption", preset.get("specific_energy_consumption", self.specific_energy_consumption),
         )
-        self.recovery_ratio = attributes.pop(
-            "recovery_ratio",
-            preset.get("recovery_ratio", self.recovery_ratio),
+        self.efficiency = attributes.pop(
+            "efficiency", preset.get("efficiency", self.efficiency),
         )
         self.fouling_factor = attributes.pop("fouling_factor", self.fouling_factor)
         self.energy_recovery_factor = attributes.pop(
@@ -264,9 +261,10 @@ class WaterReuseSystem(MIMO):
 
         # --------------------------------------------------------------
         # derived conversion quantities
+        # feedwater ratio: m³ influent per m³ treated water output
         # --------------------------------------------------------------
-        self._feedwater_per_output = 1.0 / self.recovery_ratio
-        self._reject_per_output = (1.0 - self.recovery_ratio) / self.recovery_ratio
+        self._feedwater_per_output = 1.0 / self.efficiency
+        self._reject_per_output = (1.0 - self.efficiency) / self.efficiency
         self._effective_sec = (
                 self.specific_energy_consumption
                 * self.fouling_factor
@@ -275,7 +273,7 @@ class WaterReuseSystem(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
-        # normalized to treated liquid output [m³/hr] = 1
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._effective_sec
@@ -284,15 +282,11 @@ class WaterReuseSystem(MIMO):
             self._feedwater_per_output
         )
         attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(1.0)
+
         if self.reject_bus is not None:
             attributes[f"conversion_factor_{self.reject_bus.label}"] = sequence(
                 self._reject_per_output
             )
-
-        # --------------------------------------------------------------
-        # output-specific costs
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -301,8 +295,8 @@ class WaterReuseSystem(MIMO):
             primary_label = self.water_out_bus.label
         elif self.primary == "water_in_bus":
             primary_label = self.water_in_bus.label
-        elif self.primary == "reject_bus" and self.reject_bus is not None:
-            primary_label = self.reject_bus.label
+        elif self.primary == "electricity_bus":
+            primary_label = self.electricity_bus.label
         else:
             primary_label = self.primary
 
@@ -328,6 +322,40 @@ class WaterReuseSystem(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.chemical_cost
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.reject_bus is not None and self.reject_bus in self.outputs:
+            self.outputs[self.reject_bus].variable_costs = sequence(
+                self.reject_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -348,8 +376,8 @@ class WaterReuseSystem(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.recovery_ratio < 1:
-            raise ValueError("recovery_ratio must be in (0, 1).")
+        if not 0 < self.efficiency < 1:
+            raise ValueError("efficiency must be in (0, 1).")
 
         if self.specific_energy_consumption < 0:
             raise ValueError("specific_energy_consumption must be >= 0.")
@@ -373,11 +401,11 @@ class WaterReuseSystem(MIMO):
             )
 
         # ----------------------------------------------------------
-        # soft warnings (DuPont manual; AWWA M62)
+        # soft warnings
         # ----------------------------------------------------------
-        if self.recovery_ratio > self.recovery_warning_threshold:
+        if self.efficiency > self.recovery_warning_threshold:
             warnings.warn(
-                f"recovery_ratio={self.recovery_ratio:.2f} exceeds the recommended "
+                f"efficiency={self.efficiency:.2f} exceeds the recommended "
                 f"threshold of {self.recovery_warning_threshold:.2f}. "
                 "High-recovery operation increases fouling and scaling risk "
                 "(DuPont RO Operations Advisor; AWWA M62).",
@@ -392,6 +420,6 @@ class WaterReuseSystem(MIMO):
                 f"specific_energy_consumption={self.specific_energy_consumption:.2f} kWh/m³ "
                 "is unusually low for a potable reuse train. Full advanced treatment "
                 "trains are typically 1.1–1.4 kWh/m³ "
-                "(Tang et al. 2018; potable reuse energy modeling review 2021).",
+                "(Tang et al. 2018; Tow et al. 2021).",
                 UserWarning,
             )
