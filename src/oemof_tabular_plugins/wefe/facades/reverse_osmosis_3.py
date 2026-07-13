@@ -22,77 +22,59 @@ class ReverseOsmosis(MIMO):
 
     Core references
     ---------------
-    1. Salinas-Rodriguez, Kennedy, Schippers (2019): recovery, SEC,
-       concentrate concentration, permeate quality, and concentration
-       polarization equations; process-design calculation chain.
-    2. DuPont FilmTec RO/NF Technical Manual (2023): operating limits,
-       rejection trends, pretreatment guidance, and design interpretation.
-    3. LANXESS/Lewabrane Guidelines for Design of RO Membrane Systems:
-       engineering design rules, recommended flux and recovery ranges.
-    4. DuPont FilmTec Design Equations Manual: SEC, net driving pressure
-       (NDP), and system-design calculation chains.
-    5. Carbotecnia / Morui RO CIP guidance: cleaning frequency, waste volumes,
-       and CIP effluent characterization.
+    1. Recovery, permeate flux, concentrate concentration, concentration polarization, and net driving pressure (NDP) equations.
+       Salinas-Rodríguez, S. G., Kennedy, M. D., & Schippers, J. C. (2021). Process design of reverse osmosis systems.
+       In S. G. Salinas-Rodríguez, J. C. Schippers, G. L. Amy, I. S. Kim, & M. D. Kennedy (Eds.), Seawater reverse osmosis
+       desalination: Assessment and pre-treatment of fouling and scaling (pp. 243-264). IWA Publishing.
+       https://doi.org/10.2166/9781780409863_0243
+    2. Operating limits, salt-rejection trends, and design-interpretation guidance for FilmTec RO/NF elements.
+       DuPont Water Solutions. (2024). FilmTec reverse osmosis membranes technical manual (Form No. 45-D01504-en).
+       https://www.dupont.com/content/dam/water/amer/us/en/water/public/documents/en/RO-NF-FilmTec-Manual-45-D01504-en.pdf
+    3. Engineering design rules and recommended flux/recovery ranges for spiral-wound RO elements.
+       LANXESS AG. (2024). Guidelines for the design of reverse osmosis membrane systems.
+       https://kh.aquaenergyexpo.com/wp-content/uploads/2024/01/Guideline-for-the-design-of-reverse-osmosis-membrane-systems.pdf
+    4. Specific energy consumption and net driving pressure calculation chains, including energy-recovery-device-adjusted SEC.
+       DuPont Water Solutions. FilmTec design equations (Form No. 609-02057-604).
+       https://www.lenntech.com/Data-sheets/Filmtec-Design-Equations-L.pdf
+    5. Membrane fouling mechanisms and pretreatment-linked cleaning frequency.
+       Salinas-Rodríguez, S. G., Kennedy, M. D., & Schippers, J. C. (2021). Fouling and pre-treatment. In S. G. Salinas-Rodríguez,
+       J. C. Schippers, G. L. Amy, I. S. Kim, & M. D. Kennedy (Eds.), Seawater reverse osmosis desalination: Assessment
+       and pre-treatment of fouling and scaling (pp. 59-83). https://doi.org/10.2166/9781780409863_0059
 
     Main equations
     --------------
-    All flows normalized to 1 m3 net permeate output (primary):
+    All flows normalized to treated water output = 1 [m³/hr]:
 
     Feedwater requirement:
-        feedwater_per_output = 1 / recovery           [m3_feed / m3_permeate]
+        feedwater_per_output = 1 / efficiency         [m³_feed / m³_permeate]
 
     Brine / concentrate output:
-        brine_per_output = 1/recovery - 1             [m3_brine / m3_permeate]
+        brine_per_output = 1/efficiency - 1             [m³_brine / m³_permeate]
 
-    Net specific energy consumption [kWh / m3 permeate]:
+    Net specific energy consumption [kWh / m³ permeate]:
         net_SEC = SEC_gross * (1 - energy_recovery_efficiency)
 
     CIP cleaning waste (time-averaged over cleaning cycles):
-        cip_waste_per_output = cleaning_waste_ratio   [m3_cip / m3_permeate]
+        cip_waste_per_output = cleaning_waste_ratio   [m³_cip / m³_permeate]
 
     Concentration factor (dimensionless, reporting only):
-        CF = 1 / (1 - recovery)
+        CF = 1 / (1 - efficiency)
 
     Permeate TDS proxy (reporting only, requires tds_in):
         TDS_permeate = tds_in * (1 - salt_rejection)
 
     Brine TDS proxy (reporting only, requires tds_in):
-        TDS_brine = tds_in * (1 - recovery * salt_rejection) / (1 - recovery)
+        TDS_brine = tds_in * (1 - efficiency * salt_rejection) / (1 - efficiency)
 
     Notes
     -----
-    - Primary flow is water_out_bus [m3/hr]. Capacity constrains the maximum
-      permeate output of the unit.
-    - Pretreatment (UF, chlorination, coagulation, etc.) is modelled as a
-      separate upstream facade connected via its own bus. The RO facade
-      receives already-pretreated feedwater on water_in_bus and has no
-      pretreatment electricity input.
-    - Energy recovery device (ERD) effects are captured through
-      energy_recovery_efficiency as a fractional gross-SEC reduction.
-      ERD hardware is considered internal to the RO unit boundary.
-    - cleaning_waste_bus is an optional output representing the CIP
-      (Clean-In-Place) effluent produced when the RO membrane is chemically
-      cleaned. CIP is triggered when permeate flow drops by 10-15%,
-      differential pressure rises by 15-20%, or on a scheduled cycle
-      (typically every 3-6 months). The cleaning sequence consists of a
-      pre-rinse, alkaline clean (pH 11-12) to remove organics/biofouling,
-      acid clean (pH 2-3) to remove mineral scale, and a final quality rinse.
-      cleaning_waste_ratio is a time-averaged coefficient (typically
-      0.001-0.005 m3/m3 permeate for well-operated RO). If the bus is omitted,
-      CIP waste is implicitly absorbed into the brine stream.
-    - For backward compatibility, "efficiency" may be passed as an alias for
-      "recovery", and "specific_energy_consumption" for
-      "specific_energy_consumption_gross", when the preferred names are not
-      explicitly provided.
-    - Water-quality surrogates (estimated_permeate_tds, estimated_brine_tds,
-      estimated_concentration_factor) are stored as reporting-only values.
-      They are not enforced as hard optimization constraints in v3.0.
-    - concentration_factor_limit and max_recovery trigger ValueError at
-      instantiation if exceeded. Full osmotic-pressure and concentration-
-      polarization effects are not modeled.
-    - Characterization values (typical SEC range, salt_rejection, tds_in)
-      are stored as documentation/calibration defaults. They are not enforced
-      as hard optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum permeate output of the unit.
+    - cleaning_waste_bus is an optional output representing the CIP (Clean-In-Place) effluent produced when the RO
+      membrane is chemically cleaned. If the bus is omitted, CIP waste is implicitly absorbed into the brine stream.
+    - Water-quality surrogates (estimated_permeate_tds, estimated_brine_tds, estimated_concentration_factor) are stored
+      as reporting-only values. They are not enforced as hard optimization constraints.
+    - Characterization values (typical SEC range, salt_rejection, tds_in) are stored as documentation/calibration defaults.
+      They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -129,26 +111,26 @@ class ReverseOsmosis(MIMO):
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
-    cleaning_waste_bus: Optional[Bus] = None  # m³  CIP effluent from membrane cleaning
+    cleaning_waste_bus: Optional[Bus] = None  # m³ CIP effluent from membrane cleaning
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption_gross: float = 1.2          # kWh / m³ permeate
-    recovery: float = 0.55                                  # m³ permeate / m³ feedwater
-    energy_recovery_efficiency: float = 0.0                 # dimensionless [0, 1)
-    salt_rejection: float = 0.99                            # dimensionless [0, 1]
-    cleaning_waste_ratio: float = 0.0                       # m³ CIP effluent / m3 permeate (time-averaged)
-    max_recovery: Optional[float] = None                    # design upper bound check
-    concentration_factor_limit: Optional[float] = None      # design upper bound check
+    specific_energy_consumption: float = 1.2                # kWh / m³ permeate (gross) [1, 4]
+    efficiency: float = 0.55                                # m³ permeate / m³ feedwater (recovery) [1, 3]
+    energy_recovery_efficiency: float = 0.0                 # dimensionless [0, 1) [4]
+    salt_rejection: float = 0.99                            # dimensionless [0, 1] [2]
+    cleaning_waste_ratio: float = 0.0                       # m³ CIP effluent / m³ permeate (time-averaged) [5]
+    max_recovery: Optional[float] = None                    # design upper bound check [1, 3]
+    concentration_factor_limit: Optional[float] = None      # design upper bound check [1]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                  # €/m³ permeate
-    carrier_cost: float = 0.0                   # €/kWh electricity
-    brine_disposal_cost: float = 0.0            # €/m³ brine
-    cleaning_waste_disposal_cost: float = 0.0   # €/m³ CIP effluent
+    marginal_cost: float = 0.0                  # USD/m³ permeate
+    carrier_cost: float = 0.0                   # USD/m³ feedwater
+    brine_disposal_cost: float = 0.0            # USD/m³ brine
+    cleaning_waste_disposal_cost: float = 0.0   # USD/m³ CIP effluent
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -158,15 +140,15 @@ class ReverseOsmosis(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Salinas-Rodriguez et al. (2019) / DuPont design-equation style
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    tds_in: Optional[float] = None                              # kg/m³ or g/L feed TDS
-    sec_typical_min: float = 0.5                                # kWh/m³, lower bound from literature
-    sec_typical_max: float = 3.0                                # kWh/m³, upper bound from literature
-    design_flux_lmh: Optional[float] = None                     # L/m²/hr, design flux, documentation only
-    ndp_bar: Optional[float] = None                             # bar, net driving pressure, documentation only
-    concentration_polarization_factor: Optional[float] = None   # dimensionless, documentation only
+    tds_in: Optional[float] = None                              # kg/m³ or g/L feed TDS [1]
+    sec_typical_min: float = 0.5                                # kWh/m³, lower bound from literature [2, 4]
+    sec_typical_max: float = 3.0                                # kWh/m³, upper bound from literature [2, 4]
+    design_flux_lmh: Optional[float] = None                     # L/m²/hr, design flux, documentation only [3]
+    ndp_bar: Optional[float] = None                             # bar, net driving pressure, documentation only [1, 4]
+    concentration_polarization_factor: Optional[float] = None   # dimensionless, documentation only [1]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -194,13 +176,9 @@ class ReverseOsmosis(MIMO):
         # --------------------------------------------------------------
         # active physical parameters
         # --------------------------------------------------------------
-        self.recovery = attributes.pop("recovery", self.recovery)
-        self.specific_energy_consumption_gross = attributes.pop(
-            "specific_energy_consumption_gross",
-            attributes.pop(
-                "specific_energy_consumption",
-                self.specific_energy_consumption_gross,
-            ),
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
+        self.specific_energy_consumption = attributes.pop(
+            "specific_energy_consumption", self.specific_energy_consumption
         )
         self.energy_recovery_efficiency = attributes.pop(
             "energy_recovery_efficiency", self.energy_recovery_efficiency
@@ -241,6 +219,7 @@ class ReverseOsmosis(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -261,24 +240,24 @@ class ReverseOsmosis(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (Salinas-Rodriguez et al., 2019; DuPont FilmTec Design Equations)
+        # (Salinas-Rodriguez et al., 2021 [1]; DuPont FilmTec Design Equations [4])
         # --------------------------------------------------------------
-        self._feedwater_per_output = 1.0 / self.recovery
+        self._feedwater_per_output = 1.0 / self.efficiency
         self._brine_per_output = self._feedwater_per_output - 1.0
 
         self._net_specific_energy_consumption = (
-                self.specific_energy_consumption_gross
+                self.specific_energy_consumption
                 * (1.0 - self.energy_recovery_efficiency)
         )
 
-        self._estimated_concentration_factor = 1.0 / (1.0 - self.recovery)
+        self._estimated_concentration_factor = 1.0 / (1.0 - self.efficiency)
 
         if self.tds_in is not None:
             self._estimated_permeate_tds = self.tds_in * (1.0 - self.salt_rejection)
             self._estimated_brine_tds = (
                     self.tds_in
-                    * (1.0 - self.recovery * self.salt_rejection)
-                    / (1.0 - self.recovery)
+                    * (1.0 - self.efficiency * self.salt_rejection)
+                    / (1.0 - self.efficiency)
             )
         else:
             self._estimated_permeate_tds = None
@@ -286,6 +265,7 @@ class ReverseOsmosis(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._net_specific_energy_consumption
@@ -298,27 +278,9 @@ class ReverseOsmosis(MIMO):
             self._brine_per_output
         )
         if self.cleaning_waste_bus is not None:
-            attributes[
-                f"conversion_factor_{self.cleaning_waste_bus.label}"
-            ] = sequence(self.cleaning_waste_ratio)
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-        attributes.setdefault("output_parameters_1", {})
-
-        if self.brine_disposal_cost > 0:
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.brine_disposal_cost}
+            attributes[f"conversion_factor_{self.cleaning_waste_bus.label}"] = sequence(
+            self.cleaning_waste_ratio
             )
-
-        if self.cleaning_waste_bus is not None:
-            attributes.setdefault("output_parameters_2", {})
-            if self.cleaning_waste_disposal_cost > 0:
-                attributes["output_parameters_2"].update(
-                    {"variable_costs": self.cleaning_waste_disposal_cost}
-                )
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -357,6 +319,43 @@ class ReverseOsmosis(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.brine_out_bus in self.outputs:
+            self.outputs[self.brine_out_bus].variable_costs = sequence(
+                self.brine_disposal_cost
+            )
+
+        if self.cleaning_waste_bus is not None and self.cleaning_waste_bus in self.outputs:
+            self.outputs[self.cleaning_waste_bus].variable_costs = sequence(
+                self.cleaning_waste_disposal_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -377,8 +376,8 @@ class ReverseOsmosis(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.recovery < 1:
-            raise ValueError("recovery must be in (0, 1).")
+        if not 0 < self.efficiency < 1:
+            raise ValueError("efficiency must be in (0, 1).")
 
         if not 0 <= self.energy_recovery_efficiency < 1:
             raise ValueError("energy_recovery_efficiency must be in [0, 1).")
@@ -386,18 +385,18 @@ class ReverseOsmosis(MIMO):
         if not 0 <= self.salt_rejection <= 1:
             raise ValueError("salt_rejection must be in [0, 1].")
 
-        if self.specific_energy_consumption_gross < 0:
-            raise ValueError("specific_energy_consumption_gross must be >= 0.")
+        if self.specific_energy_consumption < 0:
+            raise ValueError("specific_energy_consumption must be >= 0.")
 
         if self.cleaning_waste_ratio < 0:
             raise ValueError("cleaning_waste_ratio must be >= 0.")
 
-        if self.max_recovery is not None and self.recovery > self.max_recovery:
+        if self.max_recovery is not None and self.efficiency > self.max_recovery:
             raise ValueError(
-                f"Configured recovery ({self.recovery}) exceeds max_recovery ({self.max_recovery}).")
+                f"Configured efficiency ({self.efficiency}) exceeds max_recovery ({self.max_recovery}).")
 
         if self.concentration_factor_limit is not None:
-            cf = 1.0 / (1.0 - self.recovery)
+            cf = 1.0 / (1.0 - self.efficiency)
             if cf > self.concentration_factor_limit:
                 raise ValueError(f"Estimated concentration factor ({cf:.3f}) exceeds concentration_factor_limit ({self.concentration_factor_limit}).")
 
