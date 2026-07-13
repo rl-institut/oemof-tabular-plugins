@@ -1,0 +1,6 @@
+name;type;balanced;carrier;verbose_name;plot
+biomass-bus;bus;True;biomass;Biomass;True
+rawbiogas-bus;bus;True;rawbiogas;RawBiogas;True
+digestate-bus;bus;True;digestate;Digestate;True
+electricity-bus;bus;True;electricity;Electricity;True
+heat-bus;bus;True;heat;Heat;True

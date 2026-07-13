@@ -55,6 +55,7 @@ from .facades import (
     WaterPreTreatment,
     WaterCoreTreatment,
     WaterPostTreatment,
+    Digester,
     Chp
 )
 
@@ -109,6 +110,7 @@ WEFE_TYPEMAP = {
     "water_pre_treatment": WaterPreTreatment,
     "water_core_treatment": WaterCoreTreatment,
     "water_post_treatment": WaterPostTreatment,
+    "digester": Digester,
     "chp": Chp,
 }
 

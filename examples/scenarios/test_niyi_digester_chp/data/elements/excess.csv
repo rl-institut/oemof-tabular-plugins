@@ -1,3 +1,5 @@
 name;type;bus;marginal_cost;resource_cost;ghg_emission_factor;water_consumption_factor;indirect_water_consumption_factor;verbose_name;output_parameters
 electricity-excess;excess;electricity-bus;0.0;0.0;0.0;0.0;0.0;Excess Electricity;"{""custom_attributes"": {""ghg_emission_factor"": 0.0, ""water_consumption_factor"": 0.0, ""indirect_water_consumption_factor"": 0.0, ""resource_cost"": 0.0}}"
 heat-excess;excess;heat-bus;0.0;0.0;0.0;0.0;0.0;Excess Heat;"{""custom_attributes"": {""ghg_emission_factor"": 0.0, ""water_consumption_factor"": 0.0, ""indirect_water_consumption_factor"": 0.0, ""resource_cost"": 0.0}}"
+rawbiogas-excess;excess;rawbiogas-bus;0.0;0.0;0.0;0.0;0.0;Excess Raw Biogas;"{""custom_attributes"": {""ghg_emission_factor"": 0.0, ""water_consumption_factor"": 0.0, ""indirect_water_consumption_factor"": 0.0, ""resource_cost"": 0.0}}"
+digestate-excess;excess;digestate-bus;0.0;0.0;0.0;0.0;0.0;Excess Digestate;"{""custom_attributes"": {""ghg_emission_factor"": 0.0, ""water_consumption_factor"": 0.0, ""indirect_water_consumption_factor"": 0.0, ""resource_cost"": 0.0}}"

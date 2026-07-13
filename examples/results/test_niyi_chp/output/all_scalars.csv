@@ -1,0 +1,14 @@
+name,var_name,var_value,region,type,carrier,tech
+chp_1,flow_in_bus,4302.160494,,chp,rawbiogas,AD
+chp_1,flow_out_bus,2151.08025,,chp,rawbiogas,AD
+chp_1,flow_out_bus,2151.08025,,chp,rawbiogas,AD
+chp_1,invest_costs_out_bus,486667.25,,chp,rawbiogas,AD
+chp_1,invest_out_bus,486.66725,,chp,rawbiogas,AD
+rawbiogas,flow_out_bus,4302.160494,,dispatchable,rawbiogas,source
+rawbiogas,invest_costs_out_bus,0.0,,dispatchable,rawbiogas,source
+rawbiogas,invest_out_bus,973.3345,,dispatchable,rawbiogas,source
+electricity-excess,flow_in_bus,0.0,,excess,,
+electricity_demand,flow_in_bus,2151.08025,,load,,
+heat-excess,flow_in_bus,2150.51025,,excess,,
+heat_demand,flow_in_bus,0.5700000000000001,,load,,
+system,total_system_cost,486667.25,,,,
