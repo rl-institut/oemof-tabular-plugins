@@ -1,3 +1,0 @@
-name;amount;profile;type;bus;verbose_name
-electricity_demand;1;electricity-load-profile;load;electricity-bus;Electricity Demand
-heat_demand;1;heat-profile;load;heat-bus;Heat Demand
