@@ -1,0 +1,2 @@
+name;type;carrier;tech;capacity;capacity_cost;capacity_potential;marginal_cost;carrier_cost;capture_efficiency;lifetime;fluegas_bus;captured_co2_bus;residual_fluegas_bus;expandable;verbose_name;output_parameters
+co2_capture_1;co2_capture;co2;MEA;0.0;1000.0;inf;0.0;0.0;0.9;25;fluegas-bus;captured-co2-bus;residual-fluegas-bus;True;CO2 Capture;"{}"

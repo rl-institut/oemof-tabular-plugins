@@ -56,7 +56,7 @@ from .facades import (
     WaterCoreTreatment,
     WaterPostTreatment,
     Digester,
-    Chp
+    Chp, Co2Capture
 )
 
 WEFE_TYPEMAP = {
@@ -112,6 +112,7 @@ WEFE_TYPEMAP = {
     "water_post_treatment": WaterPostTreatment,
     "digester": Digester,
     "chp": Chp,
+    "co2_capture": Co2Capture,
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)
