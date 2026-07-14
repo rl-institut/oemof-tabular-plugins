@@ -22,27 +22,30 @@ class MicroFiltration(MIMO):
 
     Core references
     ---------------
-    1. Christensen & Gilabert-Oriol (2024): recovery, availability, net flux,
-       cleaning/fouling concepts, and feed-filtrate-concentrate mass balances.
-    2. TU Delft OCW - Micro- and ultrafiltration (Water Treatment):
-       dead-end MF mass balance, backwash-adjusted recovery, and
-       filtration/backwash cycle logic.
-    3. Di Bella & Di Trapani (2019): A Brief Review on the Resistance-in-Series
-       Model in Membrane Bioreactors. Source for reduced-order fouling
-       representation via Darcy-law resistance-in-series concepts.
+    1. Recovery, availability, net flux, cleaning/fouling concepts, and feed-filtrate-concentrate mass balances for
+       micro- and ultrafiltration processes.
+       Christensen, M. L., & Gilabert-Oriol, G. (2024). Microfiltration and ultrafiltration. In S. G. Salinas-Rodríguez
+       & L. O. Villacorte (Eds.), Experimental methods for membrane applications in desalination and water treatment
+       (pp. 27-46). IWA Publishing. https://doi.org/10.2166/9781789062977_0027
+    2. Dead-end MF mass balance, backwash-adjusted recovery, and filtration/backwash cycle logic.
+       TU Delft OpenCourseWare. Micro- and ultrafiltration. In Drinking water treatment 1.
+       https://ocw.tudelft.nl/courses/drinking-water-treatment-1/
+    3. Resistance-in-series/Darcy-law fouling representation.
+       Di Bella, G., & Di Trapani, D. (2019). A brief review on the resistance-in-series model in membrane bioreactors.
+       Membranes, 9(2), 24. https://doi.org/10.3390/membranes9020024
 
     Main equations
     --------------
     All flows normalized to 1 m³ net treated water (primary output):
 
     Feedwater requirement:
-        feedwater_per_output = 1 / recovery           [m³_feed / m³_product]
+        feedwater_per_output = 1 / efficiency           [m³_feed / m³_product]
 
     Backwash wastewater:
         backwash_per_output = backwash_ratio           [m³_bw / m³_product]
 
     Brine / reject output:
-        brine_per_output = 1/recovery - 1 - backwash_ratio  [m³_brine / m³_product]
+        brine_per_output = 1/efficiency - 1 - backwash_ratio  [m³_brine / m³_product]
 
     Electricity demand:
         electricity_per_output = SEC                   [kWh / m³_product]
@@ -55,22 +58,15 @@ class MicroFiltration(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      net treated water throughput of the unit.
-    - availability is implemented as an activity_bound_max constraint, not as
-      a hidden multiplier inside SEC or recovery, to keep cost interpretation
-      unambiguous.
-    - TMP, flux, membrane area, and detailed fouling dynamics are intentionally
-      excluded from v3.0. Their effects should be reflected through recovery,
-      availability, SEC, and operating-cost parameters calibrated from literature.
-    - For backward compatibility, `efficiency` may be passed as an alias for
-      `recovery` when `recovery` is not explicitly provided.
-    - cleaning_chemical_bus is optional. When provided, cleaning_dose sets the
-      kg of CEB chemical consumed per m³ net treated water. When not provided,
-      chemical O&M costs may still be captured via cleaning_cost.
-    - Characterization values (typical SEC range, design flux, TMP) are stored
-      as documentation/calibration defaults. They are not enforced as hard
-      optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum net treated water throughput of the unit.
+    - availability is implemented as an activity_bound_max constraint, not as a hidden multiplier inside SEC or efficiency,
+      to keep cost interpretation unambiguous.
+    - TMP, flux, membrane area, and detailed fouling dynamics are intentionally excluded. Their effects should be reflected
+      through efficiency, availability, SEC, and operating-cost parameters calibrated from literature.
+    - cleaning_chemical_bus is optional. When provided, cleaning_dose sets the kg of CEB chemical consumed per m³ net
+      treated water. When not provided, chemical O&M costs may still be captured via cleaning_cost.
+    - Characterization values (typical SEC range, design flux, TMP) are stored as documentation/calibration defaults.
+      They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -95,9 +91,9 @@ class MicroFiltration(MIMO):
     # mandatory buses
     # ------------------------------------------------------------------
     electricity_bus: Bus = None         # kWh
-    water_in_bus: Bus = None            # m³
-    water_out_bus: Bus = None           # m³  (PRIMARY)
-    brine_out_bus: Bus = None           # m³
+    water_in_bus: Bus = None            # m³  (pretreated feedwater)
+    water_out_bus: Bus = None           # m³  (permeate — PRIMARY)
+    brine_out_bus: Bus = None           # m³  (concentrate)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -107,25 +103,27 @@ class MicroFiltration(MIMO):
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
-    backwash_out_bus: Optional[Bus] = None          # m³  backwash wastewater
+    backwash_out_bus: Optional[Bus] = None          # m³ backwash wastewater
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.20   # kWh / m³ net treated water
-    recovery: float = 0.97                      # m³ net treated water / m³ feedwater
-    backwash_ratio: float = 0.0                 # m³ backwash water / m³ net treated water
-    availability: float = 1.0                   # fraction of productive operating time
-    cleaning_dose: float = 0.0                  # kg CEB chemical / m³ net treated water
+    specific_energy_consumption: float = 0.20   # kWh / m³ net treated water [2]
+    efficiency: float = 0.97                    # m³ net treated water / m³ feedwater (recovery) [1, 2]
+    backwash_ratio: float = 0.0                 # m³ backwash water / m³ net treated water [2]
+    availability: float = 1.0                   # fraction of productive operating time [1]
+                                                # set expandable=False if availability<1.0
+    cleaning_dose: float = 0.0                  # kg CEB chemical / m³ net treated water [3]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                  # €/m³ net treated water
-    carrier_cost: float = 0.0                   # €/kWh electricity
-    brine_disposal_cost: float = 0.0            # €/m³ brine
-    backwash_disposal_cost: float = 0.0         # €/m³ backwash wastewater
-    cleaning_cost: float = 0.0                  # €/m³ net treated water (O&M surcharge)
+    marginal_cost: float = 0.0                  # USD/m³ net treated water
+    carrier_cost: float = 0.0                   # USD/m³ feedwater
+    brine_disposal_cost: float = 0.0            # USD/m³ brine
+    backwash_disposal_cost: float = 0.0         # USD/m³ backwash wastewater
+    cleaning_cost: float = 0.0                  # USD/m³ net treated water (O&M surcharge)
+                                                # ~0.0 if cleaning_chemical_bus provided
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -135,15 +133,15 @@ class MicroFiltration(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Christensen & Gilabert-Oriol (2024) / TU Delft style characterization
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    sec_typical_min: float = 0.1            # kWh/m³, lower bound from literature
-    sec_typical_max: float = 0.4            # kWh/m³, upper bound from literature
-    design_flux_lmh: float = None           # L/m²/hr, design flux, documentation only
-    tmp_bar: float = None                   # bar, transmembrane pressure, documentation only
-    backwash_duration_s: float = None       # s, duration per backwash event, documentation only
-    backwash_interval_min: float = None     # min, interval between backwash events, documentation only
+    sec_typical_min: float = 0.1            # kWh/m³, lower bound from literature [1]
+    sec_typical_max: float = 0.4            # kWh/m³, upper bound from literature [1]
+    design_flux_lmh: float = None           # L/m²/hr, design flux, documentation only [1, 2]
+    tmp_bar: float = None                   # bar, transmembrane pressure, documentation only [1, 2]
+    backwash_duration_s: float = None       # s, duration per backwash event, documentation only [2]
+    backwash_interval_min: float = None     # min, interval between backwash events, documentation only [2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -175,7 +173,7 @@ class MicroFiltration(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.recovery = attributes.pop("recovery", self.recovery)
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
         self.backwash_ratio = attributes.pop("backwash_ratio", self.backwash_ratio)
         self.availability = attributes.pop("availability", self.availability)
         self.cleaning_dose = attributes.pop("cleaning_dose", self.cleaning_dose)
@@ -208,6 +206,7 @@ class MicroFiltration(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -230,9 +229,9 @@ class MicroFiltration(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (Christensen & Gilabert-Oriol, 2024; TU Delft OCW)
+        # (Christensen & Gilabert-Oriol, 2024 [1]; TU Delft OCW [2])
         # --------------------------------------------------------------
-        self._feedwater_per_output = 1.0 / self.recovery
+        self._feedwater_per_output = 1.0 / self.efficiency
         self._backwash_per_output = self.backwash_ratio
         self._brine_per_output = (
                 self._feedwater_per_output - 1.0 - self._backwash_per_output
@@ -240,6 +239,7 @@ class MicroFiltration(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -261,32 +261,10 @@ class MicroFiltration(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        if self.cleaning_cost > 0:
-            attributes.setdefault("output_parameters", {})
-            attributes["output_parameters"].update(
-                {"variable_costs": self.cleaning_cost}
-            )
-
-        attributes.setdefault("output_parameters_1", {})
-        if self.brine_disposal_cost > 0:
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.brine_disposal_cost}
-            )
-
-        if self.backwash_out_bus is not None:
-            attributes.setdefault("output_parameters_2", {})
-            if self.backwash_disposal_cost > 0:
-                attributes["output_parameters_2"].update(
-                    {"variable_costs": self.backwash_disposal_cost}
-                )
-
-        # --------------------------------------------------------------
         # availability as activity bound
         # --------------------------------------------------------------
         if self.availability < 1.0:
-            attributes["activity_bound_max"] = sequence(self.availability)
+            attributes["activity_bound_max"] = sequence(self.availability*self.capacity)
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -325,6 +303,45 @@ class MicroFiltration(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.cleaning_cost
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.brine_out_bus in self.outputs:
+            self.outputs[self.brine_out_bus].variable_costs = sequence(
+                self.brine_disposal_cost
+            )
+
+        if self.backwash_out_bus is not None and self.backwash_out_bus in self.outputs:
+            self.outputs[self.backwash_out_bus].variable_costs = sequence(
+                self.backwash_disposal_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -347,8 +364,8 @@ class MicroFiltration(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.recovery <= 1:
-            raise ValueError("recovery must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
         if self.backwash_ratio < 0:
             raise ValueError("backwash_ratio must be >= 0.")
         if not 0 < self.availability <= 1:
@@ -358,11 +375,11 @@ class MicroFiltration(MIMO):
         if self.cleaning_dose < 0:
             raise ValueError("cleaning_dose must be >= 0.")
 
-        brine_check = 1.0 / self.recovery - 1.0 - self.backwash_ratio
+        brine_check = 1.0 / self.efficiency - 1.0 - self.backwash_ratio
         if brine_check < 0:
             raise ValueError(
                 "Invalid parameter combination: brine fraction becomes negative. "
-                "Reduce backwash_ratio or increase recovery."
+                "Reduce backwash_ratio or increase efficiency."
             )
 
         if self.cleaning_dose > 0 and self.cleaning_chemical_bus is None:
