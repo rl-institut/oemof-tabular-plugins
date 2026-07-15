@@ -12,33 +12,33 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade
-class Co2Capture(Converter, Facade):
-    r""" A fluegas capture unit with 1 input and 2 outputs. The input is fluegas from the
-    chp while the outputs are captured co2 and residual gas.
+class BiogasUpgrading(Converter, Facade):
+    r""" A biogas upgrading unit with 1 input and 2 outputs. The input is rawbiogas from the
+    digester while the outputs are captured co2 and biomethane.
 
     Parameters
     ----------
-    fluegas_bus: oemof.solph.Bus
+    rawbiogas_bus: oemof.solph.Bus
         An oemof bus instance where the unit is connected to with
-        its fluegas input.
+        its rawbiogas input.
     captured_co2_bus: oemof.solph.Bus
         An oemof bus instance where the unit is connected to with
         its captured co2 output.
-    residual_gas_bus: oemof.solph.Bus
+    biomethane_bus: oemof.solph.Bus
         An oemof bus instance where the unit is connected to with
-        its rawgas output.
-    efficiency: float
-        Captured co2 efficiency (e.g., energy or mass ratio).
-        Default: 0.8
-    efficiency: float
-        Residual gas efficiency (e.g., energy or mass ratio).
-        Default: 0.2
+        its biomethane output.
+    methane_fraction: float
+        recovered biomethane(e.g., energy or mass ratio).
+        Default: 0.60
+    co2 captured: float
+        co2 captured and losses (e.g., energy or mass ratio).
+        Default: 1 - 0.60
     capacity: numeric
-        The captured co2 production capacity (primary output side) of the unit.
+        The captured biomethane production capacity (primary output side) of the unit.
     carrier_cost: numeric
         Carrier cost for one unit of used input (rawbiogas). Default: 0
     capacity_cost: numeric
-        Investment costs per unit of co2 output capacity.
+        Investment costs per unit of biomethane capacity.
         If capacity is not set, this value will be used for optimizing the
         conversion output capacity.
     expandable: boolean or numeric (binary)
@@ -58,17 +58,17 @@ class Co2Capture(Converter, Facade):
         Set parameters on the output edge of the conversion unit.
     """
 
-    fluegas_bus: Bus
+    rawbiogas_bus: Bus
 
     captured_co2_bus: Bus
 
-    residual_fluegas_bus: Bus
+    biomethane_bus: Bus
 
     tech: str
 
     carrier: str = ""
 
-    capture_efficiency: float = 0.9 # capture efficiency
+    methane_fraction: float = 0.60 # capture efficiency
 
     capacity: float = None
 
@@ -95,38 +95,38 @@ class Co2Capture(Converter, Facade):
     def build_solph_components(self):
 
         # In oemof, conversion factors are defined relative to a nominal reference flow.
-        # The flue gas stream enters the capture unit.
-        # A fraction is separated as captured CO2,
-        # while the remainder leaves as residual flue gas.
+        # The rawbiogas stream enters the biogas upgrading unit.
+        # A fraction is separated as biomethane,
+        # while the remainder leaves as co2 gas.
         self.conversion_factors.update(
             {
-                self.fluegas_bus: sequence(1),
-                self.captured_co2_bus: sequence(
-                    self.capture_efficiency
+                self.rawbiogas_bus: sequence(1),
+                self.biomethane_bus: sequence(
+                    self.methane_fraction
                 ),
-                self.residual_fluegas_bus: sequence(
-                    1 - self.capture_efficiency
+                self.captured_co2_bus: sequence(
+                    1 - self.methane_fraction
                 ),
             }
         )
 
         self.inputs.update(
             {
-                self.fluegas_bus: Flow(
+                self.rawbiogas_bus: Flow(
                     variable_costs=self.carrier_cost,
                     **self.input_parameters,
-                )
+                ),
             }
         )
 
         self.outputs.update(
             {
-                self.captured_co2_bus: Flow(
+                self.biomethane_bus: Flow(
                     nominal_value=self._nominal_value(),
                     variable_costs=self.marginal_cost,
                     investment=self._investment(),
                     **self.output_parameters,
                 ),
-                self.residual_fluegas_bus: Flow(),
+                self.captured_co2_bus: Flow(),
             }
         )

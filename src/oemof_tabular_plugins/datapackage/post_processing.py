@@ -953,7 +953,15 @@ def process_raw_inputs(df_results, dp_path, moo=False, raw_inputs=None, typemap=
     # inputs_df = None
     for r in p.resources:
         if "elements" in r.descriptor["path"] and r.name != "bus":
-            df = pd.DataFrame.from_records(r.read(keyed=True), index="name")
+
+            print("\nRESOURCE:", r.name)
+
+            records = r.read(keyed=True)
+
+            if len(records) > 0:
+                print("COLUMNS:", list(records[0].keys()))
+
+            df = pd.DataFrame.from_records(records, index="name")
             resource_inputs = df[list(set(raw_inputs).intersection(set(df.columns)))].T
             if inputs_df is None:
                 if not resource_inputs.empty:

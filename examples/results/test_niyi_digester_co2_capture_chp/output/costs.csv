@@ -1,0 +1,19 @@
+bus,direction,asset,carrier,facade_type,Upfront Investment Costs,Annuity Total,Variable Costs Total
+biomass-bus,in,digester_1,biomass,digester,,,0.0
+biomass-bus,out,sludge_source,biomass,dispatchable,,0.0,0.0
+biomethane-bus,in,biomethane-excess,biomethane,excess,,,
+biomethane-bus,in,chp_1,biomethane,chp,,,0.0
+biomethane-bus,out,biogas_upgrading_1,biomethane,biogasupgrading,,0.0,0.0
+captured-co2-bus,in,captured-co2-excess,co2,excess,,,
+captured-co2-bus,out,biogas_upgrading_1,co2,biogasupgrading,,,0.0
+digestate-bus,in,digestate-excess,digestate,excess,,,
+digestate-bus,out,digester_1,digestate,digester,,,0.0
+electricity-bus,in,electricity-excess,electricity,excess,,,
+electricity-bus,in,electricity_demand,electricity,load,,,
+electricity-bus,out,chp_1,electricity,chp,973334.5,486667.25,0.0
+heat-bus,in,heat-excess,heat,excess,,,
+heat-bus,in,heat_demand,heat,load,,,
+heat-bus,out,chp_1,heat,chp,,,0.0
+rawbiogas-bus,in,biogas_upgrading_1,rawbiogas,biogasupgrading,,,0.0
+rawbiogas-bus,in,rawbiogas-excess,rawbiogas,excess,,,
+rawbiogas-bus,out,digester_1,rawbiogas,digester,3244448.4000000004,1622224.2000000002,0.0

@@ -47,5 +47,5 @@ from .water_pre_treatment import WaterPreTreatment
 from .water_core_treatment import WaterCoreTreatment
 from .water_post_treatment import WaterPostTreatment
 from .digester import Digester
+from .biogasupgrading import BiogasUpgrading
 from .chp import Chp
-from .co2_capture import Co2Capture

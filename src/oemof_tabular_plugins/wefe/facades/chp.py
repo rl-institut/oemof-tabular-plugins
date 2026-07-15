@@ -13,14 +13,14 @@ from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade
 class Chp(Converter, Facade):
-    r""" A chp unit with 1 input and 2 outputs. The input is rawbiogas from the
-    digester while the outputs are electricity and heat.
+    r""" A chp unit with 1 input and 2 outputs. The input is biomethane from the
+    upgrading unit while the outputs are electricity and heat.
 
     Parameters
     ----------
-    rawbiogas_bus: oemof.solph.Bus
+    biomethane_bus: oemof.solph.Bus
         An oemof bus instance where the unit is connected to with
-        its rawbiogas input.
+        its biomethane input.
     electricity_bus: oemof.solph.Bus
         An oemof bus instance where the unit is connected to with
         its electricity output.
@@ -29,14 +29,14 @@ class Chp(Converter, Facade):
         its heat output.
     efficiency: float
         Electrical conversion efficiency (e.g., energy or mass ratio).
-        Default: 0.38
+        Default: 0.50
     efficiency: float
         Thermal conversion efficiency (e.g., energy or mass ratio).
-        Default: 0.47
+        Default: 0.50
     capacity: numeric
         The electricity production capacity (primary output side) of the unit.
     carrier_cost: numeric
-        Carrier cost for one unit of used input (rawbiogas). Default: 0
+        Carrier cost for one unit of used input (biomethane). Default: 0
     capacity_cost: numeric
         Investment costs per unit of electricity output capacity.
         If capacity is not set, this value will be used for optimizing the
@@ -58,7 +58,7 @@ class Chp(Converter, Facade):
         Set parameters on the output edge of the conversion unit.
     """
 
-    rawbiogas_bus: Bus
+    biomethane_bus: Bus
 
     electricity_bus: Bus
 
@@ -98,20 +98,25 @@ class Chp(Converter, Facade):
 
         # In oemof, conversion factors are defined relative to a nominal reference flow.
         # Since the nominal capacity is bound to the primary output (electricity),
-        # we define the ratios relative to the biomass input or scale them to the main output.
-        # Here, we treat biomass as the base (1), and outputs as fractions of that input.
+        # we define the ratios relative to the biometahne input or scale them to the main output.
+        # Here, we treat biomethane as the base (1), and outputs as fractions of that input.
         self.conversion_factors.update(
             {
-                self.rawbiogas_bus: sequence(1),
-                self.electricity_bus: sequence(self.electric_efficiency),
-                self.heat_bus: sequence(self.heat_efficiency),
+                self.biomethane_bus: sequence(1),
+                self.electricity_bus: sequence(
+                    self.electric_efficiency
+                ),
+                self.heat_bus: sequence(
+                    self.heat_efficiency
+                ),
             }
         )
 
         self.inputs.update(
             {
-                self.rawbiogas_bus: Flow(
-                    variable_costs = self.carrier_cost, **self.input_parameters
+                self.biomethane_bus: Flow(
+                    variable_costs=self.carrier_cost,
+                    **self.input_parameters,
                 ),
             }
         )
@@ -127,3 +132,4 @@ class Chp(Converter, Facade):
                 self.heat_bus: Flow(),
             }
         )
+
