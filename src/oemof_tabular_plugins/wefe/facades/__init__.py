@@ -46,6 +46,7 @@ from .open_field import OpenField
 from .water_pre_treatment import WaterPreTreatment
 from .water_core_treatment import WaterCoreTreatment
 from .water_post_treatment import WaterPostTreatment
+from .biomass_transport_1 import BiomassTransport
 from .digester import Digester
 from .biogasupgrading import BiogasUpgrading
 from .chp import Chp

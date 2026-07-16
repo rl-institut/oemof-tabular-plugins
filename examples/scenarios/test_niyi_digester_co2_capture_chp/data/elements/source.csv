@@ -1,2 +1,2 @@
 name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;resource_cost;profile;output_parameters;expandable;verbose_name
-sludge_source;dispatchable;biomass;source;0.0;0.0;biomass-bus;0.0;0.0;sludge-profile;"{""custom_attributes"": {""resource_cost"": 0.0}}";True;Sludge Feedstock
+sludge_source;dispatchable;biomass;source;0.0;0.0;biomass-source-bus;0.0;0.0;sludge-profile;"{""custom_attributes"": {""resource_cost"": 0.0}}";True;Sludge Feedstock
