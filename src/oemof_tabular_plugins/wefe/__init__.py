@@ -54,7 +54,11 @@ from .facades import (
     OpenField,
     WaterPreTreatment,
     WaterCoreTreatment,
-    WaterPostTreatment
+    WaterPostTreatment,
+    BiomassTransport,
+    Digester,
+    Chp, BiogasUpgrading,
+    Mixer
 )
 
 WEFE_TYPEMAP = {
@@ -107,7 +111,12 @@ WEFE_TYPEMAP = {
     "open_field": OpenField,
     "water_pre_treatment": WaterPreTreatment,
     "water_core_treatment": WaterCoreTreatment,
-    "water_post_treatment": WaterPostTreatment
+    "water_post_treatment": WaterPostTreatment,
+    "biomass_transport_1": BiomassTransport,
+    "digester": Digester,
+    "biogasupgrading": BiogasUpgrading,
+    "chp": Chp,
+    "mixer_3": Mixer
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)

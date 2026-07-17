@@ -1,0 +1,2 @@
+name;amount;profile;type;bus;verbose_name
+rb_demand;1;raw-biogas-profile;load;rawbiogas-bus;Raw Biogas Demand

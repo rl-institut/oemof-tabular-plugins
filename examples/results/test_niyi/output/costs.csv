@@ -1,0 +1,8 @@
+bus,direction,asset,carrier,facade_type,Upfront Investment Costs,Annuity Total,Variable Costs Total
+biomass-bus,in,digester_1,biomass,digester,,,0.0
+biomass-bus,out,sludge_source,biomass,dispatchable,,0.0,0.0
+digestate-bus,in,digestate-excess,digestate,excess,,,
+digestate-bus,out,digester_1,digestate,digester,,,0.0
+rawbiogas-bus,in,rawbiogas-excess,rawbiogas,excess,,,
+rawbiogas-bus,in,rb_demand,rawbiogas,load,,,
+rawbiogas-bus,out,digester_1,rawbiogas,digester,80.0,40.0,0.0

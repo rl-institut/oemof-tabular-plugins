@@ -1,0 +1,71 @@
+digraph {
+	subgraph cluster_1 {
+		color=black
+		label=Legends
+		Bus [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip=Bus width=4.1]
+		Sink [color="#FFD6E0" fontsize=10 shape=trapezium]
+		Source [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+		"Transforme
+r" [color="#7BF1A8" fontsize=10 shape=rectangle]
+		Storage [color="#90F1EF" fontsize=10 shape=rectangle style=rounded]
+	}
+	"rawbiogas-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="rawbiogas-bus" width=4.1]
+	"biomethane-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="biomethane-bus" width=4.1]
+	"captured-co2-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="captured-co2-bus" width=4.1]
+	"biogas_upg
+rading_1" [color="#7BF1A8" fontsize=10 shape=rectangle]
+	"biomass-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="biomass-bus" width=4.1]
+	"digestate-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="digestate-bus" width=4.1]
+	"electricity-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="electricity-bus" width=4.1]
+	"heat-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="heat-bus" width=4.1]
+	chp_1 [color="#7BF1A8" fontsize=10 shape=rectangle]
+	digester_1 [color="#7BF1A8" fontsize=10 shape=rectangle]
+	"electricit
+y-excess" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"heat-exces
+s" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"rawbiogas-
+excess" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"biomethane
+-excess" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"digestate-
+excess" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"captured-c
+o2-excess" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"electricit
+y_demand" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"heat_deman
+d" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"sludge_sou
+rce" [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+	digester_1 -> "rawbiogas-bus"
+	"rawbiogas-bus" -> "biogas_upg
+rading_1"
+	"rawbiogas-bus" -> "rawbiogas-
+excess"
+	"biogas_upg
+rading_1" -> "biomethane-bus"
+	"biomethane-bus" -> chp_1
+	"biomethane-bus" -> "biomethane
+-excess"
+	"biogas_upg
+rading_1" -> "captured-co2-bus"
+	"captured-co2-bus" -> "captured-c
+o2-excess"
+	"sludge_sou
+rce" -> "biomass-bus"
+	"biomass-bus" -> digester_1
+	digester_1 -> "digestate-bus"
+	"digestate-bus" -> "digestate-
+excess"
+	chp_1 -> "electricity-bus"
+	"electricity-bus" -> "electricit
+y-excess"
+	"electricity-bus" -> "electricit
+y_demand"
+	chp_1 -> "heat-bus"
+	"heat-bus" -> "heat-exces
+s"
+	"heat-bus" -> "heat_deman
+d"
+}

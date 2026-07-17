@@ -1,0 +1,9 @@
+name;type;balanced;carrier;verbose_name;plot
+biomass-source-bus;bus;True;biomass;Biomass Source Bus;True
+biomass-digester-bus;bus;True;biomass;Biomass Digester Bus;True
+rawbiogas-bus;bus;True;rawbiogas;RawBiogas;True
+biomethane-bus;bus;True;biomethane;Biomethane;True
+digestate-bus;bus;True;digestate;Digestate;True
+electricity-bus;bus;True;electricity;Electricity;True
+heat-bus;bus;True;heat;Heat;True
+captured-co2-bus;bus;True;co2;Captured CO2;True

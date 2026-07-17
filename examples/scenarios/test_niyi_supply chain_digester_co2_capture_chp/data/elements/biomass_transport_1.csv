@@ -1,0 +1,5 @@
+name;type;carrier;tech;distance;transport_cost_per_tkm;transport_efficiency;capacity;capacity_cost;biomass_source_bus;biomass_digester_bus;expandable;verbose_name;output_parameters
+biomass_transport_1;biomass_transport_1;biomass;truck;25;0.12;1.0;0.0;0.0;biomass-source-1-bus;biomass-mixer-1-bus;True;Biomass Transport 1;{}
+biomass_transport_2;biomass_transport_1;biomass;rail;30;0.1;1.0;0.0;0.0;biomass-source-2-bus;biomass-mixer-2-bus;True;Biomass Transport 2;{}
+biomass_transport_3;biomass_transport_1;biomass;pipe;28;0.11;1.0;0.0;0.0;biomass-source-3-bus;biomass-mixer-3-bus;True;Biomass Transport 3;{}
+biomass_transport_4;biomass_transport_1;biomass;truck;32;0.09;1.0;1000.0;0.0;biomass-source-4-bus;biomass-mixer-4-bus;True;Biomass Transport 4;{}

@@ -1,0 +1,2 @@
+name;type;carrier;tech;capacity;capacity_cost;bus;marginal_cost;resource_cost;profile;output_parameters;expandable;verbose_name
+rawbiogas;dispatchable;rawbiogas;source;0.0;0.0;rawbiogas-bus;0.0;0.0;1.0;"{""custom_attributes"": {""resource_cost"": 0.0}}";True;Rawbiogas

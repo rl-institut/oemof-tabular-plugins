@@ -1,0 +1,33 @@
+digraph {
+	subgraph cluster_1 {
+		color=black
+		label=Legends
+		Bus [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip=Bus width=4.1]
+		Sink [color="#FFD6E0" fontsize=10 shape=trapezium]
+		Source [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+		"Transforme
+r" [color="#7BF1A8" fontsize=10 shape=rectangle]
+		Storage [color="#90F1EF" fontsize=10 shape=rectangle style=rounded]
+	}
+	"rawbiogas-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="rawbiogas-bus" width=4.1]
+	"rawbiogas-
+excess" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"digestate-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="digestate-bus" width=4.1]
+	"digestate-
+excess" [color="#FFD6E0" fontsize=10 shape=trapezium]
+	rb_demand [color="#FFD6E0" fontsize=10 shape=trapezium]
+	"biomass-bus" [color=lightgrey fixedsize=shape fontsize=10 height=0.3 shape=rectangle style=filled tooltip="biomass-bus" width=4.1]
+	"sludge_sou
+rce" [color="#A4ADFB" fontsize=10 shape=invtrapezium]
+	digester_1 [color="#7BF1A8" fontsize=10 shape=rectangle]
+	digester_1 -> "rawbiogas-bus"
+	"rawbiogas-bus" -> "rawbiogas-
+excess"
+	"rawbiogas-bus" -> rb_demand
+	digester_1 -> "digestate-bus"
+	"digestate-bus" -> "digestate-
+excess"
+	"sludge_sou
+rce" -> "biomass-bus"
+	"biomass-bus" -> digester_1
+}

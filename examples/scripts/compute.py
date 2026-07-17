@@ -4,6 +4,7 @@ from oemof.solph import EnergySystem, Model
 from oemof.solph import processing
 from oemof.solph.processing import parameter_as_dict
 
+
 # TODO this should be with from oemof.tabular.datapackage import building when https://github.com/oemof/oemof-tabular/pull/173 is merged
 from oemof_tabular_plugins.script import compute_scenario
 
@@ -75,10 +76,14 @@ scenarios = [
     # "wefe_custom_attributes",
     # "wefe_pv_panel",
     # "wefe_reverse_osmosis",
-    "aiwa_24"
-    # "aiwa_8760"
-    # "arusi_8760"
-    # "arusi_24"
+    #"aiwa_24",
+    # "aiwa_8760",
+    # "arusi_8760",
+    # "arusi_24",
+    #"test_niyi_chp",
+    "test_niyi_supply chain_digester_co2_capture_chp"
+
+
 ]
 # Regionalized Characterisation Factor for Available water remaining (AWARE) - might move later;
 # this parameter is needed to calculate the regionalized water scarcity footprint in moo.
@@ -94,7 +99,7 @@ custom_attributes = [
     "renewable_factor",
     "land_requirement_factor",
     "water_consumption_factor",
-    "indirect_water_consumption_factor"
+    "indirect_water_consumption_factor",
     "land_requirement",
     "water_footprint",
     "ghg_emissions",
@@ -102,7 +107,7 @@ custom_attributes = [
     "annuity"
 ]
 # set whether the multi-objective optimization should be performed
-moo = True
+moo = False
 
 # MOO weight factors
 # Assign weights to the different minimization objectives (cost, greenhouse gas emissions,
@@ -135,6 +140,7 @@ for scenario in scenarios:
         dash_app=True,
         parameters_units=parameters_units,
         skip_infer_datapackage_metadata=True
+
     )
     df = calculator.df_results
     print(df)

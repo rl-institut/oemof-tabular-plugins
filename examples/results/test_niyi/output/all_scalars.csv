@@ -1,0 +1,13 @@
+name,var_name,var_value,region,type,carrier,tech
+digester_1,flow_in_bus,2.2800000000000002,,digester,biomass,AD
+digester_1,flow_out_bus,1.71,,digester,biomass,AD
+digester_1,flow_out_bus,0.5700000000000001,,digester,biomass,AD
+digester_1,invest_costs_out_bus,40.0,,digester,biomass,AD
+digester_1,invest_out_bus,0.04,,digester,biomass,AD
+sludge_source,flow_out_bus,2.2800000000000002,,dispatchable,biomass,source
+sludge_source,invest_costs_out_bus,0.0,,dispatchable,biomass,source
+sludge_source,invest_out_bus,0.16,,dispatchable,biomass,source
+digestate-excess,flow_in_bus,1.71,,excess,,
+rawbiogas-excess,flow_in_bus,0.0,,excess,,
+rb_demand,flow_in_bus,0.5700000000000001,,load,,
+system,total_system_cost,40.0,,,,

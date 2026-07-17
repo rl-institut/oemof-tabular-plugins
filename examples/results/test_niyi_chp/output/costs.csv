@@ -1,0 +1,9 @@
+bus,direction,asset,carrier,facade_type,Upfront Investment Costs,Annuity Total,Variable Costs Total
+electricity-bus,in,electricity-excess,electricity,excess,,,
+electricity-bus,in,electricity_demand,electricity,load,,,
+electricity-bus,out,chp_1,electricity,chp,973334.5,486667.25,0.0
+heat-bus,in,heat-excess,heat,excess,,,
+heat-bus,in,heat_demand,heat,load,,,
+heat-bus,out,chp_1,heat,chp,,,0.0
+rawbiogas-bus,in,chp_1,rawbiogas,chp,,,0.0
+rawbiogas-bus,out,rawbiogas,rawbiogas,dispatchable,,0.0,0.0
