@@ -50,3 +50,4 @@ from .biomass_transport_1 import BiomassTransport
 from .digester import Digester
 from .biogasupgrading import BiogasUpgrading
 from .chp import Chp
+from .mixer_3 import Mixer

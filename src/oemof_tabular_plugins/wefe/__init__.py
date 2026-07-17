@@ -57,7 +57,8 @@ from .facades import (
     WaterPostTreatment,
     BiomassTransport,
     Digester,
-    Chp, BiogasUpgrading
+    Chp, BiogasUpgrading,
+    Mixer
 )
 
 WEFE_TYPEMAP = {
@@ -114,7 +115,8 @@ WEFE_TYPEMAP = {
     "biomass_transport_1": BiomassTransport,
     "digester": Digester,
     "biogasupgrading": BiogasUpgrading,
-    "chp": Chp
+    "chp": Chp,
+    "mixer_3": Mixer
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)

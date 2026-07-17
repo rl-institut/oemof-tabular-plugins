@@ -81,7 +81,7 @@ scenarios = [
     # "arusi_8760",
     # "arusi_24",
     #"test_niyi_chp",
-    "test_niyi_digester_co2_capture_chp"
+    "test_niyi_supply chain_digester_co2_capture_chp"
 
 
 ]

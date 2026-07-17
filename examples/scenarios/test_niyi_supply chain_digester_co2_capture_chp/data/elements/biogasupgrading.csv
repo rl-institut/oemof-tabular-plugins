@@ -1,0 +1,2 @@
+name;type;carrier;tech;capacity;capacity_cost;capacity_potential;marginal_cost;carrier_cost;methane_recovery;rawbiogas_bus;biomethane_bus;captured_co2_bus;expandable;verbose_name;output_parameters
+biogas_upgrading_1;biogasupgrading;biogas;membrane;0.0;0.0;inf;0.0;0.0;0.6;rawbiogas-bus;biomethane-bus;captured-co2-bus;True;Biogas Upgrading;{}

@@ -1,0 +1,16 @@
+name;type;balanced;carrier;verbose_name;plot
+biomass-source-1-bus;bus;True;biomass;Biomass Source 1 Bus;True
+biomass-source-2-bus;bus;True;biomass;Biomass Source 2 Bus;True
+biomass-source-3-bus;bus;True;biomass;Biomass Source 3 Bus;True
+biomass-source-4-bus;bus;True;biomass;Biomass Source 4 Bus;True
+biomass-mixer-1-bus;bus;True;biomass;Biomass Mixer 1 Bus;True
+biomass-mixer-2-bus;bus;True;biomass;Biomass Mixer 2 Bus;True
+biomass-mixer-3-bus;bus;True;biomass;Biomass Mixer 3 Bus;True
+biomass-mixer-4-bus;bus;True;biomass;Biomass Mixer 4 Bus;True
+biomass-mixer-out-bus;bus;True;biomass;Biomass Mixer Out Bus;True
+rawbiogas-bus;bus;True;rawbiogas;RawBiogas;True
+biomethane-bus;bus;True;biomethane;Biomethane;True
+digestate-bus;bus;True;digestate;Digestate;True
+electricity-bus;bus;True;electricity;Electricity;True
+heat-bus;bus;True;heat;Heat;True
+captured-co2-bus;bus;True;co2;Captured CO2;True
