@@ -826,6 +826,11 @@
                         "format": "default"
                     },
                     {
+                        "name": "input_flow_share_config",
+                        "type": "string",
+                        "format": "default"
+                    },
+                    {
                         "name": "output_bus",
                         "type": "string",
                         "format": "default"

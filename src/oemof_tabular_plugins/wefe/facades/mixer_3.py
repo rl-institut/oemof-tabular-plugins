@@ -1,5 +1,6 @@
 import dataclasses
 from typing import Sequence, Union
+import json
 
 from oemof.solph.buses import Bus
 from oemof.solph._plumbing import sequence
@@ -147,8 +148,13 @@ class Mixer(MIMO):
         # flow shares
         # --------------------------------------------------------------
         self.input_flow_share_config = attributes.pop(
-            "input_flow_share_config", None
+            "input_flow_share_config", {}
         )
+
+        if isinstance(self.input_flow_share_config, str):
+            self.input_flow_share_config = json.loads(
+                self.input_flow_share_config
+            )
 
         # --------------------------------------------------------------
         # economics / investment
@@ -171,6 +177,7 @@ class Mixer(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # validate
