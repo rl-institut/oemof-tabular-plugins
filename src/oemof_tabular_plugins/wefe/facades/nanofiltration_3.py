@@ -21,27 +21,30 @@ class NanoFiltration(MIMO):
 
     Core references
     ---------------
-    1. DuPont / FilmTec Principle of RO and NF Technical Manual Excerpt:
-       recovery definition, osmotic-pressure limitation logic, and engineering
-       operating intuition.
-    2. Nanofiltration: Principles, Process Modeling, and Applications
-       (Taylor & Francis, 2021): terminology, process-design framing, and
-       variable definitions.
-    3. Schaefer et al. (2021) — Modeling of NF using DSPM-DE model (PMC):
-       mechanistic NF transport boundary and justification of reduced-order
-       modeling scope.
-    4. Discussion on calculation of maximum water recovery in NF systems
-       (Desalination, 2014): recovery bounds and concentration-factor logic.
+    1. Recovery definition, osmotic-pressure limitation logic, and engineering operating intuition for pressure-driven
+       RO/NF membranes.
+       DuPont Water Solutions (2020). Principle of reverse osmosis and nanofiltration (Form No. 45-D01538-en, Rev. 4).
+       https://de.scribd.com/document/549453748/Basics-of-Reverse-Osmosis-Principle
+    2. Terminology, process-design framing, and variable definitions for nanofiltration systems.
+       Vatsa, S., Kumar, M., Ghanghas, N., Prabhakar, P., & Meghwal, M. (2021). Nanofiltration: Principles, process
+       modeling, and applications. In Nanofiltration (Ch. 9). CRC Press. https://doi.org/10.1201/9781003163213-9
+    3. Mechanistic NF transport modeling (DSPM-DE) — boundary justification for reduced-order treatment of concentration
+       polarization and solute rejection.
+       Ghorbani, A., Bayati, B., Drioli, E., Macedonio, F., Kikhavani, T., & Frappa, M. (2021). Modeling of nanofiltration
+       process using DSPM-DE model for purification of amine solution. Membranes, 11(4), 230.
+    4. Recovery bounds and concentration-factor logic for NF systems.
+       Bi, F., Zhao, H., Zhang, L., Ye, Q., Chen, H., & Gao, C. (2014). Discussion on calculation of maximum water
+       recovery in nanofiltration system. Desalination, 332(1), 142–146. https://doi.org/10.1016/j.desal.2013.11.017
 
     Main equations
     --------------
     All flows normalized to 1 m³ net permeate output (primary output):
 
     Feedwater requirement:
-        feedwater_per_output = 1 / water_recovery     [m³_feed / m³_permeate]
+        feedwater_per_output = 1 / efficiency     [m³_feed / m³_permeate]
 
     Brine / concentrate output:
-        brine_per_output = (1 - water_recovery) / water_recovery
+        brine_per_output = (1 - efficiency) / efficiency
                                                        [m³_brine / m³_permeate]
 
     Electricity demand (Mode A — direct SEC):
@@ -60,22 +63,15 @@ class NanoFiltration(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      permeate output of the unit.
-    - SEC can be provided directly (Mode A) or derived from effective pressure
-      and pump efficiency (Mode B). Provide either specific_energy_consumption
-      or feed_pressure_bar; both at the same time defaults to Mode A.
-    - Optional antiscalant_bus and backwash_water_bus extend the four-port base
-      for more detailed process configurations; not required for standard use.
-    - Detailed solute rejection, concentration polarization, and ion-transport
-      physics (DSPM-DE) are intentionally excluded from v3.0. Their effects
-      should be reflected through water_recovery, SEC, and operating-cost
-      parameters calibrated from literature.
-    - For backward compatibility, `efficiency` may be passed as an alias for
-      `water_recovery` when `water_recovery` is not explicitly provided.
-    - Characterization values (typical SEC range, design flux, TMP) are stored
-      as documentation/calibration defaults. They are not enforced as hard
-      optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum permeate output of the unit.
+    - SEC can be provided directly (Mode A) or derived from effective pressure and pump efficiency (Mode B). Provide either
+      specific_energy_consumption or feed_pressure_bar; both at the same time defaults to Mode A.
+    - Optional antiscalant_bus and backwash_water_bus extend the four-port base for more detailed process configurations;
+      not required for standard use.
+    - Detailed solute rejection, concentration polarization, and ion-transport physics (DSPM-DE) are intentionally excluded.
+      Their effects should be reflected through efficiency (water recovery), SEC, and operating-cost parameters calibrated from literature.
+    - Characterization values (typical SEC range, design flux, TMP) are stored as documentation/calibration defaults.
+      They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -100,9 +96,9 @@ class NanoFiltration(MIMO):
     # mandatory buses
     # ------------------------------------------------------------------
     electricity_bus: Bus = None         # kWh
-    water_in_bus: Bus = None            # m³ feedwater
-    water_out_bus: Bus = None           # m³ permeate (PRIMARY)
-    brine_out_bus: Bus = None           # m³ concentrate
+    water_in_bus: Bus = None            # m³  (pretreated feedwater)
+    water_out_bus: Bus = None           # m³  (permeate — PRIMARY)
+    brine_out_bus: Bus = None           # m³  (concentrate)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -118,22 +114,22 @@ class NanoFiltration(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    water_recovery: float = None                         # m³ permeate / m³ feed [-]
-    specific_energy_consumption: float = None            # kWh / m³ permeate
-    feed_pressure_bar: float = None                      # bar
-    osmotic_pressure_bar: float = 0.0                    # bar
-    pump_efficiency: float = 0.80                        # [-]
-    max_recovery: Optional[float] = None                 # upper validation bound [-]
-    antiscalant_dose_per_m3: float = 0.0                 # m³ antiscalant / m³ permeate
-    backwash_fraction: float = 0.0                       # m³ backwash / m³ permeate
+    efficiency: float = None                             # m³ permeate / m³ feed (water recovery) [1, 4]
+    specific_energy_consumption: float = None            # kWh / m³ permeate [1, 2]
+    feed_pressure_bar: float = None                      # bar [1, 2]
+    osmotic_pressure_bar: float = 0.0                    # bar [1]
+    pump_efficiency: float = 0.80                        # [-] [1]
+    max_recovery: Optional[float] = None                 # upper validation bound [-] [4]
+    antiscalant_dose_per_m3: float = 0.0                 # m³ antiscalant / m³ permeate [2]
+    backwash_fraction: float = 0.0                       # m³ backwash / m³ permeate [2]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0              # €/m³ permeate; exclude cleaning O&M (use cleaning_cost)
-    carrier_cost: float = 0.0               # €/kWh electricity
-    brine_disposal_cost: float = 0.0        # €/m³ brine
-    cleaning_cost: float = 0.0              # €/m³ permeate (O&M surcharge)
+    marginal_cost: float = 0.0              # USD/m³ permeate; exclude cleaning O&M (use cleaning_cost)
+    carrier_cost: float = 0.0               # USD/m³ feed
+    brine_disposal_cost: float = 0.0        # USD/m³ brine
+    cleaning_cost: float = 0.0              # USD/m³ permeate (O&M surcharge)
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -143,18 +139,18 @@ class NanoFiltration(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # DuPont / FilmTec NF Technical Manual; Schaefer et al. (2021) DSPM-DE
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    sec_typical_min: float = 0.3                # kWh/m³, lower bound from literature
-    sec_typical_max: float = 1.5                # kWh/m³, upper bound from literature
-    design_flux_lmh: float = None               # L/m²/hr, documentation only
-    tmp_bar: float = None                       # bar, transmembrane pressure, documentation only
-    cp_factor: Optional[float] = None           # concentration polarization [-], documentation only
-    feed_tds: Optional[float] = None            # mg/L, documentation only
-    solute_rejection: Optional[float] = None    # lumped rejection [-], documentation only
-    temperature_c: Optional[float] = None       # °C, documentation only
-    membrane_area_m2: Optional[float] = None    # m², documentation only
+    sec_typical_min: float = 0.3                # kWh/m³, lower bound from literature [1]
+    sec_typical_max: float = 1.5                # kWh/m³, upper bound from literature [1]
+    design_flux_lmh: float = None               # L/m²/hr, documentation only [2]
+    tmp_bar: float = None                       # bar, transmembrane pressure, documentation only [1, 2]
+    cp_factor: Optional[float] = None           # concentration polarization [-], documentation only [3]
+    feed_tds: Optional[float] = None            # mg/L, documentation only [2, 3]
+    solute_rejection: Optional[float] = None    # lumped rejection [-], documentation only [3]
+    temperature_c: Optional[float] = None       # °C, documentation only [2, 3]
+    membrane_area_m2: Optional[float] = None    # m², documentation only [2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -183,7 +179,7 @@ class NanoFiltration(MIMO):
         # --------------------------------------------------------------
         # active physical parameters
         # --------------------------------------------------------------
-        self.water_recovery = attributes.pop("water_recovery", self.water_recovery)
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
@@ -229,6 +225,7 @@ class NanoFiltration(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -250,8 +247,7 @@ class NanoFiltration(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (DuPont / FilmTec NF Technical Manual, ref. 1;
-        #  Nanofiltration: Principles, Process Modeling, ref. 2)
+        # (DuPont Water Solutions (2020) [1]; Nanofiltration: Principles, Process Modeling [2])
         # --------------------------------------------------------------
         if self.specific_energy_consumption is not None:
             self._sec = float(self.specific_energy_consumption)
@@ -259,11 +255,12 @@ class NanoFiltration(MIMO):
             _eff_p = self.feed_pressure_bar - self.osmotic_pressure_bar
             self._sec = float(_eff_p / (36.0 * self.pump_efficiency))
 
-        self._feedwater_per_output = 1.0 / self.water_recovery
-        self._brine_per_output = (1.0 - self.water_recovery) / self.water_recovery
+        self._feedwater_per_output = 1.0 / self.efficiency
+        self._brine_per_output = (1.0 - self.efficiency) / self.efficiency
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._sec
@@ -282,21 +279,6 @@ class NanoFiltration(MIMO):
         if self.backwash_water_bus is not None:
             attributes[f"conversion_factor_{self.backwash_water_bus.label}"] = sequence(
                 max(self.backwash_fraction, 1e-9)
-            )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        if self.cleaning_cost > 0:
-            attributes.setdefault("output_parameters", {})
-            attributes["output_parameters"].update(
-                {"variable_costs": self.cleaning_cost}
-            )
-
-        attributes.setdefault("output_parameters_1", {})
-        if self.brine_disposal_cost > 0:
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.brine_disposal_cost}
             )
 
         # --------------------------------------------------------------
@@ -336,6 +318,40 @@ class NanoFiltration(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.cleaning_cost
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.brine_out_bus in self.outputs:
+            self.outputs[self.brine_out_bus].variable_costs = sequence(
+                self.brine_disposal_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -357,20 +373,20 @@ class NanoFiltration(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if self.water_recovery is None:
+        if self.efficiency is None:
             raise ValueError(
-                "water_recovery must be provided "
+                "efficiency must be provided "
                 "(defined as V_permeate / V_feed, per DuPont/FilmTec NF manual)."
             )
-        if not 0 < self.water_recovery < 1:
-            raise ValueError("water_recovery must be in the open interval (0, 1).")
+        if not 0 < self.efficiency < 1:
+            raise ValueError("efficiency must be in the open interval (0, 1).")
 
         if self.max_recovery is not None:
             if not 0 < self.max_recovery < 1:
                 raise ValueError("max_recovery must be in the open interval (0, 1).")
-            if self.water_recovery > self.max_recovery:
+            if self.efficiency > self.max_recovery:
                 raise ValueError(
-                    f"water_recovery ({self.water_recovery}) exceeds max_recovery "
+                    f"efficiency ({self.efficiency}) exceeds max_recovery "
                     f"({self.max_recovery}). Revise design or use a lower recovery value."
                 )
 

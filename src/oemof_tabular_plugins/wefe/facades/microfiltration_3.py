@@ -264,7 +264,7 @@ class MicroFiltration(MIMO):
         # availability as activity bound
         # --------------------------------------------------------------
         if self.availability < 1.0:
-            attributes["activity_bound_max"] = sequence(self.availability*self.capacity)
+            attributes["activity_bound_max"] = sequence(self.availability * self.capacity)
 
         # --------------------------------------------------------------
         # primary bus label resolution
