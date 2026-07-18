@@ -22,43 +22,40 @@ class FineScreen(MIMO):
 
     Core references
     ---------------
-    1. Metcalf & Eddy, Wastewater Engineering: Treatment and Resource Recovery
-       (5th ed.): process role and unit-boundary justification for fine
-       screening as a preliminary/headworks treatment unit.
-    2. Huber, "Fine Screens – Basics and Applications": screen types,
-       opening-size effects, screenings generation, washing/compaction,
-       and hydraulic design guidance; supports a separate screenings side-stream
-       and cautions against universal hydraulic parameterization.
-    3. IEUA Headworks Fine Screen Case Study: operational realism for
-       screenings handling, washing/compaction, and capture rates relative
-       to conventional bar screens.
-    4. Ruiz-Hernando et al. (2018), Energy Valorization of Fine Screenings
-       from a Municipal Wastewater Treatment Plant: supports explicit modeling
-       of screenings as a recoverable or disposable side-stream with resource
-       and energy relevance.
+    1. Process role and unit-boundary justification for fine screening as a preliminary/headworks treatment unit.
+       Metcalf & Eddy, Inc., Tchobanoglous, G., Stensel, H. F., Tsuchihashi, R., & Burton, F. L. (2014). Wastewater
+       engineering: Treatment and resource recovery (5th ed.). McGraw-Hill Education.
+       https://www.mheducation.com/highered/product/wastewater-engineering-treatment-and-resource-recovery-metcalf-and-eddy.html?viewOption=student
+    2. Screen types, opening-size effects, screenings generation, washing/compaction, and hydraulic design guidance.
+       HUBER Technology. Fine Screens - Basics and Applications.
+       https://www.tpomag.com/uploads/downloads/Screening-Considerations_Guide_Huber_180119_133914.pdf
+    3. Operational realism for screenings handling, washing/compaction, and capture rates relative to conventional bar screens.
+       LEE + RO / Inland Empire Utilities Agency (IEUA). RP-4 Influent Screen Replacement: Headworks fine screen case study.
+       https://www.lee-ro.com/solutions/ieua-rp-4
+    4. Supports explicit modeling of screenings as a recoverable or disposable side-stream with resource and energy relevance.
+       Lemonidis, I., Banti, D. C., Tzenos, C. A., Kalamaras, S. D., Kotsopoulos, T. A., & Samaras, P. (2022). Energy
+       valorization of fine screenings from a municipal wastewater treatment plant. Energies, 15(21), 8236.
+       https://doi.org/10.3390/en15218236
 
     Main equations
     --------------
-    All conversion factors are normalized to treated-water output = 1.
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Electricity demand:
         E(t) = specific_energy_consumption * Q_out(t)
 
     Raw water requirement:
-        Q_in(t) = Q_out(t) / water_recovery
+        Q_in(t) = Q_out(t) / efficiency
 
     Screenings generation (optional):
         S(t) = screenings_yield * Q_out(t)
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated-water throughput of the screen unit.
-    - screenings_out_bus is optional. If not provided, the facade behaves as a
-      2-input/1-output unit.
-    - Documentation metadata fields are stored for scenario documentation and
-      reporting only. They are not enforced as hard optimization constraints
-      in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the screen unit.
+    - screenings_out_bus is optional. If not provided, the facade behaves as a  2-input/1-output unit.
+    - Documentation metadata fields are stored for scenario documentation and reporting only. They are not enforced as
+      hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -84,7 +81,7 @@ class FineScreen(MIMO):
     # ------------------------------------------------------------------
     electricity_bus: Bus = None         # kWh
     water_in_bus: Bus = None            # m³
-    water_out_bus: Bus = None           # m³
+    water_out_bus: Bus = None           # m³ (PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -99,16 +96,16 @@ class FineScreen(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.04   # kWh / m³ treated water
-    water_recovery: float = 0.995               # m³ treated water / m³ raw water
-    screenings_yield: float = 0.005             # m³ screenings / m³ treated water
+    specific_energy_consumption: float = 0.04           # kWh / m³ treated water [1, 2]
+    efficiency: float = 0.995                           # m³ treated water / m³ raw water (water recovery) [1]
+    screenings_yield: float = 0.005                     # m³ screenings / m³ treated water [3, 4]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                  # €/m³ treated water
-    carrier_cost: float = 0.0                   # €/kWh electricity
-    screenings_disposal_cost: float = 0.0       # €/unit screenings output
+    marginal_cost: float = 0.0                  # USD/m³ treated water
+    carrier_cost: float = 0.0                   # USD/m³ raw water
+    screenings_disposal_cost: float = 0.0       # USD/unit screenings output
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -118,15 +115,16 @@ class FineScreen(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    screen_type: str = ""                           # e.g. "drum", "band", "step"
-    screen_opening_mm: Optional[float] = None       # aperture size [mm]
-    approach_velocity_ms: Optional[float] = None    # upstream channel velocity [m/s]
-    washing_compaction: bool = False                # screenings washed and compacted on-site
-    cod_capture_ratio: Optional[float] = None       # fraction of COD retained [0, 1]
-    tss_capture_ratio: Optional[float] = None       # fraction of TSS retained [0, 1]
-    valorization_route: str = ""                    # e.g. "landfill", "biogas", "compost"
+    screen_type: str = ""                               # e.g. "drum", "band", "step" [2]
+    screen_opening_mm: Optional[float] = None           # aperture size [mm] [2]
+    approach_velocity_ms: Optional[float] = None        # upstream channel velocity [m/s] [2]
+    washing_compaction: bool = False                    # screenings washed and compacted on-site [2, 3]
+    cod_capture_ratio: Optional[float] = None           # fraction of COD retained [0, 1] [3, 4]
+    tss_capture_ratio: Optional[float] = None           # fraction of TSS retained [0, 1] [3]
+    valorization_route: str = ""                        # e.g. "landfill", "biogas", "compost" [4]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -156,8 +154,8 @@ class FineScreen(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.water_recovery = attributes.pop(
-            "water_recovery", self.water_recovery
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
         self.screenings_yield = attributes.pop(
             "screenings_yield", self.screenings_yield
@@ -187,6 +185,7 @@ class FineScreen(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -219,11 +218,12 @@ class FineScreen(MIMO):
         # --------------------------------------------------------------
         # derived constants
         # --------------------------------------------------------------
-        self._feedwater_per_treated_water = 1.0 / self.water_recovery
+        self._feedwater_per_treated_water = 1.0 / self.efficiency
         self._screenings_per_treated_water = self.screenings_yield
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -237,24 +237,6 @@ class FineScreen(MIMO):
             attributes[f"conversion_factor_{self.screenings_out_bus.label}"] = sequence(
                 self._screenings_per_treated_water
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs / revenue / output parameters
-        # --------------------------------------------------------------
-        output_parameters = attributes.pop("output_parameters", {})
-        screenings_output_parameters = attributes.pop(
-            "screenings_output_parameters", {}
-        )
-
-        if self.screenings_out_bus is None and self.screenings_disposal_cost not in (None, 0, 0.0):
-            output_parameters.setdefault(
-                "variable_costs", self.screenings_disposal_cost
-            )
-
-        attributes["output_parameters"] = output_parameters
-
-        if self.screenings_out_bus is not None:
-            attributes["screenings_output_parameters"] = screenings_output_parameters
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -290,6 +272,38 @@ class FineScreen(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.screenings_out_bus is not None and self.screenings_out_bus in self.outputs:
+            self.outputs[self.screenings_out_bus].variable_costs = sequence(
+                self.screenings_disposal_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -310,8 +324,8 @@ class FineScreen(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.water_recovery <= 1:
-            raise ValueError(f"water_recovery must be in (0, 1], got {self.water_recovery!r}.")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError(f"efficiency must be in (0, 1], got {self.efficiency!r}.")
 
         if self.specific_energy_consumption < 0:
             raise ValueError(f"specific_energy_consumption must be >= 0, got {self.specific_energy_consumption!r}.")
