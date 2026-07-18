@@ -22,26 +22,31 @@ class IntakeStructure(MIMO):
 
     Core references
     ---------------
-    1. Lauterjung & Schmidt (1989): Planning of Water Intake Structures for
-       Irrigation or Hydropower. GTZ. — hydrology, abstraction availability,
-       and seasonal source constraints.
-    2. Scheuerlein & Mtalo: Sediment Exclusion at River Intakes (EOLSS). —
-       sediment as a core intake-performance issue; supports lumped sediment
-       derating parameter.
-    3. WHO: Surface Water Source and Intake (Sanitary Inspection Guidance). —
-       operational risk from sediment build-up, vegetation, blockage, and
-       source-quality events; supports availability/activity bound modeling.
+    1. Hydrology, abstraction availability, and seasonal source constraints for planning intake structures.
+       Lauterjung, H., & Schmidt, G. (1989). Planning of water intake structures for irrigation or hydropower.
+       Deutsche Gesellschaft fuer Technische Zusammenarbeit (GTZ) GmbH.
+       https://www.ircwash.org/sites/default/files/Lauterjung-1989-Planning.pdf
+    2. Sediment as a core intake-performance issue - basis for the lumped sediment_rejection_factor.
+       Scheuerlein, H., & Mtalo, F. (2009). Sediment exclusion at river intakes. In Fresh Surface Water (Vol. III).
+       Encyclopedia of Life Support Systems (EOLSS), UNESCO.
+       http://www.eolss.net/sample-chapters/c07/e2-07-05-04.pdf
+    3. Operational risk from sediment build-up, vegetation, blockage, and source-quality events - basis for availability/
+       activity bound modeling.
+       World Health Organization. Sanitary inspection package: Surface water source and intake.
+       https://cdn.who.int/media/docs/default-source/wash-documents/water-safety-and-quality/water-safety-planning/sanitary-inspection-packages/7.-surface-water-source-and-intake_web.pdf
 
     Main equations
     --------------
+    All flows normalized to 1 m³ net treated water (primary output):
+
     Total specific energy consumption:
         SEC_tot = SEC_main + SEC_aux
         [kWh/m³]  [kWh/m³]  [kWh/m³]
 
-    Effective abstraction efficiency (Scheuerlein & Mtalo; WHO):
+    Effective abstraction efficiency:
         eta_eff = eta_abs * (1 - phi_sed)
         where:
-            eta_abs  = abstraction_efficiency    [-]
+            eta_abs  = efficiency    [-]
             phi_sed  = sediment_rejection_factor [-]
 
     Raw water required per unit usable-water output:
@@ -52,36 +57,22 @@ class IntakeStructure(MIMO):
         w_sed = w_in - 1.0
         [m³_reject / m³_useful]
 
-    Availability-bound on usable-water output (WHO; Lauterjung & Schmidt):
+    Availability-bound on usable-water output:
         Q_out(t) <= availability(t) * capacity
         Implemented via activity_bound_max.
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      usable-water output of the intake, representing the design abstraction
-      capacity of the structure.
-    - Each bus is its own independent MIMO group. There are no multi-bus
-      additive groups. MIMO._unify_groups() wraps each Bus individually into
-      its own auto-named group. The pairwise group-linking constraint enforces:
-          GROUP_FLOW[in_elec] == GROUP_FLOW[in_water] == GROUP_FLOW[out_water]
-      after each group flow is normalized by its conversion factor.
-    - abstraction_efficiency and sediment_rejection_factor must be scalars.
-      Time-varying source conditions should be represented via the availability
-      profile, not via time-series efficiency parameters.
-    - Sediment effects are represented as a lumped effective abstraction
-      efficiency derating. If sediment_out_bus is provided, the reject
-      volume appears as a separate output stream; otherwise losses are
-      folded silently into eta_eff.
-    - Operational interruptions from hydrology, blockage, vegetation, or
-      source-quality events are represented via a time-varying availability
-      profile applied as an activity upper bound on the output.
-    - Detailed siting, intake elevation, screen geometry, flood resilience,
-      and hydraulic design checks remain outside the optimization model and
-      must be handled during data preparation and engineering design.
-    - Documentation-only fields (intake_type, source_type, screen_type,
-      siting_comment) are stored as metadata for scenario documentation.
-      They are not enforced as hard optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum usable-water output of the intake,
+      representing the design abstraction capacity of the structure.
+    - Sediment effects are represented as a lumped effective abstraction efficiency derating. If sediment_out_bus is provided,
+      the reject volume appears as a separate output stream; otherwise losses are folded silently into eta_eff.
+    - Operational interruptions from hydrology, blockage, vegetation, or source-quality events are represented via a
+      time-varying availability profile applied as an activity upper bound on the output.
+    - Detailed siting, intake elevation, screen geometry, flood resilience, and hydraulic design checks remain outside
+      the optimization model and must be handled during data preparation and engineering design.
+    - Documentation-only fields (intake_type, source_type, screen_type, siting_comment) are stored as metadata for scenario
+      documentation. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -107,7 +98,7 @@ class IntakeStructure(MIMO):
     # ------------------------------------------------------------------
     electricity_bus: Bus = None     # kWh
     water_in_bus: Bus = None        # m³ (raw surface water)
-    water_out_bus: Bus = None       # m³ (usable abstracted water)
+    water_out_bus: Bus = None       # m³ (usable abstracted water - PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -122,17 +113,17 @@ class IntakeStructure(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.008          # kWh/m³
-    auxiliary_energy_consumption: float = 0.0           # kWh/m³
-    abstraction_efficiency: float = 0.98                # [-]  scalar only
-    sediment_rejection_factor: float = 0.0              # [-]  scalar only
-    availability: Union[float, Sequence[float]] = None  # [-] None = no bound
+    specific_energy_consumption: float = 0.008              # kWh/m³ [1]
+    auxiliary_energy_consumption: float = 0.0               # kWh/m³ [1]
+    efficiency: float = 0.98                                # [-]  scalar only [1]
+    sediment_rejection_factor: float = 0.0                  # [-]  scalar only [2]
+    availability: Union[float, Sequence[float]] = None      # [-] None = no bound [3]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0  # €/m³ filtered water
-    carrier_cost: float = 0.0   # €/kWh electricity
+    marginal_cost: float = 0.0  # USD/m³ filtered water
+    carrier_cost: float = 0.0   # USD/m³ raw surface water
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -142,12 +133,13 @@ class IntakeStructure(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    intake_type: str = ""       # e.g. "canal", "river", "reservoir", "floating"
-    source_type: str = ""       # e.g. "river", "canal", "lake"
-    screen_type: str = ""       # e.g. "coarse", "fine", "Coanda"
-    siting_comment: str = ""    # free-text note on siting assumptions
+    intake_type: str = ""               # e.g. "canal", "river", "reservoir", "floating" [1]
+    source_type: str = ""               # e.g. "river", "canal", "lake" [1, 3]
+    screen_type: str = ""               # e.g. "coarse", "fine", "Coanda" [2]
+    siting_comment: str = ""            # free-text note on siting assumptions [1, 3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -180,8 +172,8 @@ class IntakeStructure(MIMO):
         self.auxiliary_energy_consumption = attributes.pop(
             "auxiliary_energy_consumption", self.auxiliary_energy_consumption
         )
-        self.abstraction_efficiency = attributes.pop(
-            "abstraction_efficiency", self.abstraction_efficiency
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
         self.sediment_rejection_factor = attributes.pop(
             "sediment_rejection_factor", self.sediment_rejection_factor
@@ -209,6 +201,7 @@ class IntakeStructure(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -225,9 +218,9 @@ class IntakeStructure(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (Scheuerlein & Mtalo; Lauterjung & Schmidt)
+        # (Scheuerlein & Mtalo [2]; Lauterjung & Schmidt [1])
         # --------------------------------------------------------------
-        self._eta_eff = self.abstraction_efficiency * (1.0 - self.sediment_rejection_factor)
+        self._eta_eff = self.efficiency * (1.0 - self.sediment_rejection_factor)
         self._w_in_per_out = 1.0 / self._eta_eff            # m³_raw / m³_useful
         self._w_sed_per_out = self._w_in_per_out - 1.0      # m³_reject / m³_useful
         self._total_sec = (
@@ -236,6 +229,7 @@ class IntakeStructure(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._total_sec
@@ -251,23 +245,10 @@ class IntakeStructure(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        output_parameters = attributes.pop("output_parameters", {})
-        attributes["output_parameters"] = output_parameters
-
-        if self.sediment_out_bus is not None:
-            attributes.setdefault("sediment_output_parameters", {})
-
-        # --------------------------------------------------------------
-        # activity bound from availability
-        # Exogenous upper activity profile on the primary output group.
-        # Approximates hydrological, blockage, or maintenance-driven
-        # restrictions on usable-water abstraction
-        # (WHO; Lauterjung & Schmidt).
+        # availability as activity bound
         # --------------------------------------------------------------
         if self.availability is not None:
-            attributes["activity_bound_max"] = sequence(self.availability)
+            attributes["activity_bound_max"] = sequence(self.availability * self.capacity)
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -303,6 +284,33 @@ class IntakeStructure(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -323,8 +331,8 @@ class IntakeStructure(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.abstraction_efficiency <= 1:
-            raise ValueError("abstraction_efficiency must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
 
         if not 0 <= self.sediment_rejection_factor < 1:
             raise ValueError("sediment_rejection_factor must be in [0, 1).")
