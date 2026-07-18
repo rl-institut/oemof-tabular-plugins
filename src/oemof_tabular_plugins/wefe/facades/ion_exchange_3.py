@@ -22,69 +22,54 @@ class IonExchange(MIMO):
 
     Core references
     ---------------
-    1. WaterTAP Technical Brief: Ion Exchange Model Demonstration and
-       Optimization (NREL/OSTI-86512, 2023): steady-state model variables,
-       cost structure, resin capacity and selectivity as key sensitivities.
-    2. Veolia Handbook of Industrial Water Treatment, Chapter 8 – Ion Exchange
-       & Water Demineralization: regeneration steps, exhaustion behavior,
-       practical operating limits, and cost relevance of regenerant disposal.
-    3. Ion Exchange for Water Treatment (PDH Academy course note, 2023):
-       service/breakthrough/regeneration logic and parallel-vessel
-       engineering simplifications.
-    4. AWWA Ion Exchange for Drinking Water Treatment: gold-standard design
-       reference for operating modes, resin selection, and system design.
+    1. Steady-state model variables, cost structure, resin capacity and selectivity as key sensitivities.
+       Sitterley, K. A., & Dudchenko, A. (2023). WaterTAP technical brief: Ion exchange model demonstration and optimization
+       (NREL/TP-5700-86512). National Renewable Energy Laboratory. https://doi.org/10.2172/2005544
+    2. Regeneration steps, exhaustion behavior, practical operating limits, and cost relevance of regenerant disposal.
+       Veolia Water Technologies. (n.d.). Handbook of industrial water treatment, Chapter 8 — Ion exchange, water demineralization
+       & resin testing. Veolia. https://www.watertechnologies.com/handbook/chapter-08-ion-exchange
+    3. Service/breakthrough/regeneration logic and parallel-vessel engineering simplifications.
+       Ludwigson, M. (2023). Ion exchange for water treatment (Course 454). PDH Academy.
+       https://pdhacademy.com/wp-content/uploads/2023/09/454-Ion-Exchange-for-Water-Treatment.pdf
+    4. Gold-standard design reference for operating modes, resin selection, and system design.
+       Wachinski, A. M. (2004). Ion exchange treatment for water. American Water Works Association.
+       https://www.abebooks.com/9781583213223/Ion-Exchange-Treatment-Water-Wachinski-1583213228/plp
 
     Main equations
     --------------
     All flows normalized to 1 m³ net treated water (primary output):
 
-    Feedwater requirement (Veolia / PDH):
-        feedwater_per_output = 1 / water_recovery       [m³_feed / m³_product]
+    Feedwater requirement:
+        feedwater_per_output = 1 / efficiency       [m³_feed / m³_product]
 
-    Electricity demand (WaterTAP):
+    Electricity demand:
         electricity_per_output = SEC                    [kWh / m³_product]
 
-    Regenerant demand (Veolia; PDH):
+    Regenerant demand:
         regenerant_per_output = regenerant_dose_kg_per_m3_product
                                                         [kg_chem / m³_product]
 
-    Brine reject output (Veolia mass balance):
-        brine_per_output = 1 / water_recovery - 1.0     [m³_brine / m³_product]
+    Brine reject output:
+        brine_per_output = 1 / efficiency - 1.0     [m³_brine / m³_product]
 
     Output costs (placed on flow edges, not lumped into marginal_cost):
-        water_out_bus:   resin_replacement_cost_per_m3_product  [€/m³]  → output_parameters
-        waste_brine_bus: waste_disposal_cost_per_m3_product     [€/m³]  → output_parameters_1
+        water_out_bus:   resin_replacement_cost_per_m3_product  [€/m³]
+        waste_brine_bus: waste_disposal_cost_per_m3_product     [€/m³]
 
-    Note: regenerant chemical cost should be included in marginal_cost at
-    scenario/tabular level (marginal_cost = base_opex + regenerant_cost_per_m3).
 
-    Availability derating (activity bound, PDH; Veolia):
+    Availability derating:
         Q_net(t) <= availability * Q_cap                [m³/hr]
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated-water throughput of the IX unit.
-    - Electricity and feedwater inputs are normalized to one unit of treated
-      water output via conversion factors (WaterTAP steady-state convention).
-    - regenerant_bus is the correct optional INPUT for chemical supply
-      (HCl / NaOH / NaCl). It acts as a material flow tracker in the WEFE
-      graph. Chemical cost should be included in marginal_cost at scenario level.
-    - waste_brine_bus is the correct optional OUTPUT for spent regenerant /
-      brine reject. Its conversion factor is derived from water_recovery.
-      Disposal cost is placed as variable_costs on output_parameters_1.
-    - availability is implemented as an activity_bound_max constraint, not as
-      a hidden multiplier inside SEC or water_recovery, to keep cost
-      interpretation unambiguous.
-    - Resin capacity, selectivity, breakthrough, and service-loading fields
-      are kept for scenario documentation and future extension. They are not
-      enforced as hard optimization constraints in v3.0 because breakthrough
-      prediction requires cycle-state or contaminant-balance logic (WaterTAP).
-    - The backward-compatible alias 'efficiency' is accepted as water_recovery
-      to allow drop-in replacement of v2.0 instances.
-    - Characterization values (resin capacity, selectivity, service loading,
-      breakthrough metrics) are stored as documentation/calibration defaults.
-      They are not enforced as hard optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the IX unit.
+    - regenerant_bus is the correct optional INPUT for chemical supply (HCl / NaOH / NaCl).
+    - waste_brine_bus is the correct optional OUTPUT for spent regenerant / brine reject.
+    - availability is implemented as an activity_bound_max constraint, not as a hidden multiplier inside SEC or efficiency,
+      to keep cost interpretation unambiguous.
+    - Resin capacity, selectivity, breakthrough, and service-loading fields are kept for scenario documentation and future extension.
+    - Characterization values (resin capacity, selectivity, service loading, breakthrough metrics) are stored as 
+      documentation/calibration defaults. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -108,9 +93,9 @@ class IonExchange(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    electricity_bus: Bus = None  # kWh
-    water_in_bus: Bus = None  # m³
-    water_out_bus: Bus = None  # m³  (PRIMARY)
+    electricity_bus: Bus = None         # kWh
+    water_in_bus: Bus = None            # m³
+    water_out_bus: Bus = None           # m³  (PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -125,18 +110,18 @@ class IonExchange(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.06  # kWh / m³ treated water (WaterTAP)
-    water_recovery: float = 0.96  # m³ treated / m³ feed (Veolia / PDH)
-    availability: float = 1.0  # fraction of productive operating time
-    regenerant_dose_kg_per_m3_product: float = 0.0  # kg chemical / m³ treated water (Veolia; PDH)
+    specific_energy_consumption: float = 0.06           # kWh / m³ treated water          [1]
+    efficiency: float = 0.96                            # m³ treated / m³ feed (water recovery) [2, 3]
+    availability: float = 1.0                           # fraction of productive operating time [3]
+    regenerant_dose_kg_per_m3_product: float = 0.0      # kg chemical / m³ treated water   [2, 3]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0  # €/m³ treated water (incl. regenerant cost at scenario level)
-    carrier_cost: float = 0.0  # €/kWh electricity
-    waste_disposal_cost_per_m3_product: float = 0.0  # €/m³ brine (Veolia handbook)
-    resin_replacement_cost_per_m3_product: float = 0.0  # €/m³ treated water (WaterTAP costing)
+    marginal_cost: float = 0.0                           # USD/m³ treated water
+    carrier_cost: float = 0.0                            # USD/m³ feed
+    waste_disposal_cost_per_m3_product: float = 0.0      # USD/m³ brine
+    resin_replacement_cost_per_m3_product: float = 0.0   # USD/m³ treated water
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -146,22 +131,22 @@ class IonExchange(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # WaterTAP and Veolia handbook style characterization fields
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    sec_typical_min: float = 0.03  # kWh/m³  literature lower bound (WaterTAP)
-    sec_typical_max: float = 0.10  # kWh/m³  literature upper bound (WaterTAP)
-    target_ion: str = ""  # e.g. "nitrate", "hardness", "fluoride"
-    influent_concentration_mgL: float = None  # mg/L   feed contaminant concentration
-    resin_capacity_eq_per_m3_resin: float = None  # eq/m³  total exchange capacity of resin bed
-    resin_selectivity: float = None  # –      selectivity coefficient vs. reference ion
-    service_flow_rate_bvph: float = None  # BV/hr  bed volumes per hour in service mode
-    breakthrough_fraction: float = None  # –      C/C₀ at which bed is considered exhausted
-    breakthrough_time_h: float = None  # hr     time to breakthrough at design conditions
-    regenerant_type: str = ""  # e.g. "HCl", "NaOH", "NaCl"
-    regenerant_dose_relative_to_stoich: float = None  # –  excess factor over stoichiometric dose
-    bed_volumes_per_cycle: float = None  # BV     service BV between two regenerations
-    parallel_trains: int = None  # –      number of parallel IX vessels
+    sec_typical_min: float = 0.03                       # kWh/m³ literature lower bound                 [1]
+    sec_typical_max: float = 0.10                       # kWh/m³ literature upper bound                 [1]
+    target_ion: str = ""                                # e.g. "nitrate", "hardness", "fluoride"        [4]
+    influent_concentration_mgL: float = None            # mg/L feed contaminant concentration           [1]
+    resin_capacity_eq_per_m3_resin: float = None        # total exchange capacity                       [1, 4]
+    resin_selectivity: float = None                     # selectivity coefficient                       [1, 4]
+    service_flow_rate_bvph: float = None                # BV/hr in service mode                         [3, 4]
+    breakthrough_fraction: float = None                 # C/C₀ at exhaustion                            [3]
+    breakthrough_time_h: float = None                   # time to breakthrough                          [3]
+    regenerant_type: str = ""                           # e.g. "HCl", "NaOH", "NaCl"                    [2, 4]
+    regenerant_dose_relative_to_stoich: float = None    # excess factor                                 [2]
+    bed_volumes_per_cycle: float = None                 # service BV between regens                     [2, 3]
+    parallel_trains: int = None                         # number of parallel IX vessels  [3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -192,7 +177,7 @@ class IonExchange(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.water_recovery = attributes.pop("water_recovery", self.water_recovery)
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
 
         self.availability = attributes.pop("availability", self.availability)
         self.regenerant_dose_kg_per_m3_product = attributes.pop(
@@ -226,6 +211,7 @@ class IonExchange(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -272,13 +258,13 @@ class IonExchange(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (WaterTAP steady-state convention; Veolia / PDH mass balance)
         # --------------------------------------------------------------
-        self._feedwater_per_output = 1.0 / self.water_recovery
+        self._feedwater_per_output = 1.0 / self.efficiency
         self._brine_per_output = self._feedwater_per_output - 1.0
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -299,28 +285,10 @@ class IonExchange(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # (WaterTAP costing; Veolia handbook)
-        # --------------------------------------------------------------
-        if self.resin_replacement_cost_per_m3_product > 0:
-            attributes.setdefault("output_parameters", {})
-            attributes["output_parameters"].update(
-                {"variable_costs": self.resin_replacement_cost_per_m3_product}
-            )
-
-        if self.waste_disposal_cost_per_m3_product > 0 and self.waste_brine_bus is not None:
-            attributes.setdefault("output_parameters_1", {})
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.waste_disposal_cost_per_m3_product}
-            )
-
-        # --------------------------------------------------------------
         # availability as activity bound
-        # derates maximum productive output without distorting SEC or
-        # water_recovery (PDH design note; Veolia operational derating)
         # --------------------------------------------------------------
         if self.availability < 1.0:
-            attributes["activity_bound_max"] = sequence(self.availability)
+            attributes["activity_bound_max"] = sequence(self.availability * self.capacity)
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -356,6 +324,40 @@ class IonExchange(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.resin_replacement_cost_per_m3_product
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.waste_brine_bus is not None and self.waste_brine_bus in self.outputs:
+            self.outputs[self.waste_brine_bus].variable_costs = sequence(
+                self.waste_disposal_cost_per_m3_product
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -378,8 +380,8 @@ class IonExchange(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.water_recovery <= 1:
-            raise ValueError("water_recovery must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
         if not 0 < self.availability <= 1:
             raise ValueError("availability must be in (0, 1].")
         if self.specific_energy_consumption < 0:
