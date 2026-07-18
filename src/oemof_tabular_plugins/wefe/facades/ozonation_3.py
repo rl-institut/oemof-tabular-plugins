@@ -22,19 +22,23 @@ class Ozonation(MIMO):
 
     Core references
     ---------------
-    1. von Sonntag & von Gunten (2012): ozone chemistry, kinetics,
-       disinfection, micropollutant transformation, energy requirements,
-       and by-product (bromate) context.
-    2. Rakness (2011): process design, operating parameters, transfer
-       efficiency, contactor realism, specific energy per kg ozone,
-       and operational optimization.
-    3. Lazarova et al. (2013): wastewater-oriented design variables,
-       transferred dose and residual logic, dose-mode justification,
-       and water-quality-driven dose adaptation.
+    1. Ozone chemistry, kinetics, disinfection, micropollutant transformation, energy requirements, and by-product
+       (bromate) context.
+       von Sonntag, C., & von Gunten, U. (2012). Chemistry of ozone in water and wastewater treatment: From basic principles
+       to applications. IWA Publishing. https://doi.org/10.2166/9781780400839
+    2. Process design, operating parameters, transfer efficiency, contactor realism, specific energy per kg ozone, and
+       operational optimization.
+       Rakness, K. L. (2015). Ozone in drinking water treatment: Process design, operation, and optimization. American
+       Water Works Association. https://www.abebooks.com/servlet/BookDetailsPL?bi=31545391331
+    3. Wastewater-oriented design variables, transferred dose and residual logic, dose-mode justification, and water-quality-driven
+       dose adaptation.
+       Lazarova, V., Liechti, P.-A., Savoye, P., & Hausler, R. (2013). Ozone disinfection: Main parameters for process
+       design in wastewater treatment and reuse. Journal of Water Reuse and Desalination, 3(4), 337–345.
+       https://doi.org/10.2166/wrd.2013.007
 
     Main equations
     --------------
-    All flows normalized to 1 m³ net treated water output (primary):
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Water balance:
         water_in_per_output = 1.0                   [m³_feed / m³_treated]
@@ -60,36 +64,15 @@ class Ozonation(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the
-      maximum treated water throughput of the ozonation unit.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated water throughput of the ozonation unit.
     - Raw water inflow is 1:1 with treated water outflow (mass balance).
-    - Electricity represents ozone generation energy via electrolysis or
-      corona discharge (Rakness, 2011). The ozone generation step is
-      implicit — ozone is not modeled as an explicit intermediate flow
-      in v3.0. A future version may introduce an ozone_bus to represent
-      the generator-contactor split explicitly.
-    - Two dose modes are supported: "fixed" (user-specified applied dose)
-      and "demand_residual" (dose derived from water-quality demand,
-      residual target, and transfer efficiency).
-    - off_gas_bus is an optional output representing the residual ozone
-      off-gas requiring destruction or venting treatment. Off-gas is
-      produced when transfer_efficiency < 1.0. The off_gas_disposal_cost
-      is a time-averaged cost coefficient (€/unit off-gas). If the bus
-      is omitted, off-gas is implicitly absorbed into the system boundary
-      with no explicit cost or flow tracking.
-    - contact_time_min and reactor_volume_m3 are design/sizing checks
-      only; they are not enforced as optimization constraints in v3.0.
-    - bromide_mg_per_l triggers a bromate risk flag stored in metadata
-      but does not add a bromate sub-model in v3.0.
-    - For backward compatibility, "ozone_dose" may be passed as an alias
-      for "applied_ozone_dose_mg_per_l" when the preferred name is not
-      explicitly provided.
-    - Derived design quantities (transferred dose, specific ozone
-      consumption, electricity intensity) are stored as custom_attributes
-      on water_out_bus for reporting and post-processing.
-    - Characterization values (contact time, reactor volume, bromide)
-      are stored as documentation/calibration defaults. They are not
-      enforced as hard optimization constraints in v3.0.
+    - Electricity represents ozone generation energy via electrolysis or corona discharge.
+    - Two dose modes are supported: "fixed" (user-specified applied dose) and "demand_residual" (dose derived from water-quality
+      demand, residual target, and transfer efficiency).
+    - off_gas_bus is an optional output representing the residual ozone off-gas requiring destruction or venting treatment. Off-gas is
+      produced when transfer_efficiency < 1.0.
+    - Characterization values (contact time, reactor volume, bromide) are stored as documentation/calibration defaults.
+      They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -130,19 +113,19 @@ class Ozonation(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_per_kg_ozone: float = 12.0              # kWh/kg ozone generated
-    ozone_dose_mode: str = "fixed"                          # "fixed" | "demand_residual"
-    applied_ozone_dose_mg_per_l: float = 1.0                # mg/L; required for mode="fixed"
-    ozone_demand_mg_per_l: float = 0.0                      # mg/L; water-quality ozone demand
-    target_residual_ozone_mg_per_l: float = 0.0             # mg/L; design residual setpoint
-    transfer_efficiency: float = 1.0                        # dimensionless [0, 1]
+    specific_energy_per_kg_ozone: float = 12.0              # kWh/kg ozone generated [2]
+    ozone_dose_mode: str = "fixed"                          # "fixed" | "demand_residual" [3]
+    applied_ozone_dose_mg_per_l: float = 1.0                # mg/L; required for mode="fixed" [3]
+    ozone_demand_mg_per_l: float = 0.0                      # mg/L; water-quality ozone demand [1, 3]
+    target_residual_ozone_mg_per_l: float = 0.0             # mg/L; design residual setpoint [3]
+    transfer_efficiency: float = 1.0                        # dimensionless [0, 1] [2]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0              # €/m³ treated water
-    carrier_cost: float = 0.0               # €/kWh electricity
-    off_gas_disposal_cost: float = 0.0      # €/unit off-gas (destruction/venting treatment)
+    marginal_cost: float = 0.0              # USD/m³ treated water
+    carrier_cost: float = 0.0               # USD/m³ feed
+    off_gas_disposal_cost: float = 0.0      # USD/m³ off-gas (destruction/venting treatment)
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -152,15 +135,15 @@ class Ozonation(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Rakness (2011) / Lazarova et al. (2013) style design fields
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    contact_time_min: Optional[float] = None    # min; contactor sizing check only
-    reactor_volume_m3: Optional[float] = None   # m³; contactor sizing check only
-    bromide_mg_per_l: Optional[float] = None    # mg/L; triggers bromate risk flag
-    sec_typical_min: float = 0.05               # kWh/m³; lower bound from literature
-    sec_typical_max: float = 0.15               # kWh/m³; upper bound from literature
-    water_quality_note: str = ""                # free-text scenario annotation
+    contact_time_min: Optional[float] = None        # min; contactor sizing check only         [2, 3]
+    reactor_volume_m3: Optional[float] = None       # m³; contactor sizing check only          [2]
+    bromide_mg_per_l: Optional[float] = None        # mg/L; triggers bromate risk flag         [1]
+    sec_typical_min: float = 0.05                   # kWh/m³; lower bound from literature      [2]
+    sec_typical_max: float = 0.15                   # kWh/m³; upper bound from literature      [2]
+    water_quality_note: str = ""                    # free-text scenario annotation            [3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -230,6 +213,7 @@ class Ozonation(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -260,8 +244,8 @@ class Ozonation(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (von Sonntag & von Gunten, 2012; Rakness, 2011;
-        #  Lazarova et al., 2013)
+        # (von Sonntag & von Gunten, 2012 [1]; Rakness, 2015 [2];
+        # Lazarova et al., 2013 [3])
         # --------------------------------------------------------------
         if self.ozone_dose_mode == "fixed":
             self._effective_applied_ozone_dose_mg_per_l = float(
@@ -286,6 +270,7 @@ class Ozonation(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._electricity_demand_per_m3
@@ -296,18 +281,6 @@ class Ozonation(MIMO):
             attributes[f"conversion_factor_{self.off_gas_bus.label}"] = sequence(
                 1.0 - self.transfer_efficiency
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-
-        if self.off_gas_bus is not None:
-            attributes.setdefault("output_parameters_1", {})
-            if self.off_gas_disposal_cost > 0:
-                attributes["output_parameters_1"].update(
-                    {"variable_costs": self.off_gas_disposal_cost}
-                )
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -342,6 +315,38 @@ class Ozonation(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.off_gas_bus is not None and self.off_gas_bus in self.outputs:
+            self.outputs[self.off_gas_bus].variable_costs = sequence(
+                self.off_gas_disposal_cost
+            )
 
     def _optional_bus_kwargs(self):
         kwargs = {}
