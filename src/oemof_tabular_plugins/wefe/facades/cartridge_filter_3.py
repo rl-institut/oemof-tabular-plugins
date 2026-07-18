@@ -22,48 +22,45 @@ class CartridgeFilter(MIMO):
 
     Core references
     ---------------
-    1. EPA Water Treatment Manual: Filtration (2020): pre-treatment role,
-       filtration objectives, turbidity targets, cartridge filter as upstream
-       barrier for UV/disinfection, critical control parameters, and
-       log-removal credit framing.
-    2. Vigneswaran, Kandasamy & Rogerson — "Filtration Technologies in
-       Wastewater Treatment" (UNESCO–EOLSS): filtration mechanisms,
-       headloss/run-length behaviour, solids loading, cleaning logic,
-       and justification for simplified linear operational representation.
-    3. Cartridge filter selection and implementation guidance (e.g.,
-       Sinfield et al., IDA WC 2024): replacement thresholds, fouling
-       proxy, consumable intensity, and practical operating envelopes.
+    1. Pre-treatment role, filtration objectives, turbidity targets, cartridge filter as upstream barrier for UV/disinfection,
+       critical control parameters, and log-removal credit framing.
+       Environmental Protection Agency (Ireland). (2020). Water treatment manual: Filtration. EPA.
+       https://www.epa.ie/publications/compliance--enforcement/drinking-water/advice--guidance/EPA-Water-Filtration-Manual.pdf
+    2. Filtration mechanisms, headloss/run-length behaviour, solids loading, cleaning logic, and justification for simplified
+       linear operational representation.
+       Vigneswaran, S., Kandasamy, J., & Rogerson, M. (2009). Filtration Technologies in Wastewater Treatment. In Encyclopedia
+       of Life Support Systems (EOLSS), Water and Wastewater Treatment Technologies. Eolss Publishers.
+       https://www.eolss.net/sample-chapters/c07/E6-144-02.pdf
+    3. Full-scale, quantitative cartridge filter selection and replacement guidance: replacement thresholds relative to
+       pressure drop, fouling proxy, consumable/energy cost trade-offs, and practical operating envelopes.
+       Farhat, N. M., Christodoulou, C., Placotas, P., Blankert, B., Sallangos, O., & Vrouwenvelder, J. S. (2020).
+       Cartridge filter selection and replacement: Optimization of produced water quantity, quality, and cost.
+       Desalination, 473, 114172. https://doi.org/10.1016/j.desal.2019.114172
 
     Main equations
     --------------
-    All conversion factors are normalized to 1 m³ filtered water output.
+    All flows normalized to 1 m³ filtered water output (primary):
 
-    Feedwater requirement (EPA, 2020):
-        f_water_in(t) = 1 / recovery                [m³ feed / m³ filtered]
+    Feedwater requirement:
+        f_water_in(t) = 1 / efficiency                [m³ feed / m³ filtered]
 
-    Electricity demand (Vigneswaran et al.):
+    Electricity demand:
         f_electricity(t) = SEC(t)                   [kWh / m³ filtered]
 
-    Optional reject stream (EPA, 2020):
-        f_reject(t) = (1 / recovery) - 1            [m³ reject / m³ filtered]
+    Optional reject stream:
+        f_reject(t) = (1 / efficiency) - 1            [m³ reject / m³ filtered]
 
-    Optional cartridge consumable input (Sinfield et al., 2024):
+    Optional cartridge consumable input:
         f_cartridge(t) = SCC(t)                     [units / m³ filtered]
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      filtered-water throughput of the unit.
-    - reject_water_bus is optional. If absent, water loss from recovery < 1
-      is treated as an implicit system loss without a dedicated bus.
-    - cartridge_bus is optional. If absent, consumable cost may be folded
-      into marginal_cost via cartridge_cost.
-    - specific_energy_consumption may be a scalar or time series to
-      approximate fouling-induced headloss increase over a filter run
-      (Vigneswaran et al.).
-    - Turbidity targets, log-removal credits, and headloss limits are stored
-      as metadata for scenario documentation. They are not enforced as hard
-      optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum filtered-water throughput of the unit.
+    - reject_water_bus is optional. If absent, water loss from recovery < 1 is treated as an implicit system loss without a dedicated bus.
+    - cartridge_bus is optional. If absent, consumable cost may be folded into marginal_cost via cartridge_cost.
+    - specific_energy_consumption may be a scalar or time series to approximate fouling-induced headloss increase over a filter run.
+    - Turbidity targets, log-removal credits, and headloss limits are stored as metadata for scenario documentation. They 
+      are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -89,7 +86,7 @@ class CartridgeFilter(MIMO):
     # ------------------------------------------------------------------
     electricity_bus: Bus = None     # kWh
     water_in_bus: Bus = None        # m³ (raw / pretreated feed)
-    water_out_bus: Bus = None       # m³ (filtered water, primary)
+    water_out_bus: Bus = None       # m³ (filtered water - PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -104,18 +101,18 @@ class CartridgeFilter(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    recovery: float = 0.97
-    specific_energy_consumption: Union[float, Sequence[float]] = 0.05  # kWh/m³
-    specific_cartridge_consumption: Union[float, Sequence[float]] = 0.0
-    availability: Union[float, Sequence[float]] = None
+    efficiency: float = 0.97                                                # filtered water / feed water (recovery) [1, 2]
+    specific_energy_consumption: Union[float, Sequence[float]] = 0.05       # kWh/m³  [3]
+    specific_cartridge_consumption: Union[float, Sequence[float]] = 0.0     # Unit cartridge / m³ filtered water [3]
+    availability: Union[float, Sequence[float]] = None                      # average uptime / net production factor [-] [1, 2]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0      # €/m³ filtered water
-    carrier_cost: float = 0.0       # €/kWh electricity
-    cartridge_cost: float = 0.0     # €/m³ filtered water; folded into marginal_cost
-                                    # when cartridge_bus is absent
+    marginal_cost: float = 0.0      # USD/m³ filtered water
+    carrier_cost: float = 0.0       # USD/m³ feed
+    cartridge_cost: float = 0.0     # USD/m³ filtered water; folded into marginal_cost when cartridge_bus is absent
+                                    # set 0.0 when cartridge_bus is active to avoid double counting with bus source
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -125,14 +122,14 @@ class CartridgeFilter(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # EPA (2020) and Vigneswaran et al. characterization fields
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    target_turbidity_in: float = None       # NTU — design feed-quality assumption (EPA, 2020)
-    target_turbidity_out: float = None      # NTU — claimed treated-water target (EPA, 2020)
-    log_removal_credit_claim: float = None  # log — barrier contribution (EPA, 2020)
-    max_headloss_m: float = None            # m — design operational headloss limit (Vigneswaran et al.)
-    replacement_interval_h: float = None    # h — assumption for consumable preprocessing (Sinfield et al., 2024)
+    target_turbidity_in: float = None           # NTU — design feed-quality assumption      [1]
+    target_turbidity_out: float = None          # NTU — claimed treated-water target        [1]
+    log_removal_credit_claim: float = None      # log — barrier contribution                [1]
+    max_headloss_m: float = None                # m — design operational headloss limit     [2, 3]
+    replacement_interval_h: float = None        # h — consumable preprocessing assumption   [3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -160,7 +157,7 @@ class CartridgeFilter(MIMO):
         # --------------------------------------------------------------
         # active physical parameters
         # --------------------------------------------------------------
-        self.recovery = attributes.pop("recovery", self.recovery)
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
@@ -191,6 +188,7 @@ class CartridgeFilter(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -219,11 +217,12 @@ class CartridgeFilter(MIMO):
         # --------------------------------------------------------------
         # derived constants
         # --------------------------------------------------------------
-        self._feedwater_per_permeate = 1.0 / self.recovery
-        self._reject_per_permeate = (1.0 / self.recovery) - 1.0
+        self._feedwater_per_permeate = 1.0 / self.efficiency
+        self._reject_per_permeate = (1.0 / self.efficiency) - 1.0
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -244,26 +243,10 @@ class CartridgeFilter(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        output_parameters = attributes.pop("output_parameters", {})
-        if self.cartridge_bus is None and self.cartridge_cost:
-            output_parameters.setdefault(
-                "variable_costs", self.cartridge_cost
-            )
-
-        attributes["output_parameters"] = output_parameters
-
-        if self.reject_water_bus is not None:
-            attributes.setdefault("reject_output_parameters", {})
-
-        # --------------------------------------------------------------
-        # activity bound from availability
-        # Exogenous upper activity profile on the primary output group.
-        # Approximates maintenance/replacement downtime (Vigneswaran et al.).
+        # availability as activity bound
         # --------------------------------------------------------------
         if self.availability is not None:
-            attributes["activity_bound_max"] = sequence(self.availability)
+            attributes["activity_bound_max"] = sequence(self.availability * self.capacity)
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -299,6 +282,35 @@ class CartridgeFilter(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.cartridge_cost
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -321,8 +333,8 @@ class CartridgeFilter(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.recovery <= 1:
-            raise ValueError("recovery must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
 
         if self.cartridge_cost < 0:
             raise ValueError("cartridge_cost must be >= 0.")
@@ -350,6 +362,7 @@ class CartridgeFilter(MIMO):
             pass
 
         if self.cartridge_bus is not None and self.cartridge_cost not in (0, 0.0, None):
+            self.cartridge_cost = 0.0
             warnings.warn(
                 "Both 'cartridge_bus' and 'cartridge_cost' are set. "
                 "'cartridge_cost' will be ignored because consumable usage "
