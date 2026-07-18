@@ -23,71 +23,62 @@ class Boiling(MIMO):
 
     Core references
     ---------------
-    1. WHO (2016). Household water treatment and safe storage guidance:
-       boiling as a valid treatment step, treatment-chain context, and
-       safe storage requirement.
-    2. WHO (2015). Technical brief — Boil water: rolling-boil treatment
-       condition, pre-clarification for turbid water, pathogen inactivation.
-    3. CAWST (2008). Household water treatment manual: practical
-       implementation guidance, pretreatment dependency, and energy framing.
-    4. WHO (2011). Evaluating household water treatment options: performance
-       framing and barrier-based technology assessment methodology.
+    1. Boiling as a valid treatment step within a household water treatment and safe storage (HWTS) programme;
+       treatment-chain context and safe storage requirement.
+       World Health Organization. (2013). Household water treatment and safe storage: Manual for the participant.
+       https://www.eawag.ch/fileadmin/Domain1/Abteilungen/sandec/E-Learning/Moocs/Resources/HWTS_Mooc_resources/Week_1/who_household_water_treatment_safe_storage_manual_participant.pdf
+    2. Rolling-boil treatment condition, pre-clarification for turbid water, and pathogen inactivation basis (Table 1:
+       thermal inactivation of bacteria, viruses, protozoa).
+       World Health Organization. (2015). Boil water: Technical brief (WHO/FWC/WSH/15.02).
+       https://www.who.int/publications/i/item/WHO-FWC-WSH-15.02
+    3. Practical implementation guidance, pretreatment dependency, and energy framing for household water treatment.
+       Centre for Affordable Water and Sanitation Technology (CAWST). (2008). Household water treatment manual.
+       https://sswm.info/sites/default/files/reference_attachments/CAWST%202008%20HWT%20Manual.pdf
+    4. Performance framing and barrier-based technology assessment methodology for evaluating household water treatment options.
+       World Health Organization. (2011). Evaluating household water treatment options: Health-based targets and microbiological
+       performance specifications.
+       https://www.who.int/publications/i/item/9789241548229
 
     Main equations
     --------------
     All flows normalized to 1 m3 net treated water output (primary):
 
     Feedwater requirement:
-        feedwater_per_output = 1 / treated_water_fraction   [m3_feed / m3_treated]
+        feedwater_per_output = 1 / efficiency   [m3_feed / m3_treated]
 
     Steam / vapour loss (optional output):
-        steam_per_output = steam_loss_fraction / treated_water_fraction
+        steam_per_output = steam_loss_fraction / efficiency
                                                             [m3_steam / m3_treated]
 
     Electric-only mode (fuel_bus is None):
         electricity_per_output =
             specific_thermal_energy_demand / heater_efficiency
-            + specific_electricity_auxiliaries
+            + specific_electricity_consumption
                                             [kWh_el / m3_treated]
 
     External fuel mode (fuel_bus is provided):
         fuel_per_output        = specific_fuel_consumption   [kWh_fuel / m3_treated]
-        electricity_per_output = specific_electricity_auxiliaries
+        electricity_per_output = specific_electricity_consumption
                                             [kWh_el / m3_treated]
 
-    Boiling conditions (documentation only — no state variable in v3.0):
-        Rolling boil >= 1 min at sea level (WHO, 2015)
-        Turbidity pre-clarification recommended if NTU > threshold (CAWST, 2008)
+    Boiling conditions:
+        Rolling boil >= 1 min at sea level
+        Turbidity pre-clarification recommended if NTU > threshold
 
     Notes
     -----
-    - Primary flow is water_out_bus [m3/hr]. Capacity constrains the maximum
-      treated-water throughput of the boiling unit.
-    - treated_water_fraction represents the availability of treated water after
-      handling losses including steam evaporation.
-    - electricity_bus carries electrical energy converted to useful process
-      heat via heater_efficiency in electric-only mode. This decouples process
-      thermodynamics from the electric heating technology type (resistance
-      heater, heat pump, etc.).
-    - When fuel_bus is provided, it supplies the full thermal duty
-      (specific_fuel_consumption) directly. electricity_bus then carries only
-      auxiliary electricity (specific_electricity_auxiliaries). heater_efficiency
-      has no effect in this mode and a UserWarning is raised.
-    - fuel_carrier_cost [€/kWh_fuel] is folded into output_parameters as a
-      variable cost on water_out_bus (per m3 treated) when fuel_bus is active
-      and fuel_carrier_cost > 0. It has no effect when fuel_bus is None.
-    - steam_loss_bus is an optional output representing water lost as vapour
-      during boiling. steam_loss_fraction defines the share of feedwater
-      evaporated. When omitted, steam losses are implicitly absorbed into the
-      treated_water_fraction and no explicit vapour stream is tracked.
-    - Boiling conditions (rolling boil, >= 1 min retention, turbidity pre-
-      treatment) are documented here but cannot be enforced as hard constraints
-      without explicit temperature or residence-time state variables.
-    - WHO and CAWST guidance consistently note that safe storage after boiling
-      is as critical as the boiling step itself; this is stored as metadata only.
-    - Characterization values (boiling time, storage requirements, turbidity
-      threshold) are stored as metadata for scenario documentation and are not
-      enforced as hard optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m3/hr]. Capacity constrains the maximum treated-water throughput of the boiling unit.
+    - electricity_bus carries electrical energy converted to useful process heat via heater_efficiency in electric-only mode.
+      This decouples process thermodynamics from the electric heating technology type (resistance heater, heat pump, etc.).
+    - When fuel_bus is provided, it supplies the full thermal duty (specific_fuel_consumption) directly. electricity_bus
+      then carries only auxiliary electricity SEC (specific electricity auxiliaries). heater_efficiency
+      has no effect in this mode.
+    - Boiling conditions (rolling boil, >= 1 min retention, turbidity pre-treatment) are documented here but cannot be
+      enforced as hard constraints without explicit temperature or residence-time state variables.
+    - WHO and CAWST guidance consistently note that safe storage after boiling is as critical as the boiling step itself;
+      this is stored as metadata only.
+    - Characterization values (boiling time, storage requirements, turbidity threshold) are stored as metadata for scenario
+      documentation and are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -128,19 +119,18 @@ class Boiling(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    treated_water_fraction: float = 1.0                 # m³ treated / m³ feed
-    steam_loss_fraction: float = 0.0                    # m³ steam / m³ feed (set > 0 when steam_loss_bus used)
-    specific_thermal_energy_demand: float = 0.93        # kWh_th / m³ treated  (WHO, 2015; CAWST, 2008)
-    heater_efficiency: float = 0.95                     # kWh_th / kWh_el  (0, 1]
-    specific_electricity_auxiliaries: float = 0.03      # kWh_el / m³ treated  (pumping, controls)
-    specific_fuel_consumption: float = 0.0              # kWh_fuel / m³ treated (set > 0 when fuel_bus used)
+    efficiency: float = 1.0                             # m³ treated / m³ feed (treated water fraction) [1, 3]
+    steam_loss_fraction: float = 0.0                    # m³ steam / m³ feed (set > 0 when steam_loss_bus used) [2]
+    specific_thermal_energy_demand: float = 0.93        # kWh_th / m³ treated [2, 3]
+    heater_efficiency: float = 0.95                     # kWh_th / kWh_el  (0, 1] [3]
+    specific_electricity_consumption: float = 0.03      # kWh_el / m³ treated  (pumping, controls) (specific electricity auxiliaries) [3]
+    specific_fuel_consumption: float = 0.0              # kWh_fuel / m³ treated (set > 0 when fuel_bus used) [3]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0              # €/m³ treated water
-    carrier_cost: float = 0.0               # €/kWh_el
-    fuel_carrier_cost: float = 0.0          # €/kWh_fuel  (only relevant when fuel_bus is set)
+    marginal_cost: float = 0.0              # USD/m³ treated water
+    carrier_cost: float = 0.0               # USD/m³ feed
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -150,15 +140,16 @@ class Boiling(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    pretreatment_required_if_turbid: bool = True        # WHO (2015), CAWST (2008)
-    safe_storage_required: bool = True                  # WHO (2016)
-    reference_boiling_time_minutes: float = 1.0         # WHO (2015): rolling boil >= 1 min at sea level
-    max_treated_water_fraction: Optional[float] = None  # design upper bound (validation only)
-    min_treated_water_fraction: Optional[float] = None  # technology lower bound (validation only)
-    sec_typical_min: float = 0.5                        # kWh_th/m³, lower bound from literature
-    sec_typical_max: float = 3.0                        # kWh_th/m³, upper bound from literature
+    pretreatment_required_if_turbid: bool = True        # [2, 3]
+    safe_storage_required: bool = True                  # [1]
+    reference_boiling_time_minutes: float = 1.0         # rolling boil >= 1 min at sea level [2]
+    max_treated_water_fraction: Optional[float] = None  # design upper bound (validation only) [4]
+    min_treated_water_fraction: Optional[float] = None  # technology lower bound (validation only) [4]
+    sec_typical_min: float = 0.5                        # kWh_th/m³, lower bound from literature [3]
+    sec_typical_max: float = 3.0                        # kWh_th/m³, upper bound from literature [3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -186,8 +177,8 @@ class Boiling(MIMO):
         # --------------------------------------------------------------
         # active physical parameters
         # --------------------------------------------------------------
-        self.treated_water_fraction = attributes.pop(
-            "treated_water_fraction", self.treated_water_fraction
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
         self.steam_loss_fraction = attributes.pop(
             "steam_loss_fraction", self.steam_loss_fraction
@@ -198,8 +189,8 @@ class Boiling(MIMO):
         self.heater_efficiency = attributes.pop(
             "heater_efficiency", self.heater_efficiency
         )
-        self.specific_electricity_auxiliaries = attributes.pop(
-            "specific_electricity_auxiliaries", self.specific_electricity_auxiliaries
+        self.specific_electricity_consumption = attributes.pop(
+            "specific_electricity_consumption", self.specific_electricity_consumption
         )
         self.specific_fuel_consumption = attributes.pop(
             "specific_fuel_consumption", self.specific_fuel_consumption
@@ -210,9 +201,6 @@ class Boiling(MIMO):
         # --------------------------------------------------------------
         self.marginal_cost = attributes.pop("marginal_cost", self.marginal_cost)
         self.carrier_cost = attributes.pop("carrier_cost", self.carrier_cost)
-        self.fuel_carrier_cost = attributes.pop(
-            "fuel_carrier_cost", self.fuel_carrier_cost
-        )
         self.expandable = attributes.pop("expandable", self.expandable)
         self.capacity = attributes.pop("capacity", self.capacity)
         self.capacity_cost = attributes.pop("capacity_cost", self.capacity_cost)
@@ -229,6 +217,7 @@ class Boiling(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -259,22 +248,22 @@ class Boiling(MIMO):
         # --------------------------------------------------------------
         # derived constants
         # --------------------------------------------------------------
-        self._feedwater_per_output = 1.0 / self.treated_water_fraction
+        self._feedwater_per_output = 1.0 / self.efficiency
 
         if self.steam_loss_bus is not None:
             self._steam_per_output = (
-                    self.steam_loss_fraction / self.treated_water_fraction
+                    self.steam_loss_fraction / self.efficiency
             )
         else:
             self._steam_per_output = None
 
         if self.fuel_bus is not None:
-            self._electricity_per_output = self.specific_electricity_auxiliaries
+            self._electricity_per_output = self.specific_electricity_consumption
             self._fuel_per_output = self.specific_fuel_consumption
         else:
             self._electricity_per_output = (
                     self.specific_thermal_energy_demand / self.heater_efficiency
-                    + self.specific_electricity_auxiliaries
+                    + self.specific_electricity_consumption
             )
             self._fuel_per_output = None
 
@@ -297,17 +286,6 @@ class Boiling(MIMO):
         if self.steam_loss_bus is not None:
             attributes[f"conversion_factor_{self.steam_loss_bus.label}"] = sequence(
                 self._steam_per_output
-            )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-
-        if self.fuel_bus is not None and self.fuel_carrier_cost > 0:
-            fuel_variable_cost = self._fuel_per_output * self.fuel_carrier_cost
-            attributes["output_parameters"].update(
-                {"variable_costs": fuel_variable_cost}
             )
 
         # --------------------------------------------------------------
@@ -344,6 +322,33 @@ class Boiling(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -366,16 +371,16 @@ class Boiling(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.treated_water_fraction <= 1:
-            raise ValueError("treated_water_fraction must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
 
         if not 0 <= self.steam_loss_fraction < 1:
             raise ValueError("steam_loss_fraction must be in [0, 1).")
 
-        if self.steam_loss_fraction + self.treated_water_fraction > 1.0 + 1e-9:
+        if self.steam_loss_fraction + self.efficiency > 1.0 + 1e-9:
             raise ValueError(
                 f"steam_loss_fraction ({self.steam_loss_fraction}) + "
-                f"treated_water_fraction ({self.treated_water_fraction}) "
+                f"efficiency ({self.efficiency}) "
                 f"must not exceed 1.0 — total water balance violated."
             )
 
@@ -384,10 +389,9 @@ class Boiling(MIMO):
 
         bounded_nonneg = {
             "specific_thermal_energy_demand": self.specific_thermal_energy_demand,
-            "specific_electricity_auxiliaries": self.specific_electricity_auxiliaries,
+            "specific_electricity_consumption": self.specific_electricity_consumption,
             "specific_fuel_consumption": self.specific_fuel_consumption,
             "carrier_cost": self.carrier_cost,
-            "fuel_carrier_cost": self.fuel_carrier_cost,
             "marginal_cost": self.marginal_cost,
         }
         for name, value in bounded_nonneg.items():
@@ -412,13 +416,6 @@ class Boiling(MIMO):
                 UserWarning,
             )
 
-        if self.fuel_bus is None and self.fuel_carrier_cost > 0:
-            warnings.warn(
-                "fuel_carrier_cost is set but fuel_bus is None. "
-                "fuel_carrier_cost will have no effect.",
-                UserWarning,
-            )
-
         if self.steam_loss_bus is not None and self.steam_loss_fraction <= 0:
             warnings.warn(
                 "steam_loss_bus is set but steam_loss_fraction is 0. "
@@ -429,21 +426,21 @@ class Boiling(MIMO):
         if self.steam_loss_bus is None and self.steam_loss_fraction > 0:
             warnings.warn(
                 "steam_loss_fraction > 0 but steam_loss_bus is not set. "
-                "Steam loss is implicitly absorbed into treated_water_fraction.",
+                "Steam loss is implicitly absorbed into efficiency.",
                 UserWarning,
             )
 
         if self.max_treated_water_fraction is not None:
-            if self.treated_water_fraction > self.max_treated_water_fraction:
+            if self.efficiency > self.max_treated_water_fraction:
                 raise ValueError(
-                    f"treated_water_fraction ({self.treated_water_fraction}) exceeds "
+                    f"efficiency ({self.efficiency}) exceeds "
                     f"max_treated_water_fraction ({self.max_treated_water_fraction})."
                 )
 
         if self.min_treated_water_fraction is not None:
-            if self.treated_water_fraction < self.min_treated_water_fraction:
+            if self.efficiency < self.min_treated_water_fraction:
                 raise ValueError(
-                    f"treated_water_fraction ({self.treated_water_fraction}) is below "
+                    f"efficiency ({self.efficiency}) is below "
                     f"min_treated_water_fraction ({self.min_treated_water_fraction})."
                 )
 
@@ -453,7 +450,6 @@ class Boiling(MIMO):
         ):
             warnings.warn(
                 f"specific_thermal_energy_demand ({self.specific_thermal_energy_demand} kWh_th/m³) "
-                f"is outside the typical literature range [{self.sec_typical_min}, {self.sec_typical_max}] kWh_th/m³ "
-                f"(CAWST, 2008; WHO, 2016). Verify this is intentional.",
+                f"is outside the typical literature range [{self.sec_typical_min}, {self.sec_typical_max}] kWh_th/m³ ",
                 UserWarning,
             )
