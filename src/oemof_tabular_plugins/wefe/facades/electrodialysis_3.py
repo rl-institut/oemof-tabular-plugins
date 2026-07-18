@@ -288,6 +288,7 @@ class ElectrodialysisUnit(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._electricity_per_output

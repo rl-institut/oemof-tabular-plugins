@@ -41,7 +41,7 @@ class Boiling(MIMO):
 
     Main equations
     --------------
-    All flows normalized to 1 m3 net treated water output (primary):
+    All flows normalized to 1 m³ net treated water output (primary):
 
     Feedwater requirement:
         feedwater_per_output = 1 / efficiency   [m3_feed / m3_treated]
@@ -269,6 +269,7 @@ class Boiling(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._electricity_per_output

@@ -22,21 +22,28 @@ class GritChamber(MIMO):
 
     Core references
     ---------------
-    1. NPTEL IIT Kharagpur, Module 15: Grit Chamber, Lectures 19 & 20 —
-       horizontal-flow chamber design logic, L/H = v/Vo relation, detention
-       time 30–60 s, target particle size 0.2 mm, settling velocity basis.
-    2. EPA Preliminary Wastewater Treatment (webinar PDF, 2023) — standard
-       design ranges: horizontal 45–90 s typical 60 s, 0.8–1.3 ft/s typical
-       1.0 ft/s; aerated 2–5 min; chamber-type definitions.
-    3. EPA NEPIS Preliminary Treatment Facilities Design Manual — prescriptive
-       design criteria and aerated chamber operating guidance.
-    4. Guyer-style preliminary treatment note — engineering defaults: 1 ft/s
-       controlled velocity (horizontal), 3 min detention (aerated), and
-       air-rate guidance.
+    1. Horizontal-flow chamber design theory (L/H = v/Vo relation), target particle size (0.2 mm), and settling-velocity
+       basis for grit capture.
+       NPTEL, IIT Kharagpur. Wastewater Management (Course 105105048), Module 15: Grit Chamber, Lecture 19 (and Lecture 20,
+       continued design equations for the same module).
+       https://archive.nptel.ac.in/content/storage2/courses/105105048/M15L19.pdf
+    2. Standard design ranges for detention time and velocity across chamber types: horizontal 45-90 s (typical 60 s),
+       0.8-1.3 ft/s (typical 1.0 ft/s); aerated 2-5 min; chamber-type classification.
+       U.S. EPA. (2023). Preliminary Wastewater Treatment: NPDES Operator Webinar Series.
+       https://www.epa.gov/system/files/documents/2023-10/tawebinar_preliminarywastewatertreatment_230725.pdf
+    3. Velocity-control device design (Parshall/Venturi flume, proportional weir), and aerated-chamber air-rate and detention
+       -time defaults, adapted from the U.S. Unified Facilities Criteria (public domain).
+       Guyer, J. P. An Introduction to Preliminary Wastewater Treatment (Course No. C02-033/C454). Continuing Education
+       and Development, Inc.
+       https://www.cedengineering.com/userfiles/C02-033%20-%20An%20Introduction%20to%20Preliminary%20Wastewater%20Treatment%20-%20US.pdf
+    4. Typical measured influent/removed grit quantities (4-200 mL/m3, higher in combined sewers).
+       Water Environment Federation, Municipal Resource Recovery Design Committee. (2017). Liquid Stream Fundamentals:
+       Grit Removal (WSEC-2017-FS-021).
+       https://www.resourcerecoverydata.org/WEFfactsheets/wsec-2017-fs-021-mrrdc-lsf-grit-removal_final.pdf
 
     Main equations
     --------------
-    All conversion factors are normalized to treated-water output = 1.
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Raw water requirement:
         Q_in(t) = Q_out(t) / efficiency
@@ -60,19 +67,13 @@ class GritChamber(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated-water throughput of the grit chamber unit.
-    - grit_out_bus and washwater_bus are fully optional. If neither is
-      provided, the facade behaves as a 2-input/1-output unit and is
-      fully backward-compatible with v2.0 and v1.0 behavior.
-    - washwater_bus requires grit_out_bus to be set simultaneously, because
-      washwater demand is physically proportional to grit output volume.
-    - Documentation metadata fields (detention_time, design_velocity,
-      target_particle_size_mm, flow_control_device, air_rate,
-      aeration_specific_energy) trigger validation warnings but are not
-      enforced as hard optimization constraints in v3.0.
-    - Chamber-type defaults are applied automatically in
-      _validate_parameters() when the user does not specify values.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the grit chamber unit.
+    - grit_out_bus and washwater_bus are fully optional. If neither is provided, the facade behaves as a 2-input/1-output unit.
+    - washwater_bus requires grit_out_bus to be set simultaneously, because washwater demand is physically proportional
+      to grit output volume.
+    - Documentation metadata fields (detention_time, design_velocity, target_particle_size_mm, flow_control_device, air_rate,
+      aeration_specific_energy) trigger validation warnings but are not enforced as hard optimization constraints.
+    - Chamber-type defaults are applied automatically in _validate_parameters() when the user does not specify values.
     """
 
     # ------------------------------------------------------------------
@@ -98,26 +99,26 @@ class GritChamber(MIMO):
     # mandatory buses
     # ------------------------------------------------------------------
     electricity_bus: Bus = None             # kWh
-    water_in_bus: Bus = None                # m³
-    water_out_bus: Bus = None               # m³
+    water_in_bus: Bus = None                # m³ (feedwater)
+    water_out_bus: Bus = None               # m³ (PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
     # ------------------------------------------------------------------
-    washwater_bus: Optional[Bus] = None     # m³
+    washwater_bus: Optional[Bus] = None     # m³ (washwater for grit)
 
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
-    grit_out_bus: Optional[Bus] = None      # m³
+    grit_out_bus: Optional[Bus] = None      # m³ (wet grit)
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.015      # kWh / m³ treated water
-    efficiency: float = 0.98                        # treated water / influent water
-    grit_capture_ratio: float = 0.90                # fraction of influent grit captured
-    grit_influent_concentration: float = 0.00015    # m³ grit / m³ influent water
+    specific_energy_consumption: float = 0.015      # kWh / m³ treated water [2, 3]
+    efficiency: float = 0.98                        # treated water / influent water [1, 2]
+    grit_capture_ratio: float = 0.90                # fraction of influent grit captured [1]
+    grit_influent_concentration: float = 0.00015    # m³ grit / m³ influent water [4]
     wash_volume_per_m3_grit: float = 0.5            # m³ washwater / m³ wet grit
                                                     # HUBER RoSF G4E: < 2 m³/h washwater at up to 3 m³/h grit capacity
                                                     # → ratio < 0.67 m³/m³ (HUBER Technology, RoSF G4E datasheet, 2021)
@@ -125,9 +126,9 @@ class GritChamber(MIMO):
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                      # €/m³ treated water
-    carrier_cost: float = 0.0                       # €/kWh electricity
-    grit_disposal_cost: float = 0.0                 # €/m³ wet grit
+    marginal_cost: float = 0.0                      # USD/m³ treated water
+    carrier_cost: float = 0.0                       # USD/m³ feed
+    grit_disposal_cost: float = 0.0                 # USD/m³ wet grit
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -137,15 +138,15 @@ class GritChamber(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / design metadata (not hard constraints in v3.0)
-    # Based on NPTEL Lectures 19 & 20, EPA fact sheet, and Guyer-style note
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    detention_time: float = None                    # s; horizontal default: 60 s (EPA/NPTEL L19); aerated: 180 s
-    design_velocity: float = None                   # m/s; horizontal default: 0.3 m/s, range 0.24–0.4 (EPA)
-    target_particle_size_mm: float = 0.2            # mm; 0.2 mm design target (NPTEL Lecture 19)
-    flow_control_device: str = "proportional_weir"  # maintains v_h under varying Q
-    air_rate: float = None                          # m³ air / m³ wastewater; aerated chambers only
-    aeration_specific_energy: float = None          # kWh / m³
+    detention_time: float = None                    # s; horizontal default: 60 s; aerated: 180 s [1, 2]
+    design_velocity: float = None                   # m/s; horizontal default: 0.3 m/s, range 0.24-0.4 [1, 2]
+    target_particle_size_mm: float = 0.2            # mm; 0.2 mm design target [1]
+    flow_control_device: str = "proportional_weir"  # maintains v_h under varying Q [3]
+    air_rate: float = None                          # m³ air / m³ wastewater; aerated chambers only [2, 3]
+    aeration_specific_energy: float = None          # kWh / m³ [2, 3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -212,6 +213,7 @@ class GritChamber(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -249,6 +251,7 @@ class GritChamber(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -267,22 +270,6 @@ class GritChamber(MIMO):
             attributes[f"conversion_factor_{self.washwater_bus.label}"] = sequence(
                 self._wash_per_treated_water
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        output_parameters = attributes.pop("output_parameters", {})
-        grit_output_parameters = attributes.pop("grit_output_parameters", {})
-
-        if self.grit_out_bus is None and self.grit_disposal_cost not in (None, 0, 0.0):
-            output_parameters.setdefault(
-                "variable_costs", self.grit_disposal_cost
-            )
-
-        attributes["output_parameters"] = output_parameters
-
-        if self.grit_out_bus is not None:
-            attributes["grit_output_parameters"] = grit_output_parameters
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -317,6 +304,38 @@ class GritChamber(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.grit_out_bus is not None and self.grit_out_bus in self.outputs:
+            self.outputs[self.grit_out_bus].variable_costs = sequence(
+                self.grit_disposal_cost
+            )
 
     def _optional_bus_kwargs(self):
         kwargs = {}
@@ -374,8 +393,7 @@ class GritChamber(MIMO):
         ):
             warnings.warn(
                 f"grit_disposal_cost={self.grit_disposal_cost!r} is set but "
-                "no grit_out_bus is provided. The cost will be folded into "
-                "output_parameters on the primary output as a proxy.",
+                "no grit_out_bus is provided.",
                 UserWarning,
             )
 
@@ -399,13 +417,13 @@ class GritChamber(MIMO):
         # apply literature-informed defaults per chamber type
         if self.chamber_type == "horizontal":
             if self.detention_time is None:
-                self.detention_time = 60.0  # s, typical (EPA; NPTEL L19)
+                self.detention_time = 60.0
             if self.design_velocity is None:
-                self.design_velocity = 0.3  # m/s, typical (EPA fact sheet)
+                self.design_velocity = 0.3
 
         elif self.chamber_type == "aerated":
             if self.detention_time is None:
-                self.detention_time = 180.0  # s, 3 min typical (EPA; Guyer)
+                self.detention_time = 180.0
 
         # validation warnings from literature ranges
         if self.chamber_type == "horizontal":
@@ -415,8 +433,7 @@ class GritChamber(MIMO):
                 warnings.warn(
                     f"Horizontal grit chamber detention_time="
                     f"{self.detention_time!r} s is outside the common "
-                    "literature range of 30–90 s "
-                    "(NPTEL Lecture 19; EPA fact sheet).",
+                    "literature range",
                     UserWarning,
                 )
             if self.design_velocity is not None and not (
@@ -425,7 +442,7 @@ class GritChamber(MIMO):
                 warnings.warn(
                     f"Horizontal grit chamber design_velocity="
                     f"{self.design_velocity!r} m/s is outside the common "
-                    "literature range of 0.24–0.4 m/s (EPA fact sheet).",
+                    "literature range",
                     UserWarning,
                 )
 
@@ -436,6 +453,6 @@ class GritChamber(MIMO):
                 warnings.warn(
                     f"Aerated grit chamber detention_time="
                     f"{self.detention_time!r} s is outside the common "
-                    "literature range of 120–300 s (EPA; Guyer).",
+                    "literature range",
                     UserWarning,
                 )
