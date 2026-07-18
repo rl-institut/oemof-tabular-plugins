@@ -22,24 +22,29 @@ class CoarseBarScreen(MIMO):
 
     Core references
     ---------------
-    1. EPA, Wastewater Technology Fact Sheet: Screening and Grit Removal:
-       process role, coarse-screen type classification, opening-size
-       ranges (>= 6 mm), and headworks placement guidance.
-    2. WEF, Design of Municipal Wastewater Treatment Plants (MOP 8):
-       coarse-screen classification, opening-size categories, and
-       engineering design framing.
-    3. Metcalf & Eddy, Wastewater Engineering: Treatment and Resource
-       Recovery, 5th ed. (Chap. 5): preliminary-treatment role,
-       downstream-protection function, and screening conceptual basis.
-    4. Jiménez-Castañeda & Medina (2024), "Separation efficiency of a
-       wastewater bar screen based on a 3D computational fluid dynamics
-       modelling", Water Environ. Res.: supports a separation-performance
-       parameter instead of a generic efficiency term.
+    1. Process role, coarse-screen type classification, opening-size ranges (>= 6 mm), and headworks placement guidance.
+       U.S. Environmental Protection Agency. (2003). Wastewater technology fact sheet: Screening and grit removal (EPA 832-F-03-011).
+       https://nepis.epa.gov/Exe/ZyNET.exe/P1000S7N.txt?ZyActionD=ZyDocument&Client=EPA&Index=2016%20Thru%202020%7C1991%20Thru%201994%7C2011%20Thru%202015%7C1986%20Thru%201990%7C2006%20Thru%202010%7C1981%20Thru%201985%7C2000%20Thru%202005%7C1976%20Thru%201980%7C1995%20Thru%201999%7CPrior%20to%201976&Docs=&Query=832F03011&Time=&EndTime=&SearchMethod=2&TocRestrict=n&Toc=&TocEntry=&QField=&QFieldYear=&QFieldMonth=&QFieldDay=&UseQField=&IntQFieldOp=0&ExtQFieldOp=0&XmlQuery=&File=D%3A%5CZYFILES%5CINDEX%20DATA%5C00THRU05%5CTXT%5C00000015%5CP1000S7N.txt&User=ANONYMOUS&Password=anonymous&SortMethod=h%7C-&MaximumDocuments=15&FuzzyDegree=0&ImageQuality=r85g16/r85g16/x150y150g16/i500&Display=hpfr&DefSeekPage=&SearchBack=ZyActionL&Back=ZyActionS&BackDesc=Results%20page&MaximumPages=1&ZyEntry=1&SeekPage=
+    2. Coarse-screen classification, opening-size categories, and engineering design framing.
+       Water Environment Federation, & Environmental and Water Resources Institute of ASCE. (2010). Design of municipal
+       wastewater treatment plants: WEF Manual of Practice No. 8 / ASCE Manuals and Reports on Engineering Practice No. 76
+       (5th ed., Vol. 2, Chapter 11). WEF Press / McGraw-Hill Education.
+    3. Preliminary-treatment role, downstream-protection function, and screening conceptual basis.
+       Metcalf & Eddy, Inc., Tchobanoglous, G., Stensel, H. F., Tsuchihashi, R., & Burton, F. L. (2014). Wastewater
+       engineering: Treatment and resource recovery (5th ed., Chap. 5). McGraw-Hill Education.
+       https://www.mheducation.com/highered/product/wastewater-engineering-treatment-and-resource-recovery-metcalf-and-eddy.html?viewOption=student
+    4. Supports a separation-performance parameter instead of a generic efficiency term, from CFD particle-tracking
+       simulation of bar-screen retention.
+       En-Nabety, L., & Boudi, E. M. (2024). Separation efficiency of a wastewater bar screen based on a 3D computational
+       fluid dynamics modeling. Water Environment Research.
+       https://www.sciencedirect.com/science/article/pii/S1944398624202988
 
     Main equations
     --------------
+    All flows normalized to 1 m³ net treated water (primary output):
+
     Feedwater per unit treated water output:
-        feedwater_per_output = 1 / treated_water_fraction
+        feedwater_per_output = 1 / efficiency
         [m³ influent / m³ treated]
 
     Electricity demand per unit treated water output:
@@ -47,20 +52,16 @@ class CoarseBarScreen(MIMO):
         [kWh / m³ treated]
 
     Screenings per unit treated water output (if screenings_out_bus given):
-        screenings_per_output = (1 - treated_water_fraction) / treated_water_fraction
+        screenings_per_output = (1 - efficiency) / efficiency
         [m³ removed / m³ treated]
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the
-      maximum treated-water throughput of the screen.
-    - Detailed headloss buildup, clogging, velocity-dependent capture, and
-      cleaning-cycle dynamics are not modeled here; these are stored as
-      documentation / engineering metadata fields only.
-    - screen_type, screen_opening_mm, approach_velocity_m_per_s,
-      headloss_clean_m, headloss_dirty_m, and bar_angle_deg are
-      documentation / QA fields and are not enforced as hard optimization
-      constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the screen.
+    - Detailed headloss buildup, clogging, velocity-dependent capture, and cleaning-cycle dynamics are not modeled here;
+      these are stored as documentation / engineering metadata fields only.
+    - screen_type, screen_opening_mm, approach_velocity_m_per_s, headloss_clean_m, headloss_dirty_m, and bar_angle_deg are
+      documentation / QA fields and are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -101,14 +102,14 @@ class CoarseBarScreen(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.04   # kWh / m³ treated water
-    treated_water_fraction: float = 0.98        # m³ treated / m³ influent
+    specific_energy_consumption: float = 0.04           # kWh / m³ treated water [2, 3]
+    efficiency: float = 0.98                # m³ treated / m³ influent (treated water fraction) [3]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                  # €/m³ treated water
-    carrier_cost: float = 0.0                   # €/kWh electricity
+    marginal_cost: float = 0.0                  # USD/m³ treated water
+    carrier_cost: float = 0.0                   # USD/m³ influent
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -118,14 +119,15 @@ class CoarseBarScreen(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    screen_type: str = "mechanical_bar_screen"  # manual, mechanical_bar_screen, trash_rack
-    screen_opening_mm: float = 20.0             # [mm] coarse screens >= 6 mm
-    approach_velocity_m_per_s: float = None     # [m/s] hydraulic sizing
-    headloss_clean_m: float = None              # [m] clean-screen head loss
-    headloss_dirty_m: float = None              # [m] clogged-screen head loss
-    bar_angle_deg: float = None                 # [°] bar inclination angle
+    screen_type: str = "mechanical_bar_screen"     # manual, mechanical_bar_screen, trash_rack [1, 2]
+    screen_opening_mm: float = 20.0                # [mm] coarse screens >= 6 mm [1]
+    approach_velocity_m_per_s: float = None        # [m/s] hydraulic sizing [2]
+    headloss_clean_m: float = None                 # [m] clean-screen head loss [4]
+    headloss_dirty_m: float = None                 # [m] clogged-screen head loss [4]
+    bar_angle_deg: float = None                    # [°] bar inclination angle [4]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -155,8 +157,8 @@ class CoarseBarScreen(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.treated_water_fraction = attributes.pop(
-            "treated_water_fraction", self.treated_water_fraction
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
 
         # --------------------------------------------------------------
@@ -180,6 +182,7 @@ class CoarseBarScreen(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -206,18 +209,18 @@ class CoarseBarScreen(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # Jiménez - Castañeda & Medina(2024): separation - efficiency basis
         # --------------------------------------------------------------
-        self.feedwater_per_output = 1.0 / self.treated_water_fraction
+        self.feedwater_per_output = 1.0 / self.efficiency
         self.electricity_per_output = self.specific_energy_consumption
         self.screenings_per_output = (
-            (1.0 - self.treated_water_fraction) / self.treated_water_fraction
+            (1.0 - self.efficiency) / self.efficiency
             if self.screenings_out_bus is not None
             else None
         )
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.electricity_per_output
@@ -231,11 +234,6 @@ class CoarseBarScreen(MIMO):
             attributes[f"conversion_factor_{self.screenings_out_bus.label}"] = sequence(
                 self.screenings_per_output
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -271,6 +269,33 @@ class CoarseBarScreen(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -291,8 +316,8 @@ class CoarseBarScreen(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.treated_water_fraction <= 1:
-            raise ValueError("treated_water_fraction must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
 
         if self.specific_energy_consumption < 0:
             raise ValueError("specific_energy_consumption must be >= 0.")
@@ -306,5 +331,5 @@ class CoarseBarScreen(MIMO):
         if self.screen_opening_mm is not None and self.screen_opening_mm < 6:
             raise ValueError(
                 "screen_opening_mm must be >= 6 mm for coarse-screen "
-                "classification (EPA / WEF MOP 8)."
+                "classification."
             )
