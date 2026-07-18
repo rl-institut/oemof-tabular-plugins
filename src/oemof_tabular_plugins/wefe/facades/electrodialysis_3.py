@@ -22,25 +22,34 @@ class ElectrodialysisUnit(MIMO):
 
     Core references
     ---------------
-    1. Al-Amshawee et al. (2020): water recovery, current efficiency,
-       desalination metrics, limiting current, and energy consumption framework.
-    2. Ahdab & Lienhard (2021): design and optimization of ED process
-       parameters: limiting current density, current efficiency, operating
-       constraints, and energy use.
-    3. Bdiri et al. (2018): determination of limiting current density and
-       current efficiency; operating-window justification.
-    4. Chehayeb et al. (2024): hypersaline ED performance trade-offs,
-       salinity-dependent SEC, and concentration-performance coupling.
+    1. Water recovery, current efficiency, desalination metrics, limiting current, and energy consumption framework for
+       ED desalination.
+       Al-Amshawee, S., Yunus, M. Y. B. M., Azoddein, A. A. M., Hassell, D. G., Dakhil, I. H., & Hasan, H. A. (2020).
+       Electrodialysis desalination for water and wastewater: A review. Chemical Engineering Journal, 380, 122231.
+       https://doi.org/10.1016/j.cej.2019.122231
+    2. Design and optimization of ED process parameters: current density, current efficiency, operating constraints, and
+       energy use for brackish-water desalination and high-salinity brine concentration.
+       Chehayeb, K. M., Farhat, D. M., Nayar, K. G., & Lienhard, J. H. (2017). Optimal design and operation of electrodialysis
+       for brackish-water desalination and for high-salinity brine concentration. Desalination, 420, 167–182.
+       https://doi.org/10.1016/j.desal.2017.07.003
+    3. Determination of limiting current density and current efficiency; operating-window justification for ED units.
+       La Cerva, M., Gurreri, L., Tedesco, M., Cipollina, A., Ciofalo, M., Tamburini, A., & Micale, G. (2018). Determination
+       of limiting current density and current efficiency in electrodialysis units. Desalination, 445, 138–148.
+       https://doi.org/10.1016/j.desal.2018.07.028
+    4. Hypersaline ED performance trade-offs, salinity-dependent specific energy consumption, and concentration-performance coupling.
+       Fan, H., Huang, Y., Cruz-Grace, P., & Yip, N. Y. (2024). Hypersaline electrodialysis desalination: Intrinsic membrane
+       and module performance trade-offs. ACS ES&T Engineering, 4(9), 2294-2305.
+       https://doi.org/10.1021/acsestengg.4c00246
 
     Main equations
     --------------
     All flows normalized to 1 m³ net treated water (primary output):
 
     Feedwater requirement:
-        feedwater_per_output = 1 / water_recovery           [m³_feed / m³_product]
+        feedwater_per_output = 1 / efficiency           [m³_feed / m³_product]
 
     Brine / concentrate output:
-        brine_per_output = 1 / water_recovery - 1           [m³_brine / m³_product]
+        brine_per_output = 1 / efficiency - 1           [m³_brine / m³_product]
 
     Chemical dosing input (optional):
         chemical_per_output = chemical_dose_ratio           [m³_chem / m³_product]
@@ -48,43 +57,31 @@ class ElectrodialysisUnit(MIMO):
     Electrode rinse output (optional):
         rinse_per_output = electrode_rinse_ratio            [m³_rinse / m³_product]
 
-    Effective specific energy consumption
-    (Al-Amshawee et al., 2020; Chehayeb et al., 2024):
+    Effective specific energy consumption:
         SEC_eff = (SEC_base + alpha_s * S_f) / xi           [kWh / m³_product]
         where:
-            SEC_base  = specific_energy_base                (anchor energy demand)
+            SEC_base  = specific_energy_consumption         (anchor energy demand)
             alpha_s   = sec_per_salinity                    (linear salinity correction)
             S_f       = feed_salinity                       (feed water salinity, g/L)
             xi        = current_efficiency                  (useful ion transport fraction)
 
-    Effective water recovery (Al-Amshawee et al., 2020):
-        r_eff = water_recovery - water_transport_loss       [—]
+    Effective water recovery:
+        r_eff = efficiency - water_transport_loss       [—]
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      net treated water throughput of the unit.
-    - chemical_dosing_bus is optional. When provided, chemical_dose_ratio
-      defines how much dosing chemical is consumed per m³ of treated water.
-      Typical use: antiscalant or acid dosing for scale prevention at higher
-      recovery rates (Al-Amshawee et al., 2020).
-    - electrode_rinse_out_bus is optional. When provided, electrode_rinse_ratio
-      defines the electrode rinse water volume produced per m³ of treated water.
-      This stream is physically distinct from brine and requires separate handling
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum net treated water throughput of the unit.
+    - chemical_dosing_bus is optional. When provided, chemical_dose_ratio defines how much dosing chemical is consumed
+      per m³ of treated water. Typical use: antiscalant or acid dosing for scale prevention at higher recovery rates.
+    - electrode_rinse_out_bus is optional. When provided, electrode_rinse_ratio defines the electrode rinse water volume
+      produced per m³ of treated water. This stream is physically distinct from brine and requires separate handling
       in the system model.
-    - Limiting current and stack design parameters (stack_voltage, membrane_area,
-      limiting_current_density, superficial_velocity, number_of_cell_pairs) are
-      intentionally excluded from v3.0 as hard constraints. Their effects should
-      be reflected through water_recovery, current_efficiency, and SEC parameters
-      calibrated from literature.
-    - Salinity-dependent SEC correction is optional. If feed_salinity is not
-      provided, the salinity correction term is zero.
-    - Characterization values (typical SEC range, limiting current density, target
-      salt removal) are stored as documentation/calibration defaults. They are not
-      enforced as hard optimization constraints in v3.0.
-    - Each mandatory bus is its own singleton MIMO group. No explicit groups
-      argument is used. This is equivalent to a standard converter when all
-      group conversion factors are 1.
+    - Limiting current and stack design parameters (stack_voltage, membrane_area, limiting_current_density, superficial_velocity,
+      number_of_cell_pairs) are intentionally excluded. Their effects should be reflected through efficiency (water recovery),
+      current_efficiency, and SEC parameters calibrated from literature.
+    - Salinity-dependent SEC correction is optional. If feed_salinity is not provided, the salinity correction term is zero.
+    - Characterization values (typical SEC range, limiting current density, target salt removal) are stored as documentation/
+      calibration defaults. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -126,23 +123,23 @@ class ElectrodialysisUnit(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_base: float = 0.9           # kWh / m³ net treated water
-    water_recovery: float = 0.75                # m³ net treated water / m³ feedwater
-    current_efficiency: float = 0.90            # fraction of applied current doing useful ion transport
-    water_transport_loss: float = 0.0           # osmotic / electro-osmotic loss as fraction of feedwater
-    feed_salinity: Optional[float] = None       # g/L — activates salinity correction if provided
-    sec_per_salinity: float = 0.0               # kWh / (m³ · g/L) — linear salinity correction slope
-    chemical_dose_ratio: float = 0.0            # m³ chemical / m³ treated water
-    electrode_rinse_ratio: float = 0.0          # m³ electrode rinse / m³ treated water
+    specific_energy_consumption: float = 0.9    # kWh / m³ net treated water (SEC base)[1, 2]
+    efficiency: float = 0.75                    # m³ net treated water / m³ feedwater (water recovery) [1, 2]
+    current_efficiency: float = 0.90            # fraction of applied current doing useful ion transport [1, 3]
+    water_transport_loss: float = 0.0           # osmotic / electro-osmotic loss as fraction of feedwater [2]
+    feed_salinity: Optional[float] = None       # g/L — activates salinity correction if provided [4]
+    sec_per_salinity: float = 0.0               # kWh / (m³ · g/L) — linear salinity correction slope [4]
+    chemical_dose_ratio: float = 0.0            # m³ chemical / m³ treated water [1]
+    electrode_rinse_ratio: float = 0.0          # m³ electrode rinse / m³ treated water [1]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                  # €/m³ net treated water
-    carrier_cost: float = 0.0                   # €/kWh electricity
-    brine_disposal_cost: float = 0.0            # €/m³ brine
-    chemical_cost: float = 0.0                  # €/m³ chemical dosed
-    electrode_rinse_disposal_cost: float = 0.0  # €/m³ electrode rinse wastewater
+    marginal_cost: float = 0.0                  # USD/m³ net treated water
+    carrier_cost: float = 0.0                   # USD/m³ feedwater
+    brine_disposal_cost: float = 0.0            # USD/m³ brine
+    chemical_cost: float = 0.0                  # USD/m³ chemical dosed
+    electrode_rinse_disposal_cost: float = 0.0  # USD/m³ electrode rinse wastewater
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -152,19 +149,19 @@ class ElectrodialysisUnit(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Al-Amshawee et al. (2020) / Chehayeb et al. (2024) style characterization
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    sec_typical_min: float = 0.5                            # kWh/m³, lower bound from literature
-    sec_typical_max: float = 2.5                            # kWh/m³, upper bound from literature
-    target_salt_removal: Optional[float] = None             # fraction of feed TDS removed
-    limiting_current_utilization: Optional[float] = None    # fraction of limiting current used
-    limiting_current_density: Optional[float] = None        # A/m²
-    stack_voltage: Optional[float] = None                   # V
-    membrane_area: Optional[float] = None                   # m² per cell pair
-    number_of_cell_pairs: Optional[int] = None              # —
-    superficial_velocity: Optional[float] = None            # m/s
-    feed_temperature: Optional[float] = None                # °C
+    sec_typical_min: float = 0.5                            # kWh/m³, lower bound from literature [1, 4]
+    sec_typical_max: float = 2.5                            # kWh/m³, upper bound from literature [1, 4]
+    target_salt_removal: Optional[float] = None             # fraction of feed TDS removed [1]
+    limiting_current_utilization: Optional[float] = None    # fraction of limiting current used [2, 3]
+    limiting_current_density: Optional[float] = None        # A/m² [3]
+    stack_voltage: Optional[float] = None                   # V [2, 3]
+    membrane_area: Optional[float] = None                   # m² per cell pair [2, 3]
+    number_of_cell_pairs: Optional[int] = None              # — [2]
+    superficial_velocity: Optional[float] = None            # m/s [2, 3]
+    feed_temperature: Optional[float] = None                # °C [1, 2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -193,10 +190,10 @@ class ElectrodialysisUnit(MIMO):
         # --------------------------------------------------------------
         # active physical parameters
         # --------------------------------------------------------------
-        self.specific_energy_base = attributes.pop(
-            "specific_energy_base", self.specific_energy_base
+        self.specific_energy_consumption = attributes.pop(
+            "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.water_recovery = attributes.pop("water_recovery", self.water_recovery)
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
 
         self.current_efficiency = attributes.pop(
             "current_efficiency", self.current_efficiency
@@ -243,6 +240,7 @@ class ElectrodialysisUnit(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -277,9 +275,8 @@ class ElectrodialysisUnit(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (Al-Amshawee et al., 2020; Chehayeb et al., 2024)
         # --------------------------------------------------------------
-        self._effective_recovery = self.water_recovery - self.water_transport_loss
+        self._effective_recovery = self.efficiency - self.water_transport_loss
         salinity_sec = (
             0.0
             if self.feed_salinity is None
@@ -287,7 +284,7 @@ class ElectrodialysisUnit(MIMO):
         )
         self._feedwater_per_output = 1.0 / self._effective_recovery
         self._brine_per_output = self._feedwater_per_output - 1.0
-        self._electricity_per_output = (self.specific_energy_base + salinity_sec) / self.current_efficiency
+        self._electricity_per_output = (self.specific_energy_consumption + salinity_sec) / self.current_efficiency
 
         # --------------------------------------------------------------
         # conversion factors
@@ -310,28 +307,6 @@ class ElectrodialysisUnit(MIMO):
             attributes[f"conversion_factor_{self.electrode_rinse_out_bus.label}"] = sequence(
                 max(self.electrode_rinse_ratio, 1e-9)
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-        attributes.setdefault("output_parameters_1", {})
-        if self.brine_disposal_cost > 0:
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.brine_disposal_cost}
-            )
-        if self.chemical_dosing_bus is not None:
-            attributes.setdefault("input_parameters_1", {})
-            if self.chemical_cost > 0:
-                attributes["input_parameters_1"].update(
-                    {"variable_costs": self.chemical_cost}
-                )
-        if self.electrode_rinse_out_bus is not None:
-            attributes.setdefault("output_parameters_2", {})
-            if self.electrode_rinse_disposal_cost > 0:
-                attributes["output_parameters_2"].update(
-                    {"variable_costs": self.electrode_rinse_disposal_cost}
-                )
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -370,6 +345,43 @@ class ElectrodialysisUnit(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.brine_out_bus in self.outputs:
+            self.outputs[self.brine_out_bus].variable_costs = sequence(
+                self.brine_disposal_cost
+            )
+
+        if self.electrode_rinse_out_bus is not None and self.electrode_rinse_out_bus in self.outputs:
+            self.outputs[self.electrode_rinse_out_bus].variable_costs = sequence(
+                self.electrode_rinse_disposal_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -392,19 +404,19 @@ class ElectrodialysisUnit(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.water_recovery <= 1:
-            raise ValueError("water_recovery must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
         if not 0 < self.current_efficiency <= 1:
             raise ValueError("current_efficiency must be in (0, 1].")
         if self.water_transport_loss < 0:
             raise ValueError("water_transport_loss must be >= 0.")
-        if self.water_transport_loss >= self.water_recovery:
+        if self.water_transport_loss >= self.efficiency:
             raise ValueError(
-                "water_transport_loss must be strictly less than water_recovery."
+                "water_transport_loss must be strictly less than efficiency."
             )
 
         bounded = {
-            "specific_energy_base": self.specific_energy_base,
+            "specific_energy_consumption": self.specific_energy_consumption,
             "sec_per_salinity": self.sec_per_salinity,
             "brine_disposal_cost": self.brine_disposal_cost,
             "chemical_dose_ratio": self.chemical_dose_ratio,
@@ -419,10 +431,10 @@ class ElectrodialysisUnit(MIMO):
         if self.feed_salinity is not None and self.feed_salinity < 0:
             raise ValueError("feed_salinity must be >= 0 if provided.")
 
-        effective_recovery = self.water_recovery - self.water_transport_loss
+        effective_recovery = self.efficiency - self.water_transport_loss
         if not 0 < effective_recovery <= 1:
             raise ValueError(
-                "effective_recovery (water_recovery - water_transport_loss) "
+                "effective_recovery (efficiency - water_transport_loss) "
                 "must be in (0, 1]."
             )
 
@@ -445,9 +457,9 @@ class ElectrodialysisUnit(MIMO):
                 "please verify calibration against reference data.",
                 UserWarning,
             )
-        if self.water_recovery > 0.9:
+        if self.efficiency > 0.9:
             warnings.warn(
-                "water_recovery > 0.9 may require careful calibration due to "
+                "efficiency > 0.9 may require careful calibration due to "
                 "water transport effects, concentration polarization, and "
                 "fouling/scaling risks at high recovery.",
                 UserWarning,
