@@ -23,88 +23,76 @@ class Distillation(MIMO):
 
     Core references
     ---------------
-    1. Eolss Thermal Desalination (Al-Karaghouli & Kazmerski, 2013):
-       core equations, variable definitions, and heat-driven process logic
-       for MED/MSF-style units; recovery, thermal duty, and brine
-       concentration calculation chain.
-    2. Adeleke et al. (2024); Patil et al. (2024): electrification of
-       distillation — justifies modeling electricity as an upstream carrier
-       for useful process heat and separating heater efficiency from
-       process thermal demand.
-    3. Danfoss desalination energy intensity brief; Veolia MED-MVC
-       technical datasheet: defensible SEC bounds and operating envelopes
-       for electrically driven thermal desalination units.
-    4. Jones et al. (2021); Abdel-Fatah (2018): brine and reject
-       management review — motivates brine as a first-class output stream
-       with explicit disposal cost.
-    5. Scielo WISA (2022); Al-Karaghouli & Kazmerski (2013): waste heat
-       integration in thermal desalination — justifies heat_in_bus as an
-       optional explicit thermal source enabling hybrid electric-plus-
-       thermal or waste-heat-driven operation modes.
+    1. Core thermodynamic/economic framework for thermal desalination: recovery, thermal duty, and GOR-based efficiency
+       benchmarking across MSF/MED/TVC/MVC technologies.
+       Al-Karaghouli, A., & Kazmerski, L. L. (2013). Energy consumption and water production cost of conventional and
+       renewable-energy-powered desalination processes. Renewable and Sustainable Energy Reviews, 24, 343-356.
+       https://doi.org/10.1016/j.rser.2012.12.064
+    2. Electrification of distillation processes — justifies modeling electricity as an upstream carrier for useful
+       process heat, and separating heater efficiency from process thermal demand.
+       Sheng, M., Guo, Y., Lee, B., Epsztein, R., Wang, Z., & Wang, L. (2025). Electrified desalination processes: Where
+       we are and where to go from performance and economic perspectives. Desalination, 600, 118486.
+       https://doi.org/10.1016/j.desal.2024.118486
+    3. Measured electricity intensity for electrically driven thermal desalination plants (intake through brine disposal,
+       ~7-14 MJ/m³ / 2-4 kWh/m³)
+       International Energy Agency. (2026). Wired for water: How electrification is transforming desalination. IEA Commentary.
+       https://www.iea.org/commentaries/wired-for-water-how-electrification-is-transforming-desalination
+    4. Global brine production and disposal-practice data.
+       Jones, E., Qadir, M., van Vliet, M. T. H., Smakhtin, V., & Kang, S. (2019). The state of desalination and brine
+       production: A global outlook. Science of the Total Environment, 657, 1343-1356.
+       https://doi.org/10.1016/j.scitotenv.2018.12.076
+    5. Brine management technology review — supports max_brine_concentration_factor as a design upper bound and reinforces
+       disposal-cost framing.
+       Bello, A. S., Zouari, N., Da'ana, D. A., Hahladakis, J. N., & Al-Ghouti, M. A. (2021). An overview of brine management:
+       Emerging desalination technologies, life cycle assessment, and metal recovery methodologies. Journal of Environmental
+       Management, 288, 112358. https://doi.org/10.1016/j.jenvman.2021.112358
+    6. Waste-heat integration in thermal desalination — justifies heat_in_bus as an optional explicit thermal source enabling 
+       hybrid electric-plus-thermal or waste-heat-driven operation modes.
+       Charitar, D., & Madhlopa, A. (2022). Integration of waste heat in thermal desalination technologies: A review.
+       Journal of Energy in Southern Africa, 33(1), 68-84. https://doi.org/10.17159/2413-3051/2022/v33i1a5434
 
     Main equations
     --------------
-    All flows normalized to 1 m3 net distillate output (primary):
+    All flows normalized to 1 m³ net distillate output (primary):
 
     Feedwater requirement:
         feedwater_per_output = 1 / recovery_ratio
-                                            [m3_feed / m3_distillate]
+                                            [m³_feed / m³_distillate]
 
     Brine / concentrate output:
         brine_per_output = 1 / recovery_ratio - 1
-                                            [m3_brine / m3_distillate]
+                                            [m³_brine / m³_distillate]
 
     Electric-only mode (heat_in_bus is None):
         electricity_per_output =
             specific_thermal_energy_demand / heater_efficiency
-            + specific_electricity_auxiliaries
-                                            [kWh_el / m3_distillate]
+            + SEC (specific electricity auxiliaries)
+                                            [kWh_el / m³_distillate]
 
     External heat mode (heat_in_bus is provided):
         heat_per_output        = specific_thermal_energy_demand
-                                            [kWh_th / m3_distillate]
-        electricity_per_output = specific_electricity_auxiliaries
-                                            [kWh_el / m3_distillate]
+                                            [kWh_th / m³_distillate]
+        electricity_per_output = SEC (specific electricity auxiliaries)
+                                            [kWh_el / m³_distillate]
 
     Brine concentration factor (dimensionless, reporting only):
         CF_brine = 1 / (1 - recovery_ratio)
 
     GOR proxy (reporting only):
         GOR_implied = 627.0 / specific_thermal_energy_demand
-        [627.0 = 2257 kJ/kg x 1000 kg/m3 / 3600 kJ/kWh]
+        [627.0 = 2257 kJ/kg x 1000 kg/m³ / 3600 kJ/kWh]
 
     Notes
     -----
-    - Primary flow is water_out_bus [m3]. Capacity constrains the maximum
-      distillate output of the unit.
-    - electricity_bus carries electrical energy converted to useful process
-      heat via heater_efficiency. This decouples process thermodynamics
-      from the electric heating technology type (resistance heater, heat
-      pump, etc.).
-    - When heat_in_bus is provided, it supplies the full thermal duty
-      (specific_thermal_energy_demand) directly. electricity_bus then
-      carries only auxiliary electricity (specific_electricity_auxiliaries).
-      heater_efficiency has no effect in this mode and a UserWarning is
-      raised if a non-default value is passed alongside heat_in_bus.
-    - heat_carrier_cost [€/kWh_th] is folded into output_parameters as
-      a variable cost on water_out_bus (per m3 distillate) when
-      heat_in_bus is active and heat_carrier_cost > 0. It has no effect
-      when heat_in_bus is None.
-    - brine_out_bus carries the concentrate/reject stream.
-      brine_disposal_cost is applied as a variable cost on this output
-      flow via output_parameters_1.
-    - Engineering bounds (max_recovery_ratio, min_recovery_ratio,
-      max_brine_concentration_factor) are implemented as Python-side
-      validation checks at instantiation, not as Pyomo constraints,
-      because recovery_ratio is a fixed input parameter in v3.0, not a
-      decision variable.
-    - A GOR sanity check is run at instantiation. A UserWarning is raised
-      if the implied GOR falls below 1.0, which indicates a physically
-      implausible specific_thermal_energy_demand value or a unit error.
-    - thermal_technology, gor_reference, sec_typical_min, and
-      sec_typical_max are stored as documentation and calibration
-      metadata only. They are not enforced as hard optimization
-      constraints in v3.0.
+    - Primary flow is water_out_bus [m³]. Capacity constrains the maximum distillate output of the unit.
+    - electricity_bus carries electrical energy converted to useful process heat via heater_efficiency. This decouples
+      process thermodynamics from the electric heating technology type (resistance heater, heat pump, etc.).
+    - When heat_in_bus is provided, it supplies the full thermal duty (specific_thermal_energy_demand) directly. electricity_bus
+      then carries only auxiliary electricity SEC (specific electricity auxiliaries). heater_efficiency has no effect in this mode.
+    - Engineering bounds (max_recovery_ratio, min_recovery_ratio, max_brine_concentration_factor) are implemented as Python-side
+      validation checks at instantiation.
+    - thermal_technology, gor_reference, sec_typical_min, and sec_typical_max are stored as documentation and calibration
+      metadata only. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -146,20 +134,19 @@ class Distillation(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    recovery_ratio: float = 0.70                            # m³_distillate / m³_feed
-    specific_thermal_energy_demand: float = 14.0            # kWh_th / m³ distillate
-    heater_efficiency: float = 0.95                         # kWh_th / kWh_el  (0, 1]
-    specific_electricity_auxiliaries: float = 0.8           # kWh_el / m³ distillate
-    max_recovery_ratio: Optional[float] = None              # design upper bound (validation only)
-    max_brine_concentration_factor: Optional[float] = None  # design upper bound (validation only)
+    recovery_ratio: float = 0.70                            # m³_distillate / m³_feed (recovery ratio)[1]
+    specific_thermal_energy_demand: float = 14.0            # kWh_th / m³ distillate [1]
+    heater_efficiency: float = 0.95                         # kWh_th / kWh_el  (0, 1] [2]
+    specific_energy_consumption: float = 0.8                # kWh_el / m³ distillate (specific electricity auxiliaries) [2, 3]
+    max_recovery_ratio: Optional[float] = None              # design upper bound (validation only) [1]
+    max_brine_concentration_factor: Optional[float] = None  # design upper bound (validation only) [4, 5]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0          # €/m³ distillate
-    carrier_cost: float = 0.0           # €/kWh_el
-    heat_carrier_cost: float = 0.0      # €/kWh_th
-    brine_disposal_cost: float = 0.0    # €/m³ brine
+    marginal_cost: float = 0.0          # USD/m³ distillate
+    carrier_cost: float = 0.0           # USD/m³ feedwater
+    brine_disposal_cost: float = 0.0    # USD/m³ brine
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -169,13 +156,14 @@ class Distillation(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    thermal_technology: str = "electric_evaporator"     # e.g. MVC_like, waste_heat, solar_thermal
-    gor_reference: Optional[float] = None               # gained output ratio reference value
-    min_recovery_ratio: Optional[float] = None          # technology lower bound (validation only)
-    sec_typical_min: float = 5.0                        # kWh_th/m³, lower bound from literature
-    sec_typical_max: float = 20.0                       # kWh_th/m³, upper bound from literature
+    thermal_technology: str = "electric_evaporator"     # e.g. MVC_like, waste_heat, solar_thermal [1, 2]
+    gor_reference: Optional[float] = None               # gained output ratio reference value [1]
+    min_recovery_ratio: Optional[float] = None          # technology lower bound (validation only) [1]
+    sec_typical_min: float = 5.0                        # kWh_th/m³, lower bound from literature [1, 3]
+    sec_typical_max: float = 20.0                       # kWh_th/m³, upper bound from literature [1, 3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -213,9 +201,9 @@ class Distillation(MIMO):
         self.heater_efficiency = attributes.pop(
             "heater_efficiency", self.heater_efficiency
         )
-        self.specific_electricity_auxiliaries = attributes.pop(
-            "specific_electricity_auxiliaries",
-            self.specific_electricity_auxiliaries,
+        self.specific_energy_consumption = attributes.pop(
+            "specific_energy_consumption",
+            self.specific_energy_consumption,
         )
         self.max_recovery_ratio = attributes.pop(
             "max_recovery_ratio", self.max_recovery_ratio
@@ -229,9 +217,6 @@ class Distillation(MIMO):
         # --------------------------------------------------------------
         self.marginal_cost = attributes.pop("marginal_cost", self.marginal_cost)
         self.carrier_cost = attributes.pop("carrier_cost", self.carrier_cost)
-        self.heat_carrier_cost = attributes.pop(
-            "heat_carrier_cost", self.heat_carrier_cost
-        )
         self.brine_disposal_cost = attributes.pop(
             "brine_disposal_cost", self.brine_disposal_cost
         )
@@ -251,6 +236,7 @@ class Distillation(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -279,12 +265,12 @@ class Distillation(MIMO):
         self._gor_implied = 627.0 / self.specific_thermal_energy_demand
 
         if self.heat_in_bus is not None:
-            self._electricity_per_output = self.specific_electricity_auxiliaries
+            self._electricity_per_output = self.specific_energy_consumption
             self._heat_per_output = self.specific_thermal_energy_demand
         else:
             self._electricity_per_output = (
                     self.specific_thermal_energy_demand / self.heater_efficiency
-                    + self.specific_electricity_auxiliaries
+                    + self.specific_energy_consumption
             )
             self._heat_per_output = None
 
@@ -304,23 +290,6 @@ class Distillation(MIMO):
         if self.heat_in_bus is not None:
             attributes[f"conversion_factor_{self.heat_in_bus.label}"] = sequence(
                 self._heat_per_output
-            )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-        attributes.setdefault("output_parameters_1", {})
-
-        if self.heat_in_bus is not None and self.heat_carrier_cost > 0:
-            heat_variable_cost = self._heat_per_output * self.heat_carrier_cost
-            attributes["output_parameters"].update(
-                {"variable_costs": heat_variable_cost}
-            )
-
-        if self.brine_disposal_cost > 0:
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.brine_disposal_cost}
             )
 
         # --------------------------------------------------------------
@@ -360,6 +329,38 @@ class Distillation(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.brine_out_bus in self.outputs:
+            self.outputs[self.brine_out_bus].variable_costs = sequence(
+                self.brine_disposal_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -388,9 +389,8 @@ class Distillation(MIMO):
 
         bounded_nonneg = {
             "specific_thermal_energy_demand": self.specific_thermal_energy_demand,
-            "specific_electricity_auxiliaries": self.specific_electricity_auxiliaries,
+            "specific_energy_consumption": self.specific_energy_consumption,
             "carrier_cost": self.carrier_cost,
-            "heat_carrier_cost": self.heat_carrier_cost,
             "marginal_cost": self.marginal_cost,
             "brine_disposal_cost": self.brine_disposal_cost,
         }
@@ -402,13 +402,6 @@ class Distillation(MIMO):
             warnings.warn(
                 "heat_in_bus is set — heater_efficiency has no effect in this mode. "
                 "Thermal duty is supplied via heat_in_bus.",
-                UserWarning,
-            )
-
-        if self.heat_in_bus is None and self.heat_carrier_cost > 0:
-            warnings.warn(
-                "heat_carrier_cost is set but heat_in_bus is None. "
-                "heat_carrier_cost will have no effect.",
                 UserWarning,
             )
 
