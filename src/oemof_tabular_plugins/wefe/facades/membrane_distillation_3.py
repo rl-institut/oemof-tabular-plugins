@@ -60,7 +60,7 @@ class MembraneDistillation(MIMO):
                                             [kWh_th / m³_permeate]
 
     Net specific electricity consumption:
-        SEC_net = specific_electricity_consumption / performance_factor
+        SEC_net = specific_energy_consumption / performance_factor
                                             [kWh_el / m³_permeate]
 
     Electric-only mode (heat_in_bus is None):
@@ -139,7 +139,7 @@ class MembraneDistillation(MIMO):
     efficiency: float = 0.75                                # m³_permeate / m³_feed (recovery ratio) [1]
     specific_thermal_energy_demand: float = 100.0           # kWh_th / m³ permeate (gross) [1]
     heater_efficiency: float = 0.95                         # kWh_th / kWh_el  (0, 1] [4]
-    specific_electricity_consumption: float = 2.0           # kWh_el / m³ permeate (gross, auxiliaries) [3]
+    specific_energy_consumption: float = 2.0           # kWh_el / m³ permeate (gross, auxiliaries) [3]
     performance_factor: float = 1.0                         # fouling / non-ideal derating [-] [1, 2]
     heat_recovery_factor: float = 0.0                       # fraction of thermal demand recovered [-]
     cleaning_waste_ratio: float = 0.0                       # m³_cip / m³_permeate (time-averaged) [3]
@@ -211,11 +211,11 @@ class MembraneDistillation(MIMO):
         self.heater_efficiency = attributes.pop(
             "heater_efficiency", self.heater_efficiency
         )
-        self.specific_electricity_consumption = attributes.pop(
-            "specific_electricity_consumption",
+        self.specific_energy_consumption = attributes.pop(
+            "specific_energy_consumption",
             attributes.pop(
                 "specific_energy_consumption",
-                self.specific_electricity_consumption,
+                self.specific_energy_consumption,
             ),
         )
         self.performance_factor = attributes.pop(
@@ -306,7 +306,7 @@ class MembraneDistillation(MIMO):
                 / self.performance_factor
         )
         self._sec_net = (
-                self.specific_electricity_consumption / self.performance_factor
+                self.specific_energy_consumption / self.performance_factor
         )
 
         if self.heat_in_bus is not None:
@@ -451,7 +451,7 @@ class MembraneDistillation(MIMO):
 
         bounded_nonneg = {
             "specific_thermal_energy_demand": self.specific_thermal_energy_demand,
-            "specific_electricity_consumption": self.specific_electricity_consumption,
+            "specific_energy_consumption": self.specific_energy_consumption,
             "cleaning_waste_ratio": self.cleaning_waste_ratio,
             "carrier_cost": self.carrier_cost,
             "marginal_cost": self.marginal_cost,

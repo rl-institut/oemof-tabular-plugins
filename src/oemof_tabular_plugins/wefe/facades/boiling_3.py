@@ -53,12 +53,12 @@ class Boiling(MIMO):
     Electric-only mode (fuel_bus is None):
         electricity_per_output =
             specific_thermal_energy_demand / heater_efficiency
-            + specific_electricity_consumption
+            + specific_energy_consumption
                                             [kWh_el / m3_treated]
 
     External fuel mode (fuel_bus is provided):
         fuel_per_output        = specific_fuel_consumption   [kWh_fuel / m3_treated]
-        electricity_per_output = specific_electricity_consumption
+        electricity_per_output = specific_energy_consumption
                                             [kWh_el / m3_treated]
 
     Boiling conditions:
@@ -123,7 +123,7 @@ class Boiling(MIMO):
     steam_loss_fraction: float = 0.0                    # m³ steam / m³ feed (set > 0 when steam_loss_bus used) [2]
     specific_thermal_energy_demand: float = 0.93        # kWh_th / m³ treated [2, 3]
     heater_efficiency: float = 0.95                     # kWh_th / kWh_el  (0, 1] [3]
-    specific_electricity_consumption: float = 0.03      # kWh_el / m³ treated  (pumping, controls) (specific electricity auxiliaries) [3]
+    specific_energy_consumption: float = 0.03      # kWh_el / m³ treated  (pumping, controls) (specific electricity auxiliaries) [3]
     specific_fuel_consumption: float = 0.0              # kWh_fuel / m³ treated (set > 0 when fuel_bus used) [3]
 
     # ------------------------------------------------------------------
@@ -189,8 +189,8 @@ class Boiling(MIMO):
         self.heater_efficiency = attributes.pop(
             "heater_efficiency", self.heater_efficiency
         )
-        self.specific_electricity_consumption = attributes.pop(
-            "specific_electricity_consumption", self.specific_electricity_consumption
+        self.specific_energy_consumption = attributes.pop(
+            "specific_energy_consumption", self.specific_energy_consumption
         )
         self.specific_fuel_consumption = attributes.pop(
             "specific_fuel_consumption", self.specific_fuel_consumption
@@ -258,12 +258,12 @@ class Boiling(MIMO):
             self._steam_per_output = None
 
         if self.fuel_bus is not None:
-            self._electricity_per_output = self.specific_electricity_consumption
+            self._electricity_per_output = self.specific_energy_consumption
             self._fuel_per_output = self.specific_fuel_consumption
         else:
             self._electricity_per_output = (
                     self.specific_thermal_energy_demand / self.heater_efficiency
-                    + self.specific_electricity_consumption
+                    + self.specific_energy_consumption
             )
             self._fuel_per_output = None
 
@@ -390,7 +390,7 @@ class Boiling(MIMO):
 
         bounded_nonneg = {
             "specific_thermal_energy_demand": self.specific_thermal_energy_demand,
-            "specific_electricity_consumption": self.specific_electricity_consumption,
+            "specific_energy_consumption": self.specific_energy_consumption,
             "specific_fuel_consumption": self.specific_fuel_consumption,
             "carrier_cost": self.carrier_cost,
             "marginal_cost": self.marginal_cost,

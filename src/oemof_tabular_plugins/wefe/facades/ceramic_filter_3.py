@@ -22,33 +22,34 @@ class CeramicFilter(MIMO):
 
     Core references
     ---------------
-    1. Gitis & Rothenberg (2016): Ceramic Membranes — New Opportunities
-       and Practical Applications. Wiley-VCH.
-       Technology framing, application context, and process-unit model
-       justification.
-    2. Viegas et al. (2015): Water reclamation with hybrid coagulation–
-       ceramic microfiltration. J. Water Reuse Desalin. 5(4), 550–562.
-       Pilot-scale calibration: recovery, flux, filtration cycle,
-       CEB frequency, TMP, and stable operating windows.
-    3. State-of-the-art review on ceramic membranes for water treatment.
-       Fouling-control, backwash, and cleaning realism. Justifies simplified
-       operational penalty (backwash_sec, availability_factor) rather than
-       nonlinear fouling physics.
+    1. Technology framing, application context, and process-unit model justification (membrane materials, pore size
+       characterization, ceramic membrane fundamentals).
+       Gitis, V., & Rothenberg, G. (2016). Ceramic membranes: New opportunities and practical applications. Wiley-VCH.
+       https://onlinelibrary.wiley.com/doi/book/10.1002/9783527696550
+    2. Pilot-scale calibration: recovery, flux, filtration cycle, CEB frequency, TMP, coagulant dosing, and stable operating
+       windows, from a one-year hybrid coagulation–ceramic microfiltration pilot study.
+       Viegas, R. M. C., Mesquita, E., Campinas, M., Inocêncio, P., Teixeira, A. P., Martins, J., & Rosa, M. J. (2015).
+       Water reclamation with hybrid coagulation–ceramic microfiltration: First part of a long-term pilot study in Portugal.
+       Journal of Water Reuse and Desalination, 5(4), 550–556. https://doi.org/10.2166/wrd.2015.122
+    3. Fouling-control, backwash, and cleaning-in-place (CIP) realism for ceramic membranes; justifies simplified operational
+       penalty (backwash_sec, availability_factor) rather than nonlinear fouling physics.
+       Gruskevica, K., & Mezule, L. (2021). Cleaning methods for ceramic ultrafiltration membranes affected by organic fouling.
+       Membranes, 11(2), 131. https://doi.org/10.3390/membranes11020131
 
     Main equations
     --------------
-    All flows normalized to 1 m³ of permeate output:
+    All flows normalized to 1 m³ net permeate output (primary):
 
     Feedwater input:
-        Q_feed(t) = (1 / recovery) * Q_permeate(t)
+        Q_feed(t) = (1 / efficiency) * Q_permeate(t)
         [m³/hr]      [-]              [m³/hr]
 
     Electricity input:
-        E(t) = (filtration_sec + backwash_sec) * Q_permeate(t)
+        E(t) = (specific_energy_consumption + backwash_sec) * Q_permeate(t)
         [kWh/hr]   [kWh/m³]         [kWh/m³]     [m³/hr]
 
     Optional reject output:
-        Q_reject(t) = ((1 - recovery) / recovery) * Q_permeate(t)
+        Q_reject(t) = ((1 - efficiency) / efficiency) * Q_permeate(t)
         [m³/hr]         [-]                           [m³/hr]
 
     Availability derating (optional linear cleaning/downtime surrogate):
@@ -56,20 +57,9 @@ class CeramicFilter(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr] (permeate). Capacity constrains
-      the maximum permeate throughput of the unit.
-    - reject_bus is optional. If not provided, reject is not explicitly
-      represented as a system flow in v3.0.
-    - Each bus is in its own auto-group (no additive mixing). MIMO chaining
-      equates all group flows through their conversion factors, normalizing
-      all inputs and outputs to the common permeate activity basis.
-    - Flux, TMP, filtration cycle time, CEB/day, and coagulant dose are
-      stored as metadata for calibration and scenario documentation. They
-      are not enforced as hard optimization constraints in v3.0.
-    - carrier_cost applies to the electricity input only.
-    - marginal_cost and chemical_cleaning_cost apply to the permeate output.
-    - reject_disposal_cost applies to the reject output only if reject_bus
-      is provided.
+    - Primary flow is water_out_bus [m³/hr] (permeate). Capacity constrains the maximum permeate throughput of the unit.
+    - Flux, TMP, filtration cycle time, CEB/day, and coagulant dose are stored as metadata for calibration and scenario
+      documentation. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -95,7 +85,7 @@ class CeramicFilter(MIMO):
     # ------------------------------------------------------------------
     electricity_bus: Bus = None             # kWh
     water_in_bus: Bus = None                # m³ (feedwater)
-    water_out_bus: Bus = None               # m³ (permeate / PRIMARY)
+    water_out_bus: Bus = None               # m³ (permeate - PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -110,18 +100,18 @@ class CeramicFilter(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    recovery: float = 0.97              # permeate / feedwater [-]
-    filtration_sec: float = 0.02        # kWh / m³ permeate
-    backwash_sec: float = 0.0           # kWh / m³ permeate
-    availability_factor: float = 1.0    # average uptime / net production factor [-]
+    efficiency: float = 0.97                    # permeate / feedwater [-] (recovery) [1, 2]
+    specific_energy_consumption: float = 0.02   # kWh / m³ permeate (SEC filtration) [1, 2]
+    backwash_sec: float = 0.0                   # kWh / m³ permeate [3]
+    availability_factor: float = 1.0            # average uptime / net production factor [-] [3]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0             # €/m³ permeate
-    carrier_cost: float = 0.0              # €/kWh electricity
-    reject_disposal_cost: float = 0.0      # €/m³ reject
-    chemical_cleaning_cost: float = 0.0    # €/m³ permeate — folded periodic OPEX term
+    marginal_cost: float = 0.0             # USD/m³ permeate
+    carrier_cost: float = 0.0              # USD/m³ feed
+    reject_disposal_cost: float = 0.0      # USD/m³ reject
+    chemical_cleaning_cost: float = 0.0    # USD/m³ cleaning permeate — folded periodic OPEX term
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -131,16 +121,17 @@ class CeramicFilter(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    filtration_time_min: float = None
-    ceb_per_day: float = None
-    tmp_reference_bar: float = None
-    flux_reference_lmh: float = None
-    backwash_water_ratio: float = 0.0
-    membrane_material: str = "Al2O3"
-    pore_size_um: float = None
-    coagulant_dose_mg_per_l: float = None
+    filtration_time_min: float = None               # [2, 3]  Viegas's pilot cycle + Gruskevica's CIP sequence timing
+    ceb_per_day: float = None                       # [2, 3]  CEB frequency + CIP procedure logic
+    tmp_reference_bar: float = None                 # [2]     reported stable TMP operating window
+    flux_reference_lmh: float = None                # [2]     reported stable flux window
+    backwash_water_ratio: float = 0.0               # [3]     backwashing water use
+    membrane_material: str = "Al2O3"                # [1]
+    pore_size_um: float = None                      # [1]
+    coagulant_dose_mg_per_l: float = None           # [2]     FeCl3 coagulant dosing directly
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -168,8 +159,8 @@ class CeramicFilter(MIMO):
         # --------------------------------------------------------------
         # active physical parameters
         # --------------------------------------------------------------
-        self.recovery = attributes.pop("recovery", self.recovery)
-        self.filtration_sec = attributes.pop("filtration_sec", self.filtration_sec)
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
+        self.specific_energy_consumption = attributes.pop("specific_energy_consumption", self.specific_energy_consumption)
         self.backwash_sec = attributes.pop("backwash_sec", self.backwash_sec)
         self.availability_factor = attributes.pop(
             "availability_factor", self.availability_factor
@@ -202,6 +193,7 @@ class CeramicFilter(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -235,12 +227,13 @@ class CeramicFilter(MIMO):
         # --------------------------------------------------------------
         # derived constants
         # --------------------------------------------------------------
-        self._total_sec = self.filtration_sec + self.backwash_sec
-        self._feedwater_per_permeate = 1.0 / self.recovery
-        self._reject_per_permeate = (1.0 - self.recovery) / self.recovery
+        self._total_sec = self.specific_energy_consumption + self.backwash_sec
+        self._feedwater_per_permeate = 1.0 / self.efficiency
+        self._reject_per_permeate = (1.0 - self.efficiency) / self.efficiency
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to permeate output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._total_sec
@@ -259,22 +252,6 @@ class CeramicFilter(MIMO):
             attributes[f"conversion_factor_{self.backwash_water_bus.label}"] = sequence(
                 max(self.backwash_water_ratio, 1e-9)
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        output_parameters = attributes.pop("output_parameters", {})
-        output_parameters.setdefault(
-            "variable_costs", self.marginal_cost + self.chemical_cleaning_cost
-        )
-        attributes["output_parameters"] = output_parameters
-
-        if self.reject_bus is not None:
-            reject_output_parameters = attributes.pop("reject_output_parameters", {})
-            reject_output_parameters.setdefault(
-                "variable_costs", self.reject_disposal_cost
-            )
-            attributes["reject_output_parameters"] = reject_output_parameters
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -310,6 +287,40 @@ class CeramicFilter(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.chemical_cleaning_cost
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.reject_bus is not None and self.reject_bus in self.outputs:
+            self.outputs[self.reject_bus].variable_costs = sequence(
+                self.reject_disposal_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -332,11 +343,11 @@ class CeramicFilter(MIMO):
         return kwargs
 
     def _validate_parameters(self):
-        if not 0 < self.recovery <= 1:
-            raise ValueError("recovery must be in (0, 1].")
+        if not 0 < self.efficiency <= 1:
+            raise ValueError("efficiency must be in (0, 1].")
 
         non_negative = {
-            "filtration_sec": self.filtration_sec,
+            "specific_energy_consumption": self.specific_energy_consumption,
             "backwash_sec": self.backwash_sec,
             "backwash_water_ratio": self.backwash_water_ratio,
         }
