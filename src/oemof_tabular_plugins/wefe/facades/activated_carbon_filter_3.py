@@ -22,20 +22,26 @@ class ActivatedCarbonFilter(MIMO):
 
     Core references
     ---------------
-    1. US EPA Process Design Manual: Carbon Adsorption — design basis for
-       EBCT, pretreatment requirements, regeneration/replacement costs, and
-       plant configuration choices.
-    2. Benstoem et al. (2017) — meta-analysis of pilot- and large-scale GAC
-       performance; justifies surrogate modeling over universal breakthrough
-       equations (Chemosphere).
-    3. Bäthe et al. (2024) — continuous GAC filter operation; supports
-       backwash-related parameters and prefiltration dependence (Water Sci. Tech.).
-    4. Saialy et al. (2023) — backwashing of granular media filters; supports
-       backwash water and energy burden parameters (J. Water Supply).
+    1. Design basis for EBCT, pretreatment requirements, regeneration/replacement costs, and plant configuration choices.
+       U.S. Environmental Protection Agency (EPA). (1973). Process design manual for carbon adsorption (EPA 625/1-71-002A).
+       U.S. EPA, Technology Transfer.
+       https://nepis.epa.gov/Exe/ZyNET.exe/20007TH6.TXT?ZyActionD=ZyDocument&Client=EPA&Index=Prior+to+1976&Docs=&Query=&Time=&EndTime=&SearchMethod=1&TocRestrict=n&Toc=&TocEntry=&QField=&QFieldYear=&QFieldMonth=&QFieldDay=&IntQFieldOp=0&ExtQFieldOp=0&XmlQuery=&File=D%3A%5Czyfiles%5CIndex%20Data%5C70thru75%5CTxt%5C00000000%5C20007TH6.txt&User=ANONYMOUS&Password=anonymous&SortMethod=h%7C-&MaximumDocuments=1&FuzzyDegree=0&ImageQuality=r75g8/r75g8/x150y150g16/i425&Display=hpfr&DefSeekPage=x&SearchBack=ZyActionL&Back=ZyActionS&BackDesc=Results%20page&MaximumPages=1&ZyEntry=1&SeekPage=x&ZyPURL
+    2. Meta-analysis of pilot- and large-scale GAC micropollutant-removal performance; justifies surrogate modeling over
+       universal breakthrough equations.
+       Benstoem, F., Nahrstedt, A., Boehler, M., Knopp, G., Montag, D., Siegrist, H., & Pinnekamp, J. (2017). Performance
+       of granular activated carbon to remove micropollutants from municipal wastewater—A meta-analysis of pilot- and
+       large-scale studies. Chemosphere, 185, 105–118. https://doi.org/10.1016/j.chemosphere.2017.06.118
+    3. Continuous GAC filter operation; supports backwash-related parameters and prefiltration dependence.
+       Kirchen, F., Fundneider, T., & Lackner, S. (2024). Implications of the operation of continuous granular activated
+       carbon filters on the effluent quality. Water Science and Technology, 89(11), 3079–3092.
+       https://doi.org/10.2166/wst.2024.178
+    4. Backwashing of granular media filters; supports backwash water and energy burden parameters. Turan, M. (2023).
+       Backwashing of granular media filters and membranes for water treatment: A review. Journal of Water Supply:
+       Research and Technology-Aqua. https://doi.org/10.2166/aqua.2023.207
 
     Main equations
     --------------
-    All conversion factors are normalized to treated water output = 1.
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Electricity demand:
         f_el(t) = (SEC + SEC_bw) * f_water_out(t)
@@ -54,16 +60,12 @@ class ActivatedCarbonFilter(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m3/hr]. Capacity constrains the maximum
-      treated-water throughput of the unit.
-    - If wastewater_out_bus is not provided, hydraulic loss remains implicit
-      in the water_in_bus / water_out_bus ratio via efficiency.
-    - If carbon_bus is not provided, carbon burden can be folded into
-      marginal_cost externally.
-    - pretreatment_factor and solids_factor are multipliers modifying carbon
-      demand and backwash burden; they are not standalone constraints.
-    - Detailed adsorption breakthrough and contaminant-specific removal are
-      deferred to v4.0 because GAC performance is highly context-specific.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the unit.
+    - If wastewater_out_bus is not provided, hydraulic loss remains implicit in the water_in_bus / water_out_bus ratio via efficiency.
+    - If carbon_bus is not provided, carbon burden can be folded into marginal_cost externally.
+    - pretreatment_factor and solids_factor are multipliers modifying carbon demand and backwash burden; they are not standalone constraints.
+    - Detailed adsorption breakthrough and contaminant-specific removal are deferred to future work because GAC performance
+      is highly context-specific.
     """
 
     # ------------------------------------------------------------------
@@ -87,44 +89,45 @@ class ActivatedCarbonFilter(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    electricity_bus: Bus = None         # kWh/hr
-    water_in_bus: Bus = None            # m³/hr  (feed water)
-    water_out_bus: Bus = None           # m³/hr  (treated water)
+    electricity_bus: Bus = None         # kWh
+    water_in_bus: Bus = None            # m³ (feed water)
+    water_out_bus: Bus = None           # m³ (treated water - PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
     # ------------------------------------------------------------------
-    carbon_bus: Optional[Bus] = None    # kg/hr  activated carbon consumption
+    carbon_bus: Optional[Bus] = None    # kg  activated carbon consumption
 
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
-    wastewater_out_bus: Optional[Bus] = None    # m³/hr  hydraulic loss / reject
-    backwash_water_bus: Optional[Bus] = None    # m³/hr  backwash discharge
+    wastewater_out_bus: Optional[Bus] = None    # m³  hydraulic loss / reject
+    backwash_water_bus: Optional[Bus] = None    # m³  backwash discharge
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.07       # kWh/m³ treated water
-    efficiency: float = 0.97                        # treated water / feed water  [–]
-    specific_backwash_energy: float = 0.0           # additional kWh/m³ treated
-    backwash_water_share: float = 0.0               # m³ backwash /m³ treated   [–]
-    specific_carbon_demand: float = 0.0             # kg carbon /m³ treated
-    pretreatment_factor: float = 1.0                # multiplier on carbon demand  [–]
-    solids_factor: float = 1.0                      # multiplier on backwash/carbon burden [–]
+    specific_energy_consumption: float = 0.07       # kWh/m³ treated water            [1]
+    efficiency: float = 0.97                        # treated water / feed water [-]  [1, 2]
+    specific_backwash_energy: float = 0.0           # additional kWh/m³ treated       [3, 4]
+    backwash_water_share: float = 0.0               # m³ backwash / m³ treated [-]    [4]
+    specific_carbon_demand: float = 0.0             # kg carbon / m³ treated          [1, 2]
+    pretreatment_factor: float = 1.0                # multiplier on carbon demand [-] [3]
+    solids_factor: float = 1.0                      # multiplier on backwash/carbon   [3, 4]
+                                                    # burden [-]
 
     # ------------------------------------------------------------------
     # optional activity bounds
     # ------------------------------------------------------------------
-    activity_bound_max: Union[float, Sequence[float]] = None # upper throughput cap on water_out_bus [m3/hr];
+    activity_bound_max: Union[float, Sequence[float]] = None # upper throughput cap on water_out_bus [m³/hr];
                                                              # use to encode EBCT-derived or operator limits
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0          # €/m³ treated water
-    carrier_cost: float = 0.0           # €/kWh electricity
-    carbon_disposal_cost: float = 0.0   # €/kg spent carbon (wastewater_out_bus side)
+    marginal_cost: float = 0.0          # USD/m³ treated water
+    carrier_cost: float = 0.0           # USD/m³ feed
+    carbon_disposal_cost: float = 0.0   # USD/kg spent carbon (wastewater_out_bus side)
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -134,12 +137,14 @@ class ActivatedCarbonFilter(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    min_ebct_minutes: float = None      # min. empty bed contact time [min]; use offline to derive activity_bound_max
-    target_contaminant: str = ""        # target pollutant label; scenario documentation only
-    influent_doc: float = None          # influent dissolved organic carbon [mg/L]; affects carbon exhaustion rate
-    influent_turbidity: float = None    # influent turbidity [NTU]; indicates pre-filtration requirement
+    min_ebct_minutes: float = None          # empty bed contact time [min]                [1, 2]
+    target_contaminant: str = ""            # target pollutant label; scenario doc only   [2]
+    influent_doc: float = None              # influent DOC [mg/L]; carbon exhaustion rate [3]
+    influent_turbidity: float = None        # influent turbidity [NTU]; pre-filtration    [1, 3]
+                                            # requirement indicator
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -217,6 +222,7 @@ class ActivatedCarbonFilter(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -254,6 +260,7 @@ class ActivatedCarbonFilter(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._electricity_per_output
@@ -277,36 +284,10 @@ class ActivatedCarbonFilter(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        output_parameters = attributes.pop("output_parameters", {})
-        wastewater_output_parameters = attributes.pop("wastewater_output_parameters", {})
-        backwash_output_parameters = attributes.pop("backwash_output_parameters", {})
-
-        if (
-                self.wastewater_out_bus is None
-                and self.carbon_disposal_cost not in (None, 0, 0.0)
-        ):
-            output_parameters.setdefault(
-                "variable_costs", self.carbon_disposal_cost
-            )
-
-        attributes["output_parameters"] = output_parameters
-
-        if self.wastewater_out_bus is not None:
-            wastewater_output_parameters.setdefault(
-                "variable_costs", self.carbon_disposal_cost
-            )
-            attributes["wastewater_output_parameters"] = wastewater_output_parameters
-
-        if self.backwash_water_bus is not None:
-            attributes["backwash_output_parameters"] = backwash_output_parameters
-
-        # --------------------------------------------------------------
-        # activity bounds — passed through to base MIMO as constraints
+        # activity bound
         # --------------------------------------------------------------
         if self.activity_bound_max is not None:
-            attributes["activity_bound_max"] = sequence(self.activity_bound_max)
+            attributes["activity_bound_max"] = sequence(self.activity_bound_max * self.capacity)
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -341,6 +322,35 @@ class ActivatedCarbonFilter(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + (self.specific_carbon_demand * self.carbon_disposal_cost)
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
 
     def _optional_bus_kwargs(self):
         kwargs = {}
