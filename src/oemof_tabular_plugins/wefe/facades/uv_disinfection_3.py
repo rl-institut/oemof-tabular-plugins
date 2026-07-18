@@ -22,28 +22,32 @@ class UVDisinfection(MIMO):
 
     Core references
     ---------------
-    1. U.S. EPA — Ultraviolet Disinfection Guidance Manual (2006):
-       validated operating conditions, UV dose, UVT sensitivity, fouling/aging
-       factor derivation, dose-monitoring strategy, and off-spec operation logic.
-    2. Irish EPA — Water Treatment Manual: Disinfection:
-       practical UV design, dose validation, operation, and monitoring guidance
-       for real plant engineering; sludge/waste stream handling.
-    3. NWRI — Ultraviolet Disinfection Guidelines for Drinking Water and
-       Water Reuse: bridges potable and reuse-oriented UV operating envelopes;
-       useful for mixed WEFE / non-potable contexts.
-    4. AWWA — Ultraviolet (UV) Disinfection for Water Treatment, 2nd ed.
-       (support source): professional engineering practice, maintenance cost
-       ranges, and lamp replacement guidance.
+    1. Validated operating conditions, UV dose, UVT sensitivity, fouling/aging factor derivation, dose-monitoring strategy,
+       and off-spec operation logic.
+       U.S. Environmental Protection Agency (EPA). (2006). Ultraviolet disinfection guidance manual for the final Long Term
+       2 Enhanced Surface Water Treatment Rule (EPA 815-R-06-007). U.S. EPA, Office of Water.
+       https://www.epa.gov/system/files/documents/2022-10/ultraviolet-disinfection-guidance-manual-2006.pdf
+    2. Practical UV design, dose validation, operation, and monitoring guidance for real plant engineering; sludge/waste
+       stream handling.
+       Environmental Protection Agency (Ireland). (n.d.). Water treatment manual: Disinfection. EPA.
+       https://www.epa.ie/publications/compliance--enforcement/drinking-water/advice--guidance/Disinfection2_web.pdf
+    3. Bridges potable and reuse-oriented UV operating envelopes; useful for mixed WEFE/non-potable contexts.
+       National Water Research Institute (NWRI). (2012). Ultraviolet disinfection guidelines for drinking water and water
+       reuse (3rd ed.) (R. W. Emerick & G. Tchobanoglous, Rev.). NWRI, in partnership with the Water Research Foundation.
+       https://www.nwri-usa.org/_files/ugd/632dc3_c8ab78b05021452c8a520c3b6dba48ca.pdf?index=true
+    4. Professional engineering practice, maintenance cost ranges, and lamp replacement guidance.
+       American Water Works Association (AWWA). (2022). AWWA F110-22: Ultraviolet disinfection systems for drinking water. AWWA.
+       https://store.awwa.org/AWWA-F110-22-Ultraviolet-Disinfection-Systems-for-Drinking-Water?whence=
 
     Main equations
     --------------
-    All flows normalized to 1 m³ net treated water output (primary):
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Water continuity:
         Q_in(t) = Q_out(t)                                [m³/hr]
 
-    Net specific energy consumption [kWh / m³ treated water]:
-        SEC_eff = SEC_base * (1 / fouling_aging_factor)   (EPA, 2006)
+    Net specific energy consumption:
+        SEC_eff = SEC_base * (1 / fouling_aging_factor)   [kWh / m³ treated water]
 
     Optional sludge output (time-averaged over cleaning cycles):
         sludge_per_output = sludge_generation_rate        [kg / m³ treated water]
@@ -53,34 +57,14 @@ class UVDisinfection(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated water output of the unit.
-    - fouling_aging_factor captures the combined effect of lamp aging and
-      sleeve fouling as a linear SEC derating proxy (EPA, 2006). Values in
-      (0, 1] — lower values imply worse lamp/sleeve performance and result
-      in higher effective SEC. At fouling_aging_factor=1.0 (new lamp, clean
-      sleeve), SEC_eff equals SEC_base exactly.
-    - reactor_availability captures scheduled downtime, lamp replacement
-      periods, and maintenance windows as a fractional throughput derating
-      (Irish EPA). Values in (0, 1] — lower values reduce the effective
-      validated throughput ceiling.
-    - uv_sludge_bus is an optional output bus representing the solid/liquid
-      waste stream from sleeve cleaning, lamp replacement, and reactor purging
-      (Irish EPA; EPA, 2006). sludge_generation_rate is a time-averaged
-      coefficient [kg / m³ treated water]. If the bus is omitted, sludge waste
-      is not tracked in the model.
-    - maintenance_cost and lamp_replacement_cost are applied as variable costs
-      on the primary output flow via output_parameters, consistent with the
-      RO facade pattern for per-output-bus cost assignment.
-    - For backward compatibility, validated_max_flow=None disables the
-      throughput bound entirely; the optimizer is free to dispatch up to
-      the investment capacity.
-    - Water-quality surrogates (uv_dose_target, uv_transmittance,
-      target_pathogen, log_removal_target) are stored as documentation /
-      calibration defaults. They are not enforced as hard optimization
-      constraints in v3.0.
-    - validated_min_uvt triggers ValueError at instantiation if
-      uv_transmittance falls below it, acting as a design-envelope guard.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated water output of the unit.
+    - fouling_aging_factor captures the combined effect of lamp aging and sleeve fouling as a linear SEC derating proxy.
+    - reactor_availability captures scheduled downtime, lamp replacement periods, and maintenance windows as a
+      fractional throughput derating.
+    - uv_sludge_bus is an optional output bus representing the solid/liquid waste stream from sleeve cleaning, lamp
+      replacement, and reactor purging. If the bus is omitted, sludge waste is not tracked in the model.
+    - Water-quality surrogates (uv_dose_target, uv_transmittance, target_pathogen, log_removal_target) are stored as
+      documentation / calibration defaults. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -104,9 +88,9 @@ class UVDisinfection(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    electricity_bus: Bus = None         # kWh
-    water_in_bus: Bus = None            # m³
-    water_out_bus: Bus = None           # m³
+    electricity_bus: Bus = None             # kWh
+    water_in_bus: Bus = None                # m³
+    water_out_bus: Bus = None               # m³  (PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -116,25 +100,24 @@ class UVDisinfection(MIMO):
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
-    uv_sludge_bus: Optional[Bus] = None  # kg/hr; sleeve cleaning / lamp waste
-                                         # (Irish EPA; EPA UV Manual, 2006)
+    uv_sludge_bus: Optional[Bus] = None  # kg ; sleeve cleaning / lamp waste
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.06       # kWh / m³ treated water
-    fouling_aging_factor: float = 1.0               # fraction in (0, 1]; SEC derating proxy (EPA, 2006)
-    reactor_availability: float = 1.0               # fraction in (0, 1]; throughput derating (Irish EPA)
-    validated_max_flow: Optional[float] = None                # m³ / timestep; validated operating bound (EPA, 2006)
-    sludge_generation_rate: float = 0.0             # kg sludge / m³ treated water (Irish EPA; EPA, 2006)
+    specific_energy_consumption: float = 0.06           # kWh / m³ treated water          [1]
+    fouling_aging_factor: float = 1.0                   # SEC derating proxy              [1]
+    reactor_availability: float = 1.0                   # throughput derating             [2]
+    validated_max_flow: Optional[float] = None          # validated operating bound       [1]
+    sludge_generation_rate: float = 0.0                 # kg sludge / m³ treated          [2]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                  # €/m³ treated water
-    carrier_cost: float = 0.0                   # €/kWh electricity
-    maintenance_cost: float = 0.0               # €/m³ treated water (Irish EPA, AWWA)
-    lamp_replacement_cost: float = 0.0          # €/m³ treated water (Irish EPA, AWWA)
+    marginal_cost: float = 0.0                  # USD/m³ treated water
+    carrier_cost: float = 0.0                   # USD/m³ feed
+    maintenance_cost: float = 0.0               # USD/m³ treated water
+    lamp_replacement_cost: float = 0.0          # USD/m³ treated water
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -144,16 +127,16 @@ class UVDisinfection(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # EPA UV Guidance Manual / NWRI style characterization fields
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    uv_dose_target: float = 40.0                # mJ/cm²; design basis (EPA, 2006; NWRI)
-    uv_transmittance: float = 0.95              # fraction; key water-quality driver (EPA, 2006)
-    validated_min_uvt: Optional[float] = None   # fraction; screening threshold only (EPA, 2006)
-    target_pathogen: str = ""                   # e.g. "Cryptosporidium", "E. coli" (EPA, NWRI)
-    log_removal_target: Optional[float] = None  # log-reduction design basis (EPA, NWRI)
-    validation_method: str = ""                 # e.g. "validated dose", "setpoint" (EPA, 2006)
-    uv_sensor_setpoint: Optional[float] = None  # mW/cm²; operational monitoring only (EPA, 2006)
+    uv_dose_target: float = 40.0                    # mJ/cm²; design basis                [1, 3]
+    uv_transmittance: float = 0.95                  # fraction; key water-quality driver  [1]
+    validated_min_uvt: Optional[float] = None       # fraction; screening threshold       [1]
+    target_pathogen: str = ""                       # e.g. "Cryptosporidium", "E. coli"   [1, 3]
+    log_removal_target: Optional[float] = None      # log-reduction design basis          [1, 3]
+    validation_method: str = ""                     # e.g. "validated dose", "setpoint"   [1]
+    uv_sensor_setpoint: Optional[float] = None      # mW/cm²; operational monitoring      [1]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -223,6 +206,7 @@ class UVDisinfection(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -256,7 +240,7 @@ class UVDisinfection(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (EPA UV Guidance Manual, 2006; Irish EPA; AWWA UV Disinfection)
+        # (EPA [1], 2006; Irish EPA [2]; AWWA UV Disinfection [4])
         # --------------------------------------------------------------
         self._sec_effective = (
                 self.specific_energy_consumption
@@ -265,6 +249,7 @@ class UVDisinfection(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._sec_effective
@@ -278,19 +263,9 @@ class UVDisinfection(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-
-        if self.maintenance_cost > 0 or self.lamp_replacement_cost > 0:
-            attributes["output_parameters"].update(
-                {"variable_costs": self.maintenance_cost + self.lamp_replacement_cost}
-            )
-
-        # --------------------------------------------------------------
-        # validated throughput bound  (EPA UV Guidance Manual, 2006)
+        # validated throughput bound
         # Q_out(t) <= validated_max_flow * reactor_availability
-        # Enforced as activity_bound_max on the output group in MIMO block.
+        # Enforced as activity_bound_max on the output group.
         # --------------------------------------------------------------
         if self.validated_max_flow is not None:
             attributes["activity_bound_max"] = sequence(
@@ -330,6 +305,35 @@ class UVDisinfection(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.maintenance_cost + self.lamp_replacement_cost
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
 
     def _optional_bus_kwargs(self):
         kwargs = {}
