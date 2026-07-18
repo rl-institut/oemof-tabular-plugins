@@ -22,45 +22,45 @@ class SlowSandFilter(MIMO):
 
     Core references
     ---------------
-    1. U.S. EPA (2024), Water Quality Goals and Operational Criteria for
-       Optimization of Slow Sand Filtration: operational criteria, HLR
-       limits, filter-to-waste guidance, ripening, cleaning triggers,
-       temperature sensitivity, and DO considerations.
-    2. Idaho DEQ (2022), Slow Sand Filter Guidance: startup, resanding,
-       biological maturity, return-to-service, and min/max HLR thresholds.
-    3. AWWA Research Foundation (1991), Manual of Design for Slow Sand
-       Filtration: classical design basis, media specifications (d10, UC,
-       fines), hydraulic design, and underdrainage.
-    4. Ellis et al. (2023), Slow Sand Filters for the 21st Century — A
-       Review: biological maturity and performance variation over time.
+    1. Operational criteria, HLR limits, filter-to-waste guidance, ripening, cleaning triggers, temperature sensitivity,
+       and dissolved-oxygen considerations for slow sand filtration optimization.
+       U.S. Environmental Protection Agency (EPA), Area-Wide Optimization Program (AWOP). (2024). Water quality goals and
+       operational criteria for optimization of slow sand filtration (EPA 815-B-24-011). U.S. EPA Office of Ground Water &
+       Drinking Water. https://www.epa.gov/system/files/documents/2024-04/water-quality-goals-and-slow-sand-filtration.pdf
+    2. Startup, resanding, biological maturity (schmutzdecke development), return-to-service (filtered-to-waste) protocols,
+       and minimum/maximum sand-depth thresholds. Idaho Department of Environmental Quality (DEQ). (2022). Slow sand filter
+       guidance (PID DWPR, CA code 82103). Idaho DEQ. https://www2.deq.idaho.gov/admin/LEIA/api/document/download/16620
+    3. Classical design basis, media specifications (d10, uniformity coefficient, fines fraction), hydraulic design, and
+       underdrainage. Barrett, J. M., & Hendricks, D. W. (1991). Manual of design for slow sand filtration. AWWA and AWWA
+       Research Foundation. https://www.waterrf.org/research/projects/manual-design-slow-sand-filtration
+    4. Biological maturity and performance variation over time in modern slow sand / biosand filter applications.
+       Maiyo, J. K., Dasika, S., & Jafvert, C. T. (2023). Slow sand filters for the 21st century: A review. International
+       Journal of Environmental Research and Public Health, 20(2), 1019. https://doi.org/10.3390/ijerph20021019
 
     Main equations
     --------------
-    All conversion factors are normalized to treated-water output = 1.
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Electricity demand:
-        E(t) = specific_energy_consumption * Q_out(t)          [EPA 2024]
+        E(t) = specific_energy_consumption * Q_out(t)
 
     Raw water requirement:
-        Q_in(t) = Q_out(t) / efficiency                        [EPA 2024]
+        Q_in(t) = Q_out(t) / efficiency
 
     Treated water output share (1 in steady operation; < 1 during ripening):
-        cf_treated(t) = treated_water_share ∈ [0, 1]     [EPA 2024, DEQ 2022]
+        cf_treated(t) = treated_water_share ∈ [0, 1]
 
     Waste water share (filter-to-waste fraction during ripening/startup):
-        cf_waste(t) = 1 − treated_water_share             [EPA 2024, DEQ 2022]
+        cf_waste(t) = 1 − treated_water_share
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated-water throughput of the filter unit and must be set explicitly
-      or left to the solver when expandable=True.
-    - waste_out_bus is optional. If not provided, the facade behaves as a
-      2-input/1-output unit and treated_water_share should equal 1.0.
-    - Documentation metadata fields (sand_depth, d10, uniformity_coefficient,
-      fines_fraction, dissolved_oxygen_in, filter_area, filtration_rate_max)
-      are stored for scenario documentation and design-check warnings only.
-      They are not enforced as hard optimization constraints.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the filter unit
+      and must be set explicitly or left to the solver when expandable=True.
+    - waste_out_bus is optional. If not provided, the facade behaves as a 2-input/1-output unit and treated_water_share should equal 1.0.
+    - Documentation metadata fields (sand_depth, d10, uniformity_coefficient, fines_fraction, dissolved_oxygen_in, filter_area,
+      filtration_rate_max) are stored for scenario documentation and design-check warnings only. They are not enforced as
+      hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -85,8 +85,8 @@ class SlowSandFilter(MIMO):
     # mandatory buses
     # ------------------------------------------------------------------
     electricity_bus: Bus = None             # kWh
-    water_in_bus: Bus = None                # m³ raw water
-    water_out_bus: Bus = None               # m³ treated water (primary)
+    water_in_bus: Bus = None                # m³ (raw water)
+    water_out_bus: Bus = None               # m³ (treated water - PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -101,18 +101,18 @@ class SlowSandFilter(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.015      # kWh / m³ treated water [EPA 2024]
-    efficiency: float = 0.98                        # treated / feedwater [-] [EPA 2024]
+    specific_energy_consumption: float = 0.015      # kWh / m³ treated water (mostly pumping/auxiliary) [1, 4]
+    efficiency: float = 0.98                        # treated / feedwater [-]         [1]
     treated_water_share: float = 1.0                # fraction of throughput yielded as treated
                                                     # water [-]; < 1.0 during ripening or
-                                                    # filter-to-waste operation [EPA 2024, DEQ 2022]
+                                                    # filter-to-waste operation [1, 2]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0  # €/m³ treated water
-    carrier_cost: float = 0.0  # €/kWh electricity
-    waste_disposal_cost: float = 0.0  # €/m³ filter-to-waste discharged
+    marginal_cost: float = 0.0              # USD/m³ treated water
+    carrier_cost: float = 0.0               # USD/m³ feed
+    waste_disposal_cost: float = 0.0        # USD/m³ waste out stream (filter-to-waste discharged)
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -122,16 +122,17 @@ class SlowSandFilter(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    sand_depth: Optional[float] = None              # inches; min 24 in [EPA 2024, DEQ 2022]
-    design_sand_depth: Optional[float] = None       # inches; min 30 in at resanding [DEQ 2022]
-    d10: Optional[float] = None                     # mm effective grain size; 0.15–0.35 [AWWA 1991]
-    uniformity_coefficient: Optional[float] = None  # [-]; 1.5–3.0 [AWWA 1991]
-    fines_fraction: Optional[float] = None          # fraction by weight; < 0.005 [AWWA 1991]
-    dissolved_oxygen_in: Optional[float] = None     # mg/L source water; > 3 mg/L [EPA 2024]
-    filter_area: Optional[float] = None             # m² filter bed plan area
-    filtration_rate_max: Optional[float] = None     # m³/(m²·hr) upper HLR [EPA 2024, DEQ 2022]
+    sand_depth: Optional[float] = None              # min 24 in                    [1, 2]
+    design_sand_depth: Optional[float] = None       # min 30 in at resanding       [2]
+    d10: Optional[float] = None                     # 0.15–0.35 mm                 [3]
+    uniformity_coefficient: Optional[float] = None  # 1.5–3.0                      [3]
+    fines_fraction: Optional[float] = None          # < 0.005                      [3]
+    dissolved_oxygen_in: Optional[float] = None     # > 3 mg/L                     [1]
+    filter_area: Optional[float] = None             # m² plan area                 [3]
+    filtration_rate_max: Optional[float] = None     # upper HLR                    [1, 2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -190,6 +191,7 @@ class SlowSandFilter(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -224,6 +226,7 @@ class SlowSandFilter(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -239,25 +242,6 @@ class SlowSandFilter(MIMO):
             attributes[f"conversion_factor_{self.waste_out_bus.label}"] = sequence(
                 self._waste_share
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        output_parameters = attributes.pop("output_parameters", {})
-        waste_output_parameters = attributes.pop("waste_output_parameters", {})
-
-        if (
-                self.waste_out_bus is None
-                and self.waste_disposal_cost not in (None, 0, 0.0)
-        ):
-            output_parameters.setdefault(
-                "variable_costs", self.waste_disposal_cost
-            )
-
-        attributes["output_parameters"] = output_parameters
-
-        if self.waste_out_bus is not None:
-            attributes["waste_output_parameters"] = waste_output_parameters
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -292,6 +276,38 @@ class SlowSandFilter(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.waste_out_bus is not None and self.waste_out_bus in self.outputs:
+            self.outputs[self.waste_out_bus].variable_costs = sequence(
+                self.waste_disposal_cost
+            )
 
     def _optional_bus_kwargs(self):
         kwargs = {}
@@ -335,29 +351,28 @@ class SlowSandFilter(MIMO):
             warnings.warn(
                 f"treated_water_share={self.treated_water_share!r} is below 1.0 "
                 "but no waste_out_bus is provided. The rejected fraction will "
-                "not be represented explicitly in the optimization. "
-                "[EPA 2024, DEQ 2022]",
+                "not be represented explicitly in the optimization. ",
                 UserWarning,
             )
 
         if self.sand_depth is not None and self.sand_depth < 24:
             warnings.warn(
                 f"sand_depth={self.sand_depth!r} inches is below the common "
-                "minimum guidance threshold of 24 inches. [EPA 2024, DEQ 2022]",
+                "minimum guidance threshold of 24 inches.",
                 UserWarning,
             )
 
         if self.design_sand_depth is not None and self.design_sand_depth < 30:
             warnings.warn(
                 f"design_sand_depth={self.design_sand_depth!r} inches is below "
-                "the recommended initial/resanding depth of 30 inches. [DEQ 2022]",
+                "the recommended initial/resanding depth of 30 inches.",
                 UserWarning,
             )
 
         if self.d10 is not None and not (0.15 <= self.d10 <= 0.35):
             warnings.warn(
                 f"d10={self.d10!r} mm is outside the common slow sand filter "
-                "media design range of 0.15–0.35 mm. [AWWA 1991]",
+                "media design range of 0.15–0.35 mm.",
                 UserWarning,
             )
 
@@ -367,14 +382,14 @@ class SlowSandFilter(MIMO):
         ):
             warnings.warn(
                 f"uniformity_coefficient={self.uniformity_coefficient!r} is "
-                "outside the common guidance range of 1.5–3.0. [AWWA 1991]",
+                "outside the common guidance range of 1.5–3.0.",
                 UserWarning,
             )
 
         if self.fines_fraction is not None and self.fines_fraction >= 0.005:
             warnings.warn(
                 f"fines_fraction={self.fines_fraction!r} is at or above the "
-                "recommended upper limit of 0.5% by weight. [AWWA 1991]",
+                "recommended upper limit of 0.5% by weight.",
                 UserWarning,
             )
 
@@ -382,6 +397,6 @@ class SlowSandFilter(MIMO):
             warnings.warn(
                 f"dissolved_oxygen_in={self.dissolved_oxygen_in!r} mg/L is "
                 "below 3 mg/L — EPA guidance suggests DO > 3 mg/L for adequate "
-                "biological activity in the filter. [EPA 2024]",
+                "biological activity in the filter.",
                 UserWarning,
             )
