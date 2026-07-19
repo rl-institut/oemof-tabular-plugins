@@ -42,7 +42,7 @@ class Adsorption(MIMO):
 
     Main equations
     --------------
-    All flows normalized to 1 m3 net treated-water output (primary):
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Electricity coupling:
         Q_elec(t) = net_SEC * Q_water_out(t)

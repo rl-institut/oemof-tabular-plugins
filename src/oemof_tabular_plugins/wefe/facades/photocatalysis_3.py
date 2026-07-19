@@ -22,14 +22,20 @@ class PhotocatalyticUnit(MIMO):
 
     Core references
     ---------------
-    1. Wang et al. (2023), Catalysts: reactor design variables, optimization
-       logic, catalyst loading/recovery, reaction-condition control, and
-       cost-aware design for practical deployment.
-    2. Espíndola & Vilar (2020), JCTB: dominant engineering parameters for
-       photoreactor design and scale-up — light source, catalyst dosage,
+    1. Reactor-level design and optimization framework — photocatalyst selection, loading and recovery within the reactor,
+       light source design, reaction-condition control, and cost-aware reactor design.
+       Mei, J., Gao, X., Zou, J., & Pang, F. (2023). Research on photocatalytic wastewater treatment reactors: Design,
+       optimization, and evaluation criteria. Catalysts, 13(6), 974. https://doi.org/10.3390/catal13060974
+    2. Dominant engineering parameters governing photoreactor design and scale-up — light source, catalyst dosage,
        reactor configuration, and hydrodynamics.
-    3. Pichat ed. (2013), Photocatalysis and Water Purification (Wiley-VCH):
-       fundamentals, reactor-design framing, and engineering scope justification.
+       Sacco, O., Vaiano, V., & Sannino, D. (2020). Main parameters influencing the design of photocatalytic reactors for
+       wastewater treatment: A mini review. Journal of Chemical Technology & Biotechnology, 95(10), 2608–2618.
+       https://doi.org/10.1002/jctb.6488
+    3. Fundamentals of photocatalysis, reactor-design framing (including a dedicated chapter on photoreactor design approaches),
+       and the general engineering scope justification for treating this as a process-yield unit rather than a mechanistic
+       photochemical model.
+       Pichat, P. (Ed.). (2013). Photocatalysis and water purification: From fundamentals to recent applications. Wiley-VCH.
+       https://onlinelibrary.wiley.com/doi/book/10.1002/9783527645404
 
     Main equations
     --------------
@@ -51,25 +57,16 @@ class PhotocatalyticUnit(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated-water throughput of the unit.
-    - UV lamp electricity is intentionally NOT modeled as a separate input bus.
-      It is assumed to be fully included in specific_energy_consumption_base,
-      which covers all electrical demand (pumping, UV lamps, ancillaries).
-      A separate UV bus would cause double-counting. For solar photocatalysis
-      variants where UV is externally sourced, set solar_mode=True
-      (documentation flag only — no effect on optimization equations).
-    - If catalyst_bus is active, catalyst cost must come from the upstream
-      catalyst supply node. catalyst_cost is only applied as an output-side
-      variable cost surcharge when catalyst_bus is absent.
-    - spent_catalyst_bus requires catalyst_bus to be active. A warning is
-      raised if spent_catalyst_bus is provided without catalyst_bus.
-    - Engineering proxy scalers (performance_factor, hydraulic_factor,
-      water_quality_factor, deactivation_factor) keep the model linear while
-      reflecting operating-condition sensitivity identified in the literature.
-    - Characterization values (Cin, target_removal, reactor_type, catalyst_mode,
-      light_source_type) are stored as documentation/calibration defaults.
-      They are not enforced as hard optimization constraints.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the unit.
+    - UV lamp electricity is intentionally NOT modeled as a separate input bus. It is assumed to be fully included in
+      specific_energy_consumption_base, which covers all electrical demand (pumping, UV lamps, ancillaries). A separate UV
+      bus would cause double-counting.
+    - If catalyst_bus is active, catalyst cost must come from the upstream catalyst supply node. catalyst_cost is only
+      applied as an output-side variable cost surcharge when catalyst_bus is absent.
+    - Engineering proxy scalers (performance_factor, hydraulic_factor, water_quality_factor, deactivation_factor) keep
+      the model linear while reflecting operating-condition sensitivity identified in the literature.
+    - Characterization values (Cin, target_removal, reactor_type, catalyst_mode, light_source_type) are stored as
+      documentation/calibration defaults. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -94,8 +91,8 @@ class PhotocatalyticUnit(MIMO):
     # mandatory buses
     # ------------------------------------------------------------------
     electricity_bus: Bus = None         # kWh
-    water_in_bus: Bus = None            # m³
-    water_out_bus: Bus = None           # m³  (PRIMARY)
+    water_in_bus: Bus = None            # m³  (raw / pre-treated feed)
+    water_out_bus: Bus = None           # m³  (disinfected water — PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -110,22 +107,22 @@ class PhotocatalyticUnit(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption_base: float = 0.12      # kWh / m³ treated water
-    catalyst_dose_base: float = 10.0                    # g / m³ treated water
-    spent_catalyst_yield: float = 1.0                   # kg spent / kg dosed (0–1, or >1 with adsorbed mass)
-    performance_factor: float = 1.0                     # non-ideal operation / operating-condition scaling
-    hydraulic_factor: float = 1.0                       # residence-time / flow-regime adequacy proxy
-    water_quality_factor: float = 1.0                   # influent difficulty / pollutant-class proxy
-    deactivation_factor: float = 1.0                    # catalyst aging / recovery loss proxy
+    specific_energy_consumption_base: float = 0.12      # kWh / m³ treated water [1, 3]
+    catalyst_dose_base: float = 10.0                    # g / m³ treated water [1, 2]
+    spent_catalyst_yield: float = 1.0                   # kg spent / kg dosed (0–1, or >1 with adsorbed mass) [1]
+    performance_factor: float = 1.0                     # non-ideal operation / operating-condition scaling [2]
+    hydraulic_factor: float = 1.0                       # residence-time / flow-regime adequacy proxy [2]
+    water_quality_factor: float = 1.0                   # influent difficulty / pollutant-class proxy [3]
+    deactivation_factor: float = 1.0                    # catalyst aging / recovery loss proxy [1]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                  # €/m³ treated water
-    carrier_cost: float = 0.0                   # €/kWh electricity
-    catalyst_cost: float = 0.0                  # €/kg — used only if catalyst_bus is absent
-    spent_catalyst_disposal_cost: float = 0.0   # €/kg spent catalyst
-    cleaning_cost: float = 0.0                  # €/m³ treated water (O&M surcharge)
+    marginal_cost: float = 0.0                  # USD/m³ treated water
+    carrier_cost: float = 0.0                   # USD/m³ feed
+    catalyst_cost: float = 10.0                 # USD/kg — used only if catalyst_bus is absent
+    spent_catalyst_disposal_cost: float = 0.0   # USD/kg spent catalyst
+    cleaning_cost: float = 0.0                  # USD/m³ treated water (O&M surcharge)
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -135,17 +132,17 @@ class PhotocatalyticUnit(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Wang et al. (2023) / Espindola & Vilar (2020) style characterization
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    Cin: float = 10.0                   # mg/L influent pollutant concentration
-    target_removal: float = 0.8         # fraction [0, 1]
-    sec_typical_min: float = 0.05       # kWh/m³, lower bound from literature
-    sec_typical_max: float = 0.5        # kWh/m³, upper bound from literature
-    reactor_type: str = "generic"       # e.g. slurry / annular / thin-film / CPC
-    catalyst_mode: str = "suspended"    # suspended / immobilized
-    light_source_type: str = "UV"       # UV / LED / solar
-    solar_mode: bool = False            # True = SEC covers pump-only; UV is externally sourced
+    Cin: float = 10.0                   # mg/L influent pollutant concentration [3]
+    target_removal: float = 0.8         # fraction [0, 1] [3]
+    sec_typical_min: float = 0.05       # kWh/m³, lower bound from literature [1]
+    sec_typical_max: float = 0.5        # kWh/m³, upper bound from literature [1]
+    reactor_type: str = "generic"       # e.g. slurry / annular / thin-film / CPC [2]
+    catalyst_mode: str = "suspended"    # suspended / immobilized [1]
+    light_source_type: str = "UV"       # UV / LED / solar [3]
+    solar_mode: bool = False            # True = SEC covers pump-only; UV is externally sourced [3]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -222,6 +219,7 @@ class PhotocatalyticUnit(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -244,7 +242,6 @@ class PhotocatalyticUnit(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (Wang et al., 2023; Espindola & Vilar, 2020)
         # --------------------------------------------------------------
         Cout = self.Cin * (1 - self.target_removal)
 
@@ -268,6 +265,7 @@ class PhotocatalyticUnit(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to permeate output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self._electricity_per_output
@@ -283,31 +281,6 @@ class PhotocatalyticUnit(MIMO):
             attributes[f"conversion_factor_{self.spent_catalyst_bus.label}"] = sequence(
                 self._spent_catalyst_per_output
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        residual_output_variable_costs = self.cleaning_cost
-        if self.catalyst_bus is None:
-            residual_output_variable_costs += (
-                    self._catalyst_per_output * self.catalyst_cost
-            )
-
-        if residual_output_variable_costs > 0:
-            attributes.setdefault("output_parameters", {})
-            attributes["output_parameters"].update(
-                {
-                    "variable_costs": residual_output_variable_costs,
-                    "custom_attributes": {"Cout_mg_per_L": Cout},
-                }
-            )
-
-        if self.spent_catalyst_bus is not None:
-            attributes.setdefault("output_parameters_1", {})
-            if self.spent_catalyst_disposal_cost > 0:
-                attributes["output_parameters_1"].update(
-                    {"variable_costs": self.spent_catalyst_disposal_cost}
-                )
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -342,6 +315,40 @@ class PhotocatalyticUnit(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self._catalyst_per_output * self.catalyst_cost
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.spent_catalyst_bus is not None and self.spent_catalyst_bus in self.outputs:
+            self.outputs[self.spent_catalyst_bus].variable_costs = sequence(
+                self.spent_catalyst_disposal_cost * self._spent_catalyst_per_output
+            )
 
     def _optional_bus_kwargs(self):
         kwargs = {}
@@ -419,6 +426,10 @@ class PhotocatalyticUnit(MIMO):
                 "physically represented but economically uncosted.",
                 UserWarning,
             )
+
+        if self.catalyst_bus is not None and self.catalyst_cost not in (0, 0.0, None):
+            self.catalyst_cost = 0.0
+
         if self.sec_typical_min is not None and self.sec_typical_max is not None:
             if not (
                     self.sec_typical_min
