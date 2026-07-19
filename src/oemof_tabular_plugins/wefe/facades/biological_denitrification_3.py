@@ -18,19 +18,27 @@ class BiologicalDenitrification(MIMO):
     units used in water treatment systems. The model is designed as a
     bookkeeping/process-yield unit representing a denitrification reactor
     as a nitrogen-removal intervention. It is not a full mechanistic
-    biokinetic reactor model (e.g. ASM1/ASM2d).
+    biokinetic reactor model.
 
     Core references
     ---------------
-    1. Zhou et al. (2001), Wat. Res.: specific energy and carbon-source
-       stoichiometry for biological denitrification at full scale.
-    2. EPA (2010), Nutrient Control Design Manual (EPA/600/R-10/100):
-       design parameters, carbon-source dosing, and effluent standards.
-    3. Minnesota PCA Denitrification Guidance: operational ranges for
-       SEC and carbon demand used to set sec_typical_min/max defaults.
+    1. Theoretical stoichiometric derivation of biological denitrification reactions (based on McCarty's half-reaction
+       theory), yielding the COD-per-nitrate-removed ratio.
+       Zhou, S. Q. (2001). Theoretical stoichiometry of biological denitrifications. Environmental Technology, 22(8), 869–880.
+       https://doi.org/10.1080/09593332208618223
+    2. Design parameters, carbon-source dosing strategy, and effluent standards for nitrogen and phosphorus control
+       retrofits at municipal WWTPs.
+       Hertzler, P., Dufresne, L., Randall, C., Barnard, J., Stensel, D., & Brown, J. (2010). Nutrient control design manual
+       (EPA/600/R-10/100). U.S. Environmental Protection Agency, Office of Research and Development.
+       https://www.epa.gov/sites/default/files/2019-02/documents/nutrient-control-design-manual.pdf
+    3. Practical operational guidance stating approximately 4 mg/L of BOD is required per 1 mg/L of nitrate removed.
+       Minnesota Pollution Control Agency. (2024). Denitrification (Document No. wq-wwtp8-30). Minnesota Pollution Control Agency.
+       https://www.pca.state.mn.us/sites/default/files/wq-wwtp8-30.pdf
 
     Main equations
     --------------
+    All flows normalized to 1 m³ net treated water (primary output):
+
     Effective removal:
         eta_eff = target_removal_efficiency * anoxic_factor        [-]
 
@@ -59,23 +67,14 @@ class BiologicalDenitrification(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      treated-water throughput of the unit.
-    - anoxic_factor derates the nominal removal efficiency for imperfect
-      anoxic conditions (e.g. dissolved oxygen intrusion). Set to 1.0 for
-      ideal anoxic operation.
-    - carbon_source_dose overrides stoichiometric dosing when set. A warning
-      is raised so the modeler is aware of the override. Set to None to use
-      the cod_demand_per_no3n_removed stoichiometry instead.
-    - N2O emissions are only tracked in the optimization model if n2o_bus
-      is provided. If n2o_emission_factor > 0 without n2o_bus, a warning is
-      raised and N2O is stored in custom_attributes only.
-    - Effluent quality (Cout_no3n_mg_per_L) is always written to
-      custom_attributes on output_parameters for post-processing, regardless
-      of whether variable costs are non-zero.
-    - Characterization values (sec_typical_min/max, retention_time_days,
-      temperature_c) are stored as metadata for scenario documentation.
-      They are not enforced as hard optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the unit.
+    - anoxic_factor derates the nominal removal efficiency for imperfect anoxic conditions (e.g. dissolved oxygen intrusion).
+      Set to 1.0 for ideal anoxic operation.
+    - carbon_source_dose overrides stoichiometric dosing when set. A warning is raised so the modeler is aware of the override.
+    - N2O emissions are only tracked in the optimization model if n2o_bus is provided. If n2o_emission_factor > 0 without
+      n2o_bus, a warning is raised.
+    - Characterization values (sec_typical_min/max, retention_time_days, temperature_c) are stored as metadata for
+      scenario documentation. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -116,23 +115,22 @@ class BiologicalDenitrification(MIMO):
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
-    # Zhou et al., 2001 / Minnesota PCA / EPA, 2010
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.008          # kWh / m³ treated water
-    Cin_no3n: float = 30.0                              # g N / m³ influent
-    target_removal_efficiency: float = 0.90             # 0..1
-    anoxic_factor: float = 1.0                          # 0..1; derates removal for imperfect anoxic conditions
-    cod_demand_per_no3n_removed: float = 2.86           # kg COD / kg NO3-N removed
-    n2_yield_per_no3n_removed: float = 1.0              # kg N2 / kg NO3-N removed
-    n2o_emission_factor: float = 0.0                    # kg N2O / kg NO3-N removed
-    carbon_source_dose: Optional[float] = 90.0          # g/m³ = mg/L
+    specific_energy_consumption: float = 0.008          # kWh / m³ treated water [2, 3]
+    Cin_no3n: float = 30.0                              # g N / m³ influent [2]
+    target_removal_efficiency: float = 0.90             # 0..1 [2]
+    anoxic_factor: float = 1.0                          # 0..1; derates removal for imperfect anoxic conditions [2]
+    cod_demand_per_no3n_removed: float = 2.86           # kg COD / kg NO3-N removed [1]
+    n2_yield_per_no3n_removed: float = 1.0              # kg N2 / kg NO3-N removed [1]
+    n2o_emission_factor: float = 0.0                    # kg N2O / kg NO3-N removed [2]
+    carbon_source_dose: Optional[float] = 90.0          # g/m³ = mg/L [3]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                          # € / m³ treated water
-    carrier_cost: float = 0.0                           # € / kWh electricity
-    carbon_source_cost: float = 0.40                    # € / kg COD-equivalent
+    marginal_cost: float = 0.0                          # USD/m³ net treated water
+    carrier_cost: float = 0.0                           # USD/m³ feedwater
+    carbon_source_cost: float = 0.40                    # USD/kg COD-equivalent
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -142,13 +140,13 @@ class BiologicalDenitrification(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Zhou et al. (2001) / EPA (2010) style characterization fields
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    sec_typical_min: float = 0.005  # kWh/m³, lower bound from literature
-    sec_typical_max: float = 0.05  # kWh/m³, upper bound from literature
-    retention_time_days: Optional[float] = None  # days; documentation only
-    temperature_c: Optional[float] = None  # °C; documentation only
+    sec_typical_min: float = 0.005                  # kWh/m³, lower bound from literature [3]
+    sec_typical_max: float = 0.05                   # kWh/m³, upper bound from literature [3]
+    retention_time_days: Optional[float] = None     # days; documentation only [2]
+    temperature_c: Optional[float] = None           # °C; documentation only [2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -222,6 +220,7 @@ class BiologicalDenitrification(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -247,9 +246,9 @@ class BiologicalDenitrification(MIMO):
         no3n_removed_per_m3 = self.Cin_no3n * effective_removal_efficiency
         Cout_no3n = self.Cin_no3n * (1.0 - effective_removal_efficiency)
 
-        n2_production_per_m3 = no3n_removed_per_m3 * self.n2_yield_per_no3n_removed
+        n2_production_per_m3 = no3n_removed_per_m3 * self.n2_yield_per_no3n_removed * 1e-3
 
-        n2o_production_per_m3 = no3n_removed_per_m3 * self.n2o_emission_factor
+        n2o_production_per_m3 = no3n_removed_per_m3 * self.n2o_emission_factor * 1e-3
 
         if self.carbon_source_dose is not None:
             warnings.warn(
@@ -266,6 +265,7 @@ class BiologicalDenitrification(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -287,22 +287,12 @@ class BiologicalDenitrification(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
+        # output-specific variable costs
         # --------------------------------------------------------------
-        residual_output_variable_costs = 0.0
+        self.residual_output_variable_costs = 0.0
         if self.carbon_source_bus is None:
-            residual_output_variable_costs += (
+            self.residual_output_variable_costs = (
                     carbon_demand_per_m3 * self.carbon_source_cost
-            )
-
-        attributes.setdefault("output_parameters", {})
-        attributes["output_parameters"]["custom_attributes"] = {
-            "Cout_no3n_mg_per_L": Cout_no3n,
-        }
-
-        if residual_output_variable_costs > 0:
-            attributes["output_parameters"]["variable_costs"] = (
-                residual_output_variable_costs
             )
 
         # --------------------------------------------------------------
@@ -341,6 +331,35 @@ class BiologicalDenitrification(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.residual_output_variable_costs
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
 
     def _optional_bus_kwargs(self):
         kwargs = {}
@@ -397,7 +416,7 @@ class BiologicalDenitrification(MIMO):
         if self.carbon_source_bus is not None and self.carbon_source_cost > 0:
             warnings.warn(
                 f"carbon_source_bus is provided and carbon_source_cost="
-                f"{self.carbon_source_cost} €/kg is set on this facade, "
+                f"{self.carbon_source_cost} USD/kg is set on this facade, "
                 f"but it will NOT be applied here. Ensure the upstream supply "
                 f"node on '{self.carbon_source_bus.label}' carries the "
                 f"procurement cost as marginal_cost.",
