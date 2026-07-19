@@ -21,18 +21,29 @@ class Chlorination(MIMO):
 
     Core references
     ---------------
-    1. EPA Water Treatment Manual: Disinfection — core design logic for
-       chlorination verification, CT, contact time, and breakpoint concepts.
-    2. Irish Water, The Disinfection of Drinking Water Training Manual —
-       dose-demand-residual logic, target CT, effective CT, and dosing calculations.
-    3. WHO chlorination / residual chlorine guidance — internationally recognized
-       minimum residual targets and public-health design assumptions.
-    4. AWWA M20 Water Chlorination/Chloramination Practices and Principles —
-       professional-standard reference for dosing, CT values, and residual testing.
+    1. Core design logic for chlorination verification, CT, contact time, and breakpoint chlorination concepts, as part of
+       drinking-water disinfection practice.
+       Environmental Protection Agency (Ireland). (2011). Water treatment manual: Disinfection. Environmental Protection Agency.
+       https://www.epa.ie/publications/compliance--enforcement/drinking-water/advice--guidance/Disinfection2_web.pdf
+    2. Dose-demand-residual logic, target CT, effective CT (Ct), and dosing calculations for primary and secondary chlorination
+       verification in utility-scale practice.
+       Irish Water. (n.d.). Disinfection of drinking water training manual (Document No. IW-AMT-MAN-002). Irish Water.
+       https://www.water.ie/sites/default/files/iwstandards/IW-AMT-MAN-002.pdf
+    3. Internationally recognized minimum free-chlorine residual targets and public-health design assumptions for drinking-water
+       disinfection; basis for target_residual_chlorine and residual_minimum.
+       World Health Organization. (2017). Guidelines for drinking-water quality (4th ed., incorporating the 1st addendum).
+       World Health Organization. https://www.who.int/publications/i/item/9789241549950
+    4. Professional-standard reference for chlorination/chloramination dosing practices, CT values for Giardia/virus
+       inactivation, and chlorine residual test methods.
+       American Water Works Association. (2006). M20: Water chlorination/chloramination practices and principles (2nd ed.).
+       American Water Works Association. https://kh.aquaenergyexpo.com/wp-content/uploads/2024/01/Water-Chlorination-Chloramination-Practices-and-Principles.pdf
+    5. Specific energy consumption value.
+       Skoczko, I. (2025). Energy efficiency analysis of water treatment plants: Current status and future trends. Energies,
+       18(5), Article 1086. https://doi.org/10.3390/en18051086
 
     Main equations
     --------------
-    All flows normalized to 1 m3 net treated-water output (primary):
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Electricity coupling:
         Q_elec(t) = net_SEC * Q_water_out(t)
@@ -42,7 +53,7 @@ class Chlorination(MIMO):
         Q_water_in(t) = Q_water_out(t)
         [m3/hr]         [m3/hr]
 
-    Dose-demand-residual balance (Irish Water manual; EPA manual):
+    Dose-demand-residual balance:
         D_applied = wqf * D_demand + C_res_target
         [mg/L]       [-]   [mg/L]     [mg/L]
 
@@ -56,26 +67,16 @@ class Chlorination(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m3/hr]. Capacity constrains the maximum
-      treated-water throughput of the unit.
-    - Chlorine chemical input can be modelled either as an output-side variable
-      cost (default, no chlorine_bus) or as a tracked third input commodity
-      (tracked_chemical mode, requires chlorine_bus).
-    - CT adequacy and WHO residual checks are implemented as validation warnings
-      or optional errors, not as hard optimization constraints in v3.0.
-      Full CT compliance requires temperature, pH, baffling, disinfectant species,
-      and pathogen-specific target data not included in the linear model.
-    - For backward compatibility, "chlorine_dose" may be passed as an alias for
-      "applied_chlorine_dose" when dosing_mode="fixed_dose" and
-      applied_chlorine_dose is not explicitly provided.
-    - Water-quality surrogates (ct_achieved, effective residual) are stored as
-      reporting-only values in custom_attributes. They are not enforced as hard
-      optimization constraints in v3.0.
-    - enforce_ct_check and enforce_residual_check convert documentation-only
-      checks into hard ValueError guards at instantiation if set to True.
-    - Characterization values (water_temperature_c, water_pH, turbidity_ntu,
-      contact_tank_baffling_factor) are stored as documentation/calibration
-      defaults. They are not enforced as hard optimization constraints in v3.0.
+    - Primary flow is water_out_bus [m3/hr]. Capacity constrains the maximum treated-water throughput of the unit.
+    - Chlorine chemical input can be modelled either as an output-side variable cost (default, no chlorine_bus) or as a
+      tracked third input commodity (tracked_chemical mode, requires chlorine_bus).
+    - CT adequacy and WHO residual checks are implemented as validation warnings or optional errors, not as hard optimization
+      constraints. Full CT compliance requires temperature, pH, baffling, disinfectant species, and pathogen-specific target
+      data not included in the linear model.
+    - Water-quality surrogates (ct_achieved, effective residual) are stored as reporting-only values in custom_attributes.
+      They are not enforced as hard optimization constraints.
+    - Characterization values (water_temperature_c, water_pH, turbidity_ntu, contact_tank_baffling_factor) are stored as
+      documentation/calibration defaults. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -117,19 +118,19 @@ class Chlorination(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.05           # kWh/m³ treated water
-    applied_chlorine_dose: float = None                 # mg/L — set directly in fixed_dose mode
-    chlorine_demand: float = 0.0                        # mg/L — consumed before residual remains
-    target_residual_chlorine: float = 0.2               # mg/L — desired free residual after contact
-    water_quality_factor: float = 1.0                   # dimensionless — safety scaling on demand term
-    max_applied_dose: Optional[float] = None            # mg/L — design upper bound check
+    specific_energy_consumption: float = 0.02           # kWh/m³ treated water [5]
+    applied_chlorine_dose: float = None                 # mg/L — set directly in fixed_dose mode [2]
+    chlorine_demand: float = 0.0                        # mg/L — consumed before residual remains [2]
+    target_residual_chlorine: float = 0.2               # mg/L — desired free residual after contact [3]
+    water_quality_factor: float = 1.0                   # dimensionless — safety scaling on demand term [4]
+    max_applied_dose: Optional[float] = None            # mg/L — design upper bound check [4]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0              # €/m³ treated water
-    carrier_cost: float = 0.0               # €/kWh electricity
-    chlorine_cost: float = 0.5              # €/kg chlorine
+    marginal_cost: float = 0.0              # USD/m³ treated water
+    carrier_cost: float = 0.0               # USD/m³ feed
+    chlorine_cost: float = 0.5              # USD/kg chlorine
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -139,19 +140,18 @@ class Chlorination(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # EPA / Irish Water CT-based adequacy checks; WHO residual guidance;
-    # characterization metadata stored in custom_attributes for traceability
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    effective_contact_time: float = None                # min
-    ct_target: float = None                             # mg.min/L
-    residual_minimum: float = 0.2                       # mg/L — based on WHO guidance
-    enforce_ct_check: bool = False
-    enforce_residual_check: bool = False
-    water_temperature_c: float = None                   # degC — affects CT and decay rate
-    water_pH: float = None                              # affects HOCl/OCl- speciation
-    turbidity_ntu: float = None                         # NTU — indicator of NOM and demand load
-    contact_tank_baffling_factor: float = None          # T10/T — hydraulic efficiency factor
+    effective_contact_time: float = None                # min [1, 2]
+    ct_target: float = None                             # mg·min/L [1, 2]
+    residual_minimum: float = 0.2                       # mg/L — based on WHO guidance [3]
+    enforce_ct_check: bool = False                      # [1, 2]
+    enforce_residual_check: bool = False                # [3]
+    water_temperature_c: float = None                   # degC — affects CT and decay rate [4]
+    water_pH: float = None                              # affects HOCl/OCl- speciation [4]
+    turbidity_ntu: float = None                         # NTU — indicator of NOM and demand load [1]
+    contact_tank_baffling_factor: float = None          # T10/T — hydraulic efficiency factor [2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -221,6 +221,7 @@ class Chlorination(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -254,11 +255,6 @@ class Chlorination(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (Irish Water manual; EPA manual; WHO guidance)
-        # dose-demand-residual balance:
-        #     D_applied = wqf * D_demand + C_res_target
-        # CT adequacy:
-        #     CT_achieved = C_res_target * T_effective
         # --------------------------------------------------------------
         if self.dosing_mode == "fixed_dose":
             pass                                                                    # applied_chlorine_dose already set and validated
@@ -290,6 +286,7 @@ class Chlorination(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to permeate output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -300,16 +297,6 @@ class Chlorination(MIMO):
         if self.chlorine_bus is not None:
             attributes[f"conversion_factor_{self.chlorine_bus.label}"] = sequence(
                 self._chlorine_kg_per_m3
-            )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-
-        if self.chlorine_bus is None:
-            attributes["output_parameters"].update(
-                {"variable_costs": self._chlorine_cost_per_m3}
             )
 
         # --------------------------------------------------------------
@@ -345,6 +332,35 @@ class Chlorination(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self._chlorine_cost_per_m3
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
 
     def _optional_bus_kwargs(self):
         kwargs = {}
@@ -382,6 +398,12 @@ class Chlorination(MIMO):
             raise ValueError(
                 "dosing_mode='fixed_dose' requires applied_chlorine_dose."
             )
+
+        if self.chlorine_cost < 0:
+            raise ValueError("chlorine_cost must be >= 0.")
+
+        if self.chlorine_bus is not None and self.chlorine_cost not in (0, 0.0, None):
+            self.chlorine_cost = 0.0
 
         if self.specific_energy_consumption < 0:
             raise ValueError("specific_energy_consumption must be >= 0.")
