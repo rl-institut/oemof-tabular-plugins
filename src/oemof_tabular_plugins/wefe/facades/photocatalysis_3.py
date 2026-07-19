@@ -334,7 +334,7 @@ class PhotocatalyticUnit(MIMO):
         if self.water_out_bus in self.outputs:
             out_flow = self.outputs[self.water_out_bus]
             out_flow.variable_costs = sequence(
-                self.marginal_cost + self._catalyst_per_output * self.catalyst_cost
+                self.cleaning_cost + self.marginal_cost + self._catalyst_per_output * self.catalyst_cost
             )
             if not self.expandable and self.capacity is not None:
                 out_flow.nominal_value = self.capacity

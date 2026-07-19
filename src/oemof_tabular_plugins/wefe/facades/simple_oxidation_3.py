@@ -22,27 +22,34 @@ class SimpleOxidation(MIMO):
 
     Core references
     ---------------
-    1. WHO, Treatment methods and performance (2017): process framing and
-       technology-train placement for chlorination, ozonation, UV-based
-       and hydrogen-peroxide-based oxidation/disinfection.
-    2. EPA Ireland, Water Treatment Manual: Disinfection (2011): contact-time
-       and residual design logic, technology differentiation, and
-       disinfection verification guidance.
-    3. Metcalf & Eddy, Wastewater Engineering — Treatment and Resource
-       Recovery (5th ed.): engineering backbone for oxidation, ozone, H2O2,
-       and AOP process families.
-    4. PMC 2024 AOP review: justification for generalized AOP variant
-       representation and scalable planning-oriented parameters.
+    1. Process framing and technology-train placement for chlorination, ozonation, UV-based, and hydrogen-peroxide-based
+       oxidation/disinfection, including the combined ozone/UV + H2O2 dosing ratio (~0.4 mg H2O2 per mg O3, the theoretical
+       optimum for hydroxyl radical formation).
+       World Health Organization. (2017). Treatment methods and performance (Annex 5). In Guidelines for drinking-water
+       quality (4th ed., incorporating the 1st addendum). WHO.
+       https://www.who.int/docs/default-source/wash-documents/wash-chemicals/treatment-methods-and-performance.pdf
+    2. Contact-time and residual design logic, technology differentiation, and disinfection verification guidance for real
+       plant operation, management, and maintenance.
+       Environmental Protection Agency (Ireland). (2011). Water treatment manual: Disinfection. EPA. ISBN 978-184095-421-0.
+       https://www.epa.ie/publications/compliance--enforcement/drinking-water/advice--guidance/Disinfection2_web.pdf
+    3. Engineering backbone for oxidation, ozone, H2O2, and AOP process families — general process-role and mass-balance justification.
+       Metcalf & Eddy, Inc., Tchobanoglous, G., Stensel, H. F., Tsuchihashi, R., & Burton, F. L. (2014).
+       Wastewater engineering: Treatment and resource recovery (5th ed.). McGraw-Hill Education.
+    4. Tutorial review proposing comparable, scalable evaluation parameters (e.g. UV fluence, ozone consumption) across
+       catalytic, ozone-based, and radiation-driven AOP variants at lab through pilot scale.
+       Hübner, U., Spahr, S., Lutze, H., Wieland, A., Rüting, S., Gernjak, W., & Wenk, J. (2024). Advanced oxidation processes
+       for water and wastewater treatment – Guidance for systematic future research. Heliyon, 10(9), e30402.
+       https://doi.org/10.1016/j.heliyon.2024.e30402
 
     Main equations
     --------------
-    All flows normalized to 1 m³ net treated-water output (primary):
+    All flows normalized to 1 m³ net treated water (primary output):
 
     Feedwater requirement:
         water_in_per_output = 1 / water_recovery      [m³_feed / m³_treated]
 
-    Net specific energy consumption [kWh / m³ treated water]:
-        net_SEC = specific_energy_consumption          [kWh / m³]
+    Net specific energy consumption:
+        net_SEC = specific_energy_consumption          [kWh / m³ treated water]
 
     Oxidant demand (if oxidant_bus is provided):
         oxidant_per_output = soc * oxidant_demand_factor
@@ -60,27 +67,12 @@ class SimpleOxidation(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the
-      maximum treated-water throughput of the unit.
-    - Each bus is treated as its own MIMO group (no additive grouping
-      is used here; all input-output coupling is pairwise linear).
-    - If oxidant_bus is provided, oxidant is modeled as a real input
-      flow and its cost must be captured via chemical_carrier_cost or
-      upstream supply economics. If oxidant_bus is absent, oxidant cost
-      is embedded into the output variable costs as a fallback to avoid
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum treated-water throughput of the unit.
+    - If oxidant_bus is provided, oxidant is modeled as a real input flow and its cost must be captured via upstream supply
+      economics. If oxidant_bus is absent, oxidant cost is embedded into the output variable costs as a fallback to avoid
       silent omission from the objective.
-    - For backward compatibility, "oxidant_dose" and
-      "specific_oxidant_consumption" are mutually exclusive; providing
-      both raises a ValueError at instantiation.
-    - contact_time_min, residual_target_mgL, ct_target_mg_min_L, and
-      dbp_risk_class are design-verification / documentation fields.
-      They are not enforced as hard optimization constraints in v3.0.
-    - Mode-specific metadata (post_treatment_required, residual_provided,
-      dbp_risk_class) is populated automatically inside
-      _validate_parameters() based on the selected mode.
-    - Characterization values (sec_typical_min/max, contact_time_min,
-      residual_target_mgL) are stored as documentation/calibration defaults.
-      They are not enforced as hard optimization constraints in v3.0.
+    - Characterization values (sec_typical_min/max, contact_time_min, residual_target_mgL) are stored as documentation/calibration
+      defaults. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -105,37 +97,36 @@ class SimpleOxidation(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    electricity_bus: Bus = None         # kWh/hr
-    water_in_bus: Bus = None            # m³/hr (raw / pretreated feedwater)
-    water_out_bus: Bus = None           # m³/hr (treated water — PRIMARY)
+    electricity_bus: Bus = None         # kWh
+    water_in_bus: Bus = None            # m³ (raw / pretreated feedwater)
+    water_out_bus: Bus = None           # m³ (treated water — PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
     # ------------------------------------------------------------------
-    oxidant_bus: Optional[Bus] = None   # kg/hr (oxidant as explicit input flow)
+    oxidant_bus: Optional[Bus] = None   # kg (oxidant as explicit input flow)
 
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
-    offgas_bus: Optional[Bus] = None    # kg / hr (ozone off-gas)
+    offgas_bus: Optional[Bus] = None    # kg (ozone off-gas)
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.07       # kWh / m³ treated water
-    water_recovery: float = 1.0                     # m³ treated / m³ feed, (0, 1]
-    oxidant_dose: float = None                      # mg/L = g/m³; converted to soc internally
-    specific_oxidant_consumption: float = None      # kg / m³ treated water (alternative to dose)
-    oxidant_demand_factor: float = 1.0              # dimensionless raw-water quality multiplier
-    specific_offgas_generation: float = 0.0         # kg / m³ treated water
+    specific_energy_consumption: float = 0.07       # kWh / m³ treated water [3]
+    water_recovery: float = 1.0                     # m³ treated / m³ feed, (0, 1] [1, 3]
+    oxidant_dose: float = None                       # mg/L = g/m³; converted to soc internally [1]
+    specific_oxidant_consumption: float = None      # kg / m³ treated water (alternative to dose) [1]
+    oxidant_demand_factor: float = 1.0              # dimensionless raw-water quality multiplier [4]
+    specific_offgas_generation: float = 0.0         # kg / m³ treated water [3]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0              # € / m³ treated water
-    carrier_cost: float = 0.0               # € / kWh electricity
-    oxidant_cost: float = None              # € / kg oxidant (fallback if no oxidant_bus)
-    chemical_carrier_cost: float = 0.0      # € / kg oxidant via modeled oxidant_bus
+    marginal_cost: float = 0.0              # USD/m³ treated water
+    carrier_cost: float = 0.0               # USD/m³ feed
+    oxidant_cost: float = 2.5               # USD/kg oxidant (fallback if no oxidant_bus)
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -145,16 +136,17 @@ class SimpleOxidation(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    contact_time_min: float = None              # minutes; design verification only
-    residual_target_mgL: float = None           # mg/L; design verification only
-    ct_target_mg_min_L: float = None            # mg·min/L; design verification only
-    sec_typical_min: float = 0.02               # kWh/m³, lower bound from literature
-    sec_typical_max: float = 1.5                # kWh/m³, upper bound from literature
-    dbp_risk_class: str = ""                    # populated by mode default if not set
-    post_treatment_required: bool = False
-    residual_provided: bool = False
+    contact_time_min: float = None              # minutes; design verification only [2]
+    residual_target_mgL: float = None           # mg/L; design verification only [2]
+    ct_target_mg_min_L: float = None            # mg·min/L; design verification only [1, 2]
+    sec_typical_min: float = 0.02               # kWh/m³, lower bound from literature [3]
+    sec_typical_max: float = 1.5                # kWh/m³, upper bound from literature [3]
+    dbp_risk_class: str = ""                    # populated by mode default if not set [4]
+    post_treatment_required: bool = False       # [2]
+    residual_provided: bool = False             # [2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -204,9 +196,6 @@ class SimpleOxidation(MIMO):
         self.marginal_cost = attributes.pop("marginal_cost", self.marginal_cost)
         self.carrier_cost = attributes.pop("carrier_cost", self.carrier_cost)
         self.oxidant_cost = attributes.pop("oxidant_cost", self.oxidant_cost)
-        self.chemical_carrier_cost = attributes.pop(
-            "chemical_carrier_cost", self.chemical_carrier_cost
-        )
         self.expandable = attributes.pop("expandable", self.expandable)
         self.capacity = attributes.pop("capacity", self.capacity)
         self.capacity_cost = attributes.pop("capacity_cost", self.capacity_cost)
@@ -223,6 +212,7 @@ class SimpleOxidation(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -253,7 +243,6 @@ class SimpleOxidation(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (WHO 2017; EPA Ireland 2011; Metcalf & Eddy 5th ed.)
         # --------------------------------------------------------------
         self._feedwater_per_output = 1.0 / self.water_recovery
 
@@ -286,6 +275,7 @@ class SimpleOxidation(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -303,20 +293,6 @@ class SimpleOxidation(MIMO):
             attributes[f"conversion_factor_{self.offgas_bus.label}"] = sequence(
                 self.specific_offgas_generation
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-
-        if self.oxidant_bus is None and self.oxidant_cost is not None:
-            embedded = self._soc * self.oxidant_demand_factor * self.oxidant_cost
-            attributes["output_parameters"].update(
-                {"variable_costs": embedded}
-            )
-
-        if self.offgas_bus is not None:
-            attributes.setdefault("output_parameters_1", {})
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -351,6 +327,35 @@ class SimpleOxidation(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self._soc * self.oxidant_demand_factor * self.oxidant_cost
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
 
     def _optional_bus_kwargs(self):
         kwargs = {}
@@ -424,6 +429,9 @@ class SimpleOxidation(MIMO):
                 "A mode-default dose will be used.",
                 UserWarning,
             )
+
+        if self.oxidant_bus is not None and self.oxidant_cost not in (0, 0.0, None):
+            self.oxidant_cost = 0.0
 
         if self.mode == "chlorine":
             if not self.residual_provided:
