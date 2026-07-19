@@ -18,18 +18,27 @@ class BioFiltration(MIMO):
     is designed as a bookkeeping/process-yield unit representing a biofilter as
     a water-treatment intervention. It is not a mechanistic biofilm reactor model
     — biological kinetics, clogging dynamics, and microbial recovery after
-    backwash are intentionally excluded from v3.0.
+    backwash are intentionally excluded.
 
     Core references
     ---------------
-    1. EPA Water Treatment Manual: Filtration (2020): design fields, backwash
-       procedure, empty bed contact time, and hydraulic loading rate guidance.
-    2. Moona et al. (2021), ACS ES&T Water: EBCT sensitivity, hydraulic loading
-       effects on biofiltration performance, and media configuration.
-    3. EPA Filter Backwash Recycling Rule Technical Guidance Manual: backwash
-       water fraction conventions for planning-scale models.
-    4. Rittmann & McCarty (2001), Environmental Biotechnology: N/P nutrient
-       requirements for biofilm sustenance and nutrient dose estimation.
+    1. Design fields, backwash procedure, empty bed contact time, and hydraulic loading rate guidance for drinking-water
+       filtration in real plant operation.
+       Environmental Protection Agency (Ireland). (2020). Water treatment manual: Filtration. Environmental Protection Agency.
+       https://www.epa.ie/publications/compliance--enforcement/drinking-water/advice--guidance/EPA-Water-Filtration-Manual.pdf
+    2. Full-scale manipulation of empty bed contact time (15-80 min) across four parallel biofilters, showing DOC and
+       fluorescent organic-matter removal efficiency increasing with EBCT — primary basis for the EBCT geometry check and
+       efficiency parameterization.
+       Moona, N., Holmes, A., Wünsch, U. J., Pettersson, T. J. R., & Murphy, K. R. (2021). Full-scale manipulation of the
+       empty bed contact time to optimize dissolved organic matter removal by drinking water biofilters. ACS ES&T Water,
+       1(5), 1117–1126. https://doi.org/10.1021/acsestwater.0c00105
+    3. Backwash water fraction conventions and recycle-stream management guidance for planning-scale models.
+       U.S. Environmental Protection Agency. (2002). Filter backwash recycling rule technical guidance manual (EPA 816-R-02-014).
+       U.S. EPA, Office of Water.
+       https://nepis.epa.gov/Exe/ZyPDF.cgi?Dockey=200025V5.txt
+    4. N/P nutrient requirements for biofilm sustenance and nutrient dose estimation.
+       Rittmann, B. E., & McCarty, P. L. (2020). Environmental biotechnology: Principles and applications (2nd ed.).
+       McGraw-Hill Education. https://www.accessengineeringlibrary.com/content/book/9781260441604
 
     Main equations
     --------------
@@ -62,8 +71,7 @@ class BioFiltration(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum
-      net treated water throughput of the unit.
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum net treated water throughput of the unit.
     - When backwash_out_bus is None, backwash volume is annualized into feedwater
       demand via the feedwater equation. When backwash_out_bus is provided, the
       backwash stream appears as an explicit output conversion factor.
@@ -71,13 +79,10 @@ class BioFiltration(MIMO):
       variable cost on water_out_bus. When nutrient_in_bus is provided, the
       nutrient stream is an explicit input conversion factor and no scalar cost
       is added.
-    - EBCT, hydraulic_loading_rate, bed_depth, filter_area, bed_porosity, and
-      media_type are stored as documentation/calibration defaults. They are not
-      enforced as hard optimization constraints in v3.0. Their effects should be
-      reflected through efficiency, specific_energy_consumption, and operating-
-      cost parameters calibrated from literature.
-    - Detailed fouling evolution, clogging, temperature-dependent kinetics, and
-      dynamic biomass recovery after backwash are excluded from v3.0.
+    - EBCT, hydraulic_loading_rate, bed_depth, filter_area, bed_porosity, and media_type are stored as documentation/calibration
+      defaults. They are not enforced as hard optimization constraints. Their effects should be reflected through efficiency,
+      specific_energy_consumption, and operating cost parameters calibrated from literature.
+    - Detailed fouling evolution, clogging, temperature-dependent kinetics, and dynamic biomass recovery after backwash are excluded.
     """
 
     # ------------------------------------------------------------------
@@ -119,24 +124,23 @@ class BioFiltration(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.12               # kWh / m³ net treated water
-    efficiency: float = 0.85                                # m³ net treated water / m³ feedwater
-    biomass_waste_fraction: float = 0.005                   # m³ biomass / m³ net treated water
-    aeration_energy: float = 0.0                            # kWh / m³ net treated water
-    backwash_energy: float = 0.0                            # kWh / m³ net treated water
-    backwash_water_fraction: float = 0.0                    # m³ backwash / m³ net treated water
-    # N/P supply to sustain biofilm (Rittmann & McCarty, 2001)
+    specific_energy_consumption: float = 0.12               # kWh / m³ net treated water [1]
+    efficiency: float = 0.85                                # m³ net treated water / m³ feedwater [1, 2]
+    biomass_waste_fraction: float = 0.005                   # m³ biomass / m³ net treated water [4]
+    aeration_energy: float = 0.0                            # kWh / m³ net treated water [1]
+    backwash_energy: float = 0.0                            # kWh / m³ net treated water [3]
+    backwash_water_fraction: float = 0.0                    # m³ backwash / m³ net treated water [3]
     # scalar cost when nutrient_in_bus is None; conversion factor when provided.
-    nutrient_dose_mg_per_L: float = 1.0                     # mg nutrient / L net treated water
-    nutrient_cost_per_kg: float = 1.0                       # € / kg nutrient
+    nutrient_dose_mg_per_L: float = 1.0                     # mg nutrient / L net treated water [4]
+    nutrient_cost_per_kg: float = 1.0                       # USD/kg nutrient [4]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                              # € / m³ net treated water
-    carrier_cost: float = 0.0                               # € / kWh electricity
-    biomass_disposal_cost: float = 0.0                      # € / m³ waste biomass
-    backwash_disposal_cost: float = 0.0                     # € / m³ backwash wastewater
+    marginal_cost: float = 0.0                              # USD/m³ net treated water
+    carrier_cost: float = 0.0                               # USD/m³ feedwater
+    biomass_disposal_cost: float = 0.0                      # USD/m³ waste biomass
+    backwash_disposal_cost: float = 0.0                     # USD/m³ backwash wastewater
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -146,19 +150,19 @@ class BioFiltration(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # EPA Filtration Manual + Moona et al. (2021) style design fields
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    design_ebct: float = None               # min — empty bed contact time; used for EBCT geometry check
-    hydraulic_loading_rate: float = None    # m/h — surface loading rate; metadata only
-    bed_depth: float = None                 # m   — filter media depth; used in EBCT geometry check
-    filter_area: float = None               # m²  — filter surface area; used in EBCT geometry check
-    bed_porosity: float = None              # -   — void fraction of media bed; used in EBCT geometry check
-    media_type: str = ""                    # e.g. "GAC", "anthracite", "sand" — descriptive only
-    target_contaminant: str = ""            # e.g. "DOC", "ammonia", "manganese" — descriptive only
-    backwash_trigger: str = ""              # e.g. "headloss", "turbidity", "time" — descriptive only
-    run_to_waste_bed_volumes: float = None  # bed volumes run to waste after backwash — metadata only
-    doc_removal_fraction: float = None      # fraction DOC removed [0,1] — reporting/calibration only
+    design_ebct: float = None               # min — EBCT geometry check [2]
+    hydraulic_loading_rate: float = None    # m/h — metadata only [1, 2]
+    bed_depth: float = None                 # m — EBCT geometry check [1]
+    filter_area: float = None               # m² — EBCT geometry check [1]
+    bed_porosity: float = None              # void fraction of media bed [1]
+    media_type: str = ""                    # e.g. "GAC", "anthracite", "sand" — descriptive only [1]
+    target_contaminant: str = ""            # e.g. "DOC", "ammonia", "manganese" — descriptive only [2]
+    backwash_trigger: str = ""              # e.g. "headloss", "turbidity", "time" — descriptive only [3]
+    run_to_waste_bed_volumes: float = None  # bed volumes run to waste after backwash — metadata only [3]
+    doc_removal_fraction: float = None      # reporting/calibration only [2]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -237,6 +241,7 @@ class BioFiltration(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -269,8 +274,8 @@ class BioFiltration(MIMO):
 
         # --------------------------------------------------------------
         # derived constants
-        # (EPA Filtration Manual, 2020; Moona et al., 2021;
-        # EPA Backwash Recycling Rule Guidance; Rittmann & McCarty, 2001)
+        # (EPA Filtration Manual, 2020 [1]; Moona et al., 2021 [2];
+        # EPA Backwash Recycling Rule Guidance [3]; Rittmann & McCarty, 2020 [4])
         # --------------------------------------------------------------
         self._total_specific_electricity = (
             self.specific_energy_consumption
@@ -338,31 +343,13 @@ class BioFiltration(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
+        # output-specific variable costs
         # nutrient cost only in scalar mode (no nutrient_in_bus)
         # --------------------------------------------------------------
-        nutrient_cost_per_m3 = 0.0
+        self.nutrient_cost_per_m3 = 0.0
         if self.nutrient_in_bus is None:
-            nutrient_cost_per_m3 = (
+            self.nutrient_cost_per_m3 = (
                     self._nutrient_per_output * self.nutrient_cost_per_kg
-            )
-
-        if nutrient_cost_per_m3 != 0.0:
-            attributes.setdefault("output_parameters", {})
-            attributes["output_parameters"].update(
-                {"variable_costs": nutrient_cost_per_m3}
-            )
-
-        if self.biomass_disposal_cost > 0:
-            attributes.setdefault("output_parameters_1", {})
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.biomass_disposal_cost}
-            )
-
-        if self.backwash_out_bus is not None and self.backwash_disposal_cost > 0:
-            attributes.setdefault("output_parameters_2", {})
-            attributes["output_parameters_2"].update(
-                {"variable_costs": self.backwash_disposal_cost}
             )
 
         # --------------------------------------------------------------
@@ -401,6 +388,45 @@ class BioFiltration(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.nutrient_cost_per_m3
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.waste_biomass_out_bus in self.outputs:
+            self.outputs[self.waste_biomass_out_bus].variable_costs = sequence(
+                self.biomass_disposal_cost
+            )
+
+        if self.backwash_out_bus is not None and self.backwash_out_bus in self.outputs:
+            self.outputs[self.backwash_out_bus].variable_costs = sequence(
+                self.backwash_disposal_cost
+            )
 
     def _optional_bus_kwargs(self):
         kwargs = {}
