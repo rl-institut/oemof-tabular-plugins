@@ -23,27 +23,29 @@ class CoagulationFlocculation(MIMO):
 
     Core references
     ---------------
-    1. EPA Ireland (2011), Water Treatment Manuals — Coagulation, Flocculation
-       and Clarification: process framing, treatment-stage logic, turbidity
-       suitability guidance, and practical assumptions for placing
-       coagulation-flocculation in the drinking-water treatment chain.
-    2. TU Delft OCW (2014), CTB3365DWx — Coagulation and Flocculation:
-       variable definitions and process logic; distinguishes destabilization
-       (coagulation) from aggregate growth under mixing energy (flocculation).
-    3. AWWA M37 (3rd ed.), Operational Control of Coagulation and Filtration
-       Processes: jar-testing and monitoring logic; primary source for
-       dose_factor and scenario-dependent chemical consumption adjustment.
-    4. Bratby, J. (2016), Coagulation and Flocculation in Water and Wastewater
-       Treatment (3rd ed.): textbook-level support for parameter naming, rapid
-       mixing velocity gradient ranges, flocculation mixing intensity, and
-       specialist process refinement.
+    1. Process framing, treatment-stage logic, turbidity suitability guidance, and practical assumptions for placing
+       coagulation-flocculation within the drinking-water treatment chain; part of the same Irish EPA Water Treatment
+       Manuals series as the Filtration and Disinfection manuals.
+       Environmental Protection Agency (Ireland). (2011). Water treatment manuals: Coagulation, flocculation and clarification. EPA.
+       https://www.epa.ie/publications/compliance--enforcement/drinking-water/advice--guidance/EPA_water_treatment_mgt_coag_flocc_clar2.pdf
+    2. Variable definitions and process logic distinguishing destabilization (coagulation) from aggregate growth under
+       mixing energy (flocculation).
+       TU Delft OpenCourseWare. (2014). CTB3365DWx: Coagulation and flocculation. Delft University of Technology.
+       https://ocw.tudelft.nl/wp-content/uploads/2014-CTB3365DWx-Coagulation-flocculation.pdf
+    3. Jar-testing and monitoring logic for operational control of coagulation and filtration processes.
+       American Water Works Association. (2011). M37: Operational control of coagulation and filtration processes (3rd ed.).
+       AWWA. ISBN 9781583218013.
+    4. Textbook-level treatment of coagulant/flocculant dosing ranges, rapid mixing velocity gradient ranges, flocculation
+       mixing intensity, and specialist process refinement.
+       Bratby, J. (2016). Coagulation and flocculation in water and wastewater treatment (3rd ed., Vol. 15).
+       IWA Publishing. https://doi.org/10.2166/9781780407500
 
     Main equations
     --------------
     All flows normalized to 1 m³ net treated water (primary output):
 
     Feedwater requirement:
-        feedwater_per_output = 1 / water_recovery      [m³_feed / m³_product]
+        feedwater_per_output = 1 / efficiency      [m³_feed / m³_product]
 
     Electricity demand:
         electricity_per_output = specific_energy_consumption
@@ -66,34 +68,18 @@ class CoagulationFlocculation(MIMO):
 
     Notes
     -----
-    - Primary flow is water_out_bus [m³/hr]. capacity constrains the maximum
-      treated-water throughput of the unit.
+    - Primary flow is water_out_bus [m³/hr]. capacity constrains the maximum treated-water throughput of the unit.
     - dosing_mode controls how chemical consumption is represented:
         "cost_only"          — costs folded into output variable_costs (default)
         "tracked_coagulant"  — coagulant_bus required; explicit kg/hr input flow
         "tracked_flocculant" — flocculant_bus required; explicit kg/hr input flow
         "tracked_both"       — both coagulant_bus and flocculant_bus required
-      In tracked modes the cost for that chemical is not added to variable_costs;
-      it is expected to be handled by the upstream commodity node.
-    - If coagulant_bus or flocculant_bus is active, chemical cost must come from
-      the upstream supply node. Chemical costs are only applied as output-side
-      variable cost surcharges when the respective bus is absent.
-    - dose_factor is an exogenous scalar or sequence for jar-test or seasonal
-      adjustment of chemical demand (Ref. 3). It does not affect
-      specific_energy_consumption, which is treated as independent of dosing.
-    - water_recovery [−]: volumetric fraction of feedwater that becomes treated
-      product. Coagulation-flocculation losses are typically 0.1–2% (default 0.99).
-    - spent_chemical_factor [kg/m³]: dry-mass yield per m³ treated water. Default
-      0.0 triggers a warning if spent_chemical_bus is provided. Unit is kg/hr,
-      consistent with mass-based chemical dosing inputs.
-    - Unit note: doses are in g/m³ (= mg/L); costs are in €/kg. The factor
-      1e-3 converts g → kg in all derived expressions.
-    - Zero-cost warnings are raised if a chemical is physically dosed but its
-      cost is 0.0 and no explicit bus is provided, to prevent silent under-costing.
-    - Characterization values (g_rapid_s_inv, g_floc_s_inv, rapid_mix_time_s,
-      flocculation_time_min, raw_water_turbidity_ntu) are stored as
-      documentation/calibration defaults. They are not enforced as hard
-      optimization constraints in v3.0
+      In tracked modes the cost for that chemical is not added to variable_costs; it is expected to be handled by the
+      upstream commodity node.
+    - If coagulant_bus or flocculant_bus is active, chemical cost must come from the upstream supply node. Chemical costs
+      are only applied as output-side variable cost surcharges when the respective bus is absent.
+    - Characterization values (g_rapid_s_inv, g_floc_s_inv, rapid_mix_time_s, flocculation_time_min, raw_water_turbidity_ntu)
+      are stored as documentation/calibration defaults. They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -118,9 +104,9 @@ class CoagulationFlocculation(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    electricity_bus: Bus = None  # kWh
-    water_in_bus: Bus = None  # m³ (untreated feedwater)
-    water_out_bus: Bus = None  # m³ (treated water — PRIMARY)
+    electricity_bus: Bus = None             # kWh
+    water_in_bus: Bus = None                # m³ (untreated feedwater)
+    water_out_bus: Bus = None               # m³ (treated water — PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -136,21 +122,21 @@ class CoagulationFlocculation(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.04  # kWh/m³ treated water
-    water_recovery: float = 0.99  # m³ treated water /m³ feed water
-    coagulant_dose: float = 20.0  # g/m³ treated water (= mg/L)
-    flocculant_dose: float = 2.55  # g/m³ treated water (= mg/L)
-    dose_factor: float = 1.0  # jar-test / seasonal adjustment [-]
-    spent_chemical_factor: float = 0.0  # kg spent chemical output / m³ treated water
+    specific_energy_consumption: float = 0.04               # kWh/m³ treated water [1, 2]
+    efficiency: float = 0.99                            # m³ treated water /m³ feed water (water recovery) [1]
+    coagulant_dose: float = 20.0                            # g/m³ treated water (= mg/L) [3, 4]
+    flocculant_dose: float = 2.55                           # g/m³ treated water (= mg/L) [4]
+    dose_factor: float = 1.0                                # jar-test / seasonal adjustment [-] [3]
+    spent_chemical_factor: float = 0.0                      # kg spent chemical output / m³ treated water [1]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0  # €/m³ treated water (excl. chemical costs)
-    carrier_cost: float = 0.0  # €/kWh electricity
-    coagulant_cost: float = 1.5  # €/kg
-    flocculant_cost: float = 2.0  # €/kg
-    spent_chemical_disposal_cost: float = 0.0  # €/kg spent chemical output
+    marginal_cost: float = 0.0                              # USD/m³ treated water (excl. chemical costs)
+    carrier_cost: float = 0.0                               # USD/m³ feed
+    coagulant_cost: float = 1.5                             # USD/kg
+    flocculant_cost: float = 2.0                            # USD/kg
+    spent_chemical_disposal_cost: float = 0.0               # USD/kg spent chemical output
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -160,19 +146,19 @@ class CoagulationFlocculation(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Bratby (2016) / AWWA M37 / EPA Ireland (2011) style characterization
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    coagulant_dose_typical_min: float = 5.0  # g/m³, lower bound from literature
-    coagulant_dose_typical_max: float = 80.0  # g/m³, upper bound from literature
-    jar_test_dose_mg_per_l: float = None  # mg/L, reference jar-test coagulant result, documentation only
-    raw_water_turbidity_ntu: float = None  # NTU, influent turbidity, documentation only
-    enforce_turbidity_check: bool = False  # bool, promote turbidity warning to ValueError
-    rapid_mix_time_s: float = None  # s, rapid mixing duration, typical: 10–60 s, documentation only
-    flocculation_time_min: float = None  # min, flocculation duration, typical: 20–40 min, documentation only
-    g_rapid_s_inv: float = None  # /s, velocity gradient rapid mix, typical: 300–1500 /s, documentation only
-    g_floc_s_inv: float = None  # /s, velocity gradient flocculation, typical: 10–100 /s, documentation only
-    flocculation_stages: int = None  # -, number of tapered mixing stages, documentation only
+    coagulant_dose_typical_min: float = 5.0                 # g/m³, lower bound from literature [4]
+    coagulant_dose_typical_max: float = 80.0                # g/m³, upper bound from literature [4]
+    jar_test_dose_mg_per_l: float = None                    # mg/L, reference jar-test coagulant result, documentation only [3]
+    raw_water_turbidity_ntu: float = None                   # NTU, influent turbidity, documentation only [1]
+    enforce_turbidity_check: bool = False                   # bool, promote turbidity warning to ValueError [1]
+    rapid_mix_time_s: float = None                          # s, rapid mixing duration, typical: 10–60 s, documentation only [2, 4]
+    flocculation_time_min: float = None                     # min, flocculation duration, typical: 20–40 min, documentation only [2, 4]
+    g_rapid_s_inv: float = None                             # /s, velocity gradient rapid mix, typical: 300–1500 /s, documentation only [4]
+    g_floc_s_inv: float = None                              # /s, velocity gradient flocculation, typical: 10–100 /s, documentation only [4]
+    flocculation_stages: int = None                         # -, number of tapered mixing stages, documentation only [4]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -205,8 +191,8 @@ class CoagulationFlocculation(MIMO):
         self.specific_energy_consumption = attributes.pop(
             "specific_energy_consumption", self.specific_energy_consumption
         )
-        self.water_recovery = attributes.pop(
-            "water_recovery", self.water_recovery
+        self.efficiency = attributes.pop(
+            "efficiency", self.efficiency
         )
         self.coagulant_dose = attributes.pop("coagulant_dose", self.coagulant_dose)
         self.flocculant_dose = attributes.pop("flocculant_dose", self.flocculant_dose)
@@ -237,6 +223,7 @@ class CoagulationFlocculation(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -279,12 +266,13 @@ class CoagulationFlocculation(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
         )
         attributes[f"conversion_factor_{self.water_in_bus.label}"] = sequence(
-            1.0 / self.water_recovery
+            1.0 / self.efficiency
         )
         attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(1.0)
 
@@ -302,31 +290,13 @@ class CoagulationFlocculation(MIMO):
             )
 
         # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
+        # output-specific variable costs
         # --------------------------------------------------------------
-        chemical_cost_per_m3 = 0.0
+        self.chemical_cost_per_m3 = 0.0
         if self.coagulant_bus is None:
-            chemical_cost_per_m3 += self._coagulant_cost_per_m3
+            self.chemical_cost_per_m3 += self._coagulant_cost_per_m3
         if self.flocculant_bus is None:
-            chemical_cost_per_m3 += self._flocculant_cost_per_m3
-
-        if chemical_cost_per_m3 > 0:
-            attributes.setdefault("output_parameters", {})
-            attributes["output_parameters"].update(
-                {"variable_costs": chemical_cost_per_m3,
-                 "custom_attributes": {
-                     "coagulant_dose_g_per_m3": self.coagulant_dose,
-                     "flocculant_dose_g_per_m3": self.flocculant_dose,
-                     "dose_factor": self.dose_factor,
-                    },
-                 }
-            )
-
-        if self.spent_chemical_bus is not None and self.spent_chemical_disposal_cost > 0:
-            attributes.setdefault("output_parameters_1", {})
-            attributes["output_parameters_1"].update(
-                {"variable_costs": self.spent_chemical_disposal_cost}
-            )
+            self.chemical_cost_per_m3 += self._flocculant_cost_per_m3
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -362,6 +332,40 @@ class CoagulationFlocculation(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self.chemical_cost_per_m3
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.spent_chemical_bus is not None and self.spent_chemical_bus in self.outputs:
+            self.outputs[self.spent_chemical_bus].variable_costs = sequence(
+                self.spent_chemical_disposal_cost
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -393,8 +397,8 @@ class CoagulationFlocculation(MIMO):
         if self.dosing_mode in {"tracked_flocculant", "tracked_both"} and self.flocculant_bus is None:
             raise ValueError(f"dosing_mode='{self.dosing_mode}' requires flocculant_bus.")
 
-        if not (0 < self.water_recovery <= 1):
-            raise ValueError("water_recovery must be in (0, 1].")
+        if not (0 < self.efficiency <= 1):
+            raise ValueError("efficiency must be in (0, 1].")
         if self.specific_energy_consumption < 0:
             raise ValueError("specific_energy_consumption must be >= 0.")
         for n, v in {"coagulant_dose": self.coagulant_dose, "flocculant_dose": self.flocculant_dose}.items():

@@ -116,7 +116,7 @@ class SimpleOxidation(MIMO):
     # ------------------------------------------------------------------
     specific_energy_consumption: float = 0.07       # kWh / m³ treated water [3]
     water_recovery: float = 1.0                     # m³ treated / m³ feed, (0, 1] [1, 3]
-    oxidant_dose: float = None                       # mg/L = g/m³; converted to soc internally [1]
+    oxidant_dose: float = None                      # mg/L = g/m³; converted to soc internally [1]
     specific_oxidant_consumption: float = None      # kg / m³ treated water (alternative to dose) [1]
     oxidant_demand_factor: float = 1.0              # dimensionless raw-water quality multiplier [4]
     specific_offgas_generation: float = 0.0         # kg / m³ treated water [3]
