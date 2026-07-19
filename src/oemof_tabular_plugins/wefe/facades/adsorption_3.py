@@ -22,16 +22,23 @@ class Adsorption(MIMO):
 
     Core references
     ---------------
-    1. Crittenden (1998): Adsorption Design for Wastewater Treatment — core
-       design methodology, capacity estimation, breakthrough prediction, and
-       scale-up workflow from laboratory to full-scale plant design.
-    2. Worch (2012): Adsorption Technology in Water Treatment — operating
-       limits, process engineering ranges, regeneration cycles, and validated
-       operating envelopes for real wastewater matrices.
-    3. Abin-Bazaine et al. (2024): A Fixed-Bed Column Sorption: Breakthrough
-       Curves Modeling — BDST, Thomas, Yoon-Nelson, and Bohart-Adams model
-       equations with linearization methods and design variable definitions
-       (EBCT, breakthrough ratio, bed depth, flow rate).
+    1. Core design methodology, capacity estimation, breakthrough prediction, and scale-up workflow from laboratory to
+       full-scale plant design.
+       Thomas, W. J., & Crittenden, B. (1998). Adsorption technology and design. Butterworth-Heinemann.
+       https://www.sciencedirect.com/book/monograph/9780750619592/adsorption-technology-and-design
+    2. Operating limits, process engineering ranges, regeneration cycles, and validated operating envelopes for real
+       wastewater matrices.
+       Worch, E. (2012). Adsorption technology in water treatment: Fundamentals, processes, and modeling. De Gruyter.
+       https://doi.org/10.1515/9783110240238
+    3. BDST, Thomas, Yoon-Nelson, and Bohart-Adams model equations with linearization methods and design variable
+       definitions (EBCT, breakthrough ratio, bed depth, flow rate).
+       Abin-Bazaine, A. A., Olmos-Marquez, M. A., & Campos-Trujillo, A. (2024). A fixed-bed column sorption: Breakthrough
+       curves modeling. In K. Margeta & A. Farkas (Eds.), Sorption — new perspectives and applications. IntechOpen.
+       https://doi.org/10.5772/intechopen.1004446
+    4. Specific energy consumption value.
+       Gibellini, S., Gialdini, F., Masoud, A., & Sorlini, S. (2024). Electric energy consumption (EEC) in groundwater-based
+       drinking water supply systems: Analysis and comparison of seven Italian case studies. Water Supply, 24(10), 3456–3466.
+       https://doi.org/10.2166/ws.2024.216
 
     Main equations
     --------------
@@ -45,7 +52,7 @@ class Adsorption(MIMO):
         Q_water_in(t) = Q_water_out(t)
         [m3/hr]         [m3/hr]
 
-    Output concentration (Crittenden, 1998):
+    Output concentration:
         C_out = C_in * (1 - eta_rem)
         [mg/L]   [mg/L]              [-]
 
@@ -53,31 +60,23 @@ class Adsorption(MIMO):
         Q_ads(t) = (adsorbent_dose * 1e-3) * Q_water_out(t)
         [kg/hr]     [kg/m3]                   [m3/hr]
 
-    EBCT (Crittenden, 1998):
+    EBCT:
         EBCT = V_bed / Q = (pi * D^2 / 4 * Z) / Q
         [h]    [m3]   [m3/h]
 
-    BDST service time (Abin-Bazaine et al., 2024):
+    BDST service time:
         t = (N0 * Z) / (C_in * U0) - (1 / (k * C_in)) * ln(C_in / C_b - 1)
         [h]
 
     Notes
     -----
-    - Primary flow is water_out_bus [m3/hr]. Capacity constrains the maximum
-      treated-water throughput of the unit.
-    - Adsorbent chemical input can be modelled either as an output-side variable
-      cost (default, no adsorbent_bus) or as a tracked third input commodity
-      (tracked_adsorbent mode, requires adsorbent_bus).
-    - For backward compatibility, "dose" may be passed as an alias for
-      "adsorbent_dose" when it is not explicitly provided.
-    - enforce_removal_check converts the documentation-only Cout consistency
-      check into a hard ValueError guard at instantiation if set to True.
-    - kinetic_model_params accepts a dict of Thomas, Yoon-Nelson, or
-      Adams-Bohart coefficients as calibration metadata for future extensions.
-      They do not affect the optimization in v3.0.
-    - Design parameters (EBCT, bed geometry, BDST coefficients) are stored as
-      metadata and do not affect the optimization unless design_model='bdst'
-      derives an activity_bound_max from service time.
+    - Primary flow is water_out_bus [m3/hr]. Capacity constrains the maximum treated-water throughput of the unit.
+    - Adsorbent chemical input can be modelled either as an output-side variable cost (default, no adsorbent_bus) or as
+      a tracked third input commodity (tracked_adsorbent mode, requires adsorbent_bus).
+    - kinetic_model_params accepts a dict of Thomas, Yoon-Nelson, or Adams-Bohart coefficients as calibration metadata for
+      future extensions. They do not affect the optimization.
+    - Design parameters (EBCT, bed geometry, BDST coefficients) are stored as metadata and do not affect the optimization
+      unless design_model='bdst' derives an activity_bound_max from service time.
     """
 
     # ------------------------------------------------------------------
@@ -120,20 +119,20 @@ class Adsorption(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    specific_energy_consumption: float = 0.06               # kWh/m³ treated water
-    Cin: float = 10.0                                       # mg/L influent concentration
-    removal_efficiency: float = 0.8                         # fraction [-]
-    adsorbent_dose: float = None                            # mg/L == g/m³
-    regeneration_factor: float = 1.0                        # multiplier on adsorbent cost [-]
-    max_throughput_before_regen: Optional[float] = None     # m³
+    specific_energy_consumption: float = 0.06               # kWh/m³ treated water [4]
+    Cin: float = 10.0                                       # mg/L influent concentration [1, 2]
+    removal_efficiency: float = 0.8                         # fraction [-] [1, 2]
+    adsorbent_dose: float = 25                              # mg/L == g/m³ [1, 2] (based on per volume of treated water)
+    regeneration_factor: float = 1.0                        # multiplier on adsorbent cost [-] [1, 2]
+    max_throughput_before_regen: Optional[float] = None     # m³ [1, 2]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                      # €/m³ treated water
-    carrier_cost: float = 0.0                       # €/kWh electricity
-    adsorbent_cost: float = 5.0                     # €/kg adsorbent
-    spent_adsorbent_disposal_cost: float = 0.0      # €/kg spent adsorbent
+    marginal_cost: float = 0.0                      # USD/m³ treated water
+    carrier_cost: float = 0.0                       # USD/m³ feed
+    adsorbent_cost: float = 5.0                     # USD/kg adsorbent
+    spent_adsorbent_disposal_cost: float = 0.0      # USD/kg spent adsorbent
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -143,25 +142,25 @@ class Adsorption(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Crittenden (1998) / Worch (2012) / Abin-Bazaine et al. (2024) style
-    # characterization fields and BDST / kinetic model calibration parameters
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
-    breakthrough_ratio: float = 0.1                 # C_b / C_in [-]
-    exhaustion_ratio: float = 0.9                   # C_e / C_in [-]
-    target_Cout: float = None                       # mg/L
-    enforce_removal_check: bool = False
-    flow_rate: float = None                         # m³/h
-    bed_depth: float = None                         # m
-    column_diameter: float = None                   # m
-    bed_porosity: float = None                      # fraction [-]
-    adsorbent_bulk_density: float = None            # kg/m³
-    ebct: float = None                              # h
-    N0_bdst: float = None
-    k_bdst: float = None
-    linear_velocity: float = None
-    service_time: float = None                      # h
-    kinetic_model_params: Optional[dict] = None     # Thomas / Yoon-Nelson / Adams-Bohart coefficients
+    breakthrough_ratio: float = 0.1                     # C_b / C_in [-]                        [3]
+    exhaustion_ratio: float = 0.9                       # C_e / C_in [-]                        [3]
+    target_Cout: float = None                           # mg/L                                  [1, 2]
+    enforce_removal_check: bool = False                 #                                       [1, 2]
+    flow_rate: float = None                             # m³/h                                  [1, 3]
+    bed_depth: float = None                             # m                                     [1, 3]
+    column_diameter: float = None                       # m                                     [1]
+    bed_porosity: float = None                          # fraction [-]                          [1]
+    adsorbent_bulk_density: float = None                # kg/m³                                 [1]
+    ebct: float = None                                  # h                                     [1, 3]
+    N0_bdst: float = None                               #                                       [3]
+    k_bdst: float = None                                #                                       [3]
+    linear_velocity: float = None                       #                                       [1, 3]
+    service_time: float = None                          # h                                     [3]
+    kinetic_model_params: Optional[dict] = None         # Thomas / Yoon-Nelson /                [3]
+                                                        # Adams-Bohart coefficients
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -200,7 +199,7 @@ class Adsorption(MIMO):
         )
         self.adsorbent_dose = attributes.pop(
             "adsorbent_dose",
-            attributes.pop("dose", self.adsorbent_dose),  # backward compat alias
+            attributes.pop("adsorbent_dose", self.adsorbent_dose),
         )
         self.regeneration_factor = attributes.pop(
             "regeneration_factor", self.regeneration_factor
@@ -234,6 +233,7 @@ class Adsorption(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -287,6 +287,7 @@ class Adsorption(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
+        # All normalized to permeate output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
             self.specific_energy_consumption
@@ -302,23 +303,6 @@ class Adsorption(MIMO):
             attributes[f"conversion_factor_{self.spent_adsorbent_bus.label}"] = sequence(
                 self._adsorbent_kg_per_m3
             )
-
-        # --------------------------------------------------------------
-        # output-specific variable costs/ revenue / output parameters / reporting metadata
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-
-        if self.adsorbent_bus is None:
-            attributes["output_parameters"].update(
-                {"variable_costs": self._adsorbent_cost_per_m3}
-            )
-
-        if self.spent_adsorbent_bus is not None:
-            attributes.setdefault("output_parameters_1", {})
-            if self.spent_adsorbent_disposal_cost > 0:
-                attributes["output_parameters_1"].update(
-                    {"variable_costs": self.spent_adsorbent_disposal_cost}
-                )
 
         # --------------------------------------------------------------
         # primary bus label resolution
@@ -354,6 +338,40 @@ class Adsorption(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(
+                self.marginal_cost + self._adsorbent_cost_per_m3
+            )
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.spent_adsorbent_bus is not None and self.spent_adsorbent_bus in self.outputs:
+            self.outputs[self.spent_adsorbent_bus].variable_costs = sequence(
+                self.spent_adsorbent_disposal_cost * self._adsorbent_kg_per_m3 * self.regeneration_factor
+            )
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -388,7 +406,7 @@ class Adsorption(MIMO):
             raise ValueError(f"design_model must be one of {sorted(valid_design_models)}, got '{self.design_model}'.")
 
         if self.adsorbent_dose is None:
-            raise ValueError("adsorbent_dose must be provided (mg/L). Use the 'dose' alias for backward compatibility.")
+            raise ValueError("adsorbent_dose must be provided (mg/L).")
 
         if self.specific_energy_consumption < 0:
             raise ValueError("specific_energy_consumption must be >= 0.")
@@ -404,6 +422,9 @@ class Adsorption(MIMO):
 
         if self.adsorbent_cost < 0:
             raise ValueError("adsorbent_cost must be >= 0.")
+
+        if self.adsorbent_bus is not None and self.adsorbent_cost not in (0, 0.0, None):
+            self.adsorbent_cost = 0.0
 
         if self.regeneration_factor <= 0:
             raise ValueError("regeneration_factor must be > 0.")
