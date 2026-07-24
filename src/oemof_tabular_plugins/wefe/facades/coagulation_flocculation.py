@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class CoagulationFlocculation(Converter, Facade):
+class Coagulation_Flocculation(Converter, Facade):
     r""" Combined Coagulation and Flocculation water treatment unit with two inputs and one output.
 
     This unit models two consecutive processes:

@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class IntakeStructure(Converter, Facade):
+class Intake_Structure(Converter, Facade):
     r""" Canal type water intake structure with two inputs and one output.
 
     Parameters

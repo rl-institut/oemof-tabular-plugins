@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class FineScreen(Converter, Facade):
+class Fine_Screen(Converter, Facade):
     r""" Fine screen water pre-treatment unit with two inputs and one output.
 
         Parameters

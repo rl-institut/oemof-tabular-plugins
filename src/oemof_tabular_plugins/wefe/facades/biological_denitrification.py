@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade
-class BiologicalDenitrification(Converter, Facade):
+class Biological_Denitrification(Converter, Facade):
     """Biological denitrification water treatment unit with two inputs and two outputs.
     Reduces nitrate and nitrogen oxide ions in the water and converts them into nitrogen gas
     with the help of a suitable carbon source. The outputs are treated water and nitrogen gas.

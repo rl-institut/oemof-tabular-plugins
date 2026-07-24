@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class Ozonation(Converter, Facade):
+class Ozona_tion(Converter, Facade):
     r""" Ozonation water treatment unit with two inputs and one output.
     Ozone dosing is attached as a parameter to the output water stream.
 

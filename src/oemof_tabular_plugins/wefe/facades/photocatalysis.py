@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class PhotocatalyticUnit(Converter, Facade):
+class Photocatalytic_Unit(Converter, Facade):
     r""" Photocatalytic water treatment unit with two inputs and one output.
     Catalyst dosing is attached as a parameter to the output water stream.
 

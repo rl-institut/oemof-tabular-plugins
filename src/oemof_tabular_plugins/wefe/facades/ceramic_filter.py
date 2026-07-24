@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class CeramicFilter(Converter, Facade):
+class Ceramic_Filter(Converter, Facade):
     r"""Ceramic filter water treatment unit with two inputs and one output.
 
     Parameters

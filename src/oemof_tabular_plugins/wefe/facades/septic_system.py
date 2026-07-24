@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class SepticSystem(Converter, Facade):
+class Septic_System(Converter, Facade):
     r"""Septic system unit with two inputs and two outputs.
     Add parameters to the sludge output stream as and when required later.
     Update self.conversion_factor.update() as and when required if considered MIMO.

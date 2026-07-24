@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class Adsorption(Converter, Facade):
+class Adsorp_tion(Converter, Facade):
     r""" Adsorption water treatment unit with two inputs and one output.
     Adsorbent dosing is attached as a parameter to the output water stream.
 
