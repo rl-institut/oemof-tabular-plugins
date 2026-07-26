@@ -24,25 +24,30 @@ class OpenField(MIMO):
 
     Core references
     ---------------
-    1. Rose et al. (2015): human feces/urine generation, density, and
-       characterization defaults (74.6% feces moisture; urine 1.42 L/cap/day).
-    2. ASABE D384.2 (MAR2005, R2019): animal feces/urine ("as-excreted" manure)
-       characterization; moisture 0.75-0.90, specific gravity ~1.0.
-    3. IPCC 2019 Refinement, Vol. 5, Ch. 6 (Wastewater Treatment & Discharge):
-       emission factors. CRITICAL: open defecation is NOT a CH4 source (no
-       anaerobic conditions) and biogenic CO2 is excluded -> ch4_yield_factor=0.
-       Default N2O factor 0.005 kg N2O-N / kg N.
-    4. Eawag Compendium of Sanitation Systems and Technologies (2nd ed.,
-       Tilley et al. 2014): sanitation-chain definitions; open field as the
-       non-preferred terminal product flow.
-    5. WHO (1992), A Guide to the Development of On-Site Sanitation: justifies
-       treating open field as the unsafe fallback, i.e. the rationale for a
-       positive marginal_cost penalty.
-    (Strande et al. 2014, Faecal Sludge Management: v4.0 scope only -- basis for a
-     future containment/transport/treatment branch; not used here.)
+    1. Human feces/urine generation, density, and characterization defaults.
+       Rose, C., Parker, A., Jefferson, B., & Cartmell, E. (2015). The characterization of feces and urine: A review of
+       the literature to inform advanced treatment technology. Critical Reviews in Environmental Science and Technology,
+       45(17), 1827-1879. https://doi.org/10.1080/10643389.2014.1000761
+    2. As-excreted manure moisture content (75-90%) and specific gravity (~1.0) — basis for animal_feces_density and
+       animal_feces_water_fraction.
+       ASABE. (2005, reaffirmed 2019). ASAE D384.2 MAR2005 (R2019): Manure production and characteristics. American Society
+       of Agricultural and Biological Engineers. https://webstore.ansi.org/preview-pages/ASABE/preview_ASAE+D384.2+MAR2005+(R2019).pdf
+    3. Methodological basis for excluding CH4 from open defecation (no anaerobic containment) and default N2O emission
+       factor for nitrogen in domestic wastewater/excreta pathways.
+       IPCC. (2019). 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories, Volume 5: Waste,
+       Chapter 6: Wastewater Treatment and Discharge. Intergovernmental Panel on Climate Change.
+       https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/5_Volume5/19R_V5_6_Ch06_Wastewater.pdf
+    4. Sanitation-chain definitions; open field/open defecation as the non-preferred terminal product flow.
+       Tilley, E., Ulrich, L., Lüthi, C., Reymond, P., & Zurbrügg, C. (2014). Compendium of sanitation systems and technologies
+       (2nd rev. ed.). Swiss Federal Institute of Aquatic Science and Technology (Eawag).
+       https://sswm.info/sites/default/files/reference_attachments/TILLEY%20et%20al%202014%20Compendium%20of%20Sanitation%20Systems%20and%20Technologies%202nd%20Revised%20Edition.pdf
+    5. Rationale for treating open defecation as the unsafe sanitation fallback.
+       https://iris.who.int/handle/10665/39313
 
     Main equations
     --------------
+    # All normalized to biomass output = 1 [m³/hr].
+
     Feces volume conversion:
         V_feces(t) = m_feces(t) / rho_feces
         [m³/hr]     [kg/hr]       [kg/m³]
@@ -54,7 +59,7 @@ class OpenField(MIMO):
                                                   animal_feces, animal_urine}
         -> inputs are SUMMED, never pairwise-equalized, and their ratio is free.
 
-    Optional proxy emissions (group-level, same idiom as the Latrine):
+    Optional proxy emissions (group-level):
         E_k(t) = beta_k * GROUP_FLOW_in_main(t),   k in {NH3, CH4, N2O}
 
     Optional policy cap on total disposal volume:
@@ -63,34 +68,19 @@ class OpenField(MIMO):
 
     Notes
     -----
-    - Primary flow is biomass_waste_bus [m³/hr]. Because open field is a
-      penalty-driven sink with no real operating cost, marginal_cost is attached
-      to total output volume rather than a single input stream. This is the
-      correct cost basis for a volumetric disposal penalty [WHO 1992].
-    - NO urine<->feces coupling. Unlike the Latrine, the open field is a sink for
-      "all remaining" excreta, so it deliberately omits any flow_share linking
-      urine to feces. Any input ratio (including all-of-one) is permitted.
-    - NO CH4 by default. ch4_yield_factor defaults to 0 because open defecation
-      is not an anaerobic source (IPCC 2019). Set it >0 only if modelling a
-      covered or ponded variant, not true open field.
-    - Group-level emissions apply one factor to the summed input volume. Because
-      the open field mixes human+animal feces+urine with very different nitrogen
-      contents, this is a coarser proxy than for a single-stream unit. For
-      N-precise N2O, switch to per-stream emission_factor_<bus>_<emission_bus>
-      keyed on each input's nitrogen content (deferred refinement).
-    - Characterization values (pH, dry solids, per-capita / per-animal generation
-      rates) are stored as metadata for scenario documentation. They size the
-      upstream sources and are not enforced as hard optimization constraints
-      in v3.0.
+    - Primary flow is biomass_waste_bus [m³/hr]. Because open field is a penalty-driven sink with no real operating cost,
+      marginal_cost is attached to total output volume rather than a single input stream. This is the correct cost basis
+      for a volumetric disposal penalty [WHO 1992].
+    - NO urine<->feces coupling. The open field is a sink for "all remaining" excreta, so it deliberately omits any flow_share
+      linking urine to feces. Any input ratio (including all-of-one) is permitted.
+    - Group-level emissions apply one factor to the summed input volume. Because the open field mixes human+animal feces+urine
+      with very different nitrogen contents, this is a coarser proxy than for a single-stream unit. For N-precise N2O, switch
+      to per-stream emission_factor_<bus>_<emission_bus> keyed on each input's nitrogen content (deferred refinement).
+    - Characterization values (pH, dry solids, per-capita / per-animal generation rates) are stored as metadata for scenario
+      documentation. They size the upstream sources and are not enforced as hard optimization constraints.
     - Expected bus units: feces buses in kg, urine + biomass buses in m³.
-    - Emission buses must be created with balanced=False.
-    - max_open_field_load only constrains human excreta rerouting in practice.
-      Animal waste buses connect exclusively to OpenField; if animal waste volume
-      alone exceeds max_open_field_load at any timestep, the model is infeasible.
-    - UNIT TRAP: Rose values are per-capita; ASABE values are per-1000-kg live
-      animal mass. Those rates belong to the upstream sources, not this node.
-      Nitrogen-content and density numbers are literature-ballpark placeholders
-      -- confirm the exact table value and page before publishing.
+    - max_open_field_load only constrains human excreta rerouting in practice. Animal waste buses connect exclusively to
+      OpenField; if animal waste volume alone exceeds max_open_field_load at any timestep, the model is infeasible.
     """
 
     # ------------------------------------------------------------------
@@ -118,7 +108,7 @@ class OpenField(MIMO):
     human_urine_bus: Bus = None            # m³
     animal_feces_bus: Bus = None           # kg
     animal_urine_bus: Bus = None           # m³
-    biomass_waste_bus: Bus = None          # m³
+    biomass_waste_bus: Bus = None          # m³ (PRIMARY)
 
     # ------------------------------------------------------------------
     # optional input buses
@@ -128,23 +118,23 @@ class OpenField(MIMO):
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
-    nh3_loss_bus: Bus = None                # proxy unit
-    ch4_bus: Bus = None                     # proxy unit
-    n2o_bus: Bus = None                     # proxy unit
+    nh3_loss_bus: Optional[Bus] = None          # kg
+    ch4_bus: Optional[Bus] = None               # kg
+    n2o_bus: Optional[Bus] = None               # kg
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
     human_feces_density: float = 1060.0         # kg/m³  wet feces [Rose et al. 2015]
     animal_feces_density: float = 1000.0        # kg/m³  as-excreted manure [ASABE D384.2]
-    nh3_loss_fraction: float = 0.0
+    nh3_loss_fraction: float = 0.0              # [IPCC 2019]
     ch4_yield_factor: float = 0.0               # 0 for true open field [IPCC 2019]
-    n2o_yield_factor: float = 0.0
+    n2o_yield_factor: float = 0.0               # [IPCC 2019]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0                  # Penalty cost per m³ of unsafe disposal.
+    marginal_cost: float = 0.0                  # Penalty cost per m³ of unsafe biomass disposal.
                                                 # Set >0 to discourage open field use [WHO 1992].
     max_open_field_load: Union[float, Sequence[float]] = None  # m³/hr policy cap; None = unconstrained
 
@@ -156,7 +146,8 @@ class OpenField(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
     population_equivalent: float = 1.0
     feces_wet_mass_per_cap_per_day: float = 0.128       # kg   [Rose 2015]
@@ -236,6 +227,7 @@ class OpenField(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -290,8 +282,8 @@ class OpenField(MIMO):
         attributes["groups"] = groups
 
         # --------------------------------------------------------------
-        # conversion factors (division semantic GROUP_FLOW = sum flow_i / cf_i)
-        # bus-level factors convert flow into common activity basis
+        # conversion factors
+        # All normalized to biomass output = 1 [m³/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.human_feces_bus.label}"] = sequence(
             self.human_feces_density
@@ -309,6 +301,7 @@ class OpenField(MIMO):
 
         # --------------------------------------------------------------
         # optional proxy emissions via existing emission-factor logic
+        # key: emission_factor_<source_bus_label>_<target_bus_label>
         # --------------------------------------------------------------
         if self.nh3_loss_bus is not None:
             attributes[
@@ -335,7 +328,7 @@ class OpenField(MIMO):
             attributes["activity_bound_max"] = sequence(self.max_open_field_load)
 
         # --------------------------------------------------------------
-        # primary bus should point to actual bus label
+        # primary bus label resolution
         # --------------------------------------------------------------
         if self.primary == "biomass_waste_bus":
             primary_label = self.biomass_waste_bus.label
@@ -372,6 +365,45 @@ class OpenField(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.biomass_waste_bus in self.outputs:
+            out_flow = self.outputs[self.biomass_waste_bus]
+            out_flow.variable_costs = sequence(self.marginal_cost)
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if not self.expandable and self.capacity is not None:
+            primary_bus_map = {
+                "biomass_waste_bus": self.biomass_waste_bus,
+                "human_feces_bus": self.human_feces_bus,
+                "human_urine_bus": self.human_urine_bus,
+                "animal_feces_bus": self.animal_feces_bus,
+                "animal_urine_bus": self.animal_urine_bus,
+            }
+            primary_bus = primary_bus_map.get(self.primary)
+            if primary_bus is not None:
+                flow = self.inputs.get(primary_bus, self.outputs.get(primary_bus))
+                if flow is not None:
+                    flow.nominal_value = self.capacity
 
     def _optional_bus_kwargs(self):
         kwargs = {}
