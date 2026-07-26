@@ -28,7 +28,7 @@ class DryToilet(MIMO):
        the literature to inform advanced treatment technology. Critical Reviews in Environmental Science and Technology,
        45(17), 1827-1879. https://doi.org/10.1080/10643389.2014.1000761
     2. Sanitation-chain and system-boundary definitions; dry-toilet processing stoichiometry.
-       Tilley, E., Ulrich, L., Lüthi, C., Reymond, P., Schertenleib, R., & Zurbrügg, C. (2014). Compendium of sanitation
+       Tilley, E., Ulrich, L., Lüthi, C., Reymond, P., & Zurbrügg, C. (2014). Compendium of sanitation
        systems and technologies (2nd rev. ed.). Swiss Federal Institute of Aquatic Science and Technology (Eawag).
        https://www.eawag.ch/fileadmin/Domain1/Abteilungen/sandec/schwerpunkte/sesp/CLUES/Compendium_2nd_pdfs/Compendium_2nd_Ed_Lowres_1p.pdf
     3. Bulking-agent dose design range (0.2-0.5 kg/kg feces) and urine diversion efficiency design expectation (85-95%).
@@ -326,15 +326,15 @@ class DryToilet(MIMO):
         # --------------------------------------------------------------
         if self.nh3_loss_bus is not None:
             attributes[
-                f"emission_factor_in_main_{self.nh3_loss_bus.label}"
+                f"emission_factor_{self.human_feces_bus.label}_{self.nh3_loss_bus.label}"
             ] = sequence(self.nh3_loss_fraction)
         if self.ch4_bus is not None:
             attributes[
-                f"emission_factor_in_main_{self.ch4_bus.label}"
+                f"emission_factor_{self.human_feces_bus.label}_{self.ch4_bus.label}"
             ] = sequence(self.ch4_yield_factor)
         if self.n2o_bus is not None:
             attributes[
-                f"emission_factor_in_main_{self.n2o_bus.label}"
+                f"emission_factor_{self.human_feces_bus.label}_{self.n2o_bus.label}"
             ] = sequence(self.n2o_yield_factor)
 
         # --------------------------------------------------------------

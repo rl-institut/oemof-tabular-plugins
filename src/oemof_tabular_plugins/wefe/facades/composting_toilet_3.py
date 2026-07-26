@@ -18,43 +18,61 @@ class CompostingToilet(MIMO):
     mixed composting toilet. The model is a bookkeeping / process-yield unit
     that converts human feces and urine into compost and leachate at fixed
     stoichiometric ratios. It is not a mechanistic biological reactor model.
-    Inputs are pairwise-coupled to the compost output via fixed conversion
-    factors; the solver decides how much throughput flows here, and the
-    bulking agent and marginal_cost express the operating cost of the pathway.
 
     Core references
     ---------------
-    1. Rose et al. (2015): excreta generation, characterization defaults, and
-       per-capita feces/urine ratios used for calibration fields and the
-       urine/feces coupling constraint.
-    2. Eawag Compendium of Sanitation Systems and Technologies (2nd ed.,
-       Tilley et al. 2014): sanitation-chain definitions, system-boundary
-       guidance, and stoichiometric defaults for composting
-       (feces_compost_fraction, urine_compost_fraction,
-       leachate_compost_relation).
-    3. Joensson et al. (2004), EcoSanRes 2004-2: N/P recovery coefficients
-       used as defaults for optional nutrient accounting buses.
-    4. Anand & Apul (2014), Waste Management: composting design drivers
-       (moisture content, C:N ratio, bulking agent dose); basis for
-       moisture and C:N calibration defaults.
-    5. Vinneras & Joensson (2002), Bioresource Technology: faecal/urine
-       nutrient mass balance; basis for n_from_urine default.
+    1. Per-capita excreta generation rates and physicochemical characterization defaults (wet/dry mass, water fraction,
+       pH, nitrogen content).
+       Rose, C., Parker, A., Jefferson, B., & Cartmell, E. (2015). The characterization of feces and urine: A review of
+       the literature to inform advanced treatment technology. Critical Reviews in Environmental Science and Technology,
+       45(17), 1827-1879. https://doi.org/10.1080/10643389.2014.1000761
+    2. Sanitation-chain and system-boundary definitions; composting-toilet processing stoichiometry.
+       Tilley, E., Ulrich, L., Lüthi, C., Reymond, P., & Zurbrügg, C. (2014). Compendium of sanitation systems and technologies
+       (2nd rev. ed.). Swiss Federal Institute of Aquatic Science and Technology (Eawag).
+       https://www.eawag.ch/fileadmin/Domain1/Abteilungen/sandec/schwerpunkte/sesp/CLUES/Compendium_2nd_pdfs/Compendium_2nd_Ed_Lowres_1p.pdf
+    3. Nitrogen and phosphorus content of source-separated urine and feces.
+       Jönsson, H., Richert Stintzing, A., Vinnerås, B., & Salomon, E. (2004). Guidelines on the use of urine and faeces
+       in crop production (EcoSanRes Publication Series, Report 2004-2). Stockholm Environment Institute.
+       https://sswm.info/sites/default/files/reference_attachments/JOENSSON%202004%20Guidelines%20on%20the%20use%20of%20urine%20and%20faeces%20in%20crop%20production.pdf
+    4. Faecal/urine nutrient mass-balance data from a source-separation trial.
+       Vinnerås, B., & Jönsson, H. (2002). The performance and potential of faecal separation and urine diversion to recycle
+       plant nutrients in household wastewater. Bioresource Technology, 84(3), 275-282.
+       https://doi.org/10.1016/S0960-8524(02)00054-8
+    5. Composting design drivers — moisture content, temperature, and carbon-to-nitrogen ratio.
+       Anand, C. K., & Apul, D. S. (2014). Composting toilets as a sustainable alternative to urban sanitation - A review.
+       Waste Management, 34(2), 329-343. https://doi.org/10.1016/j.wasman.2013.10.006
+    6. Default CH4 emission factors for on-site/dry sanitation excreta management.
+       IPCC. (2019). 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories, Volume 5: Waste,
+       Chapter 6: Wastewater Treatment and Discharge. Intergovernmental Panel on Climate Change.
+       https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/5_Volume5/19R_V5_6_Ch06_Wastewater.pdf
+    7. UDDT field-practice additive dosing ratio (2:1 additive:feces, w/w) — input-basis component of the derived
+       bulking_agent_dose default.
+       Niwagaba, C., Kulabako, R. N., Mugala, P., & Jönsson, H. (2009). Comparing microbial die-off in separately collected
+       faeces with ash and sawdust additives. Waste Management, 29(7), 2214-2219.
+       https://doi.org/10.1016/j.wasman.2009.02.010
+    8. Generic composting mass-loss rate (~19.4%, range 11.5-31.4%) — used to convert the Niwagaba et al. (2009) feces-basis
+       ratio onto a compost-output basis for bulking_agent_dose.
+       Breitenbeck, G. A., & Schellinger, D. (2004). Calculating the reduction in material mass and volume during composting.
+       Compost Science & Utilization, 12(4), 365-371. https://doi.org/10.1080/1065657X.2004.10702206
 
     Main equations
     --------------
-    Stoichiometry (conversion_factor divisor semantics):
+    All normalized to compost output = 1 [kg/hr].
+
+    Stoichiometry:
+        Additive input group: feces + urine both feed "in_main"
         f_feces(t) / feces_compost_fraction    = C(t)   [kg compost / hr]
-        f_urine(t) / urine_compost_fraction    = C(t)   [kg compost / hr]
+        f_urine(t) / feces_compost_fraction    = C(t)   [kg compost / hr]
+        f_compost(t) / 1.0                     = C(t)   [kg compost / hr]
         f_water(t) / leachate_compost_relation = C(t)   [kg compost / hr]
         defaults: feces_compost_fraction = 3.91,
-                  urine_compost_fraction = 2.17,
                   leachate_compost_relation = 1.74
 
     Bulking agent commodity coupling (tracked_bulking_agent mode only):
         Q_bulk(t) = bulking_agent_dose * C(t)
         [kg/hr]     [kg/kg compost]   [kg compost/hr]
 
-    Urine/feces coupling (Rose et al., 2015):
+    Urine/feces coupling:
         f_urine(t) ≤ urine_per_feces_ratio × f_feces(t)
         where urine_per_feces_ratio
             = urine_volume_per_cap_per_day / feces_wet_mass_per_cap_per_day
@@ -70,31 +88,16 @@ class CompostingToilet(MIMO):
 
     Notes
     -----
-    - Primary flow is human_feces_bus [kg/hr]. Capacity constrains the maximum
-      feces throughput of the toilet, representing sanitation service capacity
-      (persons served × feces generation rate per capita).
-    - Bulking agent input can be modelled either as an output-side variable
-      cost embedded in the compost flow (default, dosing_mode='cost_only',
-      no bulking_agent_bus) or as a tracked third input commodity
-      (dosing_mode='tracked_bulking_agent', requires bulking_agent_bus).
-    - marginal_cost is charged on the primary input flow (kg feces / hr),
-      not on the compost output. It represents a collection or handling cost
-      tied to input volume.
-    - Inputs are pairwise-coupled, not additive. The conversion factors enforce
-      a fixed feces-to-compost and urine-to-compost recipe. Any deviation from
-      the recipe makes the system infeasible for that timestep.
-    - Urine inflow is bounded by the physiological per-capita feces/urine ratio
-      (Rose et al., 2015). This constraint is inactive when system-level
-      penalties already enforce the ratio, but is required in multi-toilet
-      systems to prevent the optimizer from routing urine independently of
-      feces.
-    - Accounting buses (N, P, CH4) must be created with balanced=False in the
-      datapackage unless a real downstream sink consumes them.
-    - Characterization values (pH, dry solids, C:N, per-capita generation rates)
-      are stored as metadata for scenario documentation and calibration.
-      They are not enforced as hard optimization constraints.
-    - UNIT NOTE: feces flows are in kg; urine, leachate, and water flows are
-      in m³. Compost output is in kg. Conversion factors carry the unit bridge.
+    - Primary flow is human_feces_bus [kg/hr]. Capacity constrains the maximum feces throughput of the toilet, representing
+      sanitation service capacity (persons served × feces generation rate per capita).
+    - Bulking agent input can be modelled either as an output-side variable cost embedded in the compost flow (default,
+      dosing_mode='cost_only', no bulking_agent_bus) or as a tracked third input commodity (dosing_mode='tracked_bulking_agent',
+      requires bulking_agent_bus).
+    - marginal_cost is charged on the primary input flow (kg feces / hr).
+    - Characterization values (pH, dry solids, C:N, per-capita generation rates) are stored as metadata for scenario documentation
+      and calibration. They are not enforced as hard optimization constraints.
+    - UNIT NOTE: feces flows are in kg; urine, leachate, and water flows are in m³. Compost output is in kg. Conversion
+      factors carry the unit bridge.
     """
 
     # ------------------------------------------------------------------
@@ -119,7 +122,7 @@ class CompostingToilet(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    human_feces_bus: Bus = None         # kg
+    human_feces_bus: Bus = None         # kg (PRIMARY)
     human_urine_bus: Bus = None         # m³
     compost_out_bus: Bus = None         # kg
     water_out_bus: Bus = None           # m³ (leachate)
@@ -140,16 +143,16 @@ class CompostingToilet(MIMO):
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
     feces_compost_fraction: float = 3.91        # kg feces/kg compost   [Eawag T14]
-    urine_compost_fraction: float = 2.17        # m³ urine/kg compost   [Eawag T14]
     leachate_compost_relation: float = 1.74     # m³ leach/kg compost   [Eawag T14]
     feces_density: float = 1060.0               # kg/m³                 [Rose 2015]
-    bulking_agent_dose: float = 2.61            # kg bulking agent/kg compost  [GTZ]
-
-    n_from_urine: Optional[float] = 7.73        # kg N/m³ urine         [Rose 2015]
+    bulking_agent_dose: float = 0.83            # kg bulking agent/kg compost [derived: Niwagaba et al. 2009, Breitenbeck
+    # & Schellinger 2004] Derived (not directly reported): 2:1 additive:feces input ratio (Niwagaba 2009)
+    # combined with ~19.4% composting mass loss (Breitenbeck & Schellinger 2004): 2/(3×0.806) ≈ 0.83.
+    n_from_urine: Optional[float] = 7.73        # kg N/m³ urine         [Joensson 2004][Vinnerås & Joensson 2002]
     n_from_feces: Optional[float] = None        # kg N/kg feces         [Joensson 2004]
     p_from_feces: Optional[float] = None        # kg P/kg feces         [Joensson 2004]
     p_from_urine: Optional[float] = None        # kg P/m³ urine         [Joensson 2004]
-    ch4_factor: Optional[float] = None          # kg CH4/kg feces
+    ch4_factor: Optional[float] = None          # kg CH4/kg feces       [IPCC 2019]
 
     # ------------------------------------------------------------------
     # economics
@@ -165,7 +168,8 @@ class CompostingToilet(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
     feces_wet_mass_per_cap_per_day: float = 0.128           # kg/cap/day       [Rose 2015]
     feces_dry_mass_per_cap_per_day: float = 0.029           # kg/cap/day       [Rose 2015]
@@ -209,7 +213,6 @@ class CompostingToilet(MIMO):
         # active physical parameters
         # --------------------------------------------------------------
         self.feces_compost_fraction = attributes.pop("feces_compost_fraction", self.feces_compost_fraction)
-        self.urine_compost_fraction = attributes.pop("urine_compost_fraction", self.urine_compost_fraction)
         self.leachate_compost_relation = attributes.pop("leachate_compost_relation", self.leachate_compost_relation)
         self.feces_density = attributes.pop("feces_density", self.feces_density)
         self.bulking_agent_dose = attributes.pop("bulking_agent_dose", self.bulking_agent_dose)
@@ -236,6 +239,7 @@ class CompostingToilet(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -272,19 +276,31 @@ class CompostingToilet(MIMO):
         )
 
         # --------------------------------------------------------------
+        # groups
+        # Additive input group: feces + urine both feed "in_main".
+        # --------------------------------------------------------------
+        groups = {
+            "in_main": [self.human_feces_bus.label, self.human_urine_bus.label],
+            "out_main": [self.compost_out_bus.label],
+            "out_liquid": [self.water_out_bus.label],
+        }
+        attributes["groups"] = groups
+
+        # --------------------------------------------------------------
         # conversion factors
-        # bus-level factors convert flow into common activity basis
+        # All normalized to compost output = 1 [kg/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.human_feces_bus.label}"] = sequence(
             self.feces_compost_fraction
         )
         attributes[f"conversion_factor_{self.human_urine_bus.label}"] = sequence(
-            self.urine_compost_fraction
+            self.feces_compost_fraction # same basis as feces within in_main
         )
+        attributes["conversion_factor_in_main"] = sequence(1.0)
+        attributes["conversion_factor_out_main"] = sequence(1.0)
         attributes[f"conversion_factor_{self.compost_out_bus.label}"] = sequence(1.0)
-        attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(
-            self.leachate_compost_relation
-        )
+        attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(1.0)
+        attributes["conversion_factor_out_liquid"] = sequence(self.leachate_compost_relation)
 
         if self.bulking_agent_bus is not None:
             attributes[f"conversion_factor_{self.bulking_agent_bus.label}"] = sequence(
@@ -292,7 +308,7 @@ class CompostingToilet(MIMO):
             )
 
         # --------------------------------------------------------------
-        # flow-share constraints: urine inflow bounded by feces-linked ratio
+        # flow-share constraints: urine inflow bounded by feces-linked ratio (approximately)
         # --------------------------------------------------------------
         attributes[f"flow_share_max_{self.human_urine_bus.label}"] = sequence(
             self._urine_per_feces_ratio
@@ -301,7 +317,8 @@ class CompostingToilet(MIMO):
         # --------------------------------------------------------------
         # optional proxy emissions via existing emission-factor logic
         # key: emission_factor_<source_bus_label>_<target_bus_label>
-        # applied per source bus independently [Rose 2015, Joensson 2004]
+        # source is human_feces_bus (wet feces input), the dominant in the in_main
+        # emission factors are per kg wet feces in, [Rose 2015, Joensson 2004]
         # --------------------------------------------------------------
         emission_pairs = [
             (self.human_urine_bus, self.n_recovery_bus, self.n_from_urine),
@@ -317,19 +334,7 @@ class CompostingToilet(MIMO):
                 ] = sequence(float(factor))
 
         # --------------------------------------------------------------
-        # output-specific variable costs
-        # cost_only mode: bulking agent cost embedded in compost output flow
-        # tracked_bulking_agent mode: cost borne by the input commodity bus
-        # --------------------------------------------------------------
-        attributes.setdefault("output_parameters", {})
-        if self.dosing_mode == "cost_only":
-            attributes["output_parameters"].update({
-                "variable_costs": self._bulking_cost_per_kg_compost,
-                "custom_attributes": {"bulking_agent_dose": self.bulking_agent_dose},
-            })
-
-        # --------------------------------------------------------------
-        # primary bus should point to actual bus label
+        # primary bus label resolution
         # --------------------------------------------------------------
         if self.primary == "human_feces_bus":
             primary_label = self.human_feces_bus.label
@@ -363,6 +368,51 @@ class CompostingToilet(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.human_feces_bus in self.inputs:
+            self.inputs[self.human_feces_bus].variable_costs = sequence(self.marginal_cost)
+
+        bulking_variable_cost = (
+            0.0 if self.dosing_mode == "tracked_bulking_agent" else self._bulking_cost_per_kg_compost
+        )
+
+        if self.compost_out_bus in self.outputs:
+            out_flow = self.outputs[self.compost_out_bus]
+            out_flow.variable_costs = sequence(bulking_variable_cost)
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if not self.expandable and self.capacity is not None:
+            primary_bus_map = {
+                "human_feces_bus": self.human_feces_bus,
+                "human_urine_bus": self.human_urine_bus,
+                "compost_out_bus": self.compost_out_bus,
+                "water_out_bus": self.water_out_bus,
+            }
+            primary_bus = primary_bus_map.get(self.primary)
+            if primary_bus is not None:
+                flow = self.inputs.get(primary_bus, self.outputs.get(primary_bus))
+                if flow is not None:
+                    flow.nominal_value = self.capacity
 
     def _optional_bus_kwargs(self):
         kwargs = {}
@@ -406,7 +456,6 @@ class CompostingToilet(MIMO):
 
         positive = {
             "feces_compost_fraction": self.feces_compost_fraction,
-            "urine_compost_fraction": self.urine_compost_fraction,
             "leachate_compost_relation": self.leachate_compost_relation,
         }
         for name, value in positive.items():
