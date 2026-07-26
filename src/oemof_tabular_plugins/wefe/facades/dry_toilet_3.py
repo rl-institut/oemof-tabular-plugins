@@ -18,41 +18,43 @@ class DryToilet(MIMO):
     toilet (UDDT) or mixed dry latrine. The model is a bookkeeping / process-yield
     unit that converts human feces and urine into dried feces and leachate at fixed
     stoichiometric ratios. It is not a mechanistic desiccation or biological reactor
-    model. Inputs are pairwise-coupled to the dry feces output via fixed conversion
-    factors; the solver decides how much throughput flows here, and the bulking
-    agent and marginal_cost express the operating cost of the pathway.
+    model.
 
     Core references
     ---------------
-    1. Rose et al. (2015): excreta generation, characterization defaults, and
-       per-capita feces/urine ratios used for calibration fields and the
-       urine/feces coupling constraint.
-    2. Eawag Compendium of Sanitation Systems and Technologies (2nd ed.,
-       Tilley et al. 2014): sanitation-chain definitions, system-boundary
-       guidance, and stoichiometric defaults for dry toilet
-       (wet_feces_dry_feces_fraction, urine_dry_feces_fraction,
-       leachate_dry_feces_relation).
-    3. Berger, W. (2011), GIZ/SuSanA Technology Review — Composting Toilets:
-       bulking agent dose design range (0.2–0.5 kg/kg feces), urine diversion
-       efficiency design expectation (85–95%); basis for bulking_agent_dose
-       and urine_diversion_efficiency defaults.
-    4. Huussi et al. (2012/2013), WECF UDDT Use & Maintenance Guide:
-       urine_diversion_efficiency field-conditions range (0.80–0.95);
-       hygienisation retention time guidance.
-    5. Radha et al. (2022), IJERT Vol. 14 — Advancements in Dry Toilet
-       Technologies: wet-to-dry feces fraction range (3.0–4.5 kg/kg)
-       cross-validating Tilley 2014 defaults; GHG yield factor ranges for
-       ch4_yield_factor and n2o_yield_factor.
+    1. Per-capita excreta generation rates and physicochemical characterization defaults (wet/dry mass, water fraction,
+       pH, nitrogen content).
+       Rose, C., Parker, A., Jefferson, B., & Cartmell, E. (2015). The characterization of feces and urine: A review of
+       the literature to inform advanced treatment technology. Critical Reviews in Environmental Science and Technology,
+       45(17), 1827-1879. https://doi.org/10.1080/10643389.2014.1000761
+    2. Sanitation-chain and system-boundary definitions; dry-toilet processing stoichiometry.
+       Tilley, E., Ulrich, L., Lüthi, C., Reymond, P., Schertenleib, R., & Zurbrügg, C. (2014). Compendium of sanitation
+       systems and technologies (2nd rev. ed.). Swiss Federal Institute of Aquatic Science and Technology (Eawag).
+       https://www.eawag.ch/fileadmin/Domain1/Abteilungen/sandec/schwerpunkte/sesp/CLUES/Compendium_2nd_pdfs/Compendium_2nd_Ed_Lowres_1p.pdf
+    3. Bulking-agent dose design range (0.2-0.5 kg/kg feces) and urine diversion efficiency design expectation (85-95%).
+       Berger, W. (2011). Technology review of composting toilets: Basic overview of composting toilets (with or without
+       urine diversion). Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) GmbH.
+       https://www.susana.org/_resources/documents/default/2-878-2-1383-gtz2011-en-technology-review-composting-toilets1.pdf
+    4. Field-conditions urine diversion efficiency range (0.80-0.95) and practical use/maintenance guidance for UDDTs.
+       Käymäläseura Huussi ry / Global Dry Toilet Association of Finland. (2013). Use and maintenance of urine diversion
+       dry toilets (UDDTs) and composting toilets. A series of educational manuals on ecological sanitation and hygiene.
+       https://www.pseau.org/outils/ouvrages/huussi_use_and_maintenance_of_urine_diversion_dry_toilets_uddts_and_composting_toilets_2013.pdf
+    5. Default CH4 and N2O emission factors for on-site/dry sanitation (including pit latrines).
+       IPCC. (2019). 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories, Volume 5: Waste,
+       Chapter 6: Wastewater Treatment and Discharge. Intergovernmental Panel on Climate Change.
+       https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/5_Volume5/19R_V5_6_Ch06_Wastewater.pdf
 
     Main equations
     --------------
-    Stoichiometry (conversion_factor divisor semantics):
+    All normalized to dry feces output = 1 [kg/hr].
+
+    Stoichiometry:
+        Additive input group: feces + urine both feed "in_main"
         f_feces(t)    / wet_feces_dry_feces_fraction = C(t)  [kg dry feces / hr]
-        f_urine(t)    / urine_dry_feces_fraction      = C(t)  [kg dry feces / hr]
+        f_urine(t)    / wet_feces_dry_feces_fraction  = C(t)  [kg dry feces / hr]
         f_dry(t)      / 1.0                           = C(t)  [kg dry feces / hr]
         f_leachate(t) / leachate_cf                   = C(t)  [kg dry feces / hr]
         defaults: wet_feces_dry_feces_fraction = 3.3,
-                  urine_dry_feces_fraction     = 2.0,
                   leachate_dry_feces_relation  = 0.1  (mixed mode baseline)
 
     Effective leachate conversion factor by mode:
@@ -64,7 +66,7 @@ class DryToilet(MIMO):
         Q_bulk(t) = bulking_agent_dose * C(t)
         [kg/hr]     [kg/kg dry feces]   [kg dry feces/hr]
 
-    Urine/feces coupling (Rose et al., 2015):
+    Urine/feces coupling:
         f_urine(t) ≤ urine_per_feces_ratio × f_feces(t)
         where urine_per_feces_ratio
             = urine_volume_per_cap_per_day / feces_wet_mass_per_cap_per_day
@@ -72,7 +74,7 @@ class DryToilet(MIMO):
             = 0.01109  [m³_urine / kg_feces]
         Enforced via flow_share_max on human_urine_bus.
 
-    Optional proxy GHG emissions (IPCC 2019, waste sector convention):
+    Optional proxy GHG emissions:
         E_NH3(t) = nh3_loss_fraction  * f_feces(t)   [kg NH3 / hr]
         E_CH4(t) = ch4_yield_factor   * f_feces(t)   [kg CH4 / hr]
         E_N2O(t) = n2o_yield_factor   * f_feces(t)   [kg N2O / hr]
@@ -81,35 +83,16 @@ class DryToilet(MIMO):
 
     Notes
     -----
-    - Primary flow is human_feces_bus [kg/hr]. Capacity constrains the maximum
-      feces throughput of the toilet, representing sanitation service capacity
-      (persons served × feces generation rate per capita).
-    - Bulking agent input can be modelled either as an output-side variable
-      cost embedded in the dry feces flow (default, no bulking_agent_bus) or
-      as a tracked third input commodity (requires bulking_agent_bus). When
-      the bus is connected, variable_costs on dry_feces_out_bus is set to 0
-      to avoid double-charging.
-    - marginal_cost is charged on the primary input flow (kg feces / hr),
-      representing a collection or handling cost tied to input volume.
-    - Inputs are pairwise-coupled, not additive. The conversion factors enforce
-      a fixed feces-to-dry-feces and urine-to-dry-feces recipe. Any deviation
-      from the recipe makes the system infeasible for that timestep.
-    - Urine inflow is bounded by the physiological per-capita feces/urine ratio
-      (Rose et al., 2015). This constraint is inactive when system-level
-      penalties already enforce the ratio, but is required in multi-toilet
-      systems to prevent the optimizer from routing urine independently of
-      feces.
-    - In urine_diverting mode the diverted urine fraction is not routed to a
-      separate bus — it increases the leachate conversion factor. Connect a
-      dedicated urine bus upstream if separate urine accounting is needed.
-    - Emission buses (nh3_loss_bus, ch4_bus, n2o_bus) must be created with
-      balanced=False in the datapackage unless a real downstream sink consumes
-      them.
-    - Characterization values (pH, dry solids, per-capita generation rates)
-      are stored as metadata for scenario documentation and calibration.
-      They are not enforced as hard optimization constraints.
-    - UNIT NOTE: feces flows are in kg; urine and leachate flows are in m³.
-      Dry feces output is in kg. Conversion factors carry the unit bridge.
+    - Primary flow is human_feces_bus [kg/hr]. Capacity constrains the maximum feces throughput of the toilet, representing
+      sanitation service capacity (persons served × feces generation rate per capita).
+    - Bulking agent input can be modelled either as an output-side variable cost embedded in the dry feces flow (default,
+      no bulking_agent_bus) or as a tracked third input commodity (requires bulking_agent_bus). When the bus is connected,
+      variable_costs on dry_feces_out_bus is set to 0 to avoid double-charging.
+    - marginal_cost is charged on the primary input flow (kg feces / hr).
+    - Characterization values (pH, dry solids, per-capita generation rates) are stored as metadata for scenario documentation
+      and calibration. They are not enforced as hard optimization constraints.
+    - UNIT NOTE: feces flows are in kg; urine and leachate flows are in m³. Dry feces output is in kg. Conversion factors
+      carry the unit bridge.
     """
 
     # ------------------------------------------------------------------
@@ -134,7 +117,7 @@ class DryToilet(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    human_feces_bus: Bus = None             # kg
+    human_feces_bus: Bus = None             # kg (PRIMARY)
     human_urine_bus: Bus = None             # m³
     dry_feces_out_bus: Bus = None           # kg
     water_out_bus: Bus = None               # m³ (leachate)
@@ -154,14 +137,13 @@ class DryToilet(MIMO):
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    wet_feces_dry_feces_fraction: float = 3.3    # kg wet feces/kg dry feces  [Tilley 2014][Radha 2022]
-    urine_dry_feces_fraction: float = 2.0        # m³ urine/kg dry feces      [Tilley 2014]
+    wet_feces_dry_feces_fraction: float = 3.3    # kg wet feces/kg dry feces  [Tilley 2014]
     leachate_dry_feces_relation: float = 0.1     # m³ leachate/kg dry feces — mixed mode baseline [Tilley 2014]
     feces_density: float = 1060.0                # kg/m³ wet feces              [Rose 2015]
     urine_diversion_efficiency: float = 0.85     # fraction of urine retained → leachate [0,1]  [Berger 2011][Huussi 2013]
-    nh3_loss_fraction: float = 0.0               # kg NH3/kg dry feces
-    ch4_yield_factor: float = 0.0                # kg CH4/kg dry feces        [IPCC 2019]
-    n2o_yield_factor: float = 0.0                # kg N2O/kg dry feces        [IPCC 2019]
+    nh3_loss_fraction: float = 0.0               # kg NH3/kg wet feces
+    ch4_yield_factor: float = 0.0                # kg CH4/kg wet feces        [IPCC 2019]
+    n2o_yield_factor: float = 0.0                # kg N2O/kg wet feces        [IPCC 2019]
 
     # ------------------------------------------------------------------
     # economics
@@ -178,7 +160,8 @@ class DryToilet(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
     population_equivalent: float = 1.0
     feces_wet_mass_per_cap_per_day: float = 0.128       # kg/cap/day       [Rose 2015]
@@ -221,8 +204,6 @@ class DryToilet(MIMO):
         # --------------------------------------------------------------
         self.wet_feces_dry_feces_fraction = attributes.pop(
             "wet_feces_dry_feces_fraction", self.wet_feces_dry_feces_fraction)
-        self.urine_dry_feces_fraction = attributes.pop(
-            "urine_dry_feces_fraction", self.urine_dry_feces_fraction)
         self.leachate_dry_feces_relation = attributes.pop(
             "leachate_dry_feces_relation", self.leachate_dry_feces_relation)
         self.feces_density = attributes.pop(
@@ -258,6 +239,7 @@ class DryToilet(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -298,26 +280,39 @@ class DryToilet(MIMO):
             self._effective_leachate_cf = self.leachate_dry_feces_relation
 
         # --------------------------------------------------------------
+        # groups
+        # Additive input group: feces + urine both feed "in_main".
+        # --------------------------------------------------------------
+        groups = {
+            "in_main": [self.human_feces_bus.label, self.human_urine_bus.label],
+            "out_main": [self.dry_feces_out_bus.label],
+            "out_liquid": [self.water_out_bus.label],
+        }
+        attributes["groups"] = groups
+
+        # --------------------------------------------------------------
         # conversion factors
-        # bus-level factors convert flow into common activity basis
+        # All normalized to dry feces output = 1 [kg/hr].
         # --------------------------------------------------------------
         attributes[f"conversion_factor_{self.human_feces_bus.label}"] = sequence(
             self.wet_feces_dry_feces_fraction
         )
         attributes[f"conversion_factor_{self.human_urine_bus.label}"] = sequence(
-            self.urine_dry_feces_fraction
+            self.wet_feces_dry_feces_fraction  # same basis as feces within in_main
         )
+        attributes["conversion_factor_in_main"] = sequence(1.0)
+        attributes["conversion_factor_out_main"] = sequence(1.0)
         attributes[f"conversion_factor_{self.dry_feces_out_bus.label}"] = sequence(1.0)
-        attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(
-            self._effective_leachate_cf
-        )
+        attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(1.0)
+        attributes["conversion_factor_out_liquid"] = sequence(self._effective_leachate_cf)
+
         if self.bulking_agent_bus is not None:
             attributes[f"conversion_factor_{self.bulking_agent_bus.label}"] = sequence(
                 self.bulking_agent_dose
             )
 
         # --------------------------------------------------------------
-        # flow-share constraints: urine inflow bounded by feces-linked ratio
+        # flow-share constraints: urine inflow bounded by feces-linked ratio (approximately)
         # --------------------------------------------------------------
         attributes[f"flow_share_max_{self.human_urine_bus.label}"] = sequence(
             self._urine_per_feces_ratio
@@ -326,37 +321,24 @@ class DryToilet(MIMO):
         # --------------------------------------------------------------
         # optional proxy emissions via existing emission-factor logic
         # key: emission_factor_<source_bus_label>_<target_bus_label>
-        # source is human_feces_bus (wet feces input), not the output —
-        # emission factors are per kg wet feces in, matching IPCC waste sector convention [IPCC 2019]
+        # source is human_feces_bus (wet feces input), the dominant in the in_main
+        # emission factors are per kg wet feces in, [IPCC 2019]
         # --------------------------------------------------------------
         if self.nh3_loss_bus is not None:
             attributes[
-                f"emission_factor_{self.human_feces_bus.label}_{self.nh3_loss_bus.label}"
+                f"emission_factor_in_main_{self.nh3_loss_bus.label}"
             ] = sequence(self.nh3_loss_fraction)
         if self.ch4_bus is not None:
             attributes[
-                f"emission_factor_{self.human_feces_bus.label}_{self.ch4_bus.label}"
+                f"emission_factor_in_main_{self.ch4_bus.label}"
             ] = sequence(self.ch4_yield_factor)
         if self.n2o_bus is not None:
             attributes[
-                f"emission_factor_{self.human_feces_bus.label}_{self.n2o_bus.label}"
+                f"emission_factor_in_main_{self.n2o_bus.label}"
             ] = sequence(self.n2o_yield_factor)
 
         # --------------------------------------------------------------
-        # output-specific variable costs
-        # --------------------------------------------------------------
-        bulking_variable_cost = (
-            0.0 if self.bulking_agent_bus is not None
-            else self._bulking_cost_per_kg_dry
-        )
-        attributes.setdefault("output_parameters", {})
-        attributes["output_parameters"].update({
-            "variable_costs": bulking_variable_cost,
-            "custom_attributes": {"bulking_agent_dose": self.bulking_agent_dose},
-        })
-
-        # --------------------------------------------------------------
-        # primary bus should point to actual bus label
+        # primary bus label resolution
         # --------------------------------------------------------------
         if self.primary == "human_feces_bus":
             primary_label = self.human_feces_bus.label
@@ -391,6 +373,51 @@ class DryToilet(MIMO):
             **attributes,
         )
 
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.human_feces_bus in self.inputs:
+            self.inputs[self.human_feces_bus].variable_costs = sequence(self.marginal_cost)
+
+        bulking_variable_cost = (
+            0.0 if self.bulking_agent_bus is not None else self._bulking_cost_per_kg_dry
+        )
+
+        if self.dry_feces_out_bus in self.outputs:
+            out_flow = self.outputs[self.dry_feces_out_bus]
+            out_flow.variable_costs = sequence(bulking_variable_cost)
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if not self.expandable and self.capacity is not None:
+            primary_bus_map = {
+                "human_feces_bus": self.human_feces_bus,
+                "human_urine_bus": self.human_urine_bus,
+                "dry_feces_out_bus": self.dry_feces_out_bus,
+                "water_out_bus": self.water_out_bus,
+            }
+            primary_bus = primary_bus_map.get(self.primary)
+            if primary_bus is not None:
+                flow = self.inputs.get(primary_bus, self.outputs.get(primary_bus))
+                if flow is not None:
+                    flow.nominal_value = self.capacity
+
     def _optional_bus_kwargs(self):
         kwargs = {}
         idx_in = 2
@@ -422,7 +449,6 @@ class DryToilet(MIMO):
 
         for name, value in {
             "wet_feces_dry_feces_fraction": self.wet_feces_dry_feces_fraction,
-            "urine_dry_feces_fraction": self.urine_dry_feces_fraction,
             "leachate_dry_feces_relation": self.leachate_dry_feces_relation,
             "feces_density": self.feces_density,
         }.items():
