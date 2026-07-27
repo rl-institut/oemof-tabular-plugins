@@ -21,62 +21,85 @@ class Latrine(MIMO):
 
     Core references
     ---------------
-    1. Rose et al. (2015): excreta generation, characterization defaults, and
-       urine-feces per-capita ratios.
-    2. Eawag Compendium of Sanitation Systems and Technologies (2nd ed.):
-       sanitation-chain definitions and system boundary guidance.
-    3. WEDC pit-latrine sizing guidance: storage volume and accumulation realism.
-    4. Pathogen reduction meta-analysis: supports future hygiene extensions.
-    5. UN/WHO Guide to sanitation resource recovery products & technologies:
-       supports future recovery outputs.
+    1. Per-capita excreta generation rates and physicochemical characterization defaults.
+       Rose, C., Parker, A., Jefferson, B., & Cartmell, E. (2015). The characterization of feces and urine: A review of
+       the literature to inform advanced treatment technology. Critical Reviews in Environmental Science and Technology,
+       45(17), 1827-1879. https://doi.org/10.1080/10643389.2014.1000761
+    2. Sanitation-chain and system-boundary definitions — basis for the general latrine input/output model structure.
+       Tilley, E., Ulrich, L., Lüthi, C., Reymond, P., & Zurbrügg, C. (2014). Compendium of sanitation systems and technologies
+       (2nd rev. ed.). Swiss Federal Institute of Aquatic Science and Technology (Eawag).
+       https://sswm.info/sites/default/files/reference_attachments/TILLEY%20et%20al%202014%20Compendium%20of%20Sanitation%20Systems%20and%20Technologies%202nd%20Revised%20Edition.pdf
+    3. Pit-latrine storage volume and accumulation-rate design guidance.
+       Reed, B., & Shaw, R. (2014). Technical brief: Simple pit latrines (WEDC Guide No. 25). Water, Engineering and
+       Development Centre (WEDC), Loughborough University.
+       https://wedc-knowledge.lboro.ac.uk/resources/booklets/G025-Simple-pit-latrines-booklet.pdf
+    4. Bulking-agent dose and urine-diversion efficiency design range (85-95%).
+       Berger, W. (2011). Technology review of composting toilets: Basic overview of composting toilets (with or without
+       urine diversion). Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) GmbH.
+       https://www.susana.org/_resources/documents/default/2-878-2-1383-gtz2011-en-technology-review-composting-toilets1.pdf
+    5. Pathogen (bacteria, viruses, protozoa, Ascaris) decay rates and T99 values as a function of pH, temperature, and
+       moisture content in pit latrines and other onsite sanitation systems.
+       Musaazi, I. G., McLoughlin, S., Murphy, H. M., Rose, J. B., Hofstra, N., Tumwebaze, I. K., & Verbyla, M. E. (2023).
+       A systematic review and meta-analysis of pathogen reduction in onsite sanitation systems. Water Research X, 18,
+       100171. https://doi.org/10.1016/j.wroa.2023.100171
+    6. Default CH4 and N2O emission factors for on-site/dry sanitation excreta management.
+       IPCC. (2019). 2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories, Volume 5: Waste,
+       Chapter 6: Wastewater Treatment and Discharge. Intergovernmental Panel on Climate Change.
+       https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/5_Volume5/19R_V5_6_Ch06_Wastewater.pdf
+    7. Risk-management framework for excreta and greywater reuse in agriculture.
+       World Health Organization. (2006). WHO guidelines for the safe use of wastewater, excreta and greywater, Volume 4:
+       Excreta and greywater use in agriculture. WHO. ISBN 92-4-154685-9.
+       https://www.who.int/publications/i/item/9241546859
 
     Main equations
     --------------
+    # All normalized to biomass output = 1 [m³/hr].
+
     Feces volume conversion:
         V_feces(t) = m_feces(t) / rho_feces
         [m³/hr]     [kg/hr]       [kg/m³]
 
-    Urine-feces coupling (Rose et al., 2015):
+    Additive input basis (in_main), all volumes in m³/hr:
+        GROUP_FLOW_in_main(t) =
+            V_feces(t)
+          + V_urine(t)
+          + V_flush(t)  × r_flush     (if flushwater_bus provided)
+          + V_clean(t)  × r_clean     (if cleaning_water_bus provided)
+          + V_cover(t)  × r_cover     (if cover_material_bus provided)
+          where:
+          r_flush, r_clean, r_cover are dimensionless retention fractions in
+          [0, 1]
+
+    Urine-feces coupling:
         f_urine(t) ≤ (V_urine_cap / m_feces_cap) * f_feces(t)
         where:
             V_urine_cap = urine_volume_per_cap_per_day   = 0.00142  [m³/cap/day]
             m_feces_cap = feces_wet_mass_per_cap_per_day = 0.128    [kg/cap/day]
             ratio       = 0.011094                        [m³/kg]
-        Enforced via flow_share_max on human_urine_bus:
-        This limits the urine inflow this latrine can absorb to at most the
-        feces-linked per-capita ratio; any excess urine can be handled by
-        other toilet facades in the model.
+        Enforced via flow_share_max on human_urine_bus.
 
-    Stored excreta bookkeeping:
-        V_stored(t) =
-            V_feces(t)
-          + (1 - alpha_ud) * V_urine(t)
-          + r_flush  * V_flush(t)
-          + r_clean  * V_clean(t)
-          + r_cover  * V_cover(t)
-          - V_leachate(t)
+    Biomass output:
+        V_biomass(t) = GROUP_FLOW_in_main(t)
+
+    Leachate (if leachate_bus provided):
+        V_leachate(t) = liquid_loss_fraction * GROUP_FLOW_in_main(t)
 
     Diverted urine (urine-diverting mode only):
-        V_diverted_urine(t) = alpha_ud * V_urine(t)
+        V_diverted_urine(t) = GROUP_FLOW_in_main(t) * urine_diversion_efficiency * _urine_fraction_in_common_input
 
     Optional proxy emissions:
         E_k(t) = beta_k * GROUP_FLOW_in_main(t),  k in {NH3, CH4, N2O}
 
     Notes
     -----
-    - Primary flow is human_feces_bus [kg/hr]. Capacity constrains the maximum
-      feces throughput of the latrine, representing sanitation service capacity
-      (persons served × feces generation rate per capita).
-    - Urine inflow is constrained to be at most proportional to feces inflow
-      (Rose et al., 2015). This allows urine flow to be lower than the ratio,
-      including zero, but prevents this latrine from absorbing more urine than
-      its feces-linked service level. Excess or zero‑urine scenarios are handled
-      by the wider system of toilet facades, not by changing this constraint.
-    - Grouped MIMO flows (in_main) make the input side additive, not pairwise
-      equalized.
-    - Characterization values (pH, dry solids, per-capita generation rates) are
-      stored as metadata for scenario documentation. They are not enforced as
-      hard optimization constraints in v3.0.
+    - Primary flow is human_feces_bus [kg/hr]. Capacity constrains the maximum feces throughput of the latrine, representing
+      sanitation service capacity (persons served × feces generation rate per capita).
+    - Urine inflow is constrained to be at most proportional to feces inflow. This allows urine flow to be lower than the ratio,
+      including zero, but prevents this latrine from absorbing more urine than its feces-linked service level. Excess or
+      zero‑urine scenarios are handled by the wider system of toilet facades, not by changing this constraint.
+    - Grouped MIMO flows (in_main) make the input side additive, not pairwise equalized.
+    - Characterization values (pH, dry solids, per-capita generation rates) are stored as metadata for scenario documentation.
+      They are not enforced as hard optimization constraints.
     """
 
     # ------------------------------------------------------------------
@@ -101,43 +124,44 @@ class Latrine(MIMO):
     # ------------------------------------------------------------------
     # mandatory buses
     # ------------------------------------------------------------------
-    human_feces_bus: Bus = None          # expected unit: kg
-    human_urine_bus: Bus = None          # expected unit: m³
-    biomass_waste_bus: Bus = None       # expected unit: m³
+    human_feces_bus: Bus = None          # kg (PRIMARY)
+    human_urine_bus: Bus = None          # m³
+    biomass_waste_bus: Bus = None        # m³
 
     # ------------------------------------------------------------------
     # optional input buses
     # ------------------------------------------------------------------
     flushwater_bus: Optional[Bus] = None           # m³
     cleaning_water_bus: Optional[Bus] = None       # m³
-    cover_material_bus: Optional[Bus] = None       # assumed already in retained-volume basis
+    cover_material_bus: Optional[Bus] = None       # m³
 
     # ------------------------------------------------------------------
     # optional output buses
     # ------------------------------------------------------------------
     leachate_bus: Optional[Bus] = None             # m³
     diverted_urine_bus: Optional[Bus] = None       # m³
-    nh3_loss_bus: Optional[Bus] = None             # proxy unit
-    ch4_bus: Optional[Bus] = None                  # proxy unit
-    n2o_bus: Optional[Bus] = None                  # proxy unit
+    nh3_loss_bus: Optional[Bus] = None             # kg
+    ch4_bus: Optional[Bus] = None                  # kg
+    n2o_bus: Optional[Bus] = None                  # kg
 
     # ------------------------------------------------------------------
     # active physical parameters (used in constraints / split logic)
     # ------------------------------------------------------------------
-    feces_density: float = 1060.0
-    flushwater_retention: float = 1.0
-    cleaning_water_retention: float = 1.0
-    cover_material_retention: float = 1.0
-    urine_diversion_efficiency: float = 0.0
-    liquid_loss_fraction: float = 0.0
-    nh3_loss_fraction: float = 0.0
-    ch4_yield_factor: float = 0.0
-    n2o_yield_factor: float = 0.0
+
+    feces_density: float = 1060.0                   # kg/m³ [Rose 2015]
+    flushwater_retention: float = 1.0               # [Tilley 2014]
+    cleaning_water_retention: float = 1.0           # [Tilley 2014]
+    cover_material_retention: float = 1.0           # [Tilley 2014]
+    urine_diversion_efficiency: float = 0.0         # fraction [0,1] [Berger 2011]
+    liquid_loss_fraction: float = 0.0               # [Reed & Shaw 2014]
+    nh3_loss_fraction: float = 0.0                  # kg NH3/kg wet feces
+    ch4_yield_factor: float = 0.0                   # kg CH4/kg wet feces        [IPCC 2019]
+    n2o_yield_factor: float = 0.0                   # kg CH4/kg wet feces        [IPCC 2019]
 
     # ------------------------------------------------------------------
     # economics
     # ------------------------------------------------------------------
-    marginal_cost: float = 0.0
+    marginal_cost: float = 0.0      # USD/kg human feces
 
     # ------------------------------------------------------------------
     # multiperiod
@@ -147,19 +171,19 @@ class Latrine(MIMO):
     fixed_costs: Union[float, Sequence[float]] = None
 
     # ------------------------------------------------------------------
-    # documentation / calibration defaults (not hard constraints in v3.0)
-    # Rose et al. (2015) style characterization fields
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
     # ------------------------------------------------------------------
     population_equivalent: float = 1.0
-    feces_wet_mass_per_cap_per_day: float = 0.128
-    feces_dry_mass_per_cap_per_day: float = 0.029
-    feces_water_fraction: float = 0.746
-    urine_volume_per_cap_per_day: float = 0.00142
-    feces_pH: float = 6.64
-    urine_pH: float = 6.2
-    urine_nitrogen_g_per_cap_per_day: float = 10.98
-    retention_time_days: float = None
-    temperature_c: float = None
+    feces_wet_mass_per_cap_per_day: float = 0.128       # kg/cap/day       [Rose 2015]
+    feces_dry_mass_per_cap_per_day: float = 0.029       # kg/cap/day       [Rose 2015]
+    feces_water_fraction: float = 0.746                 # mass fraction    [Rose 2015]
+    urine_volume_per_cap_per_day: float = 0.00142       # m³/cap/day       [Rose 2015]
+    feces_pH: float = 6.64                              # [Rose 2015]
+    urine_pH: float = 6.2                               # [Rose 2015]
+    urine_nitrogen_g_per_cap_per_day: float = 10.98     # g N/cap/day      [Rose 2015]
+    retention_time_days: float = None                   # [Musaazi et al. 2023]
+    temperature_c: float = None                         # [Musaazi et al. 2023]
 
     def __init__(self, **attributes):
         # --------------------------------------------------------------
@@ -241,6 +265,7 @@ class Latrine(MIMO):
         self.lifetime = attributes.pop("lifetime", self.lifetime)
         self.age = attributes.pop("age", self.age)
         self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
 
         # --------------------------------------------------------------
         # documentation / calibration defaults
@@ -277,16 +302,14 @@ class Latrine(MIMO):
         self._validate_parameters()
 
         # --------------------------------------------------------------
-        # per-capita urine/feces coupling ratio (Rose et al. 2015)
-        # feces is primary — urine is coupled to feces flow
-        # ratio: urine [m³/hr] per unit feces [kg/hr]
-        # = urine_volume_per_cap_per_day / feces_wet_mass_per_cap_per_day
-        # = 0.00142 / 0.128 = 0.011094 m³_urine / kg_feces
+        # derived constants
         # --------------------------------------------------------------
         self._urine_per_feces_ratio = (
                 self.urine_volume_per_cap_per_day
                 / self.feces_wet_mass_per_cap_per_day
         )
+
+        self._urine_fraction_in_common_input = 0.9216
 
         # --------------------------------------------------------------
         # groups
@@ -316,32 +339,27 @@ class Latrine(MIMO):
 
         # --------------------------------------------------------------
         # conversion factors
-        # bus-level factors convert flow into common activity basis
+        # All normalized to biomass output = 1 [m³/hr].
         # --------------------------------------------------------------
-        # Bus-level conversion factors: normalize each input to m³ basis
-        # MIMO divides flow by conversion_factor internally (GROUP_FLOW = sum(f_i / eta_i))
-        # so pass density directly — MIMO computes: f_feces [kg/hr] / 1060 [kg/m³] = m³/hr
         attributes[f"conversion_factor_{self.human_feces_bus.label}"] = sequence(
-            self.feces_density  # kg/m³ — NOTE: MIMO semantic: eta is the DENOMINATOR, not multiplier
+            self.feces_density
         )
         attributes[f"conversion_factor_{self.human_urine_bus.label}"] = sequence(1.0)
         attributes[f"conversion_factor_{self.biomass_waste_bus.label}"] = sequence(1.0)
-
-        # Group-level normalization: no extra scaling on the group
         attributes["conversion_factor_in_main"] = sequence(1.0)
         attributes["conversion_factor_out_main"] = sequence(1.0)
 
         if self.flushwater_bus is not None:
             attributes[f"conversion_factor_{self.flushwater_bus.label}"] = sequence(
-                max(self.flushwater_retention, 1e-9)
+                1.0 / max(self.flushwater_retention, 1e-9)
             )
         if self.cleaning_water_bus is not None:
             attributes[f"conversion_factor_{self.cleaning_water_bus.label}"] = sequence(
-                max(self.cleaning_water_retention, 1e-9)
+                1.0 / max(self.cleaning_water_retention, 1e-9)
             )
         if self.cover_material_bus is not None:
             attributes[f"conversion_factor_{self.cover_material_bus.label}"] = sequence(
-                max(self.cover_material_retention, 1e-9)
+                1.0 / max(self.cover_material_retention, 1e-9)
             )
         if self.leachate_bus is not None:
             attributes[f"conversion_factor_{self.leachate_bus.label}"] = sequence(1.0)
@@ -351,35 +369,19 @@ class Latrine(MIMO):
         if self.diverted_urine_bus is not None:
             attributes[f"conversion_factor_{self.diverted_urine_bus.label}"] = sequence(1.0)
             attributes["conversion_factor_out_urine"] = sequence(
-                max(self.urine_diversion_efficiency, 1e-9)
+                max(self.urine_diversion_efficiency * self._urine_fraction_in_common_input, 1e-9)
             )
 
         # --------------------------------------------------------------
-        # flow-share constraints
+        # flow-share constraints: urine inflow bounded by feces-linked ratio (approximately)
         # --------------------------------------------------------------
-        # [MANDATORY] Urine inflow is limited by the feces-derived per-capita ratio.
-        # Enforces: f_urine(t) <= urine_per_feces_ratio * f_feces(t)
-        # This allows urine to be lower than the ratio at a given timestep, while
-        # preventing this latrine from absorbing more urine than its feces-linked
-        # service level. Any remaining urine can be handled by other toilet facades.
         attributes[
             f"flow_share_max_{self.human_urine_bus.label}"
         ] = sequence(self._urine_per_feces_ratio)
 
-        # [OPTIONAL] Urine diversion split — only in urine_diverting mode
-        if self.diverted_urine_bus is not None and self.mode == "urine_diverting":
-            attributes[
-                f"flow_share_fix_{self.diverted_urine_bus.label}"
-            ] = sequence(self.urine_diversion_efficiency)
-
-        # [OPTIONAL] Leachate loss — upper bound on liquid loss fraction
-        if self.leachate_bus is not None:
-            attributes[
-                f"flow_share_max_{self.leachate_bus.label}"
-            ] = sequence(self.liquid_loss_fraction)
-
         # --------------------------------------------------------------
         # optional proxy emissions via existing emission-factor logic
+        # key: emission_factor_<source_bus_label>_<target_bus_label>
         # --------------------------------------------------------------
         if self.nh3_loss_bus is not None:
             attributes[
@@ -397,7 +399,7 @@ class Latrine(MIMO):
             ] = sequence(self.n2o_yield_factor)
 
         # --------------------------------------------------------------
-        # primary bus should point to actual bus label
+        # primary bus label resolution
         # --------------------------------------------------------------
         if self.primary == "biomass_waste_bus":
             primary_label = self.biomass_waste_bus.label
@@ -428,6 +430,45 @@ class Latrine(MIMO):
             **self._optional_bus_kwargs(),
             **attributes,
         )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+
+        if self.human_feces_bus in self.inputs:
+            self.inputs[self.human_feces_bus].variable_costs = sequence(self.marginal_cost)
+
+        if self.biomass_waste_bus in self.outputs:
+            out_flow = self.outputs[self.biomass_waste_bus]
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if not self.expandable and self.capacity is not None:
+            primary_bus_map = {
+                "biomass_waste_bus": self.biomass_waste_bus,
+                "human_feces_bus": self.human_feces_bus,
+                "human_urine_bus": self.human_urine_bus,
+            }
+            primary_bus = primary_bus_map.get(self.primary)
+            if primary_bus is not None:
+                flow = self.inputs.get(primary_bus, self.outputs.get(primary_bus))
+                if flow is not None:
+                    flow.nominal_value = self.capacity
 
     def _optional_bus_kwargs(self):
         kwargs = {}
