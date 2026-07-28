@@ -136,11 +136,11 @@ WEFE_TYPEMAP = {
     "septic_system_3": SepticSystem,
     "centralized_WWTP_3": CentralizedWWTP,
     "decentralized_WWTP_3": DecentralizedWWTP,
-    "flush_toilet": FlushToilet,
-    "dry_toilet": DryToilet,
-    "latrine": Latrine,
-    "composting_toilet": CompostingToilet,
-    "open_field": OpenField,
+    "flush_toilet_3": FlushToilet,
+    "dry_toilet_3": DryToilet,
+    "latrine_3": Latrine,
+    "composting_toilet_3": CompostingToilet,
+    "open_field_3": OpenField,
     "mimo_ro": MIMO_ReverseOsmosis,
     "mimo_uf": MIMO_UltraFiltration,
     "mimo_nf": MIMO_NanoFiltration,
@@ -177,9 +177,9 @@ WEFE_TYPEMAP = {
     "mimo_centralized_WWTP": MIMO_CentralizedWWTP,
     "mimo_decentralized_WWTP": MIMO_DecentralizedWWTP,
     "mimo_water_reuse": MIMO_WaterReuseSystem,
-    "water_pre_treatment": WaterPreTreatment,
-    "water_core_treatment": WaterCoreTreatment,
-    "water_post_treatment": WaterPostTreatment
+    "water_pre_treatment_3": WaterPreTreatment,
+    "water_core_treatment_3": WaterCoreTreatment,
+    "water_post_treatment_3": WaterPostTreatment
 }
 
 WEFE_TYPEMAP.update(TYPEMAP)

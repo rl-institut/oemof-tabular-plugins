@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class WaterPreTreatment(Converter, Facade):
+class Water_PreTreatment(Converter, Facade):
     r"""Water pre-treatment unit with two inputs and one output.
 
         Parameters

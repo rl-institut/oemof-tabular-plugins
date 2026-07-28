@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade  # v1.0   #please check default values once more #improve more pending
-class Latrine(Converter, Facade):
+class Lat_rine(Converter, Facade):
     r""" Latrine unit with human feces and human urine as the input
     and a combined biomass waste as the output.
 

@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade  # v1.0   #please check default values once more #improve more pending
-class CompostingToilet(Converter, Facade):
+class Composting_Toilet(Converter, Facade):
     r""" Composting toilet unit with human feces and human urine as input, bulking agent as a
     dosing parameter and, compost and leachate as the output.
     The fractions and relations need to be explicitly provided for more accuracy.

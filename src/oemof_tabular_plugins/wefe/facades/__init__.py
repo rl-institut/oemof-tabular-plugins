@@ -38,11 +38,11 @@ from .constructed_wetland_3 import ConstructedWetland
 from .septic_system_3 import SepticSystem
 from .centralized_WWTP_3 import CentralizedWWTP
 from .decentralized_WWTP_3 import DecentralizedWWTP
-from .flush_toilet import FlushToilet
-from .dry_toilet import DryToilet
-from .latrine import Latrine
-from .composting_toilet import CompostingToilet
-from .open_field import OpenField
+from .flush_toilet_3 import FlushToilet
+from .dry_toilet_3 import DryToilet
+from .latrine_3 import Latrine
+from .composting_toilet_3 import CompostingToilet
+from .open_field_3 import OpenField
 from .mimo_ro import MIMO_ReverseOsmosis
 from .mimo_uf import MIMO_UltraFiltration
 from .mimo_nf import MIMO_NanoFiltration
@@ -79,6 +79,6 @@ from .mimo_centralized_WWTP import MIMO_CentralizedWWTP
 from .mimo_decentralized_WWTP import MIMO_DecentralizedWWTP
 from .mimo_water_reuse import MIMO_WaterReuseSystem
 from .mimo_biological_denitrification import MIMO_BiologicalDenitrification
-from .water_pre_treatment import WaterPreTreatment
-from .water_core_treatment import WaterCoreTreatment
-from .water_post_treatment import WaterPostTreatment
+from .water_pre_treatment_3 import WaterPreTreatment
+from .water_core_treatment_3 import WaterCoreTreatment
+from .water_post_treatment_3 import WaterPostTreatment

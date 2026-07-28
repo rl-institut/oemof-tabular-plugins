@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade  # v1.0   #please check default values once more #improve more pending
-class DryToilet(Converter, Facade):
+class Dry_Toilet(Converter, Facade):
     r""" Dry toilet unit with human feces and human urine as input, bulking agent as a
     dosing parameter and, dry feces and leachate as the output.
     The fractions and relations need to be explicitly provided for more accuracy.

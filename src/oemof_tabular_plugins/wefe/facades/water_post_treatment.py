@@ -10,7 +10,7 @@ from oemof.solph.flows import Flow
 from oemof.tabular._facade import dataclass_facade, Facade
 
 @dataclass_facade #v1.0   #please check default values once more #improve more pending
-class WaterPostTreatment(Converter, Facade):
+class WaterPost_Treatment(Converter, Facade):
     r"""Water post-treatment unit with mandatory electricity and water input,
     mandatory treated water output, and an optional waste biomass output.
 
@@ -136,8 +136,8 @@ class WaterPostTreatment(Converter, Facade):
 
         if self.waste_biomass_out_bus is not None:
             # Nutrient cost per m³ of treated water:
-            # nutrient_dose [mg/L] * 1e-6 [kg/m³ per mg/L] * nutrient_cost [USD/kg]
-            nutrient_cost_per_m3 = (self.nutrient_dose * 1e-6 * self.nutrient_cost)
+            # nutrient_dose [mg/L] * 1e-3 [kg/m³ per mg/L] * nutrient_cost [USD/kg]
+            nutrient_cost_per_m3 = (self.nutrient_dose * 1e-3 * self.nutrient_cost)
             water_out_variable_costs += nutrient_cost_per_m3
 
             self.conversion_factors[self.waste_biomass_out_bus] = sequence(self.biomass_waste_fraction)
