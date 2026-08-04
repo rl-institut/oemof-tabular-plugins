@@ -1,7 +1,7 @@
 import dataclasses
 import warnings
 from typing import Sequence, Union, Optional
-
+import numpy as np
 from oemof.solph.buses import Bus
 from oemof.solph._plumbing import sequence
 from oemof_tabular_plugins.wefe.facades import MIMO
@@ -404,7 +404,7 @@ class BioFiltration(MIMO):
         # --------------------------------------------------------------
         # output-specific costs
         # --------------------------------------------------------------
-        total_marginal_cost = self.marginal_cost + self.nutrient_cost_per_m3
+        total_marginal_cost = np.add(self.marginal_cost, self.nutrient_cost_per_m3)
 
         if self.water_out_bus in self.outputs:
             out_flow = self.outputs[self.water_out_bus]

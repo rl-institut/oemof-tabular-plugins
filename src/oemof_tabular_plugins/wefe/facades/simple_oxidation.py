@@ -1,7 +1,7 @@
 import dataclasses
 import warnings
 from typing import Sequence, Union, Optional
-
+import numpy as np
 from oemof.solph.buses import Bus
 from oemof.solph._plumbing import sequence
 from oemof_tabular_plugins.wefe.facades import MIMO
@@ -342,7 +342,7 @@ class SimpleOxidation(MIMO):
         # --------------------------------------------------------------
         # output-specific costs
         # --------------------------------------------------------------
-        total_marginal_cost = self.marginal_cost + self._soc * self.oxidant_demand_factor * self.oxidant_cost
+        total_marginal_cost = np.add(self.marginal_cost, self._soc * self.oxidant_demand_factor * self.oxidant_cost)
 
         if self.water_out_bus in self.outputs:
             out_flow = self.outputs[self.water_out_bus]
