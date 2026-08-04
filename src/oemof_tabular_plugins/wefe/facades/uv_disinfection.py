@@ -320,12 +320,11 @@ class UVDisinfection(MIMO):
         # --------------------------------------------------------------
         # output-specific costs
         # --------------------------------------------------------------
+        total_marginal_cost = self.marginal_cost + self.maintenance_cost + self.lamp_replacement_cost
 
         if self.water_out_bus in self.outputs:
             out_flow = self.outputs[self.water_out_bus]
-            out_flow.variable_costs = sequence(
-                self.marginal_cost + self.maintenance_cost + self.lamp_replacement_cost
-            )
+            out_flow.variable_costs = sequence(total_marginal_cost)
             if not self.expandable and self.capacity is not None:
                 out_flow.nominal_value = self.capacity
             custom_attrs = (getattr(self, "output_parameters", None) or {}).get(

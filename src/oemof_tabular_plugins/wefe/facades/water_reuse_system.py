@@ -311,7 +311,7 @@ class WaterReuseSystem(MIMO):
             from_bus_1=self.water_in_bus,
             to_bus_0=self.water_out_bus,
             primary=primary_label,
-            marginal_cost=self.marginal_cost + self.chemical_cost,
+            marginal_cost=self.marginal_cost,
             carrier_cost=self.carrier_cost,
             expandable=self.expandable,
             capacity=self.capacity,
@@ -339,12 +339,11 @@ class WaterReuseSystem(MIMO):
         # --------------------------------------------------------------
         # output-specific costs
         # --------------------------------------------------------------
+        total_marginal_cost = self.marginal_cost + self.chemical_cost
 
         if self.water_out_bus in self.outputs:
             out_flow = self.outputs[self.water_out_bus]
-            out_flow.variable_costs = sequence(
-                self.marginal_cost + self.chemical_cost
-            )
+            out_flow.variable_costs = sequence(total_marginal_cost)
             if not self.expandable and self.capacity is not None:
                 out_flow.nominal_value = self.capacity
             custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
