@@ -51,7 +51,7 @@ service__item_style = {
 
 table__item_style = {
     "kpis": {
-        "width": "500px",
+        "width": "auto",
         "border-style": "solid",
         "border-width": "3px",
         "padding": "1rem",
@@ -59,13 +59,69 @@ table__item_style = {
         "border-radius": "5px",
     },
     "capacities": {
-        "width": "800px",
+        "width": "auto",
         "border-style": "solid",
         "border-width": "3px",
         "padding": "1rem",
         "margin": "1rem",
         "border-radius": "5px",
     },
+    "fixed_inputs": {
+        "width": "auto",
+        "border-style": "solid",
+        "border-width": "3px",
+        "padding": "1rem",
+        "margin": "1rem",
+        "border-radius": "5px",
+    },
+}
+
+TABLE_TITLES = {
+    "kpis": "Key Performance Indicators",
+    "capacities": "Installed and Optimised Capacities",
+    "fixed_inputs": "Annex A - Fixed Inputs (not optimiser decisions)",
+}
+
+# "Capacity" / "Optimized Capacity" / "Capacity Total" read ambiguously side by side
+CAPACITY_COLUMN_TITLES = {
+    "Capacity": "Existing",
+    "Optimized Capacity": "Added",
+    "Capacity Total": "Total",
+    "unit": "Unit",
+    "value": "Value",
+}
+
+LEFT_ALIGNED_COLUMNS = ("Section", "Component name", "kpi", "Unit")
+
+# KPIs as a summary strip on top, then capacities, then the annex
+TABLE_ORDER = ["kpis", "capacities", "fixed_inputs"]
+
+table_container_style = {
+    "display": "flex",
+    "flex-direction": "column",
+    "align-items": "stretch",
+}
+
+scenario_header_style = {
+    "display": "flex",
+    "flex-wrap": "wrap",
+    "gap": "2rem",
+    "padding": "0.75rem 1rem",
+    "margin": "1rem",
+    "border-left": "4px solid #444",
+    "background-color": "#f7f7f7",
+    "fontFamily": "sans-serif",
+    "fontSize": "0.9rem",
+}
+
+# fallback so that adding a new result table cannot break the dash app
+default_table__item_style = {
+    "width": "600px",
+    "border-style": "solid",
+    "border-width": "3px",
+    "padding": "1rem",
+    "margin": "1rem",
+    "border-radius": "5px",
 }
 
 container_style = {
@@ -222,7 +278,16 @@ def sankey(results, display_name, units, date_time_index=None, ts=None):
 
 
 
-def prepare_app(app, dp_path, results, tables, services, units=None, label_map=None):
+def prepare_app(
+    app,
+    dp_path,
+    results,
+    tables,
+    services,
+    units=None,
+    label_map=None,
+    scenario_meta=None,
+):
     """ """
     p0 = Package(dp_path)
 
@@ -311,7 +376,11 @@ def prepare_app(app, dp_path, results, tables, services, units=None, label_map=N
 
     tables_figure = []
 
-    for table in tables:
+    ordered_tables = [t for t in TABLE_ORDER if t in tables] + [
+        t for t in tables if t not in TABLE_ORDER
+    ]
+
+    for table in ordered_tables:
         df = tables[table]
 
         if "unit" not in df.columns:
@@ -322,25 +391,59 @@ def prepare_app(app, dp_path, results, tables, services, units=None, label_map=N
 
             df["unit"] = df[df.columns[0]].apply(set_value, args=(units,))
 
+        df = df.copy()
+
         if "Component name" in df.columns:
             df["Component name"] = df["Component name"].apply(display_name)
         elif "kpi" in df.columns:
             df["kpi"] = df["kpi"].apply(display_name)
+
+        # thousands separators before the frame is stringified for the DataTable
+        if "value" in df.columns:
+            df["value"] = df["value"].apply(
+                lambda v: f"{v:,.2f}" if isinstance(v, (int, float)) else v
+            )
+
+        # a column with the same entry on every row carries no information
+        if "Maximum Capacity" in df.columns and df["Maximum Capacity"].nunique() == 1:
+            df = df.drop(columns="Maximum Capacity")
+
+        # print the section label once per group rather than on every row
+        if "Section" in df.columns:
+            df["Section"] = df["Section"].mask(df["Section"].duplicated(), "")
+
+        df = df.rename(columns=CAPACITY_COLUMN_TITLES)
+
         tables_figure.append(
             html.Div(
-                style=table__item_style[table],
+                style=table__item_style.get(table, default_table__item_style),
                 children=[
-                    html.H4(table),
+                    html.H4(TABLE_TITLES.get(table, table.replace("_", " ").title())),
                     dash_table.DataTable(
-                        data=df.round(2).to_dict("records"),
+                        data=df.to_dict("records"),
                         columns=[{"name": i, "id": i} for i in df.columns],
+                        style_cell={
+                            "textAlign": "right",
+                            "padding": "6px 12px",
+                            "fontFamily": "sans-serif",
+                        },
+                        style_header={
+                            "fontWeight": "bold",
+                            "backgroundColor": "#f4f4f4",
+                            "textAlign": "left",
+                        },
                         style_cell_conditional=[
-                            {"if": {"column_id": "kpi"}, "textAlign": "center"},
-                            {
-                                "if": {"column_id": "Component name"},
-                                "textAlign": "center",
-                            },
+                            {"if": {"column_id": c}, "textAlign": "left"}
+                            for c in LEFT_ALIGNED_COLUMNS
                         ],
+                        style_data_conditional=[
+                            {
+                                "if": {"filter_query": '{Section} != ""'},
+                                "borderTop": "2px solid #bbb",
+                            }
+                        ]
+                        if "Section" in df.columns
+                        else [],
                     ),
                 ],
             )
@@ -435,16 +538,32 @@ def prepare_app(app, dp_path, results, tables, services, units=None, label_map=N
     # loading external resources
     external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
-    app.layout = html.Div(
-        children=[
-            html.H2("Scalar results"),
-            html.H3("KPIS"),
+    scenario_header = []
+    if scenario_meta:
+        scenario_header = [
             html.Div(
-                className="table--container",
-                style=container_style,
-                children=tables_figure,
-            ),
-            html.H3("Services"),
+                className="scenario--header",
+                style=scenario_header_style,
+                children=[
+                    html.Span(
+                        [html.B(f"{key}: "), html.Span(str(value))]
+                    )
+                    for key, value in scenario_meta.items()
+                    if value is not None
+                ],
+            )
+        ]
+
+    app.layout = html.Div(
+        children=scenario_header
+                 + [
+                     html.H2("Scalar results"),
+                     html.Div(
+                         className="table--container",
+                         style=table_container_style,
+                         children=tables_figure,
+                     ),
+                     html.H3("Services"),
             # dcc.Dropdown(
             #     options=[s for s in services],
             #     value=[s for s in services],
