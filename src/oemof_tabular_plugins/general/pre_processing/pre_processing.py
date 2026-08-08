@@ -132,6 +132,8 @@ def pre_processing_costs(wacc, element, element_df):
             # -------- CASE 3: compute from params --------
             elif has_all_cost_params:
                 capacity_cost = calculate_annuity(capex, opex, lifetime, wacc)
+                if "annuity" in element_df.columns:
+                    element_df.at[index, "annuity"] = float(capacity_cost)
 
             # -------- CASE 4: broken intent --------
             else:

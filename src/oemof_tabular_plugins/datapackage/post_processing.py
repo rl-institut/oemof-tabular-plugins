@@ -65,14 +65,28 @@ def get_raw_inputs(moo=False):
 
 
 # Functions for results per component
+
+def _invested_capacity(results_df):
+    """Return the capacity investment relevant for costing a component.
+
+    For storages this is the energy-capacity investment (volume / kWh), not the
+    charge/discharge power investment that ends up in the 'investments' column.
+    """
+    if "storage" in results_df.name:
+        v = results_df.get("storage_capacity_invest")
+        if v is not None and pd.notna(v):
+            return v
+    investments = results_df.investments
+    if investments is None or pd.isna(investments):
+        investments = 0
+    return investments
+
 def compute_capacity_total(results_df):
     # ToDo: how it is here is that now total capacity is considering the storage capacity (in MWh) for storage.
     #  Check how the storage capacities should be displayed in the results to make it not confusing for the user. Maybe
     #  the storage components need two total capacity results (one for power and one for energy)?
     """Calculates total capacity by adding existing capacity (capacity) to optimized capacity (investments)"""
-    investments = results_df.investments
-    if investments is None:
-        investments = 0
+    investments = _invested_capacity(results_df)
 
     if "storage" in results_df.name:
         return results_df.storage_capacity + investments
@@ -82,9 +96,7 @@ def compute_capacity_total(results_df):
 
 def compute_capacity_added(results_df):
     """Calculates duplicate optimized capacity (investments) into a column with a better name"""
-    investments = results_df.investments
-    if investments is None:
-        investments = 0
+    investments = _invested_capacity(results_df)
     return investments
 
 
@@ -94,9 +106,7 @@ def compute_annuity_total(results_df):
     #  Check that this is correctly applied for storage components or if two different costs should
     #  be calculated (one for power and one for energy)
 
-    investments = results_df.investments
-    if investments is None:
-        investments = 0
+    investments = _invested_capacity(results_df)
 
     # When MOO is active, capacity_cost is scaled for optimization but annuity contains
     # the original unscaled value. Use annuity if available to ensure correct cost reporting.
@@ -114,9 +124,7 @@ def compute_upfront_investment_costs(results_df):
     if "capex" not in results_df.index:
         return None
     else:
-        investments = results_df.investments
-        if investments is None:
-            investments = 0
+        investments = _invested_capacity(results_df)
 
         return results_df.capex * investments
 
@@ -126,16 +134,20 @@ def compute_annualized_capex_moo(results_df):
     (called investments) with component annuity. This function is used in the moo mode
     """
 
-    investments = results_df.investments
-    if investments is None:
-        investments = 0
+    investments = _invested_capacity(results_df)
 
     return results_df.annuity * investments
 
 
 def compute_total_annual_cost_moo(results_df):
     """Calculates total annual system cost (TAC) by summing up all component annuities and variable cost"""
-    total_system_annuity = results_df["annualized_capex"].sum()
+    #total_system_annuity = results_df["annualized_capex"].sum()
+    # storages (and MIMOs) appear on several bus/direction rows -> count each asset once
+    idx_component = results_df.index.names.index("asset")
+    assets = [i[idx_component] for i in results_df.index]
+    total_system_annuity = (
+        results_df["annualized_capex"].groupby(assets).max().fillna(0.0).sum()
+    )
     total_system_variable_cost = results_df["variable_cost_moo"].sum()
     total_annual_cost = total_system_annuity + total_system_variable_cost
     return total_annual_cost
@@ -146,9 +158,7 @@ def compute_opex_fix_costs(results_df):
     if "opex_fix" not in results_df.index:
         return None
     else:
-        investments = results_df.investments
-        if investments is None:
-            investments = 0
+        investments = _invested_capacity(results_df)
         return results_df.opex_fix * investments
 
 
@@ -169,6 +179,10 @@ def compute_variable_costs(results_df):
 def compute_variable_cost_moo(results_df):
     """Calculates variable costs by multiplying the resource cost by the aggregated flow."""
     if results_df.name[4] == "excess":
+        return None
+        # resource_cost is a per-unit rate on the component's reference flow; a component
+        # connected to several buses would otherwise be charged once per bus
+    if not results_df.get("is_reference_flow", True):
         return None
     return results_df.resource_cost * results_df.aggregated_flow
 
@@ -196,6 +210,8 @@ def compute_co2_emissions(results_df):
 
 def compute_ghg_emissions(results_df):
     """Calculates ghg emissions by multiplying aggregated flow by emission factor"""
+    if not results_df.get("is_reference_flow", True):
+        return None
     if results_df.name[4] == "excess":
         return None
     if "ghg_emission_factor" not in results_df.index:
@@ -209,9 +225,7 @@ def compute_land_requirement_additional(results_df):
     if "land_requirement_factor" not in results_df.index:
         return None
     else:
-        investments = results_df.investments
-        if investments is None:
-            investments = 0
+        investments = _invested_capacity(results_df)
         return investments * results_df.land_requirement_factor
 
 
@@ -225,6 +239,8 @@ def compute_land_requirement_total(results_df):
 
 def compute_water_consumption(results_df):
     """Calculates water footprint by multiplying aggregated flow by water_consumption_factor"""
+    if not results_df.get("is_reference_flow", True):
+        return None
     if results_df.name[4] == "excess":
         return None
     if "water_consumption_factor" not in results_df.index:
@@ -235,6 +251,8 @@ def compute_water_consumption(results_df):
 
 def compute_indirect_water_consumption(results_df):
     """Calculates water footprint by multiplying aggregated flow by water_consumption_factor"""
+    if not results_df.get("is_reference_flow", True):
+        return None
     if results_df.name[4] == "excess":
         return None
     if "indirect_water_consumption_factor" not in results_df.index:
@@ -867,6 +885,14 @@ def construct_dataframe_from_results(
         ts = []
         investments = []
         flows = []
+        # storage energy-capacity investment lives in the (node, 'None') entries,
+        # which are skipped by the flow loop below -> collect them separately
+        storage_invest = {}
+        for x, res in solph.views.convert_keys_to_strings(results).items():
+            if x[1] == "None" and not res["scalars"].empty:
+                if "invest" in res["scalars"].index:
+                    storage_invest[x[0]] = res["scalars"].invest
+
         for x, res in solph.views.convert_keys_to_strings(results).items():
             # filter out entries where the second element of the tuple is 'None' and ensure the
             # tuple has exactly two elements
@@ -896,6 +922,10 @@ def construct_dataframe_from_results(
         )
 
         df["investments"] = investments
+        idx_asset = mindex.names.index("asset")
+        df["storage_capacity_invest"] = [
+            storage_invest.get(ix[idx_asset], float("nan")) for ix in df.index
+        ]
         df.sort_index(inplace=True)
 
     return df
@@ -971,6 +1001,21 @@ def process_raw_inputs(df_results, dp_path, moo=False, raw_inputs=None, typemap=
     # TODO does not work for inputs which are timeseries (ie for moo)
     return df_results.join(inputs_df.T.apply(pd.to_numeric, downcast="float"))
 
+def mark_reference_flows(results_df):
+    """Flag one flow per asset as the reference for per-unit intensity factors."""
+    if "is_reference_flow" in results_df.columns:
+        return
+    i_asset = results_df.index.names.index("asset")
+    i_dir = results_df.index.names.index("direction")
+    flags = pd.Series(False, index=results_df.index)
+    flow = results_df["aggregated_flow"].fillna(0)
+    for asset in dict.fromkeys(i[i_asset] for i in results_df.index):
+        sub = flow[[i[i_asset] == asset for i in results_df.index]]
+        out = sub[[i[i_dir] == "out" for i in sub.index]]
+        pick = out if not out.empty else sub
+        flags.loc[pick.idxmax()] = True
+    results_df["is_reference_flow"] = flags
+
 
 def apply_calculations(results_df, calculations=None):
     """Apply calculation and populate the columns of the results_df
@@ -992,6 +1037,8 @@ def apply_calculations(results_df, calculations=None):
     """
     if calculations is None:
         calculations = []
+
+    mark_reference_flows(results_df)
 
     for calc in calculations:
         _validate_calculation(calc)

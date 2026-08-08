@@ -43,6 +43,7 @@ RESULT_TABLE_COLUMNS = {
         "storage_capacity_potential",
         "expandable",
         "investments",
+        "storage_capacity_invest",
         "capacity_total",
     ],
 }
@@ -53,8 +54,75 @@ CAPACITIES_UNIT = {
     "irradiation": {"default": "[kWh/m²]", "storage": "[kWh]"},
     "crop": {"default": "[m²]", "storage": "[kg]"},
     "water": {"default": "[m³/h]", "storage": "[m³]"},
+    # Sanitation carriers. Units are declared in the WEFE facade docstrings:
+    # feces buses are mass (kg), urine and biomass/sludge buses are volume (m3).
+    "feces": {"default": "[kg/h]", "storage": "[kg]"},
+    "dry-feces": {"default": "[kg/h]", "storage": "[kg]"},
+    "urine": {"default": "[m³/h]", "storage": "[m³]"},
+    "biomass": {"default": "[m³/h]", "storage": "[m³]"},
 }
 
+# Report sections for the capacities table. Keys are the raw component names as
+# they appear in the datapackage (verbose names are applied at render time).
+# A few `volatile` sources use `capacity` as a population multiplier: the profile
+# carries the per-capita generation rate and the model flow is capacity x profile.
+# Their capacity is a headcount, not a flow rate, so it cannot be derived from the
+# carrier (and the facade_type "volatile" is shared with pv-panel, so that is not a
+# safe key either). Override per component name.
+CAPACITY_UNIT_OVERRIDES = {
+    "hu_waste": "[persons]",
+    "hf_waste": "[persons]",
+    "hh_gw_waste": "[persons]",
+    "au_waste": "[animals]",
+    "af_waste": "[animals]",
+}
+
+ANNEX_SECTION = "Annex A - Fixed Inputs"
+CAPACITY_SECTION_ORDER = ["Energy Supply", "Water Treatment", "Sanitation", "Other"]
+CAPACITY_SECTIONS = {
+    # Energy Supply
+    "pv-panel": "Energy Supply",
+    "battery-storage": "Energy Supply",
+    "inverter": "Energy Supply",
+    "diesel-generator": "Energy Supply",
+    # Water Treatment
+    "groundwater-pump": "Water Treatment",
+    "DW_pre_treatment": "Water Treatment",
+    "DW_core_treatment": "Water Treatment",
+    "DW_post_treatment": "Water Treatment",
+    "drinking-water-storage": "Water Treatment",
+    # Sanitation
+    "grey_water_septic": "Sanitation",
+    "decentralized_WWTP": "Sanitation",
+    "water_reuse_system": "Sanitation",
+    "latrine": "Sanitation",
+    "dry_toilet": "Sanitation",
+    "open_field": "Sanitation",
+    # Annex A - fixed data inputs, not optimiser decisions
+    "hh_gw_waste": ANNEX_SECTION,
+    "hf_waste": ANNEX_SECTION,
+    "hu_waste": ANNEX_SECTION,
+    "af_waste": ANNEX_SECTION,
+    "au_waste": ANNEX_SECTION,
+}
+
+
+def format_capacities_for_display(table, decimals=2, na_rep="—"):
+    """Return a display copy with fixed decimals and a dash for non-applicable cells.
+
+    The CSV export keeps native floats; only the rendered table is stringified.
+    """
+    display = table.copy()
+    for col in ["Capacity", "Optimized Capacity", "Capacity Total", "Population"]:
+        if col in display.columns:
+            display[col] = display[col].apply(
+                lambda v: na_rep if pd.isna(v) else f"{float(v):.{decimals}f}"
+            )
+    if "Maximum Capacity" in display.columns:
+        display["Maximum Capacity"] = display["Maximum Capacity"].apply(
+            lambda v: v if isinstance(v, str) else f"{float(v):.{decimals}f}"
+        )
+    return display
 
 def extract_table_from_results(df_results, columns):
     """Extracts a set of columns from the df_results DataFrame. The lists of columns to generate these tables can be
@@ -194,6 +262,7 @@ def post_processing(
     calculations=None,
     kpi_calculations=None,
     moo=False,
+    scenario_meta=None,
 ):
     # ToDo: adapt this function after multi-index dataframe is implemented to make it more concise / cleaner
     # ToDo: params can be accessed in results so will not need to be a separate argument
@@ -333,15 +402,48 @@ def post_processing(
         capacities_table.rename(
             columns={
                 "asset": "Component name",
-                "Investments": "Optimized Capacity",
                 "Capacity Potential": "Maximum Capacity",
             },
             inplace=True,
         )
 
-        # eliminate double occurences of same asset
-        capacities_table = capacities_table.loc[
-            (capacities_table["Capacity Total"] > 0),
+        # Storages invest in energy capacity (volume / kWh); that value lives in a
+        # different column from the charge/discharge power investment, so all three
+        # capacity columns must be sourced consistently for storage rows.
+        def _installed(row):
+            if row.get("facade_type") == "storage":
+                v = row.get("Storage Capacity")
+                if v is not None and pd.notna(v):
+                    return v
+            return row.get("Capacity")
+
+        def _optimized(row):
+            if row.get("facade_type") == "storage":
+                v = row.get("Storage Capacity Invest")
+                if v is not None and pd.notna(v):
+                    return v
+            return row.get("Investments")
+
+        capacities_table["Capacity"] = capacities_table.apply(_installed, axis=1)
+        capacities_table["Optimized Capacity"] = capacities_table.apply(
+            _optimized, axis=1
+        )
+
+        # A component appears once per bus it is connected to. Keep the row carrying
+        # its own capacity (the largest) so that the unit is derived from the
+        # component's own carrier rather than, say, its electricity input bus.
+        capacities_table = capacities_table[capacities_table["Capacity Total"] > 0]
+        # Several rows can tie on Capacity Total (a component's nameplate is repeated
+        # on every bus it touches). The facade's capacity is defined on its *primary*
+        # flow, which is also the only flow carrying an investment entry, so break ties
+        # on that. This keeps e.g. the latrine on its feces bus [kg/h] rather than its
+        # biomass bus [m³/h].
+        capacities_table["_has_inv"] = capacities_table["Investments"].notna().astype(int)
+        capacities_table = capacities_table.sort_values(
+            ["Component name", "Capacity Total", "_has_inv"],
+            ascending=[True, False, False],
+        ).drop_duplicates(subset=["Component name"], keep="first")
+        capacities_table = capacities_table[
             [
                 "Component name",
                 "Capacity",
@@ -349,11 +451,79 @@ def post_processing(
                 "Capacity Total",
                 "Maximum Capacity",
                 "unit",
-            ],
+            ]
         ]
-        capacities_table = capacities_table.drop_duplicates(subset=["Component name"])
 
-        result_tables.update({"capacities": capacities_table})
+        for _col in ["Capacity", "Optimized Capacity", "Capacity Total"]:
+            capacities_table[_col] = pd.to_numeric(
+                capacities_table[_col], errors="coerce"
+            ).round(2)
+
+        def _max_cap(v):
+            v = pd.to_numeric(v, errors="coerce")
+            if pd.isna(v) or v == float("inf"):
+                return "unconstrained"
+            return round(float(v), 2)
+
+        capacities_table["Maximum Capacity"] = capacities_table[
+            "Maximum Capacity"
+        ].apply(_max_cap)
+
+        capacities_table["unit"] = capacities_table.apply(
+            lambda r: CAPACITY_UNIT_OVERRIDES.get(r["Component name"], r["unit"]),
+            axis=1,
+        )
+
+        # -- split into report sections and lift the fixed data inputs into an annex --
+        capacities_table["Section"] = (
+            capacities_table["Component name"].map(CAPACITY_SECTIONS).fillna("Other")
+        )
+        unmapped = sorted(
+            capacities_table.loc[
+                capacities_table["Section"] == "Other", "Component name"
+            ].unique()
+        )
+        if unmapped:
+            logging.warning(
+                f"Components not assigned to a capacities section, shown under "
+                f"'Other': {unmapped}. Add them to CAPACITY_SECTIONS."
+            )
+
+        fixed_inputs_table = capacities_table[
+            capacities_table["Section"] == ANNEX_SECTION
+            ].copy()
+        fixed_inputs_table = fixed_inputs_table.rename(
+            columns={"Capacity Total": "Population"}
+        )[["Component name", "Population", "unit"]]
+
+        capacities_table = capacities_table[
+            capacities_table["Section"] != ANNEX_SECTION
+            ].copy()
+        _rank = {name: i for i, name in enumerate(CAPACITY_SECTION_ORDER)}
+        capacities_table["_rank"] = (
+            capacities_table["Section"].map(_rank).fillna(len(_rank))
+        )
+        capacities_table = capacities_table.sort_values(
+            ["_rank", "Component name"]
+        ).drop(columns="_rank")
+        capacities_table = capacities_table[
+            [
+                "Section",
+                "Component name",
+                "Capacity",
+                "Optimized Capacity",
+                "Capacity Total",
+                "Maximum Capacity",
+                "unit",
+            ]
+        ]
+
+        result_tables.update(
+            {
+                "capacities": format_capacities_for_display(capacities_table),
+                "fixed_inputs": format_capacities_for_display(fixed_inputs_table),
+            }
+        )
 
         cost_table = extract_table_from_results(
             calculator.df_results, RESULT_TABLE_COLUMNS["costs"]
@@ -399,7 +569,11 @@ def post_processing(
 
         # save tables to csv files
         tables_to_save.update(
-            {"costs.csv": cost_table, "capacities.csv": capacities_table}
+            {
+                "costs.csv": cost_table,
+                "capacities.csv": capacities_table,
+                "fixed_inputs.csv": fixed_inputs_table,
+            }
         )
 
     kpis = calculator.kpis
@@ -417,7 +591,11 @@ def post_processing(
                 "ac-elec-bus", "in"
             ]["aggregated_flow"].sum()
 
-        result_tables.update({"kpis": kpis})
+        # not parameterised in this configuration -> omit from the rendered table
+        # (the CSV written above retains it for traceability)
+        result_tables.update(
+            {"kpis": kpis.drop(index="total_indirect_water_consumption", errors="ignore")}
+        )
 
     for filename, table in tables_to_save.items():
         save_table_to_csv(table, results_path, filename)
@@ -436,7 +614,8 @@ def post_processing(
             tables=result_tables,
             services=service_tables,
             units=parameters_units,
-            label_map=verbose_names
+            label_map=verbose_names,
+            scenario_meta=scenario_meta
         )
         app.run(debug=False, port=8060)
 

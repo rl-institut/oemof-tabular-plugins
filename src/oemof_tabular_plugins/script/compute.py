@@ -1,4 +1,5 @@
 import os
+import datetime
 
 import pandas as pd
 from oemof.solph import EnergySystem, Model
@@ -128,11 +129,26 @@ def compute_scenario(
     # select solver 'gurobi', 'cplex', 'glpk' etc
     m.solve("cbc")
 
+    # capture the raw solver objective value (before MOO scaling factors)
+    raw_objective_value = m.objective()
+    print(f"Raw solver objective value: {raw_objective_value}")
+
     # extract parameters and results
     params = parameter_as_dict(es)
     es.results = processing.results(m)
     if save_raw_results is True:
         es.dump(dpath=results_path, filename="oemof_raw")
+
+    scenario_meta = {
+        "Scenario": scenario_name,
+        "WACC": f"{wacc:.1%}" if isinstance(wacc, (int, float)) else str(wacc),
+        "Solver": "cbc",
+        "Run": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+    }
+    if moo and moo_wf:
+        scenario_meta["MOO weights"] = ", ".join(
+            f"{k}={v:g}" for k, v in moo_wf.items()
+        )
 
     return post_processing(
         params,
@@ -143,6 +159,7 @@ def compute_scenario(
         parameters_units=parameters_units,
         infer_bus_carrier=infer_bus_carrier,
         moo=moo,
+        scenario_meta=scenario_meta
     )
 
 

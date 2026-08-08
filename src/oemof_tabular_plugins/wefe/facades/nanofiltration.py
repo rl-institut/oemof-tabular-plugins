@@ -1,140 +1,444 @@
-from dataclasses import field
-from typing import Sequence, Union
-
+import dataclasses
+import warnings
+from typing import Sequence, Union, Optional
 import numpy as np
-from oemof.solph._plumbing import sequence
 from oemof.solph.buses import Bus
-from oemof.solph.components import Converter
-from oemof.solph.flows import Flow
+from oemof.solph._plumbing import sequence
+from oemof_tabular_plugins.wefe.facades import MIMO
 
-from oemof.tabular._facade import dataclass_facade, Facade
 
-@dataclass_facade #v1.0   #please check default values once more #improve more pending
-class NanoFiltration(Converter, Facade):
-    r"""Nanofiltration water treatment unit with two inputs and two outputs.
-    Add parameters to the Brine output stream as and when required later.
-    Update self.conversion_factor.update() as and when required if considered MIMO.
+@dataclasses.dataclass(unsafe_hash=False, frozen=False, eq=False)
+class NanoFiltration(MIMO):
+    """
+    Literature-informed nanofiltration facade based on MIMO.
 
-    Parameters
-    ----------
-    electricity_bus: oemof.solph.Bus
-        An oemof bus instance where unit is connected to with
-        its low temperature input.
-    water_in_bus: oemof.solph.Bus
-        An oemof bus instance where unit is connected to with
-        its water input.
-    water_out_bus: oemof.solph.Bus
-        An oemof bus instance where the unit is connected to with
-        its water output.
-    brine_out_bus: oemof.solph.Bus
-        An oemof bus instance where unit is connected to with
-        its brine/concentrate output.
-    specific_energy_consumption: float
-        Specific electricity demand/consumption in kWh per m³ treated water. Default: 0.5.
-    efficiency: float
-        Share of untreated water that becomes treated water.
-        Value between 0 and 1. Default: 0.90
-    capacity: numeric
-        The water treatment capacity (output side) of the unit.
-    carrier_cost: numeric
-        Carrier cost for one unit of used input. Default: 0
-    capacity_cost: numeric
-        Investment costs per unit of output capacity.
-        If capacity is not set, this value will be used for optimizing the
-        conversion output capacity.
-    expandable: boolean or numeric (binary)
-        True, if capacity can be expanded within optimization. Default: False.
-    lifetime: int (optional)
-        Lifetime of the component in years. Necessary for multi-period
-        investment optimization.
-        Note: Only applicable for a multi-period model. Default: None.
-    age : int (optional)
-        The initial age of a component (usually given in years);
-        once it reaches its lifetime (considering also
-        an initial age), the component is forced to 0 (retire/replace).
-        Note: Only applicable for a multi-period model. Default: 0.
-    fixed_costs : numeric (iterable or scalar) (optional)
-        The fixed operational costs associated with a component.
-        Note: Only applicable for a multi-period model. Default: None.
-    capacity_potential: numeric
-        Maximum invest capacity in unit of output capacity. Default: +inf.
-    input_parameters: dict (optional)
-        Set parameters on the input edge of the conversion unit
-         (see oemof.solph for more information on possible parameters)
-    output_parameters: dict (optional)
-        Set parameters on the output edge of the conversion unit
-         (see oemof.solph for more information on possible parameters)
+    Purpose
+    -------
+    Engineering-grade NF water treatment facade representing a pressure-driven
+    membrane unit as a four-port MIMO component. The model is designed as a
+    recovery-and-energy bookkeeping unit for system optimization, not a full
+    mechanistic membrane transport solver.
+
+    Core references
+    ---------------
+    1. Recovery definition, osmotic-pressure limitation logic, and engineering operating intuition for pressure-driven
+       RO/NF membranes.
+       DuPont Water Solutions (2020). Principle of reverse osmosis and nanofiltration (Form No. 45-D01538-en, Rev. 4).
+       https://de.scribd.com/document/549453748/Basics-of-Reverse-Osmosis-Principle
+    2. Terminology, process-design framing, and variable definitions for nanofiltration systems.
+       Vatsa, S., Kumar, M., Ghanghas, N., Prabhakar, P., & Meghwal, M. (2021). Nanofiltration: Principles, process
+       modeling, and applications. In Nanofiltration (Ch. 9). CRC Press. https://doi.org/10.1201/9781003163213-9
+    3. Mechanistic NF transport modeling (DSPM-DE) — boundary justification for reduced-order treatment of concentration
+       polarization and solute rejection.
+       Ghorbani, A., Bayati, B., Drioli, E., Macedonio, F., Kikhavani, T., & Frappa, M. (2021). Modeling of nanofiltration
+       process using DSPM-DE model for purification of amine solution. Membranes, 11(4), 230.
+    4. Recovery bounds and concentration-factor logic for NF systems.
+       Bi, F., Zhao, H., Zhang, L., Ye, Q., Chen, H., & Gao, C. (2014). Discussion on calculation of maximum water
+       recovery in nanofiltration system. Desalination, 332(1), 142–146. https://doi.org/10.1016/j.desal.2013.11.017
+
+    Main equations
+    --------------
+    All flows normalized to 1 m³ net permeate output (primary output):
+
+    Feedwater requirement:
+        feedwater_per_output = 1 / efficiency     [m³_feed / m³_permeate]
+
+    Brine / concentrate output:
+        brine_per_output = (1 - efficiency) / efficiency
+                                                       [m³_brine / m³_permeate]
+
+    Electricity demand (Mode A — direct SEC):
+        electricity_per_output = SEC                   [kWh / m³_permeate]
+
+    Electricity demand (Mode B — pressure-derived SEC):
+        delta_P_eff = max(0, P_feed - Pi_osm)          [bar]
+        SEC         = delta_P_eff / (36 * eta_pump)    [kWh / m³_permeate]
+
+    Antiscalant dosing (optional input):
+        antiscalant_per_output = antiscalant_dose_per_m3
+                                                       [m³_chem / m³_permeate]
+
+    Backwash water demand (optional input):
+        backwash_per_output = backwash_fraction        [m³_bw / m³_permeate]
+
+    Notes
+    -----
+    - Primary flow is water_out_bus [m³/hr]. Capacity constrains the maximum permeate output of the unit.
+    - SEC can be provided directly (Mode A) or derived from effective pressure and pump efficiency (Mode B). Provide either
+      specific_energy_consumption or feed_pressure_bar; both at the same time defaults to Mode A.
+    - Optional antiscalant_bus and backwash_water_bus extend the four-port base for more detailed process configurations;
+      not required for standard use.
+    - Detailed solute rejection, concentration polarization, and ion-transport physics (DSPM-DE) are intentionally excluded.
+      Their effects should be reflected through efficiency (water recovery), SEC, and operating-cost parameters calibrated from literature.
+    - Characterization values (typical SEC range, design flux, TMP) are stored as documentation/calibration defaults.
+      They are not enforced as hard optimization constraints.
     """
 
-    electricity_bus: Bus
+    # ------------------------------------------------------------------
+    # tabular identity
+    # ------------------------------------------------------------------
+    type: str = "nanofiltration"
+    name: str = ""
+    tech: str = "water-treatment"
+    carrier: str = "water"
+    primary: str = "water_out_bus"
 
-    water_in_bus: Bus
-
-    water_out_bus: Bus
-
-    brine_out_bus: Bus
-
-    tech: str
-
-    carrier: str = ""
-
-    specific_energy_consumption: float = 0.5  # kWh/m³
-
-    efficiency: float = 0.90
-
-    capacity: float = None
-
-    marginal_cost: float = 0
-
-    carrier_cost: float = 0
-
-    capacity_cost: float = None
-
+    # ------------------------------------------------------------------
+    # capacity / investment
+    # ------------------------------------------------------------------
     expandable: bool = False
+    capacity: float = None
+    capacity_cost: float = None
+    capacity_minimum: float = None
+    capacity_potential: float = None
 
+    # ------------------------------------------------------------------
+    # mandatory buses
+    # ------------------------------------------------------------------
+    electricity_bus: Bus = None         # kWh
+    water_in_bus: Bus = None            # m³  (pretreated feedwater)
+    water_out_bus: Bus = None           # m³  (permeate — PRIMARY)
+    brine_out_bus: Bus = None           # m³  (concentrate)
+
+    # ------------------------------------------------------------------
+    # optional input buses
+    # ------------------------------------------------------------------
+    antiscalant_bus: Optional[Bus] = None       # m³  chemical dosing input
+    backwash_water_bus: Optional[Bus] = None    # m³  membrane cleaning water
+
+    # ------------------------------------------------------------------
+    # optional output buses
+    # ------------------------------------------------------------------
+    # reserved for future extension
+
+    # ------------------------------------------------------------------
+    # active physical parameters (used in constraints / split logic)
+    # ------------------------------------------------------------------
+    efficiency: float = None                             # m³ permeate / m³ feed (water recovery) [1, 4]
+    specific_energy_consumption: float = None            # kWh / m³ permeate [1, 2]
+    feed_pressure_bar: float = None                      # bar [1, 2]
+    osmotic_pressure_bar: float = 0.0                    # bar [1]
+    pump_efficiency: float = 0.80                        # [-] [1]
+    max_recovery: Optional[float] = None                 # upper validation bound [-] [4]
+    antiscalant_dose_per_m3: float = 0.0                 # m³ antiscalant / m³ permeate [2]
+    backwash_fraction: float = 0.0                       # m³ backwash / m³ permeate [2]
+
+    # ------------------------------------------------------------------
+    # economics
+    # ------------------------------------------------------------------
+    marginal_cost: float = 0.0              # USD/m³ permeate; exclude cleaning O&M (use cleaning_cost)
+    carrier_cost: float = 0.0               # USD/m³ feed
+    brine_disposal_cost: float = 0.0        # USD/m³ brine
+    cleaning_cost: float = 0.0              # USD/m³ permeate (O&M surcharge)
+
+    # ------------------------------------------------------------------
+    # multiperiod
+    # ------------------------------------------------------------------
     lifetime: int = None
-
     age: int = 0
-
     fixed_costs: Union[float, Sequence[float]] = None
 
-    capacity_potential: float = float("+inf")
+    # ------------------------------------------------------------------
+    # documentation / calibration defaults (not hard constraints)
+    # Based on the core literature references
+    # ------------------------------------------------------------------
+    sec_typical_min: float = 0.3                # kWh/m³, lower bound from literature [1]
+    sec_typical_max: float = 1.5                # kWh/m³, upper bound from literature [1]
+    design_flux_lmh: float = None               # L/m²/hr, documentation only [2]
+    tmp_bar: float = None                       # bar, transmembrane pressure, documentation only [1, 2]
+    cp_factor: Optional[float] = None           # concentration polarization [-], documentation only [3]
+    feed_tds: Optional[float] = None            # mg/L, documentation only [2, 3]
+    solute_rejection: Optional[float] = None    # lumped rejection [-], documentation only [3]
+    temperature_c: Optional[float] = None       # °C, documentation only [2, 3]
+    membrane_area_m2: Optional[float] = None    # m², documentation only [2]
 
-    input_parameters: dict = field(default_factory=dict)
+    def __init__(self, **attributes):
+        # --------------------------------------------------------------
+        # identity
+        # --------------------------------------------------------------
+        self.type = attributes.pop("type", self.type)
+        self.name = attributes.pop("name", self.name)
+        self.tech = attributes.pop("tech", self.tech)
+        self.carrier = attributes.pop("carrier", self.carrier)
+        self.primary = attributes.pop("primary", self.primary)
 
-    output_parameters: dict = field(default_factory=dict)
+        # --------------------------------------------------------------
+        # mandatory buses
+        # --------------------------------------------------------------
+        self.electricity_bus = attributes.pop("electricity_bus")
+        self.water_in_bus = attributes.pop("water_in_bus")
+        self.water_out_bus = attributes.pop("water_out_bus")
+        self.brine_out_bus = attributes.pop("brine_out_bus")
 
-    def build_solph_components(self):
+        # --------------------------------------------------------------
+        # optional buses
+        # --------------------------------------------------------------
+        self.antiscalant_bus = attributes.pop("antiscalant_bus", None)
+        self.backwash_water_bus = attributes.pop("backwash_water_bus", None)
 
-        self.conversion_factors.update(
-            {
-                # Electricity input per unit treated water output
-                self.electricity_bus: sequence(self.specific_energy_consumption),
-                # Raw water input per unit treated water output (inverse of efficiency)
-                self.water_in_bus: sequence(1/self.efficiency),
-                # Treated water output normalized to 1
-                self.water_out_bus: sequence(1),
-                self.brine_out_bus: sequence((1/self.efficiency) - 1),
-            }
+        # --------------------------------------------------------------
+        # active physical parameters
+        # --------------------------------------------------------------
+        self.efficiency = attributes.pop("efficiency", self.efficiency)
+        self.specific_energy_consumption = attributes.pop(
+            "specific_energy_consumption", self.specific_energy_consumption
+        )
+        self.feed_pressure_bar = attributes.pop(
+            "feed_pressure_bar", self.feed_pressure_bar
+        )
+        self.osmotic_pressure_bar = attributes.pop(
+            "osmotic_pressure_bar", self.osmotic_pressure_bar
+        )
+        self.pump_efficiency = attributes.pop("pump_efficiency", self.pump_efficiency)
+        self.max_recovery = attributes.pop("max_recovery", self.max_recovery)
+
+        # optional input bus parameters
+        self.antiscalant_dose_per_m3 = attributes.pop(
+            "antiscalant_dose_per_m3", self.antiscalant_dose_per_m3
+        )
+        self.backwash_fraction = attributes.pop(
+            "backwash_fraction", self.backwash_fraction
         )
 
-        self.inputs.update(
-            {
-                self.electricity_bus: Flow(
-                    variable_costs = self.carrier_cost, **self.input_parameters
-                ),
-                self.water_in_bus: Flow(),
-            }
+        # --------------------------------------------------------------
+        # economics / investment
+        # --------------------------------------------------------------
+        self.marginal_cost = attributes.pop("marginal_cost", self.marginal_cost)
+        self.carrier_cost = attributes.pop("carrier_cost", self.carrier_cost)
+        self.brine_disposal_cost = attributes.pop(
+            "brine_disposal_cost", self.brine_disposal_cost
+        )
+        self.cleaning_cost = attributes.pop("cleaning_cost", self.cleaning_cost)
+        self.expandable = attributes.pop("expandable", self.expandable)
+        self.capacity = attributes.pop("capacity", self.capacity)
+        self.capacity_cost = attributes.pop("capacity_cost", self.capacity_cost)
+        self.capacity_minimum = attributes.pop(
+            "capacity_minimum", self.capacity_minimum
+        )
+        self.capacity_potential = attributes.pop(
+            "capacity_potential", self.capacity_potential
         )
 
-        self.outputs.update(
-            {
-                self.water_out_bus: Flow(
-                    nominal_value = self._nominal_value(),
-                    variable_costs = self.marginal_cost,
-                    investment = self._investment(),
-                    **self.output_parameters,
-                ),
-                self.brine_out_bus: Flow(),
-            }
+        # --------------------------------------------------------------
+        # multiperiod
+        # --------------------------------------------------------------
+        self.lifetime = attributes.pop("lifetime", self.lifetime)
+        self.age = attributes.pop("age", self.age)
+        self.fixed_costs = attributes.pop("fixed_costs", self.fixed_costs)
+        self.output_parameters = attributes.pop("output_parameters", {})
+
+        # --------------------------------------------------------------
+        # documentation / calibration defaults
+        # --------------------------------------------------------------
+        self.sec_typical_min = attributes.pop("sec_typical_min", self.sec_typical_min)
+        self.sec_typical_max = attributes.pop("sec_typical_max", self.sec_typical_max)
+        self.design_flux_lmh = attributes.pop("design_flux_lmh", self.design_flux_lmh)
+        self.tmp_bar = attributes.pop("tmp_bar", self.tmp_bar)
+        self.cp_factor = attributes.pop("cp_factor", self.cp_factor)
+        self.feed_tds = attributes.pop("feed_tds", self.feed_tds)
+        self.solute_rejection = attributes.pop("solute_rejection", self.solute_rejection)
+        self.temperature_c = attributes.pop("temperature_c", self.temperature_c)
+        self.membrane_area_m2 = attributes.pop("membrane_area_m2", self.membrane_area_m2)
+
+        # --------------------------------------------------------------
+        # validate parameters
+        # --------------------------------------------------------------
+        self._validate_parameters()
+
+        # --------------------------------------------------------------
+        # derived constants
+        # (DuPont Water Solutions (2020) [1]; Nanofiltration: Principles, Process Modeling [2])
+        # --------------------------------------------------------------
+        if self.specific_energy_consumption is not None:
+            self._sec = float(self.specific_energy_consumption)
+        else:
+            _eff_p = self.feed_pressure_bar - self.osmotic_pressure_bar
+            self._sec = float(_eff_p / (36.0 * self.pump_efficiency))
+
+        self._feedwater_per_output = 1.0 / self.efficiency
+        self._brine_per_output = (1.0 - self.efficiency) / self.efficiency
+
+        # --------------------------------------------------------------
+        # conversion factors
+        # All normalized to treated water output = 1 [m³/hr].
+        # --------------------------------------------------------------
+        attributes[f"conversion_factor_{self.electricity_bus.label}"] = sequence(
+            self._sec
         )
+        attributes[f"conversion_factor_{self.water_in_bus.label}"] = sequence(
+            self._feedwater_per_output
+        )
+        attributes[f"conversion_factor_{self.water_out_bus.label}"] = sequence(1.0)
+        attributes[f"conversion_factor_{self.brine_out_bus.label}"] = sequence(
+            self._brine_per_output
+        )
+        if self.antiscalant_bus is not None:
+            attributes[f"conversion_factor_{self.antiscalant_bus.label}"] = sequence(
+                max(self.antiscalant_dose_per_m3, 1e-9)
+            )
+        if self.backwash_water_bus is not None:
+            attributes[f"conversion_factor_{self.backwash_water_bus.label}"] = sequence(
+                max(self.backwash_fraction, 1e-9)
+            )
+
+        # --------------------------------------------------------------
+        # primary bus label resolution
+        # --------------------------------------------------------------
+        if self.primary == "water_out_bus":
+            primary_label = self.water_out_bus.label
+        elif self.primary == "water_in_bus":
+            primary_label = self.water_in_bus.label
+        elif self.primary == "electricity_bus":
+            primary_label = self.electricity_bus.label
+        elif self.primary == "brine_out_bus":
+            primary_label = self.brine_out_bus.label
+        else:
+            primary_label = self.primary
+
+        # --------------------------------------------------------------
+        # initialize base MIMO facade
+        # --------------------------------------------------------------
+        super().__init__(
+            from_bus_0=self.electricity_bus,
+            from_bus_1=self.water_in_bus,
+            to_bus_0=self.water_out_bus,
+            to_bus_1=self.brine_out_bus,
+            primary=primary_label,
+            marginal_cost=self.marginal_cost,
+            carrier_cost=self.carrier_cost,
+            expandable=self.expandable,
+            capacity=self.capacity,
+            capacity_cost=self.capacity_cost,
+            capacity_minimum=self.capacity_minimum,
+            capacity_potential=self.capacity_potential,
+            lifetime=self.lifetime,
+            age=self.age,
+            fixed_costs=self.fixed_costs,
+            **self._optional_bus_kwargs(),
+            **attributes,
+        )
+
+        # ------------------------------------------------------------
+        # PATCH: MIMO's create_flow() (mimo_converter.py) never wires
+        # variable_costs onto any Flow, and only ever sets nominal_value
+        # on the primary bus's Flow when expandable=True. Patch the
+        # already-built Flow objects directly since
+        # MultiInputMultiOutputConverter/MIMO cannot be modified.
+        # ------------------------------------------------------------
+        self._apply_flow_parameters()
+
+    def _apply_flow_parameters(self):
+
+        # --------------------------------------------------------------
+        # output-specific costs
+        # --------------------------------------------------------------
+        total_marginal_cost = np.add(self.marginal_cost, self.cleaning_cost)
+
+        if self.water_out_bus in self.outputs:
+            out_flow = self.outputs[self.water_out_bus]
+            out_flow.variable_costs = sequence(total_marginal_cost)
+            if not self.expandable and self.capacity is not None:
+                out_flow.nominal_value = self.capacity
+            custom_attrs = (getattr(self, "output_parameters", None) or {}).get(
+                "custom_attributes"
+            )
+            if custom_attrs:
+                for attribute, value in custom_attrs.items():
+                    setattr(out_flow, attribute, value)
+
+        if self.brine_out_bus in self.outputs:
+            self.outputs[self.brine_out_bus].variable_costs = sequence(
+                self.brine_disposal_cost
+            )
+
+    def _optional_bus_kwargs(self):
+        kwargs = {}
+        idx_in = 2
+        idx_out = 2
+        # inputs
+        for bus in [
+            self.antiscalant_bus,
+            self.backwash_water_bus,
+        ]:
+            if bus is not None:
+                kwargs[f"from_bus_{idx_in}"] = bus
+                idx_in += 1
+        # outputs
+        for bus in []:
+            if bus is not None:
+                kwargs[f"to_bus_{idx_out}"] = bus
+                idx_out += 1
+
+        return kwargs
+
+    def _validate_parameters(self):
+        if self.efficiency is None:
+            raise ValueError(
+                "efficiency must be provided "
+                "(defined as V_permeate / V_feed, per DuPont/FilmTec NF manual)."
+            )
+        if not 0 < self.efficiency < 1:
+            raise ValueError("efficiency must be in the open interval (0, 1).")
+
+        if self.max_recovery is not None:
+            if not 0 < self.max_recovery < 1:
+                raise ValueError("max_recovery must be in the open interval (0, 1).")
+            if self.efficiency > self.max_recovery:
+                raise ValueError(
+                    f"efficiency ({self.efficiency}) exceeds max_recovery "
+                    f"({self.max_recovery}). Revise design or use a lower recovery value."
+                )
+
+        if self.specific_energy_consumption is None and self.feed_pressure_bar is None:
+            raise ValueError(
+                "Provide either specific_energy_consumption [kWh/m³] directly "
+                "or feed_pressure_bar [bar] for pressure-derived SEC (Mode B)."
+            )
+        if self.specific_energy_consumption is not None:
+            if self.specific_energy_consumption < 0:
+                raise ValueError("specific_energy_consumption must be >= 0.")
+
+        if self.feed_pressure_bar is not None:
+            if self.feed_pressure_bar < 0:
+                raise ValueError("feed_pressure_bar must be >= 0.")
+            if self.specific_energy_consumption is None:
+                if self.feed_pressure_bar <= self.osmotic_pressure_bar:
+                    raise ValueError(
+                        "feed_pressure_bar must be strictly greater than "
+                        "osmotic_pressure_bar for a positive effective driving "
+                        "pressure (Mode B SEC)."
+                    )
+
+        if self.osmotic_pressure_bar < 0:
+            raise ValueError("osmotic_pressure_bar must be >= 0.")
+        if not 0 < self.pump_efficiency <= 1:
+            raise ValueError("pump_efficiency must be in (0, 1].")
+
+        if self.solute_rejection is not None:
+            if not 0 <= self.solute_rejection <= 1:
+                warnings.warn(
+                    f"solute_rejection ({self.solute_rejection}) is outside [0, 1]. "
+                    "This field is for documentation only and has no effect on the "
+                    "optimization, but the value appears physically unrealistic.",
+                    UserWarning,
+                )
+        if self.cp_factor is not None and self.cp_factor < 1.0:
+            warnings.warn(
+                f"cp_factor ({self.cp_factor}) is below 1.0. "
+                "Concentration polarization factor is expected to be >= 1.0. "
+                "This field is for documentation only and has no effect on the optimization.",
+                UserWarning,
+            )
+
+        if self.antiscalant_bus is None and self.antiscalant_dose_per_m3 > 0:
+            warnings.warn(
+                "antiscalant_dose_per_m3 is set but antiscalant_bus is None. "
+                "Dose parameter will be ignored.",
+                UserWarning,
+            )
+        if self.backwash_water_bus is None and self.backwash_fraction > 0:
+            warnings.warn(
+                "backwash_fraction > 0 but no backwash_water_bus provided. "
+                "Backwash demand parameter will be ignored.",
+                UserWarning,
+            )

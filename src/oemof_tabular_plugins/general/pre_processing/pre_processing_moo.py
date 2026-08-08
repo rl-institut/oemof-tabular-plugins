@@ -169,7 +169,7 @@ def pre_processing_moo(
     -----
     - This function **overwrites** capacity_cost and marginal_cost values if MOO is active.
     - If 'capacity_cost' is missing or zero, it is handled silently; no warnings are issued for intentional zero values.
-    - Flow-related values (marginal_cost, ghg_emission_factor, water_direct, indirect_water_consumption_factor)
+    - Flow-related values (marginal_cost, ghg_emission_factor, water_consumption_factor, indirect_water_consumption_factor)
       missing or NaN are treated as zero in the MOO calculation.
     - All MOO indicators are multiplied by a normalization factor (default 1e15) to bring them to a comparable scale.
     - Variable timeseries are linked via foreign keys to cf_aware_res if applicable.
@@ -239,7 +239,7 @@ def pre_processing_moo(
 
         ghg = to_float_safe(row, "ghg_emission_factor")
         land = to_float_safe(row, "land_requirement_factor")
-        water_direct = to_float_safe(row, "water_direct")
+        water_direct = to_float_safe(row, "water_consumption_factor")
         water_indirect = to_float_safe(row, "indirect_water_consumption_factor")
 
         has_capacity = capacity_cost is not None
@@ -285,6 +285,11 @@ def pre_processing_moo(
         # ---- write timeseries ----
         for col in cf_aware_temp_df.columns:
             cf_aware_df[col] = cf_aware_temp_df[col]
+
+        # the column holds numeric marginal costs; writing a profile *name* into it
+        # needs an object dtype (pandas >=2.2 refuses to upcast in place)
+        if moo_variable_var in element_df.columns:
+            element_df[moo_variable_var] = element_df[moo_variable_var].astype(object)
 
         for index, col in row_temp_dict.items():
             element_df.at[index, moo_variable_var] = col
