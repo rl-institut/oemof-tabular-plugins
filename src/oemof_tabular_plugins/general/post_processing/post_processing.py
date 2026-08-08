@@ -96,6 +96,7 @@ CAPACITY_SECTIONS = {
     "decentralized_WWTP": "Sanitation",
     "water_reuse_system": "Sanitation",
     "latrine": "Sanitation",
+    "dry_toilet": "Sanitation",
     "open_field": "Sanitation",
     # Annex A - fixed data inputs, not optimiser decisions
     "hh_gw_waste": ANNEX_SECTION,

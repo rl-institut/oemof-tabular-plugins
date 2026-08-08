@@ -180,6 +180,10 @@ def compute_variable_cost_moo(results_df):
     """Calculates variable costs by multiplying the resource cost by the aggregated flow."""
     if results_df.name[4] == "excess":
         return None
+        # resource_cost is a per-unit rate on the component's reference flow; a component
+        # connected to several buses would otherwise be charged once per bus
+    if not results_df.get("is_reference_flow", True):
+        return None
     return results_df.resource_cost * results_df.aggregated_flow
 
 
